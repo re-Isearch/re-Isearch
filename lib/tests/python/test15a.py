@@ -1,6 +1,6 @@
-#!/opt/BSN/bin/python
+#!/usr/bin/python
 #-------------------------------------------------
-#ident  "%Z%%Y%%M%  %I% %G% %U% BSN"
+#ident  "%Z%%Y%%M%  %I% %G% %U% nonmonotonic"
 
 import sys
 import string
