@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="ASCII" ?>
+
+
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+	<teiHeader>
+		<fileDesc>
+			<titleStmt>
+				<title>"Faith is a fine invention"</title>
+				<author>Emily Dickinson</author>
+				<respStmt>
+					<name>Jarom McDonald</name>
+					<resp>Text encoding</resp>
+				</respStmt>
+				<respStmt>
+					<name>Lara Vetter</name>
+					<resp>Proofing</resp>
+				</respStmt>
+			</titleStmt>
+			<publicationStmt>
+				<publisher>The Versioning Machine project</publisher>
+				<availability>
+					<p>This poem is available only for demonstration purposes. It was created as
+						part of a research project to experiment with ways of displaying multiple
+						witnesses of a TEI-encoded poem using XML, XSLT and JavaScript.</p>
+				</availability>
+			</publicationStmt>
+			<notesStmt>
+				<note type="image" anchored="true">
+					<witDetail wit="#p1891" target="#p1891" place="apparatus">
+						<figure>
+							<graphic url="images/p1891.jpg"/>
+						</figure>
+					</witDetail>
+					<witDetail wit="#ll227" target="#ll227" place="apparatus">
+						<figure>
+							<graphic url="images/ll227.jpg"/>
+						</figure>
+					</witDetail>
+				</note>
+			</notesStmt>
+			<sourceDesc>
+				<p>See Witness List.</p>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<projectDesc>
+				<p>Test document for versioning machine project. Marked-up collation of three
+					manuscript witnesses: A 660, H 201, and H 72, and four early print witnesses:
+					Poems (1891)--XXX, Letters (1894)--p. 191, Complete Poems (1924)--LVI, and Life
+					and Letters (1926)--p. 227. </p>
+				<p>DTD constructed from TEI prose base with tagsets for linking, figures, analysis,
+					transcr, textcrit.</p>
+			</projectDesc>
+			<variantEncoding location="internal" method="parallel-segmentation"/>
+		</encodingDesc>
+	</teiHeader>
+	
+	<facsimile>
+		<graphic xml:id="image1" url="images/cp32.jpg"/>
+	</facsimile>
+	
+	<text>
+		<front>
+			<div>
+				<listWit>
+					<witness xml:id="a660">A 660, verse embedded in letter to Samuel
+						Bowles.</witness>
+					<witness xml:id="h201">H 201, fascicle version of poem.</witness>
+					<witness xml:id="h72">H 72, fascicle version of poem.</witness>
+					<witness xml:id="p1891">Published as poem XXX in the second volume of Todd and
+						Higginson's <title rend="italic">Poems of Emily Dickinson</title>.</witness>
+					<witness xml:id="l1894">Letter to Samuel Bowles published in Todd's edition of
+						Dickinson's letters.</witness>
+					<witness xml:id="cp32">Published as poem LVI in Martha Dickinson Bianchi's
+							<title rend="italic">Complete Poems of Emily
+						Dickinson</title>.</witness>
+					<witness xml:id="ll227">Letter to Samuel Bowles published in Bianchi's <title
+							rend="italic">The Life and Letters of Emily Dickinson</title>.</witness>
+				</listWit>
+			</div>
+		</front>
+		<body>
+			<div1>
+				<lg>
+					<l n="1">
+						<app>
+							<rdg wit="#a660 #h72">"Faith"</rdg>
+							<rdg wit="#h201 #l1894 #ll227">Faith</rdg>
+							<rdg wit="#p1891 #cp32">FAITH</rdg>
+						</app> is a fine invention</l>
+					<l n="2">
+						<app>
+							<rdg wit="#a660 #ll227">When </rdg>
+							<rdg wit="#h201 #h72 #p1891 #l1894 #cp32">For </rdg>
+						</app>
+						<app>
+							<rdg wit="#a660 #h201 #h72">Gentlemen </rdg>
+							<rdg wit="#p1891 #l1894 #cp32 #ll227">gentlemen </rdg>
+						</app>
+						<app>
+							<rdg wit="#a660 #ll227">can </rdg>
+							<rdg wit="#h201 #h72 #p1891 #l1894 #cp32">who </rdg>
+						</app>
+						<app>
+							<rdg wit="#a660 #h201 #h72">
+								<hi rend="underline">see</hi>
+							</rdg>
+							<rdg wit="#p1891 #l1894 #cp32 #ll227">see</rdg>
+						</app>
+						<app>
+							<rdg wit="#h72 #ll227">!</rdg>
+							<rdg wit="#a660 #h201"> -</rdg>
+							<rdg wit="#p1891 #cp32">;</rdg>
+							<rdg wit="#l1894">,</rdg>
+						</app>
+					</l>
+					<l n="3"> But <app>
+							<rdg wit="#h72">Microscopes</rdg>
+							<rdg wit="#a660 #h201">
+								<hi rend="underline">Microscopes</hi>
+							</rdg>
+							<rdg wit="#p1891 #l1894 #cp32 #ll227">microscopes</rdg>
+						</app> are prudent</l>
+					<l n="4"> In an <app>
+							<rdg wit="#a660 #h201 #h72">Emergency</rdg>
+							<rdg wit="#p1891 #l1894 #cp32 #ll227">emergency</rdg>
+						</app>
+						<app>
+							<rdg wit="#a660 #l1894">. <pb facs="#image1" ed="#l1894"/></rdg>
+							<rdg wit="#h201 #h72 #p1891 #ll227 #cp32">!</rdg>
+						</app>
+					</l>
+				</lg>
+			</div1>
+		</body>
+	</text>
+</TEI>

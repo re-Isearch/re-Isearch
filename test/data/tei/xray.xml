@@ -1,0 +1,1003 @@
+
+<?xml version="1.0" encoding="ASCII" ?>
+
+
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+
+    <teiHeader>
+        <fileDesc>
+
+            <titleStmt>
+
+                <title>Xray</title>
+
+                <author>Baroness Elsa von Freytag-Loringhoven</author>
+                <respStmt>
+                    <resp>Text Encoding by </resp>
+                    <name>Tanya Clement</name>
+                </respStmt>
+
+                <respStmt>
+                    <resp>Proofing and Additional Encoding by </resp>
+                    <name>Tanya Clement</name>
+                </respStmt>
+                <respStmt>
+                    <resp>TIFF images scanned at 600 dpi from manuscript pages and JPEGS derived
+                        by</resp>
+                    <name>Tanya Clement</name>
+                </respStmt>
+            </titleStmt>
+
+            <publicationStmt>
+                <publisher>Tanya Clement</publisher>
+
+                <address>
+                    
+                    <addrLine>Office of Digital Collections and Research (DCR), University of Maryland, College Park, MD 20742</addrLine>
+                    
+                    
+                </address>
+
+                <availability status="unknown">
+
+                    <p>Baroness Elsa von Freytag-Loringhoven's poetry is printed here with the
+                        support of the University of Maryland Libraries. Permission to reproduce
+                        images of Freytag-Loringhoven's manuscripts has also been generously granted
+                        by the libraries.</p>
+                    <p>This poem and manuscript drafts are available from this site for
+                        demonstration purposes only. Though the intellectual property of <name>Elsa
+                            von Freytag-Loringhoven</name> is in the public domain, all annotations
+                        and editorial commentary are copyrighted. They may not be reproduced without
+                        explicit permission from the copyright holder. For copyright information,
+                        please contact Tanya Clement.</p>
+
+                </availability>
+
+            </publicationStmt>
+
+
+
+            <notesStmt>
+
+               <note type="image" anchored="true"> <p>The images are JPEGS derived from TIFFS scanned at 600 dpi.</p></note>
+                <note type="image" anchored="true">
+
+                    <witDetail wit="#pub1927" target="#pub1927" place="apparatus">First: this version appeared in <title rend="italic" level="j">transition</title> 7 (October 1927): 135. There is no image for this version. 
+                    </witDetail>
+                    <witDetail wit="#va9" target="#va9" place="apparatus">Second: Reel 5, Frame 514
+                        <figure><graphic
+                            url="images/litmss-003138-0001.jpg"/></figure>
+                    </witDetail>
+                    <witDetail wit="#va8" target="#va8" place="apparatus">Third: Reel 5, Frame 1130
+                        <figure><graphic
+                            url="images/litmss-003149-0001.jpg"/></figure>
+                    </witDetail>
+                    
+                    <witDetail wit="#va7" target="#va7" place="apparatus">Fourth: Reel 5, Frame 188
+                       <figure> <graphic
+                            url="images/litmss-003281-0001.jpg"/></figure>
+                    </witDetail>
+                    
+                    <witDetail wit="#va6" target="#va6" place="apparatus">Fifth: Reel 5, Frame 23
+                       <figure> <graphic
+                            url="images/litmss-003147-0001.jpg"/></figure>
+                        
+                    </witDetail>
+                    <witDetail wit="#va5" target="#va5" place="apparatus">Sixth: Reel 5, Frame 1132
+                       <figure> <graphic
+                            url="images/litmss-003151-0001.jpg"/></figure></witDetail>
+                    
+                    
+                    
+                    <witDetail wit="#va4" target="#va4" place="apparatus">Seventh: Reel 5, Frame 1136
+                        <figure><graphic
+                            url="images/litmss-003155-0001.jpg"/></figure></witDetail>
+                    
+                    
+                    <witDetail wit="#va3" target="#va3" place="apparatus">Eighth: Reel 5, Frame 1131
+                       <figure> <graphic
+                            url="images/litmss-003150-0001.jpg"/></figure></witDetail>
+                    
+                    <witDetail wit="#va2" target="#va2" place="apparatus">Ninth: Reel 5, Frame 1134
+                       <figure> <graphic
+                            url="images/litmss-003153-0001.jpg"/></figure>
+                    </witDetail>
+                    <witDetail wit="#va1" target="#va1" place="apparatus">Tenth: Reel 5, Frame 1133
+                       <figure> <graphic
+                            url="images/litmss-003152-0001.jpg"/></figure>
+                    </witDetail>                   
+                </note>
+
+
+                <note anchored="true">Drafts of this poem occupy series 3, box 4, folder 44.</note>
+
+                <note type="critIntro">
+                    <p>The poem "Xray" was published in <title rend="italic" level="j"
+                            >transition</title> (October 1927: 134-135). There are ten extant
+                        versions (including the published text). Across the versions there are some
+                        phrases that remain more or less the same, some that change course and
+                        change back, and still others that evolve quite dramatically in a
+                        perceptive, linear fashion. </p>
+                </note>
+
+            </notesStmt>
+
+            <sourceDesc>
+
+                <p>Encoded documents and images are derived from manuscripts in the <ref
+                        target="http://www.lib.umd.edu/litmss/holdings.html#evfl">Papers of Elsa von
+                        Freytag-Loringhoven</ref> in Special Collections at the University of
+                    Maryland, College Park, Libraries. In addition, individual pages or leaves of
+                    manuscripts are identified by the corresponding reel and frame numbers of the
+                    microfilm edition of the Freytag-Lorinhoven Papers.</p>
+
+                <p>The one printed version of Xray appeared in <title rend="italic" level="j"
+                        >transition</title> 7 (October 1927): 135. </p>
+            </sourceDesc>
+
+
+        </fileDesc>
+        <encodingDesc>
+
+            <editorialDecl>
+
+                <p>DTD constructed from TEI P5 poetry base with tagsets for linking, figures,
+                    analysis, transcr, textcrit.</p>
+
+
+                <p>Line numbers have been included to reflect the numbering across all versions.
+                    Thus, some line numbers are missing on versions which do not include all lines
+                    within the text.</p>
+
+            </editorialDecl>
+
+            <variantEncoding method="location-referenced" location="internal"/>
+
+        </encodingDesc>
+
+    </teiHeader>
+
+    <text>
+
+        <front>
+
+            <div>
+
+                <listWit xml:id="all">
+                    <witness xml:id="pub1927">First</witness>
+
+                    <witness xml:id="va9">Second </witness>
+
+                    <witness xml:id="va8">Third </witness>
+                    <witness xml:id="va7">Fourth </witness>
+                    <witness xml:id="va6">Fifth </witness>
+
+                    <witness xml:id="va5">Sixth </witness>
+
+
+
+                    <witness xml:id="va4">Seventh </witness>
+
+                    <witness xml:id="va3">Eighth </witness>
+
+
+                    <witness xml:id="va2">Ninth </witness>
+
+                    <witness xml:id="va1">Tenth </witness>
+
+
+
+                </listWit>
+
+
+            </div>
+
+        </front>
+
+        <body>
+
+            <div1>
+
+                <lg>
+                    <l>
+                        <app>
+                            <rdg wit="#va4">
+                                <del rend="overstrike">VIVID FALLS</del>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app>
+                            <rdg wit="#va4">
+                                <del rend="overstrike">BUGLE SKY</del>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app>
+                            <rdg wit="#va4">
+                                <del rend="overstrike">CASTLE CLOUDS</del>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app>
+                            <rdg wit="#va4">
+                                <del rend="overstrike">LEAFY LIMBSWISH</del>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app>
+                            <rdg wit="#va4">
+                                <del rend="overstrike">WESTWARD</del>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app>
+                            <rdg wit="#va4">
+                                <del rend="overstrike">SAXOPHONE DAYS STEELBLAST GALAXY</del>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app>
+                            <rdg wit="#va4">
+                                <del rend="overstrike">EASTWARD</del>
+                                <note type="critical">This fragment is a manuscript version of
+                                    Freytag-Loringhoven's compilation poem "Ostentatious: Westward:
+                                    Eastward: Agog."</note>
+                            </rdg>
+                        </app>
+                    </l>
+                </lg>
+
+
+            </div1>
+
+            <div1 n="1">
+                <head type="main" rend="underline">
+                    <app loc="a1">
+                        <rdg wit="#va1 #va2 #va3 #va4 #va9">X</rdg>
+                        <rdg wit="#va4"> -</rdg>
+                        <rdg wit="#va1 #va2 #va3 #va4 #va9"> RAY</rdg>
+                        <rdg wit="#va1">S.</rdg>
+                        <rdg wit="#va2">.</rdg>
+                        <rdg wit="#va7">
+                            <del rend="overstrike">
+                                <unclear>??</unclear>
+                            </del>
+                        </rdg>
+                        <rdg wit="#va8">
+                            <del rend="overstrike">
+                                <unclear>??</unclear>
+                            </del>
+                            <add place="above">X-RAY. </add>
+                        </rdg>
+                    </app>
+                </head>
+                <head type="main">
+                    <app loc="a1">
+                        <rdg wit="#va5 #pub1927">X </rdg>
+                        <rdg wit="#pub1927">- </rdg>
+                        <rdg wit="#va5 #pub1927">RAY</rdg>
+
+                        <rdg wit="#va6">
+                            <del>RADIO </del>
+                        </rdg>
+                    </app>
+                </head>
+                <lg n="1">
+
+                    <l n="1">
+                        <app loc="a3">
+                            <rdg wit="#va1 #va2 #va3 #va5 #va7 #va8 #va9 #va6">NATURE </rdg>
+                            <rdg wit="#va1 #va2 #va3 #va4 #va5">INTENDS</rdg>
+                            <rdg wit="#va6 #va7">
+                                <del>INTENDS </del>
+                            </rdg>
+                            <rdg wit="#va7">
+                                <del rend="overstrike">
+                                    <unclear>??</unclear>
+                                </del>
+                            </rdg>
+                            <rdg wit="#va7 #va6">
+                                <add place="above">CAUSES </add>
+                            </rdg>
+                            <rdg wit="#va8 #va9">CAUSES </rdg>
+                            <rdg wit="#va1 #va2 #va3 #va5 #va7 #va8 #va9 #va6"> BRASS TO </rdg>
+                            <rdg wit="#va1">
+                                <del rend="overstrike">CORODE</del>
+                            </rdg>
+                            <rdg wit="#va1 #va2 #va3 #va5 #va7 #va8 #va9 #va6"> OXIDIZE </rdg>
+                            <rdg wit="#va1 #va2 #va3 #va7 #va8 #va6">- </rdg>
+                            <rdg wit="#pub1927">Nature causes brass to oxidize </rdg>
+
+                        </app>
+                        <app loc="a7a">
+                            <rdg wit="#va1">
+                                <del rend="overstrike">PEOPLE POLISH </del>
+                            </rdg>
+                        </app>
+                        <app loc="a3a">
+                            <rdg wit="#va1">
+                                <del rend="overstrike">WITH INDEFATIGABLE RUB AGAINST PRIMITIVE
+                                    COROSION</del>
+                            </rdg>
+
+                        </app>
+                    </l>
+
+                    <l n="2">
+                        <app loc="a4">
+                            <rdg wit="#va1 #va2 #va3 #va5 #va7 #va6">NATURE </rdg>
+                            <rdg wit="#va1 #va2 #va3 #va5">INTENDS </rdg>
+                            <rdg wit="#va4">
+                                <space resp="editor" quantity="15" unit="char"/>
+                            </rdg>
+                            <rdg wit="#va6">
+                                <del>INTENDS </del>
+                                <add place="above">CAUSES </add>
+                            </rdg>
+                            <rdg wit="#va7">CAUSES </rdg>
+                            <rdg wit="#va8">
+                                <del rend="overstrike">NATURE CAUSES </del>
+                            </rdg>
+                            <rdg wit="#va1 #va2 #va3 #va5 #va7 #va8 #va9 #va6">
+                                <choice>
+                                    <sic>POEPLE</sic>
+                                    <corr>PEOPLE</corr>
+                                </choice> TO </rdg>
+                            <rdg wit="#va1 #va2 #va3 #va4 #va5 #va7 #va6">AMASS </rdg>
+                            <rdg wit="#va7"> - - -</rdg>
+                            <rdg wit="#va8">
+                                <del rend="overstrike">AMASS </del>
+                                <add place="above">CONGEST </add>
+                            </rdg>
+                            <rdg wit="#va9">CONGEST</rdg>
+                            <rdg wit="#va1 #va2 #va3 #va8 #va6"> - </rdg>
+                            <rdg wit="#pub1927">People to congest - </rdg>
+                        </app>
+                        <app loc="a9d">
+                            <rdg wit="#va1">
+                                <del rend="overstrike">
+                                    <choice>
+                                        <sic>POEPLE</sic>
+                                        <corr>PEOPLE</corr>
+                                    </choice> KILL </del>
+                            </rdg>
+                        </app>
+                        <app loc="a10">
+                            <rdg wit="#va1">
+                                <del rend="overstrike"> WITH INDEFATIGABLE</del>
+                            </rdg>
+
+                        </app>
+                    </l>
+
+
+                    <l>
+                        <app loc="a6">
+                            <rdg wit="#va8">
+                                <app>
+                                    <rdgGrp>
+                                        <rdg wit="#va8">SUNS RADIOINFUSED</rdg>
+                                        <rdg wit="#va8">RADIO'S <add place="below">
+                                                <app>
+                                                  <rdgGrp>
+                                                  <rdg wit="#va8"> SOIL SECRET </rdg>
+                                                  <rdg wit="#va8"> SUN MESSAGE </rdg>
+                                                  <rdg wit="#va8">
+                                                  <del rend="overstrike">PENETR</del> SUNIMPREGNATED
+                                                  </rdg>
+                                                  </rdgGrp>
+                                                </app></add></rdg>
+                                    </rdgGrp>
+                                </app> SOIL </rdg>
+                        </app>
+                    </l>
+
+
+                    <l n="3">
+                        <app loc="a6">
+                            <rdg wit="#va1 #va2 #va3 #va4 #va5 #va6">BECAUSE OF </rdg>
+                            <rdg wit="#va6">RADIO </rdg>
+                            <rdg wit="#va7"><del rend="overstrike">BECAUSE OF </del> RADIO - </rdg>
+                            <rdg wit="#va1">LATENT</rdg>
+                            <rdg wit="#va2">
+                                <del rend="overstrike">LATENT</del>
+                                <add place="above">DORMANT </add>
+                            </rdg>
+                            <rdg wit="#va3 #va4 #va5">DORMANT </rdg>
+                            <rdg wit="#va1 #va2 #va3 #va4 #va5"> IDEAL OF </rdg>
+                            <rdg wit="#va1 #va3 #va4">BRILLIANCY -</rdg>
+                            <rdg wit="#va5">
+                                <del rend="overstrike">BRILLIANCY</del>
+                            </rdg>
+                            <rdg wit="#va7 #va8 #va6">DORMANT WITHIN SOIL FOR PROGRESS' </rdg>
+                            <rdg wit="#va8">DUMB </rdg>
+                            <rdg wit="#va9">BY DULL </rdg>
+                            <rdg wit="#va8 #va9">RADIOPENETRATED SOIL </rdg>
+                            <rdg wit="#pub1927">By dull-radiopenetrated soil </rdg>
+                        </app>
+                    </l>
+
+
+
+
+                    <l>
+                        <app loc="a7">
+                            <rdg wit="#va2">BRILLIANCY </rdg>
+                            <rdg wit="#va1 #va2 #va3 #va5 #va7 #va8 #va9">LUXURY </rdg>
+                            <rdg wit="#va6">
+                                <del>LUXURY <unclear>??</unclear> ARISTOCRACY </del>
+                            </rdg>
+                            <rdg wit="#va1 #va2 #va3">- </rdg>
+                            <rdg wit="#va1 #va2 #va3 #va5 #va7 #va8 #va9"> ORNAMENT </rdg>
+                            <rdg wit="#va1 #va2 #va3 #va6"> - </rdg>
+                            <rdg wit="#va1 #va3">ARISTOCRACY </rdg>
+                            <rdg wit="#va3"> - </rdg>
+                            <rdg wit="#va1">ASPIRATION -</rdg>
+                            <rdg wit="#va7">
+                                <del rend="overstrike">
+                                    <unclear>?? </unclear>
+                                </del>
+                                <add place="below">
+                                    <emph rend="underline">SUNSHINE</emph>
+                                </add>
+                            </rdg>
+                            <rdg wit="#va8">
+                                <add place="above">
+                                    <del rend="overstrike">SUNSHINE </del>
+                                </add>
+                            </rdg>
+                        </app>
+                    </l>
+
+                    <l>
+                        <app loc="a7a">
+                            <rdg wit="#va1">
+                                <del rend="overstrike">
+                                    <choice>
+                                        <sic>POEPLE</sic>
+                                        <corr>PEOPLE</corr>
+                                    </choice> POLISH</del>
+                            </rdg>
+                        </app>
+                    </l>
+
+
+                    <l>
+                        <app loc="a7">
+                            <rdg wit="#va2 #va5">ARISTOCRACY</rdg>
+                            <rdg wit="#va6"><add place="margin">SUN </add> SHINE -</rdg>
+                        </app>
+                        <app loc="a8a">
+
+                            <rdg wit="#va2"> ASPIRATION - - - - -</rdg>
+                            <rdg wit="#va7">CAUSES </rdg>
+                            <rdg wit="#va8">PENETRATES FORCES STIMULATES CAUSES</rdg>
+                            <rdg wit="#va9">
+                                <del rend="overstrike">FORCES </del>
+                            </rdg>
+
+                        </app>
+                    </l>
+
+                    <l>
+                        <app loc="a7">
+                            <rdg wit="#va5">SHINE</rdg>
+                        </app>
+                    </l>
+
+
+                    <l>
+                        <app loc="a9b">
+                            <rdg wit="#va7">COSMIC HAND'S</rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app loc="a9b">
+                            <rdg wit="#va7">DYNAMIC CROWD</rdg>
+                        </app>
+                    </l>
+
+
+                    <l n="4">
+                        <app loc="a3a">
+                            <rdg wit="#va1 #va2 #va3 #va4 #va5 #va7 #va6">WITH INDEFATIGEABLE
+                                RUB</rdg>
+                            <rdg wit="#va4 #va5 #va7 #va6">B</rdg>
+                            <rdg wit="#va1 #va2 #va3 #va4 #va5 #va7 #va6"> AGAINST </rdg>
+                            <rdg wit="#va1 #va2 #va3 #va5 #va7 #va6">PRIMITIVE </rdg>
+                            <rdg wit="#va4">
+                                <del rend="overstrike">PRIMITIVE</del>
+                                <add place="above">PRIMITIVE </add>
+                            </rdg>
+                            <rdg wit="#va1 #va2 #va3 #va4 #va5 #va6">COROSION </rdg>
+                            <rdg wit="#va1 #va3 #va6"> - </rdg>
+                        </app>
+                        <app loc="a19b">
+                            <rdg wit="#va9">DESTINNED </rdg>
+                            <rdg wit="#pub1927">Destined</rdg>
+                        </app>
+                    </l>
+
+                    <l>
+                        <app loc="a9d">
+                            <rdg wit="#va1">
+                                <del rend="overstrike">
+                                    <choice>
+                                        <sic>POEPLE</sic>
+                                        <corr>PEOPLE</corr>
+                                    </choice> KILL</del>
+                            </rdg>
+                        </app>
+                    </l>
+
+
+                    <l>
+                        <app loc="a10">
+                            <rdg wit="#va1 #va2 #va3 #va5 #va7 #va6">WITH INDEFATIGEABLE RUB</rdg>
+                            <rdg wit="#va5 #va7 #va6">B </rdg>
+                            <rdg wit="#va4">
+                                <space resp="editor" quantity="25" unit="char"/>
+                            </rdg>
+                            <rdg wit="#va1 #va2 #va3 #va4 #va5 #va7 #va6"> AGAINST </rdg>
+                            <rdg wit="#va1 #va2 #va3">PRIMITIVE CROWDING -</rdg>
+                            <rdg wit="#va4 #va5 #va7 #va6">INDISTINCT </rdg>
+
+                            <rdg wit="#va5">
+                                <del rend="overstrike">ION CROWDING</del>
+                                <add place="above">QUANTITY </add>
+                            </rdg>
+                            <rdg wit="#va5 #va7 #va6">QUANTITY </rdg>
+                            <rdg wit="#va6"> - </rdg>
+                        </app>
+                    </l>
+
+                    <l n="5">
+                        <app loc="a10a">
+                            <rdg wit="#va5">FATE FLURY ONTO SPIRIT PRESS </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app>
+                            <rdg wit="#va8">
+                                <del rend="overstrike">CAUSES</del>
+                            </rdg>
+                        </app>
+                        <app loc="a7a">
+                            <rdg wit="#va1 #va2 #va3">
+                                <choice>
+                                    <sic>POEPLE </sic>
+                                    <corr>PEOPLE </corr>
+                                </choice>
+                            </rdg>
+                            <rdg wit="#va4">
+                                <subst>
+                                    <del>PEOPLE POLISH</del>
+                                    <add place="above">
+                                        <del rend="overstrike">THINE </del>
+                                    </add>
+                                </subst>
+                            </rdg>
+                        </app>
+                        <app loc="a9b">
+                            <rdg wit="#va4">
+                                <add>COSMIC HANDS </add>
+                            </rdg>
+                        </app>
+                        <app loc="a7a">
+                            <rdg wit="#va1 #va2 #va3 #va4 #va5 #va7 #va8 #va9">POLISH </rdg>
+                            <rdg wit="#va2 #va3"> - </rdg>
+                        </app>
+                        <app loc="a9b">
+                            <rdg wit="#va5 #va8 #va9 #va6">COSMIC HANDS </rdg>
+                            <rdg wit="#va9">
+                                <del>CROWDED </del>
+                            </rdg>
+                            <rdg wit="#va8 #va9 #va6">DYNAMIC </rdg>
+                            <rdg wit="#va8">
+                                <del rend="overstrike">CROWD </del>
+                                <add place="above">GANG </add>
+                            </rdg>
+
+                        </app>
+                        <app loc="a7a">
+                            <rdg wit="#va7 #va8 #va9">TO </rdg>
+                        </app>
+                        <app loc="a9b">
+                            <rdg wit="#va9">GANG </rdg>
+
+                            <rdg wit="#va6">CROWD </rdg>
+                        </app>
+                    </l>
+                    <l n="5">
+                        <app loc="a9b">
+                            <rdg wit="#pub1927">Cosmic hand's dynamic gang </rdg>
+                        </app>
+                    </l>
+
+                    <l n="6">
+                        <app loc="a7a">
+                            <rdg wit="#va5 #va7 #va8 #va6">POLISH</rdg>
+                            <rdg wit="#va7 #va8"> - </rdg>
+                            <rdg wit="#pub1927">Polish - </rdg>
+                        </app>
+                    </l>
+
+
+                    <l n="7">
+                        <app loc="a7a">
+                            <rdg wit="#va9"><del rend="overstrike">TO </del> POLISH </rdg>
+                        </app>
+                        <app loc="a9d">
+                            <rdg wit="#va1 #va2 #va3">
+                                <choice>
+                                    <sic>POEPLE </sic>
+                                    <corr>PEOPLE </corr>
+                                </choice>
+                            </rdg>
+                            <rdg wit="#va4">
+                                <space resp="editor" quantity="7" unit="char"/>
+                            </rdg>
+                            <rdg wit="#va9">
+                                <space resp="editor" quantity="3" unit="char"/>
+                            </rdg>
+                            <rdg wit="#va1 #va2 #va3 #va4 #va5 #va7 #va8 #va9">KILL </rdg>
+                            <rdg wit="#va2 #va7 #va8"> - </rdg>
+                            <rdg wit="#va3"> . </rdg>
+                            <rdg wit="#va5"><space resp="editor" quantity="7" unit="char"/>
+                                FASTIDIOUS </rdg>
+                            <rdg wit="#pub1927 #va6">Kill -</rdg>
+                        </app>
+                    </l>
+
+                    <l>
+                        <app>
+                            <rdg wit="#va3">
+                                <del rend="overstrike">
+                                    <unclear>??</unclear>
+                                </del>
+                            </rdg>
+                            <rdg wit="#va1 #va2 #va4 #va5">POLISHING BRASS KNO</rdg>
+                            <rdg wit="#va1">CKERS -<note type="critical" anchored="true"
+                                    resp="editor">This added span, from "Polishing brass knockers .
+                                    . . to civilizations progress" appears on the manuscript before
+                                    the frist line "Nature intends . . ."</note></rdg>
+                            <rdg wit="#va2">
+                                <del rend="overstrike">CKERS</del>
+                                <add place="above">BS </add>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app>
+                            <rdg wit="#va1 #va2">KILLING <choice>
+                                    <sic>POEPLE</sic>
+                                    <corr>PEOPLE</corr>
+                                </choice> -</rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app>
+                            <rdg wit="#va1 #va2">CONTINUES</rdg>
+                        </app>
+                    </l>
+                    <l n="9">
+                        <app loc="a17">
+                            <rdg wit="#va1">FOR CIVILISATIONS </rdg>
+                            <rdg wit="#va1">
+                                <del rend="overstrike">ADVANCE</del>
+                                <add place="above">PROGRESS </add>
+                            </rdg>
+                            <rdg wit="#va2">PROGRESS -</rdg>
+                        </app>
+                        <app loc="a19b">
+                            <rdg wit="#va8">BY DESTINY </rdg>
+                        </app>
+                        <app loc="a18a">
+                            <rdg wit="#va7 #va9 #va6">FOR FASTIDIOUS </rdg>
+                            <rdg wit="#va6">
+                                <del>TASTE PALATE <add>LORD </add></del>
+                            </rdg>
+                            <rdg wit="#pub1927">For fastidioius </rdg>
+                            <rdg wit="#va7 #va6">BOSS'</rdg>
+                        </app>
+                    </l>
+
+                    <l n="10">
+                        <app loc="a18">
+                            <rdg wit="#va1 #va2">NATURE </rdg>
+                            <rdg wit="#va1">
+                                <del rend="overstrike">AG</del>
+                            </rdg>
+                            <rdg wit="#va1 #va2 #va4 #va5 #va7 #va8 #va9"> CONTRA NATURE </rdg>
+                            <rdg wit="#va2">'S FINISHING </rdg>
+                            <rdg wit="#va1">
+                                <add place="above">FINISHING </add>
+                            </rdg>
+                            <rdg wit="#va1 #va2">PROCESS </rdg>
+                            <rdg wit="#va1">
+                                <del rend="overstrike">Progress</del>
+                            </rdg>
+                            <rdg wit="#va4">
+                                <del rend="overstrike">FOR SHINE LORD CONTRA CHAOS</del>
+                            </rdg>
+                            <rdg wit="#va5">
+                                <del rend="overstrike">LORD CONTRA CHAOS <add place="below">FOR
+                                        QUALITY</add></del>
+                            </rdg>
+                        </app>
+                        <app loc="a18a">
+                            <rdg wit="#va8">FOR FASTIDIOUS </rdg>
+                            <rdg wit="#va9">BRILLIANT </rdg>
+
+                            <rdg wit="#va8 #va9">BOSS' </rdg>
+                            <rdg wit="#va9">
+                                <add place="above">IDEE FIX </add>
+                            </rdg>
+                        </app>
+                        <app loc="a18b">
+                            <rdg wit="#va7 #va8 #va9">SUM TOTAL</rdg>
+                            <rdg wit="#va7">
+                                <del rend="overstrike"> : </del>
+                            </rdg>
+                        </app>
+                        <app loc="a18a">
+                            <rdg wit="#va6">
+                                <del rend="overstrike">DIVINE ID&#x00c9;E FIX </del>
+                            </rdg>
+                            <rdg wit="#pub1927">Brilliant boss' "idee fixe " </rdg>
+                        </app>
+                    </l>
+
+
+                    <l>
+                        <app loc="a10a">
+                            <rdg wit="#va5">
+                                <del rend="overstrike">ON SPIRIT PRESS</del>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app loc="a10a">
+                            <rdg wit="#va5">
+                                <del rend="overstrike">IN LABORATORY </del>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app loc="a10a">
+                            <rdg wit="#va5">
+                                <del rend="overstrike">ON SPIRIT PRESS</del>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app>
+                            <rdg wit="#va5">
+                                <del rend="overstrike">OH LORD</del>
+                            </rdg>
+                        </app>
+                    </l>
+
+
+                    <l n="11">
+                        <app loc="a18a">
+                            <rdg wit="#va2"><del rend="overstrike">FOR </del> BY <del
+                                    rend="overstrike">| | </del>
+                                <add place="above">FOR - </add><del rend="overstrike">| | | BY LORDS
+                                    FIXED IDEA</del>
+                                <add place="below"><del rend="overstrike">DIOS </del> DIVINE<del
+                                        rend="overstrike">ITY'S </del> "ID&#x00c9;E FIX."
+                                </add></rdg>
+                            <rdg wit="#va3 #va4 #va5">FOR </rdg>
+                            <rdg wit="#va5">
+                                <del rend="overstrike">FASTIDIOUS </del>
+                            </rdg>
+                            <rdg wit="#va3 #va4">DIVINE </rdg>
+                            <rdg wit="#va3 #va4 #va5"> "ID&#x00c9;E FIX."</rdg>
+                        </app>
+                        <app loc="a19b">
+                            <rdg wit="#va7">OUR DESTINY: </rdg>
+                            <rdg wit="#va8">
+                                <add place="below">RADIANCE </add>
+                            </rdg>
+                            <rdg wit="#va6">
+                                <del rend="overstrike">SPIRIT </del>
+                            </rdg>
+                            <rdg wit="#va9 #va6">RADIANCE </rdg>
+                        </app>
+                        <app loc="a18b">
+                            <rdg wit="#va6">
+                                <add>SUM TOTAL </add>
+                            </rdg>
+                            <rdg wit="#pub1927">Sum total : </rdg>
+                        </app>
+                    </l>
+
+
+
+                    <l n="12">
+                        <app loc="a18">
+                            <rdg wit="#va4">LORD CONTRA CHAOS.</rdg>
+                        </app>
+                        <app loc="a19b">
+                            <rdg wit="#va7">
+                                <emph rend="underline">RADIANCE</emph>
+                            </rdg>
+                            <rdg wit="#va9a #av9">OUR DESTINY </rdg>
+                        </app>
+                        <app loc="a18a">
+                            <rdg wit="#va9">
+                                <del rend="overstrike">DIVINE ID&#x00c9;E FIX </del>
+                            </rdg>
+                        </app>
+                        <app loc="a19b">
+                            <rdg wit="#pub1927"><space resp="editor" quantity="7" unit="char"/>
+                                Radiance</rdg>
+                        </app>
+                    </l>
+                </lg>
+                <closer>
+                    <signed>
+                        <app>
+                            <rdg wit="#va2 #va3 #va9a">
+                                <persName key="Elsa von Freytag-Loringhoven"> E.V.F.L</persName>
+                            </rdg>
+                        </app>
+                    </signed>
+                </closer>
+            </div1>
+
+            <div1>
+                <div2>
+                    <lg>
+                        <l>
+                            <app>
+                                <rdg wit="#va2">ALL <del rend="overstrike">GOD</del> LORD <del
+                                        rend="overstrike">IS</del> DYNAMIC DESIGNER - FAITHFULL <del
+                                        rend="overstrike">TO MAP OF HIS MIND</del> MINDMAP ONLY
+                                </rdg>
+                            </app>
+                        </l>
+
+                        <l>
+                            <app>
+                                <rdg wit="#va2">
+                                    <del rend="overstrike">CONSCIENCE IS SONS THRALL TO VIOLENCE
+                                    </del>
+                                </rdg>
+                            </app>
+                        </l>
+                        <l>
+                            <app>
+                                <rdg wit="#va2">
+                                    <del rend="overstrike">FORCE PRIMITIVE UNJUSTLY</del>
+                                </rdg>
+                            </app>
+                        </l>
+                        <l>
+                            <app>
+                                <rdg wit="#va2">
+                                    <del rend="overstrike">OMNIPOTENCY GRAVELS CONSCIENCE IS <add
+                                            place="above">TRACES </add>RESULT</del>
+                                </rdg>
+                            </app>
+                        </l>
+
+                        <l>
+                            <app>
+                                <rdg wit="#va2">ALL <del rend="overstrike">IS</del> ENTHRALLED <del
+                                        rend="overstrike">INTO</del>
+                                    <add place="below">TO <del rend="overstrike">BY </del></add>
+                                    <add place="above">
+                                        <del rend="overstrike">DYNAMIC</del>
+                                    </add> OMNIPOTENCY GRAVELS </rdg>
+                            </app>
+                        </l>
+                        <l>
+                            <app>
+                                <rdg wit="#va2"><add place="above">ELECTRIC </add> ROUTINE.</rdg>
+                            </app>
+                        </l>
+                        <l>
+                            <app>
+                                <rdg wit="#va2">CONSCIENCE <del rend="overstrike">IS </del>
+                                    <add place="above">LIES </add>BEYOND RECKONING IN </rdg>
+                            </app>
+                        </l>
+                        <l>
+                            <app>
+                                <rdg wit="#va2"><add place="inline">COSMIC BRAINS </add> SUM TOTAL
+                                        <del rend="overstrike">OF </del></rdg>
+                            </app>
+                        </l>
+                    </lg>
+
+
+                </div2>
+
+                <div2>
+                    <head>
+                        <app>
+                            <rdg wit="#va2">IDEAL OF PERFECTION<note type="critical">The following
+                                    excerpt is a manuscript version of Freytag-Loringhoven's poem
+                                    "Christ - Don Quixote - St. George." This poem is part of a
+                                    larger compilation of poems called "Contradictory Speculations
+                                    on My Own Hook's Fallibility". </note>
+                            </rdg>
+                        </app>
+                    </head>
+
+
+                    <p>
+                        <app>
+                            <rdg wit="va#2">HOW CAME CONCEPTION OF CHIVALRY <del rend="overstrike"
+                                    >INTO CHRIST FIRST DON QUIXOTE IN FIGHTING</del>
+                                <add place="above">DEFYING </add>
+                                <del rend="overstrike">ATTACKING</del> ELEMENTALLY DRIVEN <del
+                                    rend="overstrike">DRIVEN FORCED BRUTAL ROTATING</del> WINDMILL
+                                ROTATION OF LORD<del rend="overstrike">S</del> BEASTS ACTIVE FORCED
+                                - INTO CHIRST DON QUIXOTE I. BY SPIRITUAL DESIRE OF <add
+                                    place="above">ELEMENT SHACKLED </add><del rend="overstrike">
+                                    LORD</del> BEASTS UNATAINABLE <add place="margin">IN </add>
+                                MATERIAL DIMENSION SPIRIT LORD <del rend="overstrike">IS IN</del>
+                                CHRIST - ALL <del rend="overstrike">HIS</del> DISCIPLES <add
+                                    place="above">ARE ARE </add> COMPROMISED <add place="margin"
+                                    >USED FOR DIGESTION </add> ON EARTH <del rend="overstrike"
+                                        ><unclear>??</unclear> DEVOURED</del> BY <del
+                                    rend="overstrike">BEASTS LORD BEAST </del> LORD BEASTS
+                                DEPENDANCE ON <del rend="overstrike">ENTRAILS VITALS MATTER
+                                    STOMACH</del> ELEMENTAL VITALS <add place="below">TO BE DEVOURED
+                                </add> HE MUST EAT. HERE IS <del rend="overstrike">LORD</del>
+                                <add place="above">GOD </add> BODY LORD - CRUCIFYING <add
+                                    place="below">
+                                    <del rend="overstrike">DESTROYING</del>
+                                </add>
+                                <add place="above">HAZING PITYING </add> DON QUIXOTE BUT REMOVAL
+                                    OF<del rend="overstrike"> ENTRAILS</del>
+                                <add place="above">DIGESTING </add> VITALS IS FOR <add place="above">
+                                    <unclear>??</unclear>
+                                </add>
+                                <del rend="overstrike">LORDS PERFECTION</del> BENEFIT DON QUIXOTES
+                                RISE TO FIRM ESTATE POOR PESTERED LORD - ELEMENT THRALL <del
+                                    rend="overstrike"> LORD OF</del>
+                                <add place="below">BY </add>
+                                <add place="above">THY </add>
+                                <del rend="overstrike">HAS</del> NEED <add place="above">THINE HIS
+                                </add> COMPROMISED <add place="above">BARBARIL </add> TO <del
+                                    rend="overstrike">HIS CREATIONS</del>
+                                <add place="above"><unclear>??</unclear> MEDIUMS </add> NECESSITY
+                                    <del rend="overstrike">BUT</del> THY MESSAGE IS HEARD - <del
+                                    rend="overstrike">THY</del> SIGN <add place="above">
+                                    <del rend="overstrike">IS</del>
+                                </add> BEHELD THEY OMNIPOTENCY PLENISHED BY BEASTS APPETITE BECOMES
+                                VOLUMINOUS MORE CONFIDENTLY THY DON QUIXOTERY GROW<del
+                                    rend="overstrike">ING</del><add place="above">S </add>
+                                ASCENDANCY WITH <del rend="overstrike">THY ASSEMBLED</del>
+                                <add place="above">SPIRITS </add> HEROES ASSEMBLAGE - IS RECOGNIZE
+                                WE HELP THEE FIGHTING BEASTLY WITH BEAST PURPOSE <add place="margin">
+                                    <del rend="overstrike">IN</del>
+                                </add> CONSCIOUS - <add place="above">
+                                    <del rend="overstrike">GLORY NESS </del>
+                                </add> FOR GLORY FOR THY REDEMPTION </rdg>
+                        </app>
+                    </p>
+
+
+
+
+                </div2>
+
+            </div1>
+
+
+        </body>
+
+    </text>
+
+</TEI>

@@ -1,0 +1,943 @@
+<?xml version="1.0" encoding="ASCII" ?>
+
+
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+
+    <teiHeader>
+        <fileDesc>
+
+            <titleStmt>
+                <title>Orchard Farming</title>
+
+                <author>Baroness Elsa von Freytag-Loringhoven</author>
+                <respStmt>
+                    <resp>Text Encoding by </resp>
+                    <name>Tanya Clement</name>
+                </respStmt>
+
+                <respStmt>
+                    <resp>Proofing and Additional Encoding by </resp>
+                    <name>Tanya Clement</name>
+                </respStmt>
+                <respStmt>
+                    <resp>TIFF images scanned at 600 dpi from manuscript pages and JPEGS derived
+                        by</resp>
+                    <name>Tanya Clement</name>
+                </respStmt>
+            </titleStmt>
+
+            <publicationStmt>
+                <publisher>Tanya Clement</publisher>
+
+                <address>
+                    
+                    <addrLine>Office of Digital Collections and Research (DCR), University of Maryland, College Park, MD 20742</addrLine>
+                    
+                    
+                </address>
+
+                <availability status="unknown">
+
+                    <p>Baroness Elsa von Freytag-Loringhoven's poetry is printed here with the
+                        support of the University of Maryland Libraries. Permission to reproduce
+                        images of Freytag-Loringhoven's manuscripts has also been generously granted
+                        by the libraries.</p>
+                    <p>This poem and manuscript drafts are available from this site for
+                        demonstration purposes only. Though the intellectual property of <name>Elsa
+                            von Freytag-Loringhoven</name> is in the public domain, all annotations
+                        and editorial commentary are copyrighted. They may not be reproduced without
+                        explicit permission from the copyright holder. For copyright information,
+                        please contact Tanya Clement.</p>
+
+                </availability>
+
+            </publicationStmt>
+
+
+            <notesStmt>
+
+                <note type="image" anchored="true">
+                    <witDetail wit="#va1" target="#va1" place="apparatus"> Reel 5, Frame 180
+                        <graphic url="images/litmss-003272-0001.jpg"/>
+                        <graphic url="images/litmss-003274-0001.jpg"/>
+                    </witDetail>
+                    <witDetail wit="#va2" target="#va2" place="apparatus">Reel 5, Frame
+                        181<graphic
+                            url="images/litmss-003275-0001.jpg"/>
+                    </witDetail>
+                    <witDetail wit="#va3" target="#va3" place="apparatus">Reel 5, Frame
+                        182<graphic
+                            url="images/litmss-003277-0001.jpg"/>
+                    </witDetail>
+                    <witDetail wit="#va4" target="#va4" place="apparatus">Reel 5, Frame
+                        183<graphic
+                            url="images/litmss-003276-0001.jpg"/>
+                    </witDetail>
+                </note>
+
+                <note anchored="true">Drafts of this poem occupy series 3, box 3, folder 14. The
+                    poem was written between 1923 and 1927. To the editor's knowledge, it has not
+                    been reprinted or published. </note>
+                <note type="critIntro">
+                    <p>Elements such as those represented graphically in this poem would not have
+                        presented well on the printed publication page. Indeed, it is quite often
+                        that, as the Baroness writes, "Print teeth bite." </p>
+                </note>
+
+
+            </notesStmt>
+
+            <sourceDesc>
+
+                <p>Encoded documents and images are derived from manuscripts in the <ref
+                        target="http://www.lib.umd.edu/litmss/holdings.html#evfl">Papers of Elsa von
+                        Freytag-Loringhoven</ref> in Special Collections at the University of
+                    Maryland, College Park, Libraries. In addition, individual pages or leaves of
+                    manuscripts are identified by the corresponding reel and frame numbers of the
+                    microfilm edition of the Freytag-Lorinhoven Papers.</p>
+            </sourceDesc>
+
+        </fileDesc>
+        <encodingDesc>
+
+            <editorialDecl>
+
+                <p>DTD constructed from TEI P5 poetry base with tagsets for parallel segmentation,
+                    linking, figures, analysis, transcr, textcrit.</p>
+                <p>Line breaks have not been preserved in prose sections in order to facilitate
+                    parallel segmentation procedures.</p>
+            </editorialDecl>
+
+            <variantEncoding method="location-referenced" location="internal"/>
+
+        </encodingDesc>
+
+    </teiHeader>
+
+    <text>
+
+        <front>
+
+            <div>
+                
+                <listWit xml:id="all">
+
+                    <witness xml:id="va1">First </witness>
+
+                    <witness xml:id="va2">Second </witness>
+                    <witness xml:id="va3">Third </witness>
+
+
+                    <witness xml:id="va4">Fourth </witness>
+
+
+                </listWit>
+
+
+            </div>
+
+        </front>
+
+        <body>
+            <div1>
+                <head rend="underline">
+                    <app loc="a1">
+                        <rdg wit="#va3">ABOUT </rdg>
+                        <rdg wit="#va1 #va2">ORCHARD FARMING </rdg>
+                    </app>
+                </head>
+                <head>
+                    <app loc="a1">
+                        <rdg wit="#va4"><del>LORE </del> Orchard </rdg>
+                    </app>
+                </head>
+                <lg>
+
+                    <l n="1">
+                        <app loc="a3">
+                            <rdg wit="#va4">
+                                <del>CONSOLING STUPID</del>
+                            </rdg>
+                        </app>
+                        <app loc="a3">
+                            <rdg wit="#all"> LESSON </rdg>
+                        </app>
+                        <app loc="a4">
+                            <rdg wit="#va2">' </rdg>
+                            <rdg wit="#va2 #va4">TO</rdg>
+                            <rdg wit="#va2">:</rdg>
+                            <rdg wit="#va4"> MOURNERS</rdg>
+                            <rdg wit="#va4"> - </rdg>
+                        </app>
+                    </l>
+                    <l n="2">
+                        <app loc="a4">
+                            <rdg wit="#va1">TO </rdg>
+                        </app>
+                    </l>
+                    <l n="3">
+                        <app loc="a4">
+                            <rdg wit="#va3">TO </rdg>
+                        </app>
+                        <app loc="a4">
+                            <rdg wit="#all"> MOURNERS </rdg>
+                        </app>
+                        <app loc="a7">
+                            <rdg wit="#va2 3">- SNOTTY </rdg>
+                        </app>
+                    </l>
+                    <l n="4">
+                        <app loc="a7">
+                            <rdg wit="#va1">SNOTTY </rdg>
+                        </app>
+                    </l>
+                    <l n="5">
+                        <app loc="a7">
+                            <rdg wit="#va4">
+                                <del>SNUBBING SNOTTY </del>
+                            </rdg>
+                        </app>
+                        <app loc="a9a">
+                            <rdg wit="#all"> YOUTH </rdg>
+                        </app>
+                        <app loc="a10">
+                            <rdg wit="#va2">
+                                <emph rend="underline">SNOBS</emph>
+                            </rdg>
+                            <rdg wit="#va1 #va3 #va4">SNOBS</rdg>
+                            <rdg wit="#va1 #va2"> . <milestone unit="stanza"/></rdg>
+                        </app>
+                    </l>
+
+
+                    <l n="6">
+                        <app loc="a10a">
+                            <rdg wit="#all">EACH </rdg>
+                            <rdg wit="#va2 #va3">AGE </rdg>
+                            <rdg wit="#va4">PERIOD </rdg>
+                            <rdg wit="#va2"> '</rdg>
+                        </app>
+                        <app loc="a11a">
+                            <rdg wit="#va2 #va3 #va4">HAS</rdg>
+                            <rdg wit="#va2">' COUTENANCE </rdg>
+
+                            <rdg wit="#va4"> FACE </rdg>
+                            <rdg wit="#va3">
+                                <del>FACE </del>
+                            </rdg>
+                            <rdg wit="#va2 #va3 #va4"> - </rdg>
+                            <rdg wit="#va4"> '</rdg>
+                            <rdg wit="#va2 #va3 #va4">GESTURE </rdg>
+                            <rdg wit="#va4"> '</rdg>
+                            <rdg wit="#va3"> - </rdg>
+                            <rdg wit="#va3 #va4">COUNTENANCE </rdg>
+                            <rdg wit="#va4">.</rdg>
+                        </app>
+                    </l>
+
+                    <l n="7">
+                        <app loc="a10a">
+                            <rdg wit="#va1">AGE </rdg>
+                            <rdg wit="#va4"> - '</rdg>
+                        </app>
+                        <app loc="a12a">
+                            <rdg wit="#va2 #va3 #va4">EXPRESSION - </rdg>
+                            <rdg wit="#va2 #va4">COUNTENANCE.</rdg>
+                            <rdg wit="#va3">
+                                <emph rend="underline">FACE</emph>
+                            </rdg>
+                        </app>
+                    </l>
+
+                    <l n="8">
+                        <app loc="a12a">
+                            <rdg wit="#va1">HAS </rdg>
+                            <rdg wit="#va2"><emph rend="underline">FACE</emph> . <milestone
+                                    unit="stanza"/></rdg>
+                        </app>
+                    </l>
+                    <l n="9">
+                        <app loc="a11a">
+                            <rdg wit="#va1">COUNTENANCE </rdg>
+                        </app>
+                    </l>
+                    <l n="10">
+                        <app loc="a11a">
+                            <rdg wit="#va1">GESTURE </rdg>
+                        </app>
+                    </l>
+                    <l n="11">
+                        <app loc="a12a">
+                            <rdg wit="#va1">EXPRESSION </rdg>
+                        </app>
+                    </l>
+                    <l n="12">
+                        <app loc="a12a">
+                            <rdg wit="#va1"><emph rend="underline">FACE</emph>. <milestone
+                                    unit="stanza"/></rdg>
+                        </app>
+                    </l>
+
+
+                    <l n="13">
+                        <app loc="a18">
+                            <rdg wit="#va4">
+                                <add place="margin">THAT</add>
+                            </rdg>
+                            <rdg wit="#va1 #va2 #va3">THAT </rdg>
+                            <rdg wit="#va4">
+                                <del>WHO HAS</del>
+                            </rdg>
+                            <rdg wit="#va4">
+                                <add place="above">
+                                    <del>WICH BEARS</del>
+                                </add>
+                                <add place="above">DROOPS </add>
+                            </rdg>
+                            <rdg wit="#va2 #va3">DROOPS </rdg>
+                            <rdg wit="#va2">'</rdg>
+                            <rdg wit="#va2 #va3">WITH</rdg>
+                            <rdg wit="#va2">'</rdg>
+                            <rdg wit="#va2"> WILTED </rdg>
+                            <rdg wit="#va3 #va4"> WITHERED </rdg>
+                            <rdg wit="#va2 #va3 #va4">BLOOM -</rdg>
+                        </app>
+                    </l>
+
+                    <l n="14">
+                        <app loc="a18">
+                            <rdg wit="#va1">DROOPS </rdg>
+                        </app>
+                        <app loc="a19a">
+                            <rdg wit="#va4"><del>NO FRUIT COUNTENACE</del> - '</rdg>
+                            <rdg wit="#va2 #va3 #va4">IS </rdg>
+                            <rdg wit="#va2">' SPRING</rdg>
+                            <rdg wit="#va3">
+                                <del>YOUTH</del>
+                                <add>SPRING</add>
+                            </rdg>
+                            <rdg wit="#va2 #va3">SHELL - </rdg>
+
+                            <rdg wit="#va4">YOUTH <del>DUMMY</del>
+                                <add>SHELL</add></rdg>
+                        </app>
+                        <app loc="a19b">
+                            <rdg wit="#va2">'</rdg>
+                            <rdg wit="#va2 #va3">GHOSTTREE </rdg>
+                            <rdg wit="#va2">- '</rdg>
+                            <rdg wit="#va2 #va3">EARTHRUBBISH. </rdg>
+                            <rdg wit="#va2">
+                                <milestone unit="stanza"/>
+                            </rdg>
+
+                        </app>
+                    </l>
+
+                    <l n="15">
+                        <app loc="a19b">
+
+                            <rdg wit="#va4">'GHOST TREE - <del>EARTH</del>
+                                <add>EARTH</add>RUBBISH - - </rdg>
+                        </app>
+                        <app loc="a18">
+                            <rdg wit="#va1">WITH </rdg>
+                        </app>
+                    </l>
+                    <l n="16">
+                        <app loc="a18">
+                            <rdg wit="#va1"> WILTED </rdg>
+                        </app>
+                    </l>
+                    <l n="17">
+                        <app loc="a18">
+                            <rdg wit="#va1"> BLOOM </rdg>
+                        </app>
+                    </l>
+                    <l n="18">
+                        <app loc="a19a">
+                            <rdg wit="#va1">IS: </rdg>
+                        </app>
+                    </l>
+                    <l n="19">
+                        <app loc="a19a">
+                            <rdg wit="#va1">SPRINGSHELL </rdg>
+                        </app>
+                    </l>
+                    <l n="20">
+                        <app loc="a19b">
+                            <rdg wit="#va1">TREE </rdg>
+                        </app>
+                    </l>
+                    <l n="21">
+                        <app loc="a19b">
+                            <rdg wit="#va1">GHOST </rdg>
+                        </app>
+                    </l>
+                    <l n="22">
+                        <app loc="a19b">
+                            <rdg wit="#va1">EARTHRUBBISH. <milestone unit="stanza"/></rdg>
+                        </app>
+                    </l>
+
+
+                    <l n="23">
+                        <app loc="a28">
+                            <rdg wit="#all">TO </rdg>
+                            <rdg wit="#va3">
+                                <del>SPRING</del>
+                            </rdg>
+                            <rdg wit="#va4">SPRING </rdg>
+                            <rdg wit="#va2 #va3">SEED </rdg>
+                            <rdg wit="#va2 #va3 #va4">SHALL BE </rdg>
+                            <rdg wit="#va2">OFFERD </rdg>
+                            <rdg wit="#va3">
+                                <del>GIVEN </del>
+                            </rdg>
+                            <rdg wit="#va2 #va3">ITS </rdg>
+                            <rdg wit="#va4">GIVEN</rdg>
+                        </app>
+                    </l>
+
+                    <l n="24">
+                        <app loc="a28">
+                            <rdg wit="#va1">SEED </rdg>
+                        </app>
+                        <app loc="a29a">
+                            <rdg wit="#va4">
+                                <add place="margin">ITS</add>
+                                <del>FERTILIZER</del>
+                                <add>DUNG</add>
+                            </rdg>
+                            <rdg wit="#va2 #va3">DUNG </rdg>
+                            <rdg wit="#va4"> '</rdg>
+                            <rdg wit="#va2 #va3 #va4"> - SPACE </rdg>
+                            <rdg wit="#va3 #va4"> - </rdg>
+                        </app>
+                    </l>
+
+
+                    <l n="25">
+                        <app loc="a28">
+                            <rdg wit="#va1">SHALL </rdg>
+                        </app>
+                        <app loc="a29">
+                            <rdg wit="#va2">
+                                <del rend="overstrike">SPACE</del>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l n="26">
+                        <app loc="a28">
+                            <rdg wit="#va1">BE </rdg>
+                        </app>
+                        <app loc="a31">
+
+                            <rdg wit="#va2 #va3 #va4">BURNING. </rdg>
+                            <rdg wit="#va4">
+                                <del>IT</del>
+                            </rdg>
+                            <rdg wit="#va3 #va4">- </rdg>
+                        </app>
+                    </l>
+                    <l n="27">
+                        <app loc="a28">
+                            <rdg wit="#va1">CAST </rdg>
+                        </app>
+                    </l>
+                    <l n="28">
+                        <app loc="a28">
+                            <rdg wit="#va1">OFFERD </rdg>
+                        </app>
+                    </l>
+                    <l n="29">
+                        <app loc="a29a">
+                            <rdg wit="#va1">IT'S </rdg>
+                        </app>
+                    </l>
+                    <l n="30">
+                        <app loc="a29a">
+                            <rdg wit="#va1">DUNG </rdg>
+                        </app>
+                    </l>
+                    <l n="31">
+                        <app loc="a29a">
+                            <rdg wit="#va1">SPACE </rdg>
+                        </app>
+                    </l>
+                    <l n="32">
+                        <app loc="a31">
+                            <rdg wit="#va1">BURNING. <milestone unit="stanza"/></rdg>
+                        </app>
+                    </l>
+
+                    <l n="33">
+                        <app loc="a38">
+                            <rdg wit="#va4">
+                                <emph rend="underline">IN CON<del>SEQUENCE</del>
+                                    <add>TRAST </add></emph>
+                            </rdg>
+                            <rdg wit="#va1 #va2 #va3">
+                                <emph rend="underline">CONTRAST</emph>
+                            </rdg>
+                            <rdg wit="#va2 #va3">:</rdg>
+                            <rdg wit="#va1">
+                                <milestone unit="stanza"/>
+                            </rdg>
+                        </app>
+                    </l>
+
+                    <l n="34">
+                        <app loc="a39">
+                            <rdg wit="#all">THAT </rdg>
+                            <rdg wit="#va2">POPPS</rdg>
+                            <rdg wit="#va3">
+                                <del>BRIMS</del>
+                                <add place="above">POPPS</add>
+                            </rdg>
+                            <rdg wit="#va4"><add place="margin">THAT </add>
+                                <del>WHO </del> BRIMS </rdg>
+                        </app>
+                        <app loc="a39a">
+                            <rdg wit="#va3 #va4">WITH FRUITS </rdg>
+                        </app>
+                    </l>
+                    <l n="35">
+                        <app loc="a39">
+                            <rdg wit="#va1">POPPS </rdg>
+                        </app>
+                    </l>
+                    <l n="36">
+                        <app loc="a39a">
+                            <rdg wit="#va1 #va2">WITH </rdg>
+                        </app>
+                    </l>
+                    <l n="37">
+                        <app loc="a39a">
+                            <rdg wit="#va1 #va2">FRUITS </rdg>
+                        </app>
+                        <app loc="a42a">
+                            <rdg wit="#va2 #va3 #va4">MATURED RESULT </rdg>
+                            <rdg wit="#va3">-</rdg>
+                        </app>
+                        <app loc="a42b">
+                            <rdg wit="#va4">
+                                <add>GLOSSGREEN</add>
+                                <add place="inline"> BUFF </add>
+                            </rdg>
+                        </app>
+                        <app loc="a50">
+                            <rdg wit="#va4">
+                                <add place="below">DAPPELD </add>
+                            </rdg>
+                        </app>
+                        <app loc="a51">
+                            <rdg wit="#va4">
+                                <add place="below">DINTED SPIKED</add>
+                            </rdg>
+                        </app>
+                        <app loc="a42b">
+                            <rdg wit="#va4"> SAFRON </rdg>
+                        </app>
+                        <app loc="a49">
+                            <rdg wit="#va4">
+                                <add>CRIMSON </add>
+                            </rdg>
+                        </app>
+                        <app loc="a42b">
+                            <rdg wit="#va4">
+                                <add>
+                                    <del> FLAME POPPY YELLOW </del>
+                                </add>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l n="38">
+                        <app loc="a42a">
+                            <rdg wit="#va1">MATURED </rdg>
+                        </app>
+                    </l>
+                    <l n="39">
+                        <app loc="a42a">
+                            <rdg wit="#va1">RESULT: <milestone unit="stanza"/></rdg>
+                        </app>
+                    </l>
+
+                    <l n="40">
+                        <app loc="a42b">
+                            <rdg wit="#va1 #va2 #va3">GLOSSGREEN </rdg>
+                            <rdg wit="#va2 #va3">-</rdg>
+                        </app>
+                    </l>
+                    <l n="41">
+                        <app loc="a42b">
+                            <rdg wit="#va1 #va2 #va3">BUFF </rdg>
+                            <rdg wit="#va3">-</rdg>
+                        </app>
+                    </l>
+                    <l n="42">
+                        <app loc="a42b">
+                            <rdg wit="#va1">
+                                <del rend="overstrike">
+                                    <unclear>??</unclear>
+                                </del>
+                                <add place="below">SULPHUR</add>
+                            </rdg>
+                            <rdg wit="#va2 #va3">SAFRON </rdg>
+                            <rdg wit="#va3">-</rdg>
+                        </app>
+                    </l>
+                    <l n="43">
+                        <app loc="a49">
+                            <rdg wit="#va1 #va2">BRICK </rdg>
+                            <rdg wit="#va3">CRIMSON </rdg>
+                        </app>
+                    </l>
+                    <l n="44">
+                        <app loc="a50">
+                            <rdg wit="#va1 #va2 #va3">DAPPLED </rdg>
+                            <rdg wit="#va3">- </rdg>
+                        </app>
+                    </l>
+                    <l n="45">
+                        <app loc="a51">
+                            <rdg wit="#va1 #va3">DIMPLED </rdg>
+                            <rdg wit="#va2">DINTED </rdg>
+                            <rdg wit="#va3">F<emph rend="underline">U</emph>RRED </rdg>
+                        </app>
+                    </l>
+                    <l n="46">
+                        <app loc="a51">
+                            <rdg wit="#va1 #va2">FURRED </rdg>
+                        </app>
+                    </l>
+                    <l n="47">
+                        <app loc="a51">
+                            <rdg wit="#va1 #va2 #va3">SPIKED </rdg>
+                            <rdg wit="#va1">
+                                <milestone unit="stanza"/>
+                            </rdg>
+                        </app>
+                    </l>
+
+                    <l n="48">
+                        <app loc="a54">
+                            <rdg wit="#all">SKILLPAYING </rdg>
+                            <rdg wit="#va3 #va4">- </rdg>
+                        </app>
+                    </l>
+                    <l n="49">
+                        <app>
+                            <rdg wit="#va4">
+                                <add>
+                                    <del rend="overstrike">
+                                        <unclear/>
+                                    </del>
+                                </add>
+                            </rdg>
+                        </app>
+                        <app loc="a56">
+                            <rdg wit="#all">PRAISE </rdg>
+                            <rdg wit=" #va1  #va2 #va3">RIPE </rdg>
+                            <rdg wit="#va4">
+                                <del>LADEN </del>
+                                <add>RIPE </add>
+                                <add place="below">GLOSSGREEN </add>
+                            </rdg>
+                            <rdg wit="#va2">- </rdg>
+                        </app>
+                    </l>
+                    <l n="50">
+                        <app loc="a57">
+                            <rdg wit="#va1 #va2 #va3">IS </rdg>
+                            <rdg wit="#va1">
+                                <milestone unit="stanza"/>
+                            </rdg>
+                        </app>
+                    </l>
+
+                    <l n="51">
+                        <app loc="a58">
+                            <rdg wit="#va4">IS <del>VENERABLE </del> - </rdg>
+                            <rdg wit="#all">ADORABLE</rdg>
+                            <rdg wit="#va1">
+                                <milestone unit="stanza"/>
+                            </rdg>
+                        </app>
+                    </l>
+
+                    <l n="52">
+                        <app loc="a59">
+                            <rdg wit="#all">UNTIL </rdg>
+                            <rdg wit="#va3 #va4">PLUCKED BARE </rdg>
+                            <rdg wit="#va3"> -</rdg>
+                            <rdg wit="#va4">!</rdg>
+                        </app>
+                    </l>
+                    <l n="53">
+                        <app loc="a59">
+                            <rdg wit="#va1 #va2">PLUCKED </rdg>
+                        </app>
+                    </l>
+                    <l n="54">
+                        <app loc="a59">
+                            <rdg wit="#va1 #va2">BARE </rdg>
+                            <rdg wit="#va2">.</rdg>
+                            <rdg wit="#va1">
+                                <milestone unit="stanza"/>
+                            </rdg>
+                        </app>
+                    </l>
+
+                    <l n="55">
+                        <app loc="a62">
+                            <rdg wit="#va1 #va2 #va3">COCK</rdg>
+                            <rdg wit="#va3">-E</rdg>
+                            <rdg wit="#va1 #va2 #va3">EARD </rdg>
+                            <rdg wit="#va1">
+                                <milestone unit="stanza"/>
+                            </rdg>
+                        </app>
+                    </l>
+
+                    <l n="56">
+                        <app loc="a63">
+                            <rdg wit="#va4"><add place="above">
+                                    <del>FOR </del>
+                                </add> AMONGST <del>PRIDES GLOSSGREEN </del><add>PRIDES BEAMING
+                                </add></rdg>
+                            <rdg wit="#va4">
+                                <del>FOLIAGE <add>GREENERY </add></del>
+                                <add>FOLIAGE </add>
+                            </rdg>
+                            <rdg wit="#va2">'</rdg>
+                            <rdg wit="#va3">
+                                <del>FROM </del>
+                                <add>AMONGST PRIDEBEAMING FOLIAGES</add>
+                            </rdg>
+                            <rdg wit="#va1 #va2">MONGST </rdg>
+                        </app>
+                    </l>
+
+                    <l n="57">
+                        <app loc="a63">
+                            <rdg wit="#va1 #va2">PRIDEBEAMING </rdg>
+                            <rdg wit="#va2">FOLIAGES </rdg>
+                            <rdg wit="#va4">
+                                <del>LADEN WITH LORE </del>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l n="58">
+                        <app loc="a63">
+                            <rdg wit="#va1">FOLIAGES' </rdg>
+                        </app>
+                    </l>
+                    <l n="59">
+                        <app loc="a66">
+                            <rdg wit="#va3">
+                                <del>BENEATH</del>
+                            </rdg>
+                            <rdg wit="#va4">BENEATH <add place="below"><del>FRISKY </del>
+                                    <add place="below">TRUSTY </add>AFFECTIONATE </add></rdg>
+                            <rdg wit="all">SNICKERING </rdg>
+                            <rdg wit="#va2 #va3 #va4">CROWN</rdg>
+                            <rdg wit="#va2 #va3">S </rdg>
+                            <rdg wit="#va4">
+                                <add place="margin">BENEATH </add>
+                            </rdg>
+                            <rdg wit="#va4">
+                                <add>
+                                    <del>PRIDES GREENERY</del> SNICKERING <del>CROWN </del>
+                                    <add place="below">CROWNS</add></add>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l n="60">
+                        <app loc="a66">
+                            <rdg wit="#va1">CROWNS' </rdg>
+                        </app>
+                        <app loc="a67a">
+                            <rdg wit="#va4">LADEN WITH LORE </rdg>
+                        </app>
+                    </l>
+                    <l n="61">
+                        <app loc="a63">
+
+                            <rdg wit="#va4">
+                                <del>AMONGST PRIDES GLOSSGREEN FOLIAGE</del>
+                            </rdg>
+                        </app>
+                        <app loc="a69">
+                            <rdg wit="#va1 #va2 #va3">GOSSIPPING </rdg>
+                            <rdg wit="#va4">
+                                <add>A TALKATIVE GREENERY </add>
+                            </rdg>
+                            <rdg wit="#va2 #va3">GREENERY </rdg>
+                        </app>
+                    </l>
+                    <l n="62">
+                        <app loc="a69">
+                            <rdg wit="#va1">GREENERY <milestone unit="stanza"/></rdg>
+                        </app>
+                    </l>
+
+                    <l n="63">
+                        <app loc="a67a">
+                            <rdg wit="#va1 #va2">RIFE </rdg>
+                            <rdg wit="#va3">
+                                <del>FRISKY</del>
+                                <add>RIFE</add>
+                            </rdg>
+                            <rdg wit="#va2">WITH LORE </rdg>
+                        </app>
+                    </l>
+                    <l n="64">
+                        <app loc="a67a">
+                            <rdg wit="#va1">WITH </rdg>
+                        </app>
+                    </l>
+                    <l n="65">
+                        <app loc="a67a">
+                            <rdg wit="#va1">LORE <milestone unit="stanza"/></rdg>
+                        </app>
+                    </l>
+
+                    <l n="66">
+                        <app loc="a78">
+                            <rdg wit="#va1 #va2 #va3">FRISKS </rdg>
+                            <rdg wit="#va3"><del>GRINS <add>WIPS </add></del><add place="margin">
+                                    FRISKS</add> BOSS</rdg>
+                            <rdg wit="#va4">
+                                <del>SQUATS<add> FRISKS</add></del>
+                                <add> SQUATS </add>
+                                <del>GARDENER</del>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l n="67">
+                        <app loc="a78">
+                            <rdg wit="#va1 #va2 #va3">BOSS </rdg>
+                            <rdg wit="#va4">
+                                <del>BEAMING</del>
+                                <add>LORD</add>
+                            </rdg>
+                        </app>
+                        <app loc="a79a">
+                            <rdg wit="#va4">CREATION . </rdg>
+                        </app>
+                    </l>
+                    <l n="68">
+                        <app loc="a80">
+                            <rdg wit="#va1 #va2">MUNCHING </rdg>
+                            <rdg wit="#va3">
+                                <del>APPLES </del>
+                            </rdg>
+                        </app>
+                        <app loc="a78">
+                            <rdg wit="#va4"> COCKEARD GRINNING </rdg>
+                        </app>
+                        <app loc="a80">
+                            <rdg wit="#va4">
+                                <add><del>FOR </del> MUNCHING</add>
+                            </rdg>
+                            <rdg wit="#va1">
+                                <milestone unit="stanza"/>
+                            </rdg>
+                        </app>
+                    </l>
+
+                    <l n="69">
+                        <app loc="a79a">
+                            <rdg wit="#va1">
+                                <del rend="overstrike">
+                                    <unclear>??</unclear>
+                                </del>
+                                <add place="above">CREATION </add>
+                            </rdg>
+                        </app>
+                        <app loc="a80">
+                            <rdg wit="#va2">APPLES </rdg>
+                        </app>
+                    </l>
+
+                    <milestone unit="stanza"/>
+
+                    <l>
+                        <app loc="a63">
+                            <rdg wit="#va4"><del>AMONGST</del>
+                                <add>FROM </add> PRIDES <del>FOLIAGE</del>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app loc="a66">
+                            <rdg wit="#va4"><del>BENEATH</del>
+                                <add>BENEATH</add> SNICKERING <add>BEAMING</add> CROWNS FOLIAGE
+                                CROWNS </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app loc="a69">
+                            <rdg wit="#va4">TALKATIVE GREENERY </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app>
+                            <rdg wit="#va4">
+                                <del>AFFECTIONATE</del>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app loc="a67a">
+                            <rdg wit="#va4"><del>LADEN</del>
+                                <add>FRISKY</add> WITH LORE</rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app loc="a78">
+                            <rdg wit="#va4"><del>SQUATES</del>
+                                <add>GRINS</add> LORD</rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app loc="a80">
+                            <rdg wit="#va4">MUNCHING APPLES</rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app loc="a78">
+                            <rdg wit="#va4">
+                                <del>GRINNING </del>
+                            </rdg>
+                        </app>
+                    </l>
+                    <l>
+                        <app loc="a78">
+                            <rdg wit="#va4">
+                                <del>COCKEARD</del>
+                            </rdg>
+                        </app>
+                    </l>
+
+
+                </lg>
+                <closer>
+                    <app>
+                        <rdg wit="#va1">
+                            <emph rend="underline"> E.V.F.L</emph>
+                        </rdg>
+                        <rdg wit="#va2 #va3">E.V.F.L</rdg>
+                    </app>
+                </closer>
+
+
+
+
+            </div1>
+
+        </body>
+
+    </text>
+
+</TEI>

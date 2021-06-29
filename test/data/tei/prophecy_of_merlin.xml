@@ -1,0 +1,225 @@
+
+<?xml version="1.0" encoding="ASCII" ?>
+
+
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+	<teiHeader>
+		<fileDesc>
+			<titleStmt>
+				<title>Prophecy of Merlin</title>
+				<author>Anonymous</author>
+				<respStmt>
+					<resp>Text Encoding by </resp>
+					<name>Susan Schreibman</name>
+				</respStmt>
+				<respStmt>
+					<resp>Transcription by </resp>
+					<name>James M Dean</name>
+				</respStmt>
+			</titleStmt>
+			<publicationStmt>
+				<publisher>Susan Schreibman</publisher>
+				<availability>
+					<p>This poem is being made available for demonstration purposes only. It may not
+						be reproduced without. For further information, please contact Susan
+						Schreibman at sschreib[at]umd.edu</p>
+				</availability>
+			</publicationStmt>
+			<notesStmt>
+				<note anchored="true">There are three MS versions of this poem transcribed by James
+					M. Dean and made publicly available through
+					http://www.lib.rochester.edu/camelot/. This version is based on his
+					transcriptions. </note>
+			</notesStmt>
+			<sourceDesc>
+				<p>Diplomatic editions of this text are based on transcriptions created by James M
+					Dean for The Camelot Project at the University of Rochester.
+					http://www.lib.rochester.edu/camelot/..</p>
+				<p>Versions are from: Trinity College Dublin MS 516 fol. 115r; Oxford University,
+					Bodleian Library MS 6943 fol. 78r; Magdalene College. Cambridge MS 1236 fol.
+					91r.</p>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<editorialDecl>
+				<p>Test document for versioning machine project. Marked-up collation of The Prophecy
+					of Merlin.</p>
+				<p>DTD constructed from TEI poetry base with tagsets for linking, figures, analysis,
+					transcr, textcrit.</p>
+			</editorialDecl>
+			<variantEncoding method="parallel-segmentation" location="internal"/>
+		</encodingDesc>
+	</teiHeader>
+	<text>
+		<front>
+			<div>
+				<listWit>
+					<witness xml:id="dublin">The Prophecy of Merlin</witness>
+					<witness xml:id="oxford">The Prophecy of Merlin</witness>
+					<witness xml:id="cambridge">The Prophecy of Merlin</witness>
+				</listWit>
+			</div>
+		</front>
+		<body>
+			<head>
+				<title>
+					<app>
+						<rdg wit="#dublin #oxford #cambridge">The Prophecy of Merlin</rdg>
+					</app>
+				</title>
+			</head>
+			<lg n="1">
+				<l n="1">
+					<app>
+						<rdg wit="#cambridge">When feythe fayleth in prestys sawys, <note
+								type="gloss" anchored="true">With sharpened swords, and men ready to
+								terrorize</note>
+							<note type="critical" anchored="true">
+								<p>sayings; When feythe fayleth. Versions of this lyric - identified
+									as "Chaucer's Proverbs" - were regularly printed in earlier
+									editions of Chaucer. Richard Morris's edition contains the
+									following lyric:</p>
+								<lg>
+									<l>Qwan prestis faylin in her sawes, </l>
+									<l>And Lordis turnin Goddis lawes</l>
+									<l>Ageynis ryght;</l>
+									<l>And lecherie is holdin as privy solas,</l>
+									<l>And robberie as fre purchas,</l>
+									<l>Bewar than of ille!</l>
+									<l>Than schall the Lond of Albion Turnin to confusion, </l>
+									<l> As sumtyme it befelle. </l>
+								</lg>
+								<p>As printed in The Poetical Works of Geoffrey Chaucer, rev. ed.
+									(London: Bell, 1875), vol. 6, p. 307. Skeat prints a similar
+									version of this poem from Caxton's edition of Chaucer, as the
+									first one of the "Sayings" (or proverbs) of Chaucer: </p>
+								<lg>
+									<l>Whan feyth failleth in prestes sawes,</l>
+									<l>And lordes hestes ar holden for lawes,</l>
+									<l>And robbery is holden purchas,</l>
+									<l>And lechery is holden solas,</l>
+									<l>Then shal the lond of Albyon</l>
+									<l>Be brought to grete confusioun.</l>
+								</lg>
+								<p>See Skeat's Complete Works of Geoffrey Chaucer, vol. 7 (Oxford:
+									Clarendon, 1897), p. 450.</p>
+							</note>
+						</rdg>
+					</app>
+				</l>
+				<l n="2">
+					<app>
+						<rdg wit="#dublin">When lordes wille is londes law, <note type="gloss"
+								anchored="true">the law of the land</note>
+						</rdg>
+						<rdg wit="#oxford">Whane lordis wol leefe theire olde lawes,<note
+								type="gloss" anchored="true">abandon</note>
+							<note type="critical" anchored="true"> leefe. So Skeat and Gray.
+								Robbins, Index and Supplement, § 3986 transcribes leefe as leese.
+								The MS can sustain either reading.</note>
+						</rdg>
+						<rdg wit="#cambridge">And lordys wyll be londys lawys,<note type="gloss"
+								anchored="true">law of the land </note>
+						</rdg>
+					</app>
+				</l>
+				<l n="3">
+					<app>
+						<rdg wit="#dublin">Prestes wylle trechery, and gyle hold soth saw,<note
+								type="critical" anchored="true">Priests intend treachery, and guile
+								turns into figures of speech </note>
+						</rdg>
+						<rdg wit="#oxford">And preestis beon varyinge in theire sawes, <note
+								type="gloss" anchored="true">teachings;</note>
+							<note type="critical" anchored="true">beon. So MS; Skeat, Gray
+								been.</note>
+						</rdg>
+					</app>
+				</l>
+				<l n="4">
+					<app>
+						<rdg wit="#dublin">Lechery callyd pryvé solace,<note type="gloss"
+								anchored="true">is called secret pleasure </note>
+						</rdg>
+						<rdg wit="#oxford">And leccherie is holden solace, <note type="gloss"
+								anchored="true">lechery is considered to be </note>
+						</rdg>
+						<rdg wit="#cambridge">And lechery is prevy solas,<note type="gloss"
+								anchored="true">secret comfort </note>
+						</rdg>
+					</app>
+				</l>
+				<l n="5">
+					<app>
+						<rdg wit="#dublin">And robbery is hold no trespace - <note type="gloss"
+								anchored="true">held to be no crime </note>
+						</rdg>
+						<rdg wit="#oxford">And oppressyon for truwe purchace; </rdg>
+						<rdg wit="#cambridge">And robbery ys goode purchas:<note type="gloss"
+								anchored="true">booty </note>
+							<note type="context" anchored="true">purchas. Skeat glosses purchas as
+								"bargain." It is that which is acquired.</note>
+						</rdg>
+					</app>
+				</l>
+				<l n="6">
+					<app>
+						<rdg wit="#oxford">And whan the moon is on David stall, <note type="gloss"
+								anchored="true"> David's stable </note>
+							<note type="context" anchored="true">David stall. David's stable, a
+								reference to Christ's birth in Bethlehem (city of David). Of the
+								apocalyptic element in this poem Gray comments: "On the more
+								intellectual prophetic tradition, reflected in the Joachimite dream
+								of a renovatio mundi, compare M. Reeves, The Influence of Prophecy
+								in the Later Middle Ages (Oxford, 1969)." </note>
+						</rdg>
+					</app>
+				</l>
+				<l n="7">
+					<app>
+						<rdg wit="#oxford">And the kynge passe Arthures hall, <note type="gloss"
+								anchored="true"> by-passes </note>
+						</rdg>
+					</app>
+				</l>
+				<l n="8">
+					<app>
+						<rdg wit="#dublin">Then schal the lond of Albyon torne into confusioun!
+								<note type="critical" anchored="true">Albyon. The legendary, antique
+								name for Britain, as in Geoffrey of Monmouth's History of the Kings
+								of Britain. The fool in King Lear quotes this or a related poem when
+								he says: "Then shall the realm of Albion / Come to great confusion"
+								(III.ii.85-86). </note>
+						</rdg>
+						<rdg wit="#oxford">Than is the lande of Albyoun <lb/>Nexst to his confusyoun
+								<note type="gloss" anchored="true">Near; its</note>
+							<note type="critical" anchored="true">Than is the. Skeat's correction of
+								MS Þat is is.</note>
+						</rdg>
+						<rdg wit="#cambridge">Than shall the londe of Albeon <lb/>Be turned into
+							confusion. <note type="context" anchored="true">Britain </note>
+						</rdg>
+					</app>
+				</l>
+
+
+				<l n="9">
+					<app>
+						<rdg wit="#dublin">A M CCCC lx and on, few lordes or ellys noone. <note
+								type="gloss" anchored="true">In 1461 [there are]; </note>
+							<note type="critical" anchored="true">A M CCCC lx and on. RHR does not
+								print this part of the poem, nor does he include the material I have
+								here numbered 7-10 as if it were subjoined to the above six lines.
+								The lyrics are separate poems, yet the thought seems to be related.
+								The dating 1461 should be compared with "When Rome Is Removed" lines
+								60-63. </note>
+						</rdg>
+
+					</app>
+				</l>
+			</lg>
+
+
+		</body>
+	</text>
+</TEI>

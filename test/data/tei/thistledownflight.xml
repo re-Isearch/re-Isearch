@@ -1,0 +1,1040 @@
+
+<?xml version="1.0" encoding="ASCII" ?>
+
+
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xml:id="thistledownflight">
+   <teiHeader>
+      <fileDesc>
+         <titleStmt>
+            <title>Thistledownflight</title>
+            <author>
+               <name>Elsa von Freytag-Loringhoven</name>
+            </author>
+            <respStmt>
+               <resp>Encoded by </resp>
+               <name>Kenichiro Shimada</name>
+               <name>Helen Lucille DeVinney</name>
+            </respStmt>
+         </titleStmt>
+
+         <publicationStmt>
+            <publisher>Special Collections, University of Maryland Libraries</publisher>
+            <pubPlace>
+               <address>
+                  <addrLine>University of Maryland, College Park, MD  20742</addrLine>
+               </address>
+            </pubPlace>
+            <date>2004</date>
+            <availability>
+               <p>Researchers can gain access to the Papers of <name>Elsa von
+                     Freytag-Loringhoven</name> in the Maryland Room, Hornbake Library, University
+                  of Maryland Libraries, College Park, MD 20742</p>
+               <p>"Thistiledownflight" manuscripts located in Series III, Box four, Folder 11;
+                  microfiche id numbers 5/920-5/927, 5/969.</p>
+               <p>Special Collections at the University of Maryland provides <ref
+                     n="http://www.lib.umd.edu/ARCV/kap/microfilm.html">more information about the
+                     microfilm edition of the papers</ref>. </p>
+               <p>Images and manuscripts drafts of this poem may not be reproduced or downloaded and
+                  used on another site without the explicit permission of UMD Archives. They may not
+                  be reproduced or downloaded and used on another site without the explicit
+                  permission of UMD Archives. Though the intellectual property of <name>Elsa von
+                     Freytag-Loringhoven</name> is in the public domain, all annotations and
+                  editorial commentary are copyrighted.</p>
+            </availability>
+         </publicationStmt>
+         <notesStmt>
+            <note type="image" anchored="true">
+               <witDetail wit="#a1" target="#a1" place="apparatus">
+                  <figure>
+                     <graphic url="images/thistledown_1b.jpg"/>
+                  </figure>
+                  <figure>
+                     <graphic url="images/thistledown_1a.jpg"/>
+                  </figure>
+               </witDetail>
+               <witDetail wit="#a2" target="#a2" place="apparatus">
+                  <figure>
+                     <graphic url="images/thistledown_3.jpg"/>
+                  </figure>
+                  <figure>
+                     <graphic url="images/thistledown_2.jpg"/>
+                  </figure>
+               </witDetail>
+               <witDetail wit="#a3" target="#a3" place="apparatus">
+                  <figure>
+                     <graphic url="images/thistledown_4a.jpg"/>
+                  </figure>
+               </witDetail>
+               <witDetail wit="#a4" target="#a4" place="apparatus">
+                  <figure>
+                     <graphic url="images/thistledown_4b.jpg"/>
+                  </figure>
+               </witDetail>
+               <witDetail wit="#a5" target="#a5" place="apparatus">
+                  <figure>
+                     <graphic url="images/thistledown_5b.jpg"/>
+                  </figure>
+                  <figure>
+                     <graphic url="images/thistledown_5a.jpg"/>
+                  </figure>
+               </witDetail>
+               <witDetail wit="#a6" target="#a6" place="apparatus">
+                  <figure>
+                     <graphic url="images/To Be-1.jpg"/>
+                  </figure>
+               </witDetail>
+            </note>
+            <note anchored="true">There are five versions of "Thistledownflight," presented here in
+               the following order: four handwritten versions and one typewritten version (Version
+               2) by the Baroness (in the order of the "most-finished" version to the earliest
+               draft, as determined by the editor). Since Baroness rewrtoe the sencond half of the
+               version 3 and it to the version 3, the second half version is separately encoded as
+               Witness a4. The version 4 (Witness 5) is available only as the images. Titles of the
+               latest three versions are "Thistledownflight". "Ginga" is used as titles for the
+               earlier two versions. The poem is unpublished.</note>
+            <note anchored="true">The following is an excerpt from <name>Helen Lucille
+                  DeVinney</name>'s transcription rationale:</note>
+            <note anchored="true">
+               <p>The handwriting is her typical use of majuscule letters, and the letters
+                  themselves are slightly larger than her standard print. It is presented as a
+                  visual poem; the Baroness has taken pains to add her own artistic decorations to
+                  the paper. Her use of the page is sparse, and the layout of the words themselves
+                  is artistic. The placement of the line groupings is irregular, and, in the case of
+                  the final word “Thistledownflight,” she arranges the word itself in an artistic
+                  way. Interestingly, the poem is unsigned, as are each of the subsequent
+                  drafts.</p>
+               <p>In some cases her handwriting seems to be slightly different in the corrections,
+                  but this alone is not enough to determine that the revisions occurred at another
+                  time. Her arrangement suggests that the poem was beginning to take shape: certain
+                  words or lines are clearly grouped and begin to suggest the arrangement of 2r/2v
+                  [Version 2]. She clearly leaves room for possibility....In 4r/4v [Version 4] we
+                  see the appearance of the later title "Thistle down flight," which are also the
+                  last lines of the poem. This version seems to precede 3r/3v [Version 3]; in 3r/3v
+                  we see the adoption of the title "Thistledownflight," as well as the arrangement
+                  and corrections of some of her revisions in 4r/4v. </p>
+            </note>
+
+            <note anchored="true">Read <name>Helen Lucille DeVinney</name>'s essay <ref
+                  n="../../essays/thistledown_devinney.htm">"Thistledownflight."</ref>
+            </note>
+
+         </notesStmt>
+
+         <sourceDesc>
+            <p>The Baroness' poems and papers are contained in the Archives and Manuscripts
+               Department at the University of Maryland Libraries. Complete papers cover the period
+               from 1917-1933 and consist of manuscripts, drafts, notes, correspondence, drawings
+               and photographs.</p>
+            <p>Textual transcription and analysis of the seven poems encoded here were undertaken in
+               Fall 2003 by graduate students in <name>William H. Sherman</name>'s English 601
+               class, "Literary Research and Critical Contexts."</p>
+            <p>Text editing of "Thistledownflight" was performed by <name>Helen Lucille
+                  DeVinney</name>.</p>
+         </sourceDesc>
+      </fileDesc>
+      <encodingDesc>
+         <editorialDecl>
+            <p>DTD constructed from TEI poetry base with tagsets for linking, figures, analysis,
+               transcr, textcrit.</p>
+         </editorialDecl>
+         <variantEncoding method="parallel-segmentation" location="internal"/>
+      </encodingDesc>
+      <profileDesc>
+         <langUsage>
+            <language ident="eng">English</language>
+         </langUsage>
+
+
+      </profileDesc>
+   </teiHeader>
+
+
+   <text>
+      <front>
+         <div>
+            <listWit>
+               <witness xml:id="a1">Thitledownflight: Version 1 - Most-Finished version </witness>
+               <witness xml:id="a2">Thistledownflight: Version 2 - Typed </witness>
+               <witness xml:id="a3">Thistledownflight: Version 3</witness>
+               <witness xml:id="a4">Thistledownflight: Version 3 - Rewritten Second Half </witness>
+               <witness xml:id="a5">Ghinga: Version 4 - Images Only</witness>
+               <witness xml:id="a6">Ginga: Version 5 - The Early Draft of Thistledownflight
+               </witness>
+            </listWit>
+         </div>
+      </front>
+
+
+
+
+
+      <body>
+         <head>
+            <title>
+               <app>
+                  <rdg wit="#a1">Thistledownflight</rdg>
+                  <rdg wit="#a2">Thistledownflight</rdg>
+                  <rdg wit="#a3">Thistle down flight</rdg>
+                  <rdg wit="#a4">Thistle down flight-Second half of Version 3 <note anchored="true"
+                        >Baroness rewrote the second half (second column) of Version 3. This part is
+                        separately encoded in order to enjoy advantages of the Versioning
+                        Machine.</note>
+                  </rdg>
+                  <rdg wit="#a5 #a6">GINGA</rdg>
+                  <rdg wit="#a5">
+                     <note anchored="true"> Version4 (Witness5) was not encoded since there are too
+                        many revisions (in this version) to apply parallel segmentation.</note>
+                  </rdg>
+               </app>
+               <milestone unit="stanza"/>
+            </title>
+         </head>
+
+         <l n="1">
+            <app>
+               <rdg wit="#a1 #a2 #a3">GHINGHA </rdg>
+               <rdg wit="#a1 #a3">—</rdg>
+               <rdg wit="#a2">–</rdg>
+               <rdg wit="#a3">(DJUNA)</rdg>
+               <rdg wit="#a6">GINGA</rdg>
+
+            </app>
+         </l>
+
+         <l n="2">
+            <app>
+
+               <rdg wit="#a1 #a2 #a3">I</rdg>
+            </app>
+         </l>
+
+         <l n="3">
+            <app>
+               <rdg wit="#a6">
+                  <del>MUST</del>I</rdg>
+               <rdg wit="#a1 #a2 #a3 #a6">TREMBLE</rdg>
+               <rdg wit="#a1">—</rdg>
+               <rdg wit="#a2">–</rdg>
+            </app>
+         </l>
+
+
+
+
+         <l n="4">
+            <app>
+               <rdg wit="#a1 #a2 #a3">DO</rdg>
+            </app>
+         </l>
+
+         <l n="5">
+            <app>
+               <rdg wit="#a1 #a2 #a3">NOT</rdg>
+            </app>
+         </l>
+
+
+         <l n="6">
+            <app>
+               <rdg wit="#a6">MAY NOT</rdg>
+               <rdg wit="#a1 #a2 #a3 #a6">LAUGH</rdg>
+               <rdg wit="#a1 #a2 #a3">!</rdg>
+               <rdg wit="#a6">—</rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+
+         <l n="7">
+            <app>
+               <rdg wit="#a1 #a2 #a3">BORN</rdg>
+
+            </app>
+         </l>
+
+
+
+         <l n="8">
+            <app>
+               <rdg wit="#a6">MOTHER</rdg>
+               <rdg wit="#a1 #a2 #a3 #a6">FINE</rdg>
+               <rdg wit="#a6">FLOWER</rdg>
+            </app>
+         </l>
+
+         <l n="9">
+            <app>
+               <rdg wit="#a1 #a2 #a3">FLOWER</rdg>
+               <rdg wit="#a1 #a3">—</rdg>
+               <rdg wit="#a2">–</rdg>
+            </app>
+         </l>
+
+
+         <l n="10">
+            <app>
+               <rdg wit="#a1 #a2 #a3">BY</rdg>
+            </app>
+         </l>
+
+
+         <l n="11">
+            <app>
+               <rdg wit="#a1 #a2 #a3 #a6">ORCHID</rdg>
+               <rdg wit="#a6">SPPECKLED DARK-LIGHT</rdg>
+            </app>
+         </l>
+
+         <l n="13">
+            <app>
+               <rdg wit="#a1 #a2 #a3">SPECKLED</rdg>
+               <rdg wit="#a1">—</rdg>
+               <rdg wit="#a2">– </rdg>
+            </app>
+         </l>
+
+         <l n="14">
+            <app>
+               <rdg wit="#a1 #a2 #a3">DARK</rdg>
+               <rdg wit="#a1 #a3">—</rdg>
+               <rdg wit="#a2">–</rdg>
+            </app>
+         </l>
+
+
+         <l n="15">
+            <app>
+               <rdg wit="#a1 #a2 #a3">LIGHT</rdg>
+               <rdg wit="#a1">—</rdg>
+               <rdg wit="#a2">–</rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+
+
+         <l n="16">
+            <app>
+               <rdg wit="#a3">
+                  <del>DOOMED</del>
+               </rdg>
+            </app>
+         </l>
+         <l n="17">
+            <app>
+               <rdg wit="#a1 #a2 #a3">SHE</rdg>
+            </app>
+         </l>
+
+         <l n="18">
+            <app>
+               <rdg wit="#a1 #a2 #a3 #a6">WEPT</rdg>
+               <rdg wit="#a6">
+                  <add>AT</add>
+                  <del>MORN</del>NIGHT SUMPTUOUS<add rend="superscript">MEAGER</add>
+               </rdg>
+            </app>
+         </l>
+
+         <l n="19">
+            <app>
+               <rdg wit="#a1 #a2 #a3">AT</rdg>
+            </app>
+         </l>
+
+         <l n="20">
+            <app>
+               <rdg wit="#a1 #a2 #a3">NIGHT</rdg>
+               <rdg wit="#a1 #a2">!</rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+
+         <l n="21">
+            <app>
+               <rdg wit="#a1 #a2 #a3">CURSED</rdg>
+               <rdg wit="#a6">CURSING</rdg>
+               <rdg wit="#a6">
+                  <del>PROPER</del>
+                  <add place="superscript">SNARING</add>
+                  <add place="infraliniar">SNARE OF AMPLE</add>LIFE'S PURSE</rdg>
+            </app>
+         </l>
+
+
+         <l n="22">
+            <app>
+               <rdg wit="#a1 #a2 #a3">TAUT</rdg>
+
+            </app>
+         </l>
+
+         <l n="23">
+            <app>
+               <rdg wit="#a1 #a2 #a3">SNARE</rdg>
+            </app>
+         </l>
+
+
+
+         <l n="24">
+            <app>
+               <rdg wit="#a1 #a2 #a3">OF</rdg>
+            </app>
+         </l>
+
+
+         <l n="25">
+            <app>
+               <rdg wit="#a1 #a2 #a3">DULLARD'S</rdg>
+            </app>
+         </l>
+
+         <l n="26">
+            <app>
+               <rdg wit="#a1 #a2 #a3">AMPLE</rdg>
+            </app>
+         </l>
+
+         <l n="27">
+            <app>
+               <rdg wit="#a1 #a2 #a3">PURSE</rdg>
+               <rdg wit="#a1">—</rdg>
+               <rdg wit="#a2">––</rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+
+         <l n="28">
+            <app>
+               <rdg wit="#a1 #a2 #a3">AT</rdg>
+            </app>
+         </l>
+
+
+         <l n="29">
+            <app>
+               <rdg wit="#a1 #a2 #a3">SPIRITLEDGE</rdg>
+               <rdg wit="#a1">—</rdg>
+               <rdg wit="#a2">–</rdg>
+
+            </app>
+         </l>
+
+
+         <l n="30">
+            <app>
+               <rdg wit="#a3">BRIGHT</rdg>
+            </app>
+         </l>
+         <l n="31">
+            <app>
+               <rdg wit="#a6">
+                  <del>BRIGHT</del>
+               </rdg>
+               <rdg wit="#a1 #a2 #a3">YOUTH</rdg>
+               <rdg wit="#a6">OF HERS</rdg>
+            </app>
+         </l>
+
+         <l n="32">
+            <app>
+               <rdg wit="#a1 #a2 #a3">OF</rdg>
+               <rdg wit="#a6">TORN     SPIRIT BORN</rdg>
+            </app>
+         </l>
+
+         <l n="33">
+            <app>
+               <rdg wit="#a1 #a2 #a3">HER'S</rdg>
+               <rdg wit="#a1">—</rdg>
+               <rdg wit="#a2">–</rdg>
+               <rdg wit="#a6">
+                  <del>AT AGE OF</del>
+                  <add>AT</add>
+                  <del>WSDOM WORN EDGE</del>
+               </rdg>
+            </app>
+         </l>
+
+         <l n="34">
+            <app>
+               <rdg wit="#a1 #a2">BRIGHT</rdg>
+               <rdg wit="#a1">—</rdg>
+               <rdg wit="#a2">––</rdg>
+               <rdg wit="#a3">
+                  <del>BRIGHT</del>     <del>WORN</del>
+               </rdg>
+               <rdg wit="#a6">SOUL FORLORN</rdg>
+            </app>
+         </l>
+
+         <l n="35">
+            <app>
+               <rdg wit="#a3">
+                  <del>WORN</del>
+               </rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+
+
+         <l n="36">
+            <app>
+               <rdg wit="#a1 #a3">AT</rdg>
+            </app>
+         </l>
+
+         <l n="37">
+            <app>
+               <rdg wit="#a2 #a6">AT</rdg>
+               <rdg wit="#a1 #a2 #a3">WISDOMEDGE</rdg>
+               <rdg wit="#a1">—</rdg>
+               <rdg wit="#a2">–</rdg>
+               <rdg wit="#a6">WISDOM EDGE</rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+
+
+         <l n="38">
+            <app>
+               <rdg wit="#a1 #a2 #a3">TORN</rdg>
+               <rdg wit="#a1 #a2">!</rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+
+
+         <l n="39">
+            <app>
+               <rdg wit="#a3">
+                  <del>BLIGHT</del>
+               </rdg>
+            </app>
+         </l>
+
+
+         <l n="40">
+            <app>
+               <rdg wit="#a6">WHY</rdg>
+            </app>
+         </l>
+
+         <l n="41">
+            <app>
+               <rdg wit="#a1 #a2 #a3 #a4">GHINGA</rdg>
+               <rdg wit="#a6">GINGA</rdg>
+               <rdg wit="#a1 #a3">—</rdg>
+               <rdg wit="#a2">–</rdg>
+               <rdg wit="#a3"> (DJUNA)</rdg>
+            </app>
+         </l>
+
+         <l n="42">
+            <app>
+               <rdg wit="#a3">
+                  <del>WHY</del>—</rdg>
+               <rdg wit="#a4">
+                  <del>THOUGH</del>
+               </rdg>
+            </app>
+         </l>
+         <l n="43">
+            <app>
+               <rdg wit="#a1 #a2 #a3 #a4">FROM</rdg>
+            </app>
+         </l>
+
+         <l n="44">
+            <app>
+               <rdg wit="#a1 #a2 #a3">HER'S</rdg>
+               <rdg wit="#a3">—</rdg>
+               <rdg wit="#a4">HER<del>S</del>S</rdg>
+            </app>
+         </l>
+
+
+         <l n="45">
+            <app>
+               <rdg wit="#a3 #a4">PATH</rdg>
+               <rdg wit="#a4">
+                  <del>COURSE BED</del>
+               </rdg>
+               <rdg wit="#a1 #a2 #a4">CURVE</rdg>
+            </app>
+         </l>
+
+         <l n="46">
+            <app>
+               <rdg wit="#a6">PATH</rdg>
+               <rdg wit="#a1 #a2 #a3 #a4 #a6">DIVERGED</rdg>
+               <rdg wit="#a1 #a3">—</rdg>
+               <rdg wit="#a2">––</rdg>
+               <rdg wit="#a3">
+                  <add rend="superscript">YET</add>
+               </rdg>
+               <rdg wit="#a6">
+                  <del>FROM HERS</del>
+                  <add rend="superscript">AM I URGED</add>
+                  <add rend="subscript">FROM HERS</add>
+               </rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+
+         <l n="47">
+            <app>
+               <rdg wit="#a3">AM<add rend="superscript"><del>WHY</del>
+                  </add>
+                  <note anchored="true"> This paragraph was revised several times. As well as the
+                     other parts of the Version 3, all rewritten parts here are organized in a way
+                     of “a word in a line.” See the image of Version 3 in order to acquire the
+                     actual locations and layouts. In the far left of the first column, there is
+                     rewritten paragraph “YET IS SHE URGED D IN HEIR TO QUAKE ANEW VAGRANT FORLORAN
+                     SPILL” ("FORLORAN" is crossed out). Next this paragraph, there is another
+                     revised paragraph “YET WITHIN HEIR SHE QUAKES ANEW”("YET" is crossed out). Left
+                     side of the second column, there are another revisions. “YET IS SHE URGED TO,"
+                     “QUAKE ANEW IN HEIR,” “TOO VGRANT SPILL.” </note>
+               </rdg>
+            </app>
+         </l>
+
+         <l n="48">
+            <app>
+               <rdg wit="#a1 #a2 #a4">WITHIN</rdg>
+               <rdg wit="#a3">I</rdg>
+            </app>
+         </l>
+
+         <l n="49">
+            <app>
+               <rdg wit="#a3">
+                  <del>F</del>URGED </rdg>
+            </app>
+         </l>
+
+         <l n="50">
+            <app>
+               <rdg wit="#a1 #a4">HEIR</rdg>
+               <rdg wit="#a2">HERE  <add>HEIR</add>
+               </rdg>
+               <rdg wit="#a3">
+                  <del>TO TO WITH</del>
+               </rdg>
+            </app>
+         </l>
+
+         <l n="51">
+            <app>
+               <rdg wit="#a1 #a2 #a4">SHE</rdg>
+            </app>
+         </l>
+
+
+
+         <l n="52">
+            <app>
+               <rdg wit="#a1">SOB'S</rdg>
+               <rdg wit="#a2">SOBS</rdg>
+               <rdg wit="#a4">
+                  <del>QUAKE</del> <del>WEPS</del>
+               </rdg>
+               <rdg wit="#a3">QUAKE</rdg>
+            </app>
+         </l>
+
+         <l n="53">
+            <app>
+               <rdg wit="#a6">TO MUST I QUAKE</rdg>
+               <rdg wit="#a1 #a2 #a3 #a4 #a6">ANEW</rdg>
+               <rdg wit="#a1 #a2">:</rdg>
+               <rdg wit="#a3">!</rdg>
+               <rdg wit="#a4">   SOBS</rdg>
+               <rdg wit="#a6">
+                  <add rend="subscript">
+                     <del>FRESH</del>
+                  </add>
+               </rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+
+
+
+         <l n="54">
+            <app>
+               <rdg wit="#a3">
+                  <del>IS</del> <del>FOR</del> <del>IS</del>
+                  <add rend="superscript">FOR</add>
+               </rdg>
+               <rdg wit="#a4">
+                  <del>IN</del>
+               </rdg>
+               <rdg wit="#a6">
+                  <del>IS</del>HER SPARK WITHIN<del>MY HORSE HOUSE</del>
+                  <add rend="subscript">YOUNG SHELL</add>
+               </rdg>
+            </app>
+         </l>
+
+         <l n="55">
+            <app>
+               <rdg wit="#a1 #a2 #a4">VAGRANT</rdg>
+               <rdg wit="#a3">
+                  <del>HEIR BULB</del>     <del>VAGRANT</del>
+               </rdg>
+
+            </app>
+         </l>
+
+         <l n="56">
+            <app>
+               <rdg wit="#a3">
+                  <del>DOOMED DOOMED</del>
+               </rdg>
+
+            </app>
+         </l>
+
+         <l n="57">
+            <app>
+               <rdg wit="#a3">
+                  <del>VAGRANCY</del>
+                  <add rend="superscript">FOR</add>
+               </rdg>
+               <rdg wit="#a1 #a2 #a3 #a4">SPILL</rdg>
+               <rdg wit="#a1 #a2">!</rdg>
+               <rdg wit="#a3">
+                  <del>DOOM</del>
+               </rdg>
+               <rdg wit="#a6">
+                  <del>IS IT</del>  <del>IS IT</del>CURSED TOO?</rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+         <l n="58">
+            <app>
+               <rdg wit="#a3">TOO<add rend="superscript"><del>DOOMED</del>
+                  </add>     <del>LIGHT</del>
+               </rdg>
+               <rdg wit="#a6">
+                  <del>IS THERE NO</del>ISLE HOT BEDSTEAD</rdg>
+            </app>
+         </l>
+         <l n="59">
+            <app>
+               <rdg wit="#a3">BLOOD      <del>VAGRANT</del>HEIR<del>ESS</del>
+               </rdg>
+            </app>
+         </l>
+         <l n="60">
+            <app>
+               <rdg wit="#a3">
+                  <del>HAS</del>
+               </rdg>
+            </app>
+         </l>
+
+         <l n="61">
+            <app>
+               <rdg wit="#a6">HAS<add>IS</add>     </rdg>
+               <rdg wit="#a1 #a2 #a3 #a4 #a6">BEACON</rdg>
+               <rdg wit="#a1">—</rdg>
+               <rdg wit="#a2">–</rdg>
+            </app>
+         </l>
+
+         <l n="62">
+            <app>
+               <rdg wit="#a1 #a2 #a3 #a4">ISLAND</rdg>
+               <rdg wit="#a1">—</rdg>
+               <rdg wit="#a2">–</rdg>
+            </app>
+         </l>
+
+         <l n="63">
+            <app>
+               <rdg wit="#a4">
+                  <del>BED</del>
+               </rdg>
+               <rdg wit="#a1 #a2 #a3 #a4">BED</rdg>
+               <rdg wit="#a1">—</rdg>
+               <rdg wit="#a2">–</rdg>
+               <rdg wit="#a4">TO</rdg>
+            </app>
+         </l>
+
+         <l n="64">
+            <app>
+               <rdg wit="#a3">
+                  <del>FOR</del>
+               </rdg>
+               <rdg wit="#a1 #a2 #a3">TO</rdg>
+               <rdg wit="#a3">BEAR</rdg>
+            </app>
+         </l>
+
+         <l n="65">
+            <app>
+               <rdg wit="#a1 #a2">BEAR</rdg>
+               <rdg wit="#a1">—</rdg>
+               <rdg wit="#a2">–</rdg>
+            </app>
+         </l>
+
+         <l n="66">
+            <app>
+               <rdg wit="#a6">FOR</rdg>
+               <rdg wit="#a1 #a2 #a3 #a4 #a6">SPECKELED</rdg>
+               <rdg wit="#a6">ORCHIDS GLARE</rdg>
+            </app>
+         </l>
+
+         <l n="67">
+            <app>
+               <rdg wit="#a1 #a2 #a4">ORCHIDS</rdg>
+               <rdg wit="#a3">ORHID'S</rdg>
+            </app>
+         </l>
+
+         <l n="68">
+            <app>
+               <rdg wit="#a3">
+                  <del>DARK —</del>
+               </rdg>
+            </app>
+         </l>
+
+         <l n="69">
+            <app>
+               <rdg wit="#a3">
+                  <del>LIGHT</del>
+               </rdg>
+            </app>
+         </l>
+
+         <l n="70">
+            <app>
+               <rdg wit="#a1 #a2 #a3 #a4">GLARE</rdg>
+               <rdg wit="#a1">—</rdg>
+               <rdg wit="#a2">–</rdg>
+               <rdg wit="#a3">     DARK—LIGHT</rdg>
+            </app>
+         </l>
+
+         <l n="71">
+            <app>
+               <rdg wit="#a3">
+                  <add>
+                     <del>HAS</del>
+                  </add>   TO BEAR</rdg>
+               <rdg wit="#a4">
+                  <del>DARK DARK</del>
+               </rdg>
+            </app>
+         </l>
+         <l n="72">
+            <app>
+               <rdg wit="#a4">
+                  <del>LIGHT LIGHT</del>
+               </rdg>
+            </app>
+         </l>
+
+         <l n="73">
+            <app>
+               <rdg wit="#a4">
+                  <del>TO FLEW</del>
+               </rdg>
+            </app>
+         </l>
+
+         <l n="74">
+            <app>
+               <rdg wit="#a4">
+                  <del>BEAR</del>
+               </rdg>
+            </app>
+         </l>
+
+         <l n="75">
+            <app>
+               <rdg wit="#a1 #a2">HAS</rdg>
+               <rdg wit="#a2">
+                  <del>FOUND</del>
+               </rdg>
+               <rdg wit="#a4">
+                  <del>HAS</del>
+               </rdg>
+            </app>
+         </l>
+
+         <l n="76">
+            <app>
+               <rdg wit="#a3">
+                  <add>HAS</add>
+               </rdg>
+               <rdg wit="#a1 #a2 #a3">SITE</rdg>
+               <rdg wit="#a4">
+                  <del>SITE</del>
+               </rdg>
+               <rdg wit="#a3">   <del>FINDS FOUND</del>
+               </rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+
+         <l n="77">
+            <app>
+               <rdg wit="#a3">
+                  <del>ON</del>
+               </rdg>
+            </app>
+         </l>
+
+         <l n="78">
+            <app>
+               <rdg wit="#a3">
+                  <del>EARTH</del>
+               </rdg>
+               <rdg wit="#a2">
+                  <del>NOWHERE</del>
+               </rdg>
+            </app>
+         </l>
+
+
+
+         <l n="79">
+            <app>
+               <rdg wit="#a6">IS IT </rdg>
+               <rdg wit="#a1 #a2 #a4 #a6">NOWHERE</rdg>
+               <rdg wit="#a1 #a2 #a4">!</rdg>
+               <rdg wit="#a3">N<sic>x</sic>WHERE?<add rend="subscript">RIGHT</add>
+                  <note type="physical" anchored="true">There is a gray oval from this line to the
+                     bottom of the page. See the image.</note>
+               </rdg>
+               <rdg wit="#a4">
+                  <add rend="subscript">
+                     <del>ON EARTH</del>
+                  </add>
+                  <del>ILL WILL</del>
+                  <note anchored="true"> There are three rewritten attempts about this part. In the
+                     space on the left hand side of the column, there is the rewriting, “SUN WILL
+                     EARTH BEARS" ("EARTH" and "BEARS" are crossed out). On the righthad side of the
+                     column, there are two revising attempts. One is “SH WE IS ARE NIL ILL" ("WE,"
+                     "ARE," and "NIL" are crossed out). Another is “SUN WILLED ILL MOTHER RIGHT
+                     BIRTH" (This part is actually closed out with the zigzag line). See the
+                     image.</note>
+               </rdg>
+               <rdg wit="#a6">
+                  <del>?</del>
+                  <del>ON EARTH</del>
+               </rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+
+         <l n="80">
+            <app>
+               <rdg wit="#a1 #a2">SUN</rdg>
+               <rdg wit="#a3">
+                  <del>MOTHER</del> <sic>xx</sic>GHT</rdg>
+            </app>
+         </l>
+         <l n="81">
+            <app>
+               <rdg wit="#a1 #a2">WILL</rdg>
+               <rdg wit="#a3">
+                  <del>NIL</del>!</rdg>
+            </app>
+         </l>
+
+         <l n="82">
+            <app>
+               <rdg wit="#a1 #a2">ILL !</rdg>
+               <rdg wit="#a4">
+                  <del>BIRTH RIGHT</del>
+               </rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+
+
+
+         <l n="83">
+            <app>
+               <rdg wit="#a6">BUT</rdg>
+               <rdg wit="#a4">NIL</rdg>
+               <rdg wit="#a1 #a2 #a3 #a4 #a6">BIRTH</rdg>
+               <rdg wit="#a4">    <add><del>EARTH</del>
+                  </add>
+               </rdg>
+               <rdg wit="#a1 #a3 #a6">—</rdg>
+               <rdg wit="#a2">–</rdg>
+               <rdg wit="#a3">
+                  <sic>x</sic>
+                  <del>RIGHT</del>
+               </rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+
+         <l n="84">
+            <app>
+               <rdg wit="#a1 #a2 #a3 #a4">BLIGHT</rdg>
+               <rdg wit="#a6">
+                  <del>BLIGHT</del>
+               </rdg>
+               <rdg wit="#a1">—</rdg>
+               <rdg wit="#a2">–</rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+
+
+
+         <l n="85">
+            <app>
+               <rdg wit="#a1 #a2 #a4">THISTLEDOWNFLIGHT</rdg>
+               <rdg wit="#a1">!<note anchored="true"> The original layout is diagonal (up-down-up);
+                     see the image. </note>
+               </rdg>
+               <rdg wit="#a2">!<note anchored="true"> The original layout is diagonal; see the
+                     image. </note>
+               </rdg>
+               <rdg wit="#a3">THISTLE<sic>xx</sic>WNFLIGHT</rdg>
+            </app>
+            <milestone unit="stanza"/>
+         </l>
+
+         <l n="86">
+            <app>
+               <rdg wit="#a1 #">CHINGHA" FOR "DJUNA"</rdg>
+               <rdg wit="#a6">FOR MOTHER <del>ME</del>
+               </rdg>
+            </app>
+         </l>
+
+         <l n="87">
+            <app>
+               <rdg wit="#a6">OUR NAME —</rdg>
+            </app>
+         </l>
+
+         <l n="88">
+            <app>
+               <rdg wit="#a6">GINGA — BROTHER</rdg>
+            </app>
+         </l>
+
+         <l n="89">
+            <app>
+               <rdg wit="#a6">FLAME?</rdg>
+            </app>
+         </l>
+
+
+      </body>
+
+   </text>
+</TEI>

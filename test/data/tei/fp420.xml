@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="ASCII" ?>
+
+
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+	<teiHeader>
+		<fileDesc>
+			<titleStmt>
+				<title>"There are two Ripenings"</title>
+				<author>By Emily Dickinson.</author>
+				<respStmt>
+					<resp>Edited and marked up by Lara Vetter.</resp>
+					<name/>
+				</respStmt>
+			</titleStmt>
+			<publicationStmt>
+				<publisher>The Versioning Machine project</publisher>
+				<availability>
+					<p>This poem is available only for demonstration purposes. It was created as
+						part of a research project to experiment with ways of displaying multiple
+						witnesses of a TEI-encoded poem using XML, XSLT and JavaScript.</p>
+				</availability>
+			</publicationStmt>
+			<notesStmt>
+				<note type="render" anchored="true">Additions appear in a green, fixed-width
+					font.</note>
+			</notesStmt>
+			<sourceDesc>
+				<p>See Witness List.</p>
+			</sourceDesc>
+		</fileDesc>
+		<encodingDesc>
+			<projectDesc>
+				<p>Test document for versioning machine project. Marked-up collation of all three
+					versions: A 456, A Tr60a, H 47. Note that I have removed issue of transcription
+					by another hand in order to better demonstrate method.</p>
+				<p>DTD constructed from TEI prose base with tagsets for linking, figures, analysis,
+					transcr, textcrit.</p>
+			</projectDesc>
+			<variantEncoding location="internal" method="parallel-segmentation"/>
+		</encodingDesc>
+	</teiHeader>
+	<text>
+		<front>
+			<div>
+				<listWit>
+					<witness xml:id="A456">A 456, version sent to unknown recipient.</witness>
+					<witness xml:id="ATr60a">A Tr60a, version transcribed by Todd and sent to
+						Anthon</witness>
+					<witness xml:id="H47">H 47, Fascicle 14</witness>
+				</listWit>
+			</div>
+		</front>
+		<body>
+			<div1>
+				<lg>
+					<l n="1">There are two Ripenings <app>
+							<rdg wit="#A456 #H47"> -</rdg>
+							<rdg wit="#ATr60a"/>
+						</app></l>
+					<l n="2">
+						<app>
+							<rdg wit="#A456">one -</rdg>
+							<rdg wit="#H47">One -</rdg>
+							<rdg wit="#ATr60a">one</rdg>
+						</app> of <app>
+							<rdg wit="#A456">sight -</rdg>
+							<rdg wit="#H47">Sight - whose Forces</rdg>
+							<rdg wit="#ATr60a">sight</rdg>
+						</app></l>
+					<l n="3">
+						<app>
+							<rdg wit="#A456 #ATr60a">Whose forces <app>
+									<rdg wit="#A456">Spheric</rdg>
+									<rdg wit="#ATr60a">spheric</rdg>
+								</app></rdg>
+							<rdg wit="#H47">spheric + round</rdg>
+						</app>
+					</l>
+					<l n="4">
+						<app>
+							<rdg wit="#A456">wind</rdg>
+							<rdg wit="#H47"/>
+							<rdg wit="#ATr60a">wind,</rdg>
+						</app>
+					</l>
+					<l n="5">Until the <app>
+							<rdg wit="#A456 #H47">Velvet</rdg>
+							<rdg wit="#ATr60a">velvet</rdg>
+						</app>
+						<app>
+							<rdg wit="#A456 #ATr60a">product</rdg>
+							<rdg wit="#H47">Product</rdg>
+						</app></l>
+					<l n="6">
+						<app>
+							<rdg wit="#A456">Drops</rdg>
+							<rdg wit="#H47">Drop,</rdg>
+							<rdg wit="#ATr60a">Drop</rdg>
+						</app>
+						<app>
+							<rdg wit="#A456 #ATr60a">spicy</rdg>
+							<rdg wit="#H47">spicy,</rdg>
+						</app> to the <app>
+							<rdg wit="#A456 #ATr60a"/>
+							<rdg wit="#H47">Ground -<milestone unit="stanza"/></rdg>
+						</app></l>
+					<l n="7">
+						<app>
+							<rdg wit="#A456">ground -</rdg>
+							<rdg wit="#H47"/>
+							<rdg wit="#ATr60a">Ground -</rdg>
+						</app>
+					</l>
+					<l n="8">A <app>
+							<rdg wit="#A456 #ATr60a">homelier</rdg>
+							<rdg wit="#H47">Homelier -</rdg>
+						</app> maturing -</l>
+					<l n="9">A <app>
+							<rdg wit="#A456 #ATr60a">process</rdg>
+							<rdg wit="#H47">Process</rdg>
+						</app> in <app>
+							<rdg wit="#A456 #H47">the Bur -</rdg>
+							<rdg wit="#ATr60a">Bur.</rdg>
+						</app></l>
+					<l n="10">
+						<app>
+							<rdg wit="#A456 #ATr60a">That</rdg>
+							<rdg wit="#H47">+ Which</rdg>
+						</app>
+						<app>
+							<rdg wit="#A456">teeth</rdg>
+							<rdg wit="#H47 #ATr60a">Teeth</rdg>
+						</app> of <app>
+							<rdg wit="#A456">Frosts</rdg>
+							<rdg wit="#ATr60a"><sic>of</sic></rdg>
+							<rdg wit="#H47">Frosts,</rdg>
+						</app></l>
+					<l n="11">
+						<app>
+							<rdg wit="#A456 #H47">alone</rdg>
+							<rdg wit="#ATr60a">Frosts alone</rdg>
+						</app>
+						<app>
+							<rdg wit="#A456 #ATr60a">disclose</rdg>
+							<rdg wit="#H47">disclose -</rdg>
+						</app>
+					</l>
+					<l n="12">
+						<app>
+							<rdg wit="#A456">In</rdg>
+							<rdg wit="#H47">+ In</rdg>
+							<rdg wit="#ATr60a">On</rdg>
+						</app>
+						<app>
+							<rdg wit="#A456 #ATr60a">far</rdg>
+							<rdg wit="#H47">+ still</rdg>
+						</app> October <app>
+							<rdg wit="#A456">Air.</rdg>
+							<rdg wit="#H47 #ATr60a">Air -</rdg>
+						</app></l>
+				</lg>
+				<ab>
+					<app>
+						<rdg wit="#A456 #ATr60a"/>
+						<rdg wit="#H47">
+							<add>+ far - </add>
+							<add>+ that Teeth</add>
+							<add>+ on far - </add>
+						</rdg>
+					</app>
+				</ab>
+			</div1>
+		</body>
+	</text>
+</TEI>

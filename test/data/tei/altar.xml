@@ -1,0 +1,666 @@
+<?xml version="1.0" encoding="ASCII" ?>
+
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+
+   <teiHeader>
+      <fileDesc>
+         <titleStmt>
+            <title>The Altar</title>
+            <respStmt>
+               <resp>transcribed, encoded, and edited by</resp>
+               <persName>Robert Whalen</persName>
+            </respStmt>
+            <sponsor>
+               <orgName>Northern Michigan University</orgName>
+               <orgName>the National Endowment for the Humanities</orgName>
+            </sponsor>
+            <funder>
+               <orgName>Northern Michigan University</orgName>
+               <orgName>the National Endowment for the Humanities</orgName>
+            </funder>
+            <principal>
+               <persName>Robert Whalen</persName>
+            </principal>
+         </titleStmt>
+
+         <editionStmt>
+            <edition n="1"/>
+            <respStmt>
+               <resp>Transcription, encoding, transformations, and notes</resp>
+               <persName>Robert Whalen</persName>
+               <orgName>Northern Michigan University</orgName>
+               <orgName>the National Endowment for the Humanities</orgName>
+            </respStmt>
+         </editionStmt>
+
+         <extent/>
+
+         <publicationStmt>
+            <publisher>Robert Whalen for demonstration purposes only. May not be reproduced without
+               permission.</publisher>
+            <address>
+               <addrLine/>
+            </address>
+            <idno type="ISBN"/>
+            <availability>
+               <p/>
+            </availability>
+            <distributor/>
+         </publicationStmt>
+
+         <notesStmt>
+            <note/>
+         </notesStmt>
+
+         <sourceDesc>
+            <listBibl>
+               <msDesc>
+                  <msIdentifier>
+                     <repository>See witness list.</repository>
+                  </msIdentifier>
+               </msDesc>
+            </listBibl>
+         </sourceDesc>
+      </fileDesc>
+
+      <encodingDesc>
+         <projectDesc>
+            <p>"The Altar" is part of a comprehensive edition of George Herbert's English verse, <hi
+                  rend="italic">The Digital Temple</hi>. This larger project includes
+               computer-readable transcriptions, in both original- and modern-spelling versions, of
+               Williams MS. Jones B62, Bodleian MS. Tanner 307, and a copy of <hi rend="italic">The
+                  Temple: Sacred Poems and Private Ejaculations</hi>, first edition (Cambridge,
+               1633); high-resolution digital images of the sources (excepting the Latin verse in
+               Williams); an apparatus that includes critical, textual, and technical introductions
+               and annotations; and a user interface with which to navigate these materials.</p>
+         </projectDesc>
+         <p>Transcriptions are encoded in TEI(P5)-conformant XML.</p>
+         <samplingDecl>
+            <p>Currently, only the Williams images and transcriptions are captured directly from the
+               source. Images (where available) and transcriptions of the Bodleian MS. and first
+               edition are captured from Scolar black-and-white facsimiles.</p>
+         </samplingDecl>
+         <editorialDecl>
+            <correction>
+               <p>Apparent errors are preserved and editorial corrections provided using SIC and
+                  CORR tags, but only where the editor conjectures that the original scribe or
+                  compositor would have recognized the instance as an error. For example, what
+                  according to modern usage is incorrect subject/verb agreement might have been
+                  deemed acceptable to a seventeenth-century scribe or compositor. All such
+                  instances are treated instead using the ORIG and REG tags. (See below.) </p>
+            </correction>
+            <normalization>
+               <p>Original spellings, abbreviations, and orthography are preserved and
+                  regularizations provided. Where in the manuscripts a character's status as
+                  majuscule or miniscule is ambiguous, the editor has silently chosen one or the
+                  other based on context and judgment (i.e., does not register such ambiguity in
+                  either the markup or the notes).</p>
+            </normalization>
+            <quotation>
+               <p>Original quotation marks, if any, are preserved.</p>
+            </quotation>
+            <hyphenation>
+               <p>Original hyphenation is preserved.</p>
+            </hyphenation>
+         </editorialDecl>
+
+         <charDecl>
+            <!-- Ligature combinations for which there are currently no corresponding Unicode codepoints. -->
+            <glyph xml:id="ctlig">
+               <glyphName>LATIN LIGATURE SMALL C AND SMALL T</glyphName>
+            </glyph>
+
+            <glyph xml:id="shlig">
+               <glyphName>LATIN LIGATURE SMALL LONG S AND SMALL H</glyphName>
+            </glyph>
+
+            <glyph xml:id="silig">
+               <glyphName>LATIN LIGATURE SMALL LONG S AND SMALL I</glyphName>
+            </glyph>
+
+            <glyph xml:id="sllig">
+               <glyphName>LATIN LIGATURE SMALL LONG S AND SMALL L</glyphName>
+            </glyph>
+
+            <glyph xml:id="sslig">
+               <glyphName>LATIN LIGATURE SMALL LONG S AND SMALL LONG S</glyphName>
+            </glyph>
+
+            <glyph xml:id="ssilig">
+               <glyphName>LATIN LIGATURE SMALL LONG S, SMALL LONG S, AND SMALL I</glyphName>
+            </glyph>
+
+            <glyph xml:id="ssllig">
+               <glyphName>LATIN LIGATURE SMALL LONG S, SMALL LONG S, AND SMALL L</glyphName>
+            </glyph>
+         </charDecl>
+
+         <classDecl>
+            <taxonomy xml:id="DDC22">
+               <bibl>
+                  <title>Dewey Decimal Classification</title>
+                  <edition/>
+                  <publisher/>
+                  <pubPlace/>
+               </bibl>
+            </taxonomy>
+         </classDecl>
+
+      </encodingDesc>
+
+      <profileDesc>
+         <langUsage>
+            <language ident="en">English</language>
+            <language ident="fr">French</language>
+            <language ident="lat">Latin</language>
+         </langUsage>
+
+         <textClass>
+            <classCode scheme="DDC22">006</classCode>
+         </textClass>
+      </profileDesc>
+
+   </teiHeader>
+   <facsimile>
+      <graphic url="images/w15v.jpg" xml:id="w15v"/>
+      <graphic url="images/b15v.jpg" xml:id="b15v"/>
+      <graphic url="images/p10v.jpg" xml:id="p10"/>
+   </facsimile>
+
+   <text>
+      <front>
+         <div>
+            <listWit>
+               <witness xml:id="w">Williams MS. Jones B62</witness>
+               <witness xml:id="b">Bodleian MS. Tanner 307</witness>
+               <witness xml:id="p">The Temple: Sacred Poems and Private Ejaculations, first edition
+                  (Cambridge, 1633)</witness>
+            </listWit>
+         </div>
+      </front>
+      <body>
+
+         <pb ed="#w" facs="#w15v"/>
+         <fw facs="#w15v" type="header" place="margin-top">The church.</fw>
+
+         <pb ed="#b" facs="#b15v"/>
+         <fw facs="#b15v" type="header" place="margin-top">The Church</fw>
+         <fw facs="#b15v" type="pageNum" place="margin-topleft">39</fw>
+
+         <pb ed="#p" facs="#p10"/>
+         <fw facs="#p10" type="header" place="margin-top"><hi rend="italic">The Church</hi>.</fw>
+         <fw facs="#p10" type="pageNum" place="margin-topleft">10</fw>
+
+         <div type="poem" xml:id="altar" rend="center">
+
+            <head rend="center">
+               <app>
+                  <rdg wit="#w"><hi rend="underline">The Altar</hi>.</rdg>
+                  <rdg wit="#b">
+                     <hi rend="underline">The Altar</hi>
+                  </rdg>
+                  <rdg wit="#p">The Altar.</rdg>
+               </app>
+               <note>See Wilcox (89) for the poem's debt to the pattern and <hi rend="italic">schola
+                     cordis</hi> (School of the Heart) emblem traditions. <lb/><lb/>The title
+                  signifies the stone altar that in Catholic tradition was associated with Christ's
+                  sacrifice on the Cross; the speaker's heart offered as a "living sacrifice"
+                  (Romans 12:1); the poem itself and <hi rend="italic">The Temple</hi> as a whole.
+                  (The following poem in all three sources happens to be "The Sacrifice.")
+                  <lb/><lb/>Though metaphorically the speaker's heart, the phrase <hi rend="italic"
+                     >broken Altar/ALTAR</hi> in the first line would have provocatively suggested
+                  Reformation acts of iconoclasm that included the removal and/or destruction of
+                  such remnants of the old religion. Toward the end of Herbert's life, advocates of
+                  ceremonial worship and what Archbishop William Laud was to call the Beauty of
+                  Holiness boldly restored the altars to a place of prominence in some English
+                  churches. <lb/><lb/>The Cambridge printers' innovation in #p&#x2014;i.e., the
+                  upper-case rendering of <hi rend="italic">ALTAR</hi>, <hi rend="italic"
+                  >HEART</hi>, and <hi rend="italic">SACRIFICE</hi>&#x2014;foregrounds as
+                  complementary the poem's devotional and ceremonial features, and thereby
+                  privileges a <hi rend="italic">via media</hi> reading of an otherwise
+                  ideologically conflicted poem. Indeed, the change from <hi rend="italic"
+                     >onely</hi> to <hi rend="italic">bleſsed</hi> in line 15 of witness #w suggests
+                  Herbert's concern that <hi rend="italic">onely sacrifice</hi> might seem a
+                  Protestant emphasis on the uniqueness of the Atonement at the expense of more
+                  Catholic notions of Real Presence and the replication of sacrifice in the ritual
+                  of the Eucharist. (According to the 31st of the <hi rend="italic">Thirty-Nine
+                     Articles</hi>, "the Offering of Christ once made is that perfect redemption,
+                  propitiation, and satisfaction, for all the sins of the whole world, both original
+                  and actual; and there is none other satisfaction for sin, but that alone.
+                  Wherefore the sacrifices of Masses, in the which it was commonly said, that the
+                  Priest did offer Christ for the quick and the dead, to have remission of pain or
+                  guilt, were blasphemous fables, and dangerous deceits.") Such revision exemplifies
+                  what historian Anthony Milton has called "negative popery": the increasing
+                  tendency of some early Stuart divines to advance Catholic ideas minus the once <hi
+                     rend="italic">de rigueur</hi> caveats disavowing them. (<hi rend="italic"
+                     >Catholic and Reformed</hi>, 63-72.) Wilcox's reading&#x2014;that the #w
+                  version unrevised "reveals H.'s assumption that there is now only one sacrifice"
+                  (93)&#x2014;seems to suggest that the revision somehow left intact the earlier and
+                  more decidedly Protestant assertion.</note>
+            </head>
+
+            <lg type="stanza" n="1">
+               <l n="1">
+                  <app>
+                     <rdg wit="#w">A broken Altar lord thy servant <w lemma="rear">
+                           <choice>
+                              <orig>reares</orig>
+                              <reg>rears</reg>
+                           </choice>
+                        </w>
+                     </rdg>
+                     <rdg wit="#b">A broken Altar, Lord, thy servant <w lemma="rear">
+                           <choice>
+                              <orig>reares</orig>
+                              <reg>rears</reg>
+                           </choice>
+                        </w>
+                     </rdg>
+                     <rdg wit="#p">A broken <w lemma="altar">A L T A R</w>, Lord, thy <w
+                           lemma="servant">
+                           <choice>
+                              <orig>ſervant</orig>
+                              <reg>servant</reg>
+                           </choice>
+                        </w>
+                        <w lemma="rear">
+                           <choice>
+                              <orig>reares</orig>
+                              <reg>rears</reg>
+                           </choice>
+                        </w>,</rdg>
+                     <note><hi rend="italic">reares</hi>: brings into existence by constructing (<hi
+                           rend="italic">OED</hi> 9), a meaning at odds with <hi rend="italic"
+                           >broken</hi> only if it is assumed that the speaker could have anything
+                        more to offer than a broken heart. The word also connotes raising the dead
+                           (<hi rend="italic">OED</hi> 3.a), by extension the Resurrection, itself a
+                        triumph in which the broken body of Christ is raised to be a glorified
+                        body.</note>
+                  </app>
+               </l>
+               <l n="2">
+                  <app>
+                     <rdg wit="#w">Made of a <w lemma="heart">
+                           <choice>
+                              <orig>Hart</orig>
+                              <reg>Heart</reg>
+                           </choice>
+                        </w> and <w lemma="cement">
+                           <choice>
+                              <orig>cimented</orig>
+                              <reg>cemented</reg>
+                           </choice>
+                        </w>
+                        <w lemma="with">
+                           <choice>
+                              <orig>w<hi rend="superscript">th</hi></orig>
+                              <reg>with</reg>
+                           </choice>
+                        </w>
+                        <w lemma="tear">
+                           <choice>
+                              <orig>teares</orig>
+                              <reg>tears</reg>
+                           </choice>
+                        </w>.</rdg>
+                     <rdg wit="#b">Made of a heart, <w lemma="and">
+                           <choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice>
+                        </w>
+                        <w lemma="cement">
+                           <choice>
+                              <orig>cimented</orig>
+                              <reg>cemented</reg>
+                           </choice>
+                        </w> with <w lemma="tear">
+                           <choice>
+                              <orig>teares</orig>
+                              <reg>tears</reg>
+                           </choice>
+                        </w>.</rdg>
+                     <rdg wit="#p">Made of a heart, and cemented with <w lemma="tear">
+                           <choice>
+                              <orig>teares</orig>
+                              <reg>tears</reg>
+                           </choice>
+                        </w>:</rdg>
+                  </app>
+               </l>
+               <l n="3">
+                  <app>
+                     <rdg wit="#w">Whose parts are as thy hand did frame</rdg>
+                     <rdg wit="#b">Whose parts are, as thy hand did frame;</rdg>
+                     <rdg wit="#p">
+                        <w lemma="whose">
+                           <choice>
+                              <orig>Whoſe</orig>
+                              <reg>Whose</reg>
+                           </choice>
+                        </w> parts are as thy hand did frame;</rdg>
+                     <note><hi rend="italic">frame</hi>: prepare, as a carpenter, for use in
+                        building (<hi rend="italic">OED</hi> 4). Jesus was a carpenter (Mark 6:3)
+                        and is "a son over his own house; whose house are we," for "he that built
+                        all things is God" (Hebrews 3:4-6).</note>
+                  </app>
+               </l>
+               <l n="4"><app>
+                     <rdg wit="#w">No <w lemma="workman">
+                           <choice>
+                              <orig>workmans</orig>
+                              <reg>workman's</reg>
+                           </choice>
+                        </w>
+                        <w lemma="tool">
+                           <choice>
+                              <orig>toole</orig>
+                              <reg>tool</reg>
+                           </choice>
+                        </w> hath <w lemma="touch">touch'd</w>
+                        <w lemma="the">
+                           <choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice>
+                        </w> same</rdg>
+                     <rdg wit="#b">No <w lemma="workman">
+                           <choice>
+                              <orig>workemans</orig>
+                              <reg>workman's</reg>
+                           </choice>
+                        </w>
+                        <w lemma="tool">
+                           <choice>
+                              <orig>toole</orig>
+                              <reg>tool</reg>
+                           </choice>
+                        </w> hath <w lemma="touch">touch'd</w>
+                        <w lemma="the">
+                           <choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice>
+                        </w> same.</rdg>
+                     <rdg wit="#p">No <w lemma="workman">
+                           <choice>
+                              <orig>workmans</orig>
+                              <reg>workman's</reg>
+                           </choice>
+                        </w> tool hath <w lemma="touch">touch'd</w> the <w lemma="same">
+                           <choice>
+                              <orig>ſame</orig>
+                              <reg>same</reg>
+                           </choice>
+                        </w>.</rdg>
+                  </app>
+               </l>
+               <l n="5">
+                  <app>
+                     <rdg wit="#w">A <w lemma="heart">
+                           <choice>
+                              <orig>Hart</orig>
+                              <reg>Heart</reg>
+                           </choice>
+                        </w> alone</rdg>
+                     <rdg wit="#b">A heart alone</rdg>
+                     <rdg wit="#p">A <w lemma="heart">H E A R T</w> alone</rdg>
+                     <note><hi rend="italic">alone</hi>: only.</note>
+                  </app>
+               </l>
+               <l n="6">
+                  <app>
+                     <rdg wit="#w">Is such a stone</rdg>
+                     <rdg wit="#b">Is such a stone,</rdg>
+                     <rdg wit="#p">Is <w lemma="such">
+                           <choice>
+                              <orig>ſuch</orig>
+                              <reg>such</reg>
+                           </choice>
+                        </w> a <w lemma="stone">
+                           <choice>
+                              <orig>ﬅone</orig>
+                              <reg>stone</reg>
+                           </choice>
+                        </w>,</rdg>
+                  </app>
+               </l>
+               <l n="7">
+                  <app>
+                     <rdg wit="#w">As nothing but</rdg>
+                     <rdg wit="#b">As nothing but</rdg>
+                     <rdg wit="#p">As nothing but</rdg>
+                  </app>
+               </l>
+               <l n="8">
+                  <app>
+                     <rdg wit="#w">Thy <w lemma="power">
+                           <choice>
+                              <orig>powre</orig>
+                              <reg>power</reg>
+                           </choice>
+                        </w> doth <w lemma="cut">
+                           <choice>
+                              <orig>cutt</orig>
+                              <reg>cut</reg>
+                           </choice>
+                        </w>.</rdg>
+                     <rdg wit="#b">Thy power doth cut.</rdg>
+                     <rdg wit="#p">Thy <w lemma="power">pow'r</w> doth cut.</rdg>
+                     <note><hi rend="italic">Lines 5-8</hi>: "Only a heart is so hard as that God's
+                        power alone is able to penetrate it."</note>
+                  </app>
+               </l>
+
+
+               <l n="9">
+                  <app>
+                     <rdg wit="#w">Wherefore each part</rdg>
+                     <rdg wit="#b"><w lemma="wherefore">
+                           <choice>
+                              <orig>Wherefor</orig>
+                              <reg>Wherefore</reg>
+                           </choice>
+                        </w> each part</rdg>
+                     <rdg wit="#p">Wherefore each part</rdg>
+                  </app>
+               </l>
+               <l n="10">
+                  <app>
+                     <rdg wit="#w">
+                        <w lemma="of">
+                           <choice>
+                              <orig>Øf</orig>
+                              <reg>Of</reg>
+                           </choice>
+                        </w> my hard <w lemma="heart">
+                           <choice>
+                              <orig>hart</orig>
+                              <reg>heart</reg>
+                           </choice>
+                        </w>
+                     </rdg>
+                     <rdg wit="#b">Of my hard heart</rdg>
+                     <rdg wit="#p">Of my hard heart</rdg>
+                  </app>
+               </l>
+               <l n="11">
+                  <app>
+                     <rdg wit="#w">Meets in this frame</rdg>
+                     <rdg wit="#b #p">Meets in this frame,</rdg>
+                     <note><hi rend="italic">frame</hi>: i.e., the poem; the stone altar of
+                        sacrifice; the speaker's body which houses his <hi rend="italic"
+                           >hart/heart</hi>&#x2014;"My body is the frame wherein 'tis held"
+                        (Shakespeare, Sonnet 24, line 3)&#x2014; and is "the temple of God" (1
+                        Corinthians 3:16).</note>
+                  </app>
+               </l>
+               <l n="12">
+                  <app>
+                     <rdg wit="#w">To <w lemma="praise">
+                           <choice>
+                              <orig>praiſe</orig>
+                              <reg>praise</reg>
+                           </choice>
+                        </w> thy name</rdg>
+                     <rdg wit="#b">To praise thy Name.</rdg>
+                     <rdg wit="#p">To <w lemma="praise">
+                           <choice>
+                              <orig>praiſe</orig>
+                              <reg>praise</reg>
+                           </choice>
+                        </w> thy name.</rdg>
+                  </app>
+               </l>
+
+
+               <l n="13">
+                  <app>
+                     <rdg wit="#w">That If I chance to hold my peace</rdg>
+                     <rdg wit="#b">That, if I chance to hold my peace,</rdg>
+                     <rdg wit="#p">That if I chance to hold my peace,</rdg>
+                  </app>
+               </l>
+               <l n="14">
+                  <app>
+                     <rdg wit="#w">
+                        <w lemma="these">
+                           <choice>
+                              <orig>Theſe</orig>
+                              <reg>These</reg>
+                           </choice>
+                        </w> stones to <w lemma="praise">
+                           <choice>
+                              <orig>praiſe</orig>
+                              <reg>praise</reg>
+                           </choice>
+                        </w> thee may not <w lemma="cease">
+                           <choice>
+                              <orig>ceaſe</orig>
+                              <reg>cease</reg>
+                           </choice>
+                        </w>
+                     </rdg>
+                     <rdg wit="#b">These stones to praise thee may not cease.</rdg>
+                     <rdg wit="#p">
+                        <w lemma="these">
+                           <choice>
+                              <orig>Theſe</orig>
+                              <reg>These</reg>
+                           </choice>
+                        </w>
+                        <w lemma="stone">
+                           <choice>
+                              <orig>ﬅones</orig>
+                              <reg>stones</reg>
+                           </choice>
+                        </w> to <w lemma="praise">
+                           <choice>
+                              <orig>praiſe</orig>
+                              <reg>praise</reg>
+                           </choice>
+                        </w> thee may not <w lemma="cease">
+                           <choice>
+                              <orig>ceaſe</orig>
+                              <reg>cease</reg>
+                           </choice>
+                        </w>.</rdg>
+                     <note><hi rend="italic">Lines 13-14</hi>: "And some of the Pharisees from among
+                        the multitude said unto him, Master, rebuke thy disciples. And he answered
+                        and said unto them, I tell you that, if these should hold their peace, the
+                        stones would immediately cry out" (Luke 19:39-40).</note>
+                  </app>
+               </l>
+               <l n="15">
+                  <app>
+                     <rdg wit="#w">
+                        <w lemma="o">
+                           <choice>
+                              <orig>Ø</orig>
+                              <reg>O</reg>
+                           </choice>
+                        </w>
+                        <w lemma="let">
+                           <choice>
+                              <orig>lett</orig>
+                              <reg>let</reg>
+                           </choice>
+                        </w> thy <w lemma="only">
+                           <choice>
+                              <orig>
+                                 <del rend="strike">onely</del>
+                              </orig>
+                              <reg>only</reg>
+                           </choice>
+                        </w>
+                        <w lemma="blessed">
+                           <choice>
+                              <orig>
+                                 <add rend="supralinear">bleſsed</add>
+                              </orig>
+                              <reg>blessed</reg>
+                           </choice>
+                        </w> sacrifice <w lemma="be">
+                           <choice>
+                              <orig>bee</orig>
+                              <reg>be</reg>
+                           </choice>
+                        </w> mine,</rdg>
+                     <rdg wit="#b">O <w lemma="let">
+                           <choice>
+                              <orig>lett</orig>
+                              <reg>let</reg>
+                           </choice>
+                        </w> thy blessed sacrifice be mine,</rdg>
+                     <rdg wit="#p">O let thy <w lemma="blessed">
+                           <choice>
+                              <orig>ble<g ref="#sslig">ſſ</g>ed</orig>
+                              <reg>blessed</reg>
+                           </choice>
+                        </w>
+                        <w lemma="sacrifice">S A C R I F I C E</w> be mine,</rdg>
+                     <note>See headnote for the significance of the #w emendation.</note>
+                  </app>
+               </l>
+               <l n="16">
+                  <app>
+                     <rdg wit="#w">And <w lemma="sanctify">
+                           <choice>
+                              <orig>sanctifie</orig>
+                              <reg>sanctify</reg>
+                           </choice>
+                        </w> this Altar to <w lemma="be">
+                           <choice>
+                              <orig>bee</orig>
+                              <reg>be</reg>
+                           </choice>
+                        </w> thine.</rdg>
+                     <rdg wit="#b">And sanctify this Altar to be thine.</rdg>
+                     <rdg wit="#p">And <w lemma="sanctify">
+                           <choice>
+                              <orig>ſan<g ref="#ctlig">ct</g>iﬁe</orig>
+                              <reg>sanctify</reg>
+                           </choice>
+                        </w> this <w lemma="altar">A L T A R</w> to be thine.</rdg>
+                     <note><hi rend="italic">Lines 15-16</hi>: For the multiple significations of
+                           <hi rend="italic">Altar/ALTAR</hi>, see headnote and the note for line
+                        11. Though the placement of <hi rend="italic">SACRIFICE</hi> over <hi
+                           rend="italic">ALTAR</hi> in #p is fortuitous and perhaps deliberate (as
+                        is the "broken" spacing of the words in these as well as lines 1 and 5), the
+                        layout in both manuscripts is unremarkable. But for <hi rend="italic"
+                           >Altar</hi> having a majuscule initial, neither word there is
+                        distinguished in any way. Had Herbert intended to highlight them in #w (the
+                        only source in which he is known to have had a hand), he might have
+                        specified an italic script, as indeed he does elsewhere in #w&#x2014;for
+                        example, in the final line of "Poetry" (entitled "The Quiddity" in
+                        #b/#p).</note>
+                  </app>
+               </l>
+            </lg>
+         </div>
+         <fw facs="#p18" type="catch" place="bottom">The</fw>
+
+      </body>
+   </text>
+
+</TEI>

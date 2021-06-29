@@ -1,0 +1,1462 @@
+
+<?xml version="1.0" encoding="ASCII" ?>
+
+
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+   <teiHeader>
+      <fileDesc>
+         <titleStmt>
+            <title>The Pearl</title>
+            <respStmt>
+               <resp>transcribed, encoded, and edited by</resp>
+               <persName>Robert Whalen</persName>
+            </respStmt>
+            <sponsor>
+               <orgName>Northern Michigan University</orgName>
+               <orgName>the National Endowment for the Humanities</orgName>
+            </sponsor>
+            <funder>
+               <orgName>Northern Michigan University</orgName>
+               <orgName>the National Endowment for the Humanities</orgName>
+            </funder>
+            <principal>
+               <persName>Robert Whalen</persName>
+            </principal>
+         </titleStmt>
+
+         <editionStmt>
+            <edition n="1"/>
+            <respStmt>
+               <resp>Transcription, encoding, transformations, and notes</resp>
+               <persName>Robert Whalen</persName>
+               <orgName>Northern Michigan University</orgName>
+               <orgName>the National Endowment for the Humanities</orgName>
+            </respStmt>
+         </editionStmt>
+
+         <extent/>
+
+         <publicationStmt>
+            <publisher>Robert Whalen for demonstration purposes only. May not be reproduced without
+               permission.</publisher>
+            <address>
+               <addrLine/>
+            </address>
+            <idno type="ISBN"/>
+            <availability>
+               <p/>
+            </availability>
+            <distributor/>
+         </publicationStmt>
+
+         <notesStmt>
+            <note/>
+         </notesStmt>
+
+         <sourceDesc>
+            <listBibl>
+               <msDesc>
+                  <msIdentifier>
+                     <repository>See witness list.</repository>
+                  </msIdentifier>
+               </msDesc>
+            </listBibl>
+         </sourceDesc>
+      </fileDesc>
+
+      <encodingDesc>
+         <projectDesc>
+            <p>"The Pearl" is part of a comprehensive edition of George Herbert's English verse, <hi
+                  rend="italic">The Digital Temple</hi>. This larger project includes
+               computer-readable transcriptions, in both original- and modern-spelling versions, of
+               Williams MS. Jones B62, Bodleian MS. Tanner 307, and a copy of <hi rend="italic">The
+                  Temple: Sacred Poems and Private Ejaculations</hi>, first edition (Cambridge,
+               1633); high-resolution digital images of the sources (excepting the Latin verse in
+               Williams); an apparatus that includes critical, textual, and technical introductions
+               and annotations; and a user interface with which to navigate these materials.</p>
+         </projectDesc>
+         <p>Transcriptions are encoded in TEI(P5)-conformant XML.</p>
+         <samplingDecl>
+            <p>Currently, only the Williams images and transcriptions are captured directly from the
+               source. Images (where available) and transcriptions of the Bodleian MS. and first
+               edition are captured from Scolar black-and-white facsimiles.</p>
+         </samplingDecl>
+         <editorialDecl>
+            <correction>
+               <p>Apparent errors are preserved and editorial corrections provided using SIC and
+                  CORR tags, but only where the editor conjectures that the original scribe or
+                  compositor would have recognized the instance as an error. For example, what
+                  according to modern usage is incorrect subject/verb agreement might have been
+                  deemed acceptable to a seventeenth-century scribe or compositor. All such
+                  instances are treated instead using the ORIG and REG tags. (See below.) </p>
+            </correction>
+            <normalization>
+               <p>Original spellings, abbreviations, and orthography are preserved and
+                  regularizations provided. Where in the manuscripts a character's status as
+                  majuscule or miniscule is ambiguous, the editor has silently chosen one or the
+                  other based on context and judgment (i.e., does not register such ambiguity in
+                  either the markup or the notes).</p>
+            </normalization>
+            <quotation>
+               <p>Original quotation marks, if any, are preserved.</p>
+            </quotation>
+            <hyphenation>
+               <p>Original hyphenation is preserved.</p>
+            </hyphenation>
+         </editorialDecl>
+
+         <charDecl>
+            <!-- Ligature combinations for which there are currently no corresponding Unicode codepoints. -->
+            <glyph xml:id="ctlig">
+               <glyphName>LATIN LIGATURE SMALL C AND SMALL T</glyphName>
+            </glyph>
+
+            <glyph xml:id="shlig">
+               <glyphName>LATIN LIGATURE SMALL LONG S AND SMALL H</glyphName>
+            </glyph>
+
+            <glyph xml:id="silig">
+               <glyphName>LATIN LIGATURE SMALL LONG S AND SMALL I</glyphName>
+            </glyph>
+
+            <glyph xml:id="sllig">
+               <glyphName>LATIN LIGATURE SMALL LONG S AND SMALL L</glyphName>
+            </glyph>
+
+            <glyph xml:id="sslig">
+               <glyphName>LATIN LIGATURE SMALL LONG S AND SMALL LONG S</glyphName>
+            </glyph>
+
+            <glyph xml:id="ssilig">
+               <glyphName>LATIN LIGATURE SMALL LONG S, SMALL LONG S, AND SMALL I</glyphName>
+            </glyph>
+
+            <glyph xml:id="ssllig">
+               <glyphName>LATIN LIGATURE SMALL LONG S, SMALL LONG S, AND SMALL L</glyphName>
+            </glyph>
+         </charDecl>
+
+         <classDecl>
+            <taxonomy xml:id="DDC22">
+               <bibl>
+                  <title>Dewey Decimal Classification</title>
+                  <edition/>
+                  <publisher/>
+                  <pubPlace/>
+               </bibl>
+            </taxonomy>
+         </classDecl>
+
+      </encodingDesc>
+
+      <profileDesc>
+         <langUsage>
+            <language ident="en">English</language>
+            <language ident="fr">French</language>
+            <language ident="lat">Latin</language>
+         </langUsage>
+
+         <textClass>
+            <classCode scheme="DDC22">006</classCode>
+         </textClass>
+      </profileDesc>
+
+   </teiHeader>
+
+   
+   <facsimile>
+      <graphic url="images/w57v.jpg" xml:id="w57v"/>
+      <graphic url="images/w58r.jpg" xml:id="w58r"/>
+   <!--  Only witness w images are currently available. -->
+   <!--<graphic url="images/b61r.jpg" xml:id="b61r"/>
+      <graphic url="images/b61v.jpg" xml:id="b61v"/>
+      <graphic url="images/b62r.jpg" xml:id="b62r"/>
+      <graphic url="images/p81.jpg" xml:id="p81"/>
+      <graphic url="images/p82.jpg" xml:id="p82"/>-->
+   </facsimile>
+
+   <text>
+      <front>
+         <div>
+            <listWit>
+               <witness xml:id="w">Williams MS. Jones B62</witness>
+               <witness xml:id="b">Bodleian MS. Tanner 307</witness>
+               <witness xml:id="p">The Temple: Sacred Poems and Private Ejaculations, first edition
+                  (Cambridge, 1633)</witness>
+            </listWit>
+         </div>
+      </front>
+      <body>
+
+         <pb ed="#w" facs="#w57v"/>
+         <fw facs="#w57v" type="header" place="margin-top">The Church.</fw>
+
+         <pb ed="#b" facs="#b61r"/>
+         <fw facs="#b61r" type="header" place="margin-top">The Church</fw>
+         <fw facs="#b61r" type="folioNum" place="margin-topright">61</fw>
+         <fw facs="#b61r" type="pageNum" place="margin-topright">
+            <del rend="strike">130</del>
+         </fw>
+
+         <pb ed="#p" facs="#p81"/>
+         <fw facs="#p81" type="header" place="margin-top"><hi rend="italic">The Church</hi>.</fw>
+         <fw facs="#p81" type="pageNum" place="margin-topright">81</fw>
+
+         <div type="poem" xml:id="pearl" rend="right">
+
+            <head>
+               <app>
+                  <rdg wit="#w">The <w lemma="pearl"><choice>
+                           <orig>Pearle</orig>
+                           <reg>Pearl</reg>
+                        </choice></w>: <w lemma="Matthew">Matth</w>: 13.45.</rdg>
+                  <rdg wit="#b">The <w lemma="pearl"><choice>
+                           <orig>Pearle</orig>
+                           <reg>Pearl</reg>
+                        </choice></w>
+                     <w lemma="Matthew">Math</w>. <num type="title">13</num>.</rdg>
+                  <rdg wit="#p">¶ The Pearl. <hi rend="italic">
+                        <w lemma="Matthew">Matth</w>. </hi>
+                     <num type="title">13</num>.</rdg>
+                  <note>"Again, the kingdom of heaven is like unto a merchant man, seeking goodly
+                     pearls: who, when he had found one pearl of great price, went and sold all that
+                     he had, and bought it" (Matthew 13:45-46). Elaborating this passage from the
+                     Sermon on the Mount, the poem reviews wistfully even while denouncing much of
+                     what is positive in worldly experience: the pleasures of intellect, social
+                     distinction, and the flesh.</note>
+               </app>
+            </head>
+
+            <lg type="stanza" n="1">
+               <l n="1">
+                  <app>
+                     <rdg wit="#w">I know <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w>
+                        <w lemma="way"><choice>
+                              <orig>wayes</orig>
+                              <reg>ways</reg>
+                           </choice></w> of learning, both the Head</rdg>
+                     <rdg wit="#b">I know <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w>
+                        <w lemma="way"><choice>
+                              <orig>waies</orig>
+                              <reg>ways</reg>
+                           </choice></w> of Learning. both the head</rdg>
+                     <rdg wit="#p">I <w lemma="know"><choice>
+                              <orig>Know</orig>
+                              <reg>know</reg>
+                           </choice></w> the <w lemma="way"><choice>
+                              <orig>wayes</orig>
+                              <reg>ways</reg>
+                           </choice></w> of learning; both the head</rdg>
+                  </app>
+               </l>
+
+               <l n="2">
+                  <app>
+                     <rdg wit="#w">And Pipes that feed <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w>
+                        <w lemma="press"><choice>
+                              <orig>Preſs</orig>
+                              <reg>Press</reg>
+                           </choice></w> and make it <w lemma="run"><choice>
+                              <orig>runn</orig>
+                              <reg>run</reg>
+                           </choice></w>.</rdg>
+                     <rdg wit="#b">And pipes, <w lemma="that"><choice>
+                              <orig>y<hi rend="superscript">t</hi></orig>
+                              <reg>that</reg>
+                           </choice></w> feed <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w>
+                        <w lemma="press"><choice>
+                              <orig>presse</orig>
+                              <reg>press</reg>
+                           </choice></w>, <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w> make it <w lemma="run"><choice>
+                              <orig>runne</orig>
+                              <reg>run</reg>
+                           </choice></w>:</rdg>
+                     <rdg wit="#p">And pipes that feed the <w lemma="press"><choice>
+                              <orig>pre<g ref="#sslig">ſſ</g>e</orig>
+                              <reg>press</reg>
+                           </choice></w>, and make it <w lemma="run"><choice>
+                              <orig>runne</orig>
+                              <reg>run</reg>
+                           </choice></w>;</rdg>
+                     <note><hi rend="italic">Lines 1-2</hi>: The <hi rend="italic">Head/head</hi>
+                        and <hi rend="italic">Pipes/pipes</hi> can be read as both mechanical
+                        components of the printing press and the human head and its channels through
+                        which experience enters the mind via the eyes and ears and, transformed into
+                        knowledge, exits via the mouth (speech being counterpart to the printed
+                        word). This opening metaphor immediately establishes the tone of the poem by
+                        suggesting that much of human knowledge is but a mechanistic response to
+                        sensory stimuli&#x2014;knowledge which <hi rend="italic">reason/rea&#x17f;on
+                           hath from Nature/nature</hi> (line 3).</note>
+                  </app>
+               </l>
+
+               <l n="3">
+                  <app>
+                     <rdg wit="#w">What reason hath from Nature purchased</rdg>
+                     <rdg wit="#b">What reason hath from Nature borrowed,</rdg>
+                     <rdg wit="#p">What <w lemma="reason"><choice>
+                              <orig>reaſon</orig>
+                              <reg>reason</reg>
+                           </choice></w> hath from nature borrowed,</rdg>
+                  </app>
+               </l>
+
+               <l n="4">
+                  <app>
+                     <rdg wit="#w"><w lemma="or"><choice>
+                              <orig>Ør</orig>
+                              <reg>Or</reg>
+                           </choice></w> of itself like a good <w lemma="housewife"><choice>
+                              <orig>huſwife</orig>
+                              <reg>housewife</reg>
+                           </choice></w>
+                        <w lemma="spin"><choice>
+                              <orig>spunn</orig>
+                              <reg>spun</reg>
+                           </choice></w></rdg>
+                     <rdg wit="#b">Or of <w lemma="itself"><choice>
+                              <orig>it selfe</orig>
+                              <reg>itself</reg>
+                           </choice></w>, like a good <w lemma="housewife"><choice>
+                              <orig>huswife</orig>
+                              <reg>housewife</reg>
+                           </choice></w>
+                        <w lemma="spin"><choice>
+                              <orig>spunne</orig>
+                              <reg>spun</reg>
+                           </choice></w></rdg>
+                     <rdg wit="#p">Or of <w lemma="itself"><choice>
+                              <orig>it ſelf</orig>
+                              <reg>itself</reg>
+                           </choice></w>, like a good <w lemma="housewife"><choice>
+                              <orig>huſwife</orig>
+                              <reg>housewife</reg>
+                           </choice></w>, <w lemma="spin"><choice>
+                              <orig>ſpunne</orig>
+                              <reg>spun</reg>
+                           </choice></w></rdg>
+                  </app>
+               </l>
+
+               <l n="5">
+                  <app>
+                     <rdg wit="#w">In <w lemma="law"><choice>
+                              <orig>lawes</orig>
+                              <reg>laws</reg>
+                           </choice></w>
+                        <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w>
+                        <w lemma="policy"><choice>
+                              <orig>Policie</orig>
+                              <reg>Policy</reg>
+                           </choice></w>: what <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w>
+                        <w lemma="star"><choice>
+                              <orig>starres</orig>
+                              <reg>stars</reg>
+                           </choice></w> conspire:</rdg>
+                     <rdg wit="#b">In Laws <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w>
+                        <w lemma="policy"><choice>
+                              <orig>Policie</orig>
+                              <reg>Policy</reg>
+                           </choice></w>. what <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w>
+                        <w lemma="star"><choice>
+                              <orig>starres</orig>
+                              <reg>stars</reg>
+                           </choice></w> conspire,</rdg>
+                     <rdg wit="#p">In laws and <w lemma="policy"><choice>
+                              <orig>policie</orig>
+                              <reg>policy</reg>
+                           </choice></w>; what the <w lemma="star"><choice>
+                              <orig>ﬅarres</orig>
+                              <reg>stars</reg>
+                           </choice></w>
+                        <w lemma="conspire"><choice>
+                              <orig>conſpire</orig>
+                              <reg>conspire</reg>
+                           </choice></w>,</rdg>
+                     <note><hi rend="italic">Lines 4-5, or &#x2026; Policie/policie</hi>: Reason,
+                        like a resourceful housewife who makes due with the materials at her
+                        immediate disposal, is self-sufficient with respect to the knowledge and
+                        practice of law and politics. <hi rend="italic"
+                        >conspire/con&#x17f;pire</hi>: combine harmoniously (<hi rend="italic"
+                           >OED</hi> 3.a).</note>
+                  </app>
+               </l>
+
+               <l n="6">
+                  <app>
+                     <rdg wit="#w">What willing Nature speaks, what <w lemma="force"><choice>
+                              <orig>forst</orig>
+                              <reg>forc'd</reg>
+                           </choice></w> by fire:</rdg>
+                     <rdg wit="#b">What willing Nature <w lemma="speak"><choice>
+                              <orig>speakes</orig>
+                              <reg>speaks</reg>
+                           </choice></w>, what <w lemma="force">forc'd</w> by fire.</rdg>
+                     <rdg wit="#p">What willing nature <w lemma="speak"><choice>
+                              <orig>ſpeaks</orig>
+                              <reg>speaks</reg>
+                           </choice></w>, what <w lemma="force">forc'd</w> by <w lemma="fire"><choice>
+                              <orig>ﬁre</orig>
+                              <reg>fire</reg>
+                           </choice></w>;</rdg>
+                     <note>"What is immediately apparent, what revealed by fire," the latter
+                        referring perhaps to some alchemical or occult process through which
+                        nature's secrets are exposed.</note>
+                  </app>
+               </l>
+
+               <l n="7">
+                  <app>
+                     <rdg wit="#w">Both <w lemma="the">th'</w>old <w lemma="discovery"><choice>
+                              <orig>diſcoveries</orig>
+                              <reg>discoveries</reg>
+                           </choice></w>, <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w>
+                        <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w> new-found seas,</rdg>
+                     <rdg wit="#b">Both the'old <w lemma="discovery"><choice>
+                              <orig>discoueries</orig>
+                              <reg>discoveries</reg>
+                           </choice></w>, <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w>
+                        <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w>
+                        <w lemma="new-found"><choice>
+                              <orig>New found</orig>
+                              <reg>New-found</reg>
+                           </choice></w> seas,</rdg>
+                     <rdg wit="#p">Both <w lemma="the">th'</w> old <w lemma="discovery"><choice>
+                              <orig>diſcoveries</orig>
+                              <reg>discoveries</reg>
+                           </choice></w>, and the <w lemma="new-found"><choice>
+                              <orig>new found</orig>
+                              <reg>new-found</reg>
+                           </choice></w>
+                        <w lemma="sea"><choice>
+                              <orig>ſeas</orig>
+                              <reg>seas</reg>
+                           </choice></w>,</rdg>
+                  </app>
+               </l>
+
+               <l n="8">
+                  <app>
+                     <rdg wit="#w">The stock and surplus, cause and History.</rdg>
+                     <rdg wit="#b">The stock <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w> surplus, cause and history:</rdg>
+                     <rdg wit="#p">The <w lemma="stock"><choice>
+                              <orig>ﬅock</orig>
+                              <reg>stock</reg>
+                           </choice></w> and <w lemma="surplus"><choice>
+                              <orig>ſurplus</orig>
+                              <reg>surplus</reg>
+                           </choice></w>, <w lemma="cause"><choice>
+                              <orig>cauſe</orig>
+                              <reg>cause</reg>
+                           </choice></w> and <w lemma="history"><choice>
+                              <orig>hiﬅorie</orig>
+                              <reg>history</reg>
+                           </choice></w>:</rdg>
+                     <note>The abundance of knowledge already acquired, and how it came to be (i.e.,
+                        philology).</note>
+                  </app>
+               </l>
+
+               <pb ed="#b" facs="#b61v"/>
+               <fw facs="#b61v" type="header" place="margin-top">The Church</fw>
+               <fw facs="#b61v" type="pageNum" place="margin-topleft">
+                  <del rend="strike">131</del>
+               </fw>
+
+               <l n="9">
+                  <app>
+                     <rdg wit="#w">All these stand open or I have the <w lemma="key"><choice>
+                              <orig>keyes</orig>
+                              <reg>keys</reg>
+                           </choice></w>.</rdg>
+                     <rdg wit="#b">All these stand open, or I <w lemma="have"><choice>
+                              <orig>haue</orig>
+                              <reg>have</reg>
+                           </choice></w> the <w lemma="key"><choice>
+                              <orig>keyes</orig>
+                              <reg>keys</reg>
+                           </choice></w>.</rdg>
+                     <rdg wit="#p">All <w lemma="these"><choice>
+                              <orig>theſe</orig>
+                              <reg>these</reg>
+                           </choice></w>
+                        <w lemma="stand"><choice>
+                              <orig>ﬅand</orig>
+                              <reg>stand</reg>
+                           </choice></w> open, or I have the <w lemma="key"><choice>
+                              <orig>keyes</orig>
+                              <reg>keys</reg>
+                           </choice></w>:</rdg>
+                     <note><hi rend="italic">keyes</hi>: i.e., means and methods with which to
+                        unlock nature's secrets (see line 6 and note).</note>
+                  </app>
+               </l>
+
+               <l n="10">
+                  <app>
+                     <rdg wit="#w">Yet I love Thee.</rdg>
+                     <rdg wit="#b">Yet I <w lemma="love"><choice>
+                              <orig>loue</orig>
+                              <reg>love</reg>
+                           </choice></w> thee.</rdg>
+                     <rdg wit="#p">Yet I love thee.</rdg>
+                  </app>
+               </l>
+            </lg>
+
+            <lg type="stanza" n="2">
+               <l n="11">
+                  <app>
+                     <rdg wit="#w">I know the <w lemma="way"><choice>
+                              <orig>wayes</orig>
+                              <reg>ways</reg>
+                           </choice></w> of Honour: what maintains</rdg>
+                     <rdg wit="#b">I know <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w>
+                        <w lemma="way"><choice>
+                              <orig>wayes</orig>
+                              <reg>ways</reg>
+                           </choice></w> of <w lemma="honour"><choice>
+                              <orig>honor</orig>
+                              <reg>honour</reg>
+                           </choice></w>. what <w lemma="maintain"><choice>
+                              <orig>mantaines</orig>
+                              <reg>maintains</reg>
+                           </choice></w></rdg>
+                     <rdg wit="#p">I know the <w lemma="way"><choice>
+                              <orig>wayes</orig>
+                              <reg>ways</reg>
+                           </choice></w> of honour, what maintains</rdg>
+                  </app>
+               </l>
+
+               <l n="12">
+                  <app>
+                     <rdg wit="#w">The quick <w lemma="return"><choice>
+                              <orig>returnes</orig>
+                              <reg>returns</reg>
+                           </choice></w> of <w lemma="courtesy"><choice>
+                              <orig>curtesie</orig>
+                              <reg>courtesy</reg>
+                           </choice></w> and <w lemma="wit"><choice>
+                              <orig>witt</orig>
+                              <reg>wit</reg>
+                           </choice></w>:</rdg>
+                     <rdg wit="#b">The quick <w lemma="return"><choice>
+                              <orig>returnes</orig>
+                              <reg>returns</reg>
+                           </choice></w> of <w lemma="courtesy"><choice>
+                              <orig>curtesie</orig>
+                              <reg>courtesy</reg>
+                           </choice></w> and <w lemma="wit"><choice>
+                              <orig>witt</orig>
+                              <reg>wit</reg>
+                           </choice></w>:</rdg>
+                     <rdg wit="#p">The quick returns of <w lemma="courtesy"><choice>
+                              <orig>courte<g ref="#silig">ſi</g>e</orig>
+                              <reg>courtesy</reg>
+                           </choice></w> and wit:</rdg>
+                     <note>"The courtier's skill in lively banter."</note>
+                  </app>
+               </l>
+
+               <l n="13">
+                  <app>
+                     <rdg wit="#w">In <w lemma="vie"><choice>
+                              <orig>vyes</orig>
+                              <reg>vies</reg>
+                           </choice></w> of <w lemma="favour"><choice>
+                              <orig>fauours</orig>
+                              <reg>favours</reg>
+                           </choice></w>
+                        <w lemma="whether"><choice>
+                              <orig>whither</orig>
+                              <reg>whether</reg>
+                           </choice></w> party gains,</rdg>
+                     <rdg wit="#b">In <w lemma="vie"><choice>
+                              <orig>vyes</orig>
+                              <reg>vies</reg>
+                           </choice></w> of <w lemma="favour"><choice>
+                              <orig>fauo<hi rend="superscript">rs</hi></orig>
+                              <reg>favours</reg>
+                           </choice></w>, whether party <w lemma="gain"><choice>
+                              <orig>gaines</orig>
+                              <reg>gains</reg>
+                           </choice></w>,</rdg>
+                     <rdg wit="#p">In vies of favours whether <w lemma="party"><choice>
+                              <orig>partie</orig>
+                              <reg>party</reg>
+                           </choice></w> gains,</rdg>
+                     <note>"Which of two courtiers wins favour in a contest of deference to a person
+                        of rank."</note>
+                  </app>
+               </l>
+
+               <l n="14">
+                  <app>
+                     <rdg wit="#w">When glory <w lemma="swell"><choice>
+                              <orig>swels</orig>
+                              <reg>swells</reg>
+                           </choice></w>
+                        <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w>
+                        <w lemma="heart"><choice>
+                              <orig>hart</orig>
+                              <reg>heart</reg>
+                           </choice></w> and <w lemma="mold">moldeth</w> it</rdg>
+                     <rdg wit="#b">When Glory swells <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w> heart, <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w>
+                        <w lemma="mold">moldeth</w> it</rdg>
+                     <rdg wit="#p">When <w lemma="glory"><choice>
+                              <orig>glorie</orig>
+                              <reg>glory</reg>
+                           </choice></w>
+                        <w lemma="swell"><choice>
+                              <orig>ſwells</orig>
+                              <reg>swells</reg>
+                           </choice></w> the heart, and <w lemma="mold">moldeth</w> it</rdg>
+                  </app>
+               </l>
+
+               <l n="15">
+                  <app>
+                     <rdg wit="#w">To all <w lemma="expression"><choice>
+                              <orig>expreſsions</orig>
+                              <reg>expressions</reg>
+                           </choice></w> both of hand <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w> eye</rdg>
+                     <rdg wit="#b">To all expressions both of hand <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w>
+                        <w lemma="eye"><choice>
+                              <orig>eie</orig>
+                              <reg>eye</reg>
+                           </choice></w>,</rdg>
+                     <rdg wit="#p">To all <w lemma="expression"><choice>
+                              <orig>expre<g ref="#ssilig">ſſi</g>ons</orig>
+                              <reg>expressions</reg>
+                           </choice></w> both of hand and eye,</rdg>
+                  </app>
+               </l>
+
+               <l n="16">
+                  <app>
+                     <rdg wit="#w"><w lemma="which"><choice>
+                              <orig>W<hi rend="superscript">ch</hi></orig>
+                              <reg>Which</reg>
+                           </choice></w> on the world a <w lemma="true"><choice>
+                              <orig>tru</orig>
+                              <reg>true</reg>
+                           </choice></w>-love-<w lemma="knot"><choice>
+                              <orig>knott</orig>
+                              <reg>knot</reg>
+                           </choice></w> may <w lemma="tie"><choice>
+                              <orig>tye</orig>
+                              <reg>tie</reg>
+                           </choice></w></rdg>
+                     <rdg wit="#b"><w lemma="which"><choice>
+                              <orig>W<hi rend="superscript">ch</hi></orig>
+                              <reg>Which</reg>
+                           </choice></w> on <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w> World a true-<w lemma="love"><choice>
+                              <orig>loue</orig>
+                              <reg>love</reg>
+                           </choice></w>-knot may tie</rdg>
+                     <rdg wit="#p">Which on the world a true-love-knot may tie,</rdg>
+                     <note><hi rend="italic">tru/true-love/loue-knot</hi>: ornamental knot used as a
+                        symbol of true love.</note>
+                  </app>
+               </l>
+
+               <l n="17">
+                  <app>
+                     <rdg wit="#w">And <w lemma="bear"><choice>
+                              <orig>beare</orig>
+                              <reg>bear</reg>
+                           </choice></w>
+                        <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w> bundle <w lemma="wheresoever"><choice>
+                              <orig>wheresoere</orig>
+                              <reg>wheresoe'er</reg>
+                           </choice></w> it goes.</rdg>
+                     <rdg wit="#b">And <w lemma="bear"><choice>
+                              <orig>beare</orig>
+                              <reg>bear</reg>
+                           </choice></w>
+                        <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w> bundle, <w lemma="wheresoever"><choice>
+                              <orig>wheresoere</orig>
+                              <reg>wheresoe'er</reg>
+                           </choice></w> it goes:</rdg>
+                     <rdg wit="#p">And bear the bundle, <w lemma="wheresoever"><choice>
+                              <orig>whereſoe're</orig>
+                              <reg>wheresoe'er</reg>
+                           </choice></w> it goes:</rdg>
+                     <note><hi rend="italic">Lines 15-17</hi>: "When the desire for fame and
+                        reputation at court is evident in subtle physical gestures and glances: a
+                        wooing of the world as though it were a mistress&#x2014;a pretence which,
+                        like a burdensome load, must always be sustained."</note>
+                  </app>
+               </l>
+
+               <l n="18">
+                  <app>
+                     <rdg wit="#w">How many drams of spirit there must <w lemma="be"><choice>
+                              <orig>bee</orig>
+                              <reg>be</reg>
+                           </choice></w></rdg>
+                     <rdg wit="#b">How many <w lemma="dram"><choice>
+                              <orig>drammes</orig>
+                              <reg>drams</reg>
+                           </choice></w> of spirit there must <w lemma="be"><choice>
+                              <orig>bee</orig>
+                              <reg>be</reg>
+                           </choice></w></rdg>
+                     <rdg wit="#p">How many <w lemma="dram"><choice>
+                              <orig>drammes</orig>
+                              <reg>drams</reg>
+                           </choice></w> of <w lemma="spirit"><choice>
+                              <orig>ſpirit</orig>
+                              <reg>spirit</reg>
+                           </choice></w> there <w lemma="must"><choice>
+                              <orig>muﬅ</orig>
+                              <reg>must</reg>
+                           </choice></w> be</rdg>
+                     <note><hi rend="italic">drams/drammes</hi>: small amounts (<hi rend="italic"
+                           >OED</hi> 3.b). <hi rend="italic">spirit/&#x17f;pirit</hi>: mental vigor,
+                        courage (<hi rend="italic">OED</hi> 13.a); vital bodily fluid (<hi
+                           rend="italic">OED</hi> 16.a); distilled alcohol (<hi rend="italic"
+                           >OED</hi> 21).</note>
+                  </app>
+               </l>
+
+               <l n="19">
+                  <app>
+                     <rdg wit="#w">To sell my life <w lemma="unto"><choice>
+                              <orig>vnto</orig>
+                              <reg>unto</reg>
+                           </choice></w> my <w lemma="friend"><choice>
+                              <orig>frends</orig>
+                              <reg>friends</reg>
+                           </choice></w> or foes</rdg>
+                     <rdg wit="#b">To sell my life <w lemma="unto"><choice>
+                              <orig>vnto</orig>
+                              <reg>unto</reg>
+                           </choice></w> my <w lemma="friend"><choice>
+                              <orig>freinds</orig>
+                              <reg>friends</reg>
+                           </choice></w> or foes.</rdg>
+                     <rdg wit="#p">To <w lemma="sell"><choice>
+                              <orig>ſell</orig>
+                              <reg>sell</reg>
+                           </choice></w> my life unto my friends or foes:</rdg>
+                     <note><hi rend="italic">Lines 18-19</hi>: The speaker bemoans the considerable
+                        energy it takes to sustain worldly respectability, wryly suggesting that
+                        such effort can be mustered at all only with a little fortifying courage
+                        from the bottle.</note>
+                  </app>
+               </l>
+
+               <l n="20">
+                  <app>
+                     <rdg wit="#w">Yet I love Thee.</rdg>
+                     <rdg wit="#b">Yet I <w lemma="love"><choice>
+                              <orig>loue</orig>
+                              <reg>love</reg>
+                           </choice></w> thee.</rdg>
+                     <rdg wit="#p">Yet I love thee.</rdg>
+                  </app>
+               </l>
+            </lg>
+
+            <pb ed="#w" facs="#w58r"/>
+            <fw facs="#w58r" type="header" place="margin-top">The church.</fw>
+            <fw facs="#w58r" type="folioNum" place="margin-topright">58</fw>
+
+            <lg type="stanza" n="3">
+               <l n="21">
+                  <app>
+                     <rdg wit="#w">I know <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w>
+                        <w lemma="way"><choice>
+                              <orig>wayes</orig>
+                              <reg>ways</reg>
+                           </choice></w> of Pleasure: the sweet strains,</rdg>
+                     <rdg wit="#b">I know <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w>
+                        <w lemma="way"><choice>
+                              <orig>waies</orig>
+                              <reg>ways</reg>
+                           </choice></w> of Pleasure. <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w> sweet <w lemma="strain"><choice>
+                              <orig>straines</orig>
+                              <reg>strains</reg>
+                           </choice></w>,</rdg>
+                     <rdg wit="#p">I know the <w lemma="way"><choice>
+                              <orig>wayes</orig>
+                              <reg>ways</reg>
+                           </choice></w> of <w lemma="pleasure"><choice>
+                              <orig>pleaſure</orig>
+                              <reg>pleasure</reg>
+                           </choice></w>, the <w lemma="sweet"><choice>
+                              <orig>ſweet</orig>
+                              <reg>sweet</reg>
+                           </choice></w>
+                        <w lemma="strain"><choice>
+                              <orig>ﬅrains</orig>
+                              <reg>strains</reg>
+                           </choice></w>,</rdg>
+                     <note><hi rend="italic">strains/straines/ﬅrains</hi>: passages of song or verse
+                           (<hi rend="italic">OED</hi> 13.b); sexual exertions.</note>
+                  </app>
+               </l>
+
+               <l n="22">
+                  <app>
+                     <rdg wit="#w">The <del rend="strike">gustos</del>
+                        <add rend="supralinear">lullings</add> and the relishes of <w lemma="it"><choice>
+                              <orig>itt</orig>
+                              <reg>it</reg>
+                           </choice></w>.<note><hi rend="italic"><del rend="strike"
+                              >gustos</del></hi>: keen enjoyments (<hi rend="italic">OED</hi>
+                           2).</note></rdg>
+                     <rdg wit="#b">The Lullings <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w>
+                        <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w>
+                        <w lemma="relish"><choice>
+                              <orig>rellishes</orig>
+                              <reg>relishes</reg>
+                           </choice></w> of <w lemma="it"><choice>
+                              <orig>itt</orig>
+                              <reg>it</reg>
+                           </choice></w>:</rdg>
+                     <rdg wit="#p">The lullings and the <w lemma="relish"><choice>
+                              <orig>reli<g ref="#shlig">ſh</g>es</orig>
+                              <reg>relishes</reg>
+                           </choice></w> of it;</rdg>
+                     <note><hi rend="italic">lullings/Lullings</hi>: soothing songs (<hi
+                           rend="italic">OED</hi> 1.b); soothing caresses (<hi rend="italic"
+                           >OED</hi> lull, v.1, 1). <hi rend="italic">relishes/rellishes/reli<g
+                              ref="#shlig">&#x17f;h</g>es</hi>: pleasing flavours or qualities (<hi
+                           rend="italic">OED</hi> 1.d); and, as Wilcox (325) notes, musical
+                        embellishments (<hi rend="italic">OED</hi> relish, n.3).</note>
+                  </app>
+               </l>
+
+               <l n="23">
+                  <app>
+                     <rdg wit="#w">The propositions of <w lemma="hot"><choice>
+                              <orig>hott</orig>
+                              <reg>hot</reg>
+                           </choice></w> blood and brains:</rdg>
+                     <rdg wit="#b">The propositions of <w lemma="hot"><choice>
+                              <orig>hott</orig>
+                              <reg>hot</reg>
+                           </choice></w> blood <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w>
+                        <w lemma="brain"><choice>
+                              <orig>braines</orig>
+                              <reg>brains</reg>
+                           </choice></w>:</rdg>
+                     <rdg wit="#p">The <w lemma="proposition"><choice>
+                              <orig>propo<g ref="#silig">ſi</g>tions</orig>
+                              <reg>propositions</reg>
+                           </choice></w> of hot <w lemma="blood"><choice>
+                              <orig>bloud</orig>
+                              <reg>blood</reg>
+                           </choice></w> and brains;</rdg>
+                     <note><hi rend="italic">propositions/propo<g ref="#silig"
+                           >&#x17f;i</g>tions</hi>: schemes or courses of action (<hi rend="italic"
+                           >OED</hi> 2.a).</note>
+                  </app>
+               </l>
+
+               <l n="24">
+                  <app>
+                     <rdg wit="#w">What mirth <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w>
+                        <w lemma="music"><choice>
+                              <orig>Musick</orig>
+                              <reg>Music</reg>
+                           </choice></w>
+                        <w lemma="mean"><choice>
+                              <orig>meane</orig>
+                              <reg>mean</reg>
+                           </choice></w>, what <w lemma="love"><choice>
+                              <orig>loue</orig>
+                              <reg>love</reg>
+                           </choice></w>
+                        <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w>
+                        <w lemma="wit"><choice>
+                              <orig>witt</orig>
+                              <reg>wit</reg>
+                           </choice></w></rdg>
+                     <rdg wit="#b">What Mirth <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w>
+                        <w lemma="music"><choice>
+                              <orig>Musiq</orig>
+                              <reg>Music</reg>
+                           </choice></w>
+                        <w lemma="mean"><choice>
+                              <orig>meane</orig>
+                              <reg>mean</reg>
+                           </choice></w>: what <w lemma="love"><choice>
+                              <orig>loue</orig>
+                              <reg>love</reg>
+                           </choice></w>
+                        <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w>
+                        <w lemma="wit"><choice>
+                              <orig>witt</orig>
+                              <reg>wit</reg>
+                           </choice></w></rdg>
+                     <rdg wit="#p">What mirth and <w lemma="music"><choice>
+                              <orig>mu<g ref="#silig">ſi</g>ck</orig>
+                              <reg>music</reg>
+                           </choice></w> mean; what love and wit</rdg>
+                  </app>
+               </l>
+
+               <l n="25">
+                  <app>
+                     <rdg wit="#w">Have done these <del rend="strike">twenty</del>
+                        <add rend="supralinear">many</add> hundred <w lemma="year"><choice>
+                              <orig>yeers</orig>
+                              <reg>years</reg>
+                           </choice></w> and more:</rdg>
+                     <rdg wit="#b"><w lemma="have"><choice>
+                              <orig>Haue</orig>
+                              <reg>Have</reg>
+                           </choice></w> done these twenty hundred <w lemma="year"><choice>
+                              <orig>yeares</orig>
+                              <reg>years</reg>
+                           </choice></w>
+                        <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w> more:</rdg>
+                     <rdg wit="#p">Have done <w lemma="these"><choice>
+                              <orig>theſe</orig>
+                              <reg>these</reg>
+                           </choice></w>
+                        <w lemma="twenty"><choice>
+                              <orig>twentie</orig>
+                              <reg>twenty</reg>
+                           </choice></w> hundred <w lemma="year"><choice>
+                              <orig>yeares</orig>
+                              <reg>years</reg>
+                           </choice></w>, and more:</rdg>
+                     <note><hi rend="italic">Lines 24-25</hi>: "What are the major cultural
+                        achievements inspired by love from Classical antiquity to the
+                        present."</note>
+                  </app>
+               </l>
+
+               <l n="26">
+                  <app>
+                     <rdg wit="#w">
+                        <del rend="strike">Where both their <w lemma="basket"><choice>
+                                 <orig>baſkets</orig>
+                                 <reg>baskets</reg>
+                              </choice></w> are <w lemma="withal"><choice>
+                                 <orig>w<hi rend="superscript">th</hi> all</orig>
+                                 <reg>withal</reg>
+                              </choice></w> their store</del>
+                        <note><hi rend="italic">their</hi>: i.e., <hi rend="italic">loue</hi>'s and
+                              <hi rend="italic">witt</hi>'s.</note>
+                     </rdg>
+                     <rdg wit="#b">I know <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w>
+                        <w lemma="project"><choice>
+                              <orig>proiects</orig>
+                              <reg>projects</reg>
+                           </choice></w> of <w lemma="unbundled"><choice>
+                              <orig>vnbundled</orig>
+                              <reg>unbundled</reg>
+                           </choice></w> store:</rdg>
+                     <rdg wit="#p">I know the <w lemma="project">proje<g ref="#ctlig">ct</g>s</w> of
+                        unbridled <w lemma="store"><choice>
+                              <orig>ﬅore</orig>
+                              <reg>store</reg>
+                           </choice></w>:</rdg>
+                     <rdg wit="#b #p">
+                        <note><hi rend="italic">vnbundled/unbridled</hi>: Whereas the #b version
+                           means merely unpacked or released, the #p revision means unrestrained or
+                           undisciplined (as of a horse without a bridle).</note>
+                     </rdg>
+                  </app>
+               </l>
+
+               <l n="27">
+                  <app>
+                     <rdg wit="#w">
+                        <del rend="strike">The smacks of dainties and their exaltation:</del>
+                        <note><hi rend="italic">smacks</hi>: agreeable flavours (<hi rend="italic"
+                              >OED</hi> 1.c). <hi rend="italic">dainties</hi>: choice viands (<hi
+                              rend="italic">OED</hi> 6). <hi rend="italic">their exaltation</hi>:
+                           the elation they cause (<hi rend="italic">OED</hi> 2.b).</note>
+                     </rdg>
+                     <rdg wit="#b">My stuff is flesh, not <w lemma="brass"><choice>
+                              <orig>brasse</orig>
+                              <reg>brass</reg>
+                           </choice></w>; my senses <w lemma="live"><choice>
+                              <orig>liue</orig>
+                              <reg>live</reg>
+                           </choice></w>,</rdg>
+                     <rdg wit="#p">My <w lemma="stuff"><choice>
+                              <orig>ﬅuﬀe</orig>
+                              <reg>stuff</reg>
+                           </choice></w> is <w lemma="flesh"><choice>
+                              <orig>ﬂe<g ref="#shlig">ſh</g></orig>
+                              <reg>flesh</reg>
+                           </choice></w>, not <w lemma="brass"><choice>
+                              <orig>bra<g ref="#sslig">ſſ</g>e</orig>
+                              <reg>brass</reg>
+                           </choice></w>; my <w lemma="sense"><choice>
+                              <orig>ſenſes</orig>
+                              <reg>senses</reg>
+                           </choice></w> live,</rdg>
+                  </app>
+               </l>
+
+               <l n="28">
+                  <app>
+                     <rdg wit="#w">
+                        <del rend="strike">What both <w lemma="the"><choice>
+                                 <orig>y<hi rend="superscript">e</hi></orig>
+                                 <reg>the</reg>
+                              </choice></w> stops and pegs of pleasure <w lemma="be"><choice>
+                                 <orig>bee</orig>
+                                 <reg>be</reg>
+                              </choice></w>:</del>
+                        <note><hi rend="italic">stops</hi>: ventages or apertures on the tube of a
+                           wind instrument (<hi rend="italic">OED</hi> 15.a). <hi rend="italic"
+                              >pegs</hi>: tuning pegs of a stringed instrument (<hi rend="italic"
+                              >OED</hi> 2.a).</note>
+                     </rdg>
+                     <rdg wit="#b">And grumble oft; that they <w lemma="have"><choice>
+                              <orig>haue</orig>
+                              <reg>have</reg>
+                           </choice></w> more in <w lemma="me"><choice>
+                              <orig>mee</orig>
+                              <reg>me</reg>
+                           </choice></w></rdg>
+                     <rdg wit="#p">And grumble oft, that they have more in me</rdg>
+                  </app>
+               </l>
+
+               <l n="29">
+                  <app>
+                     <rdg wit="#w">The <w lemma="joy"><choice>
+                              <orig>ioyes</orig>
+                              <reg>joys</reg>
+                           </choice></w> of Company or Contemplation<note>"The pleasures of society
+                           or solitary reflection."</note></rdg>
+                     <rdg wit="#b"><w lemma="than"><choice>
+                              <orig>Then</orig>
+                              <reg>Than</reg>
+                           </choice></w> he, <w lemma="that"><choice>
+                              <orig>y<hi rend="superscript">t</hi></orig>
+                              <reg>that</reg>
+                           </choice></w> curbs them, being but one to <w lemma="five"><choice>
+                              <orig>fiue</orig>
+                              <reg>five</reg>
+                           </choice></w>.</rdg>
+                     <rdg wit="#p"><w lemma="than"><choice>
+                              <orig>Then</orig>
+                              <reg>Than</reg>
+                           </choice></w> he that curbs them, being but one to <w lemma="five"><choice>
+                              <orig>ﬁve</orig>
+                              <reg>five</reg>
+                           </choice></w>:</rdg>
+                     <rdg wit="#b #p">
+                        <note><hi rend="italic">Lines 27-29</hi>: "I am made of flesh and my five
+                           senses complain often that they are restrained by Reason even though
+                           outnumbering him five to one."</note>
+                     </rdg>
+                  </app>
+               </l>
+
+               <l n="30">
+                  <app>
+                     <rdg wit="#w">Yet I love Thee</rdg>
+                     <rdg wit="#b">Yet I <w lemma="love"><choice>
+                              <orig>loue</orig>
+                              <reg>love</reg>
+                           </choice></w> thee.</rdg>
+                     <rdg wit="#p">Yet I love thee.</rdg>
+                  </app>
+               </l>
+            </lg>
+            <fw facs="#p81" type="sig" place="bottom">D5</fw>
+            <fw facs="#p81" type="catch" place="bottom">I</fw>
+
+            <pb ed="#b" facs="#b62r"/>
+            <fw facs="#b62r" type="header" place="margin-top">The Church</fw>
+            <fw facs="#b62r" type="folioNum" place="margin-topright">62</fw>
+            <fw facs="#b62r" type="pageNum" place="margin-topright">
+               <del rend="strike">132</del>
+            </fw>
+
+            <pb ed="#p" facs="#p82"/>
+            <fw facs="#p82" type="header" place="margin-top"><hi rend="italic">The Church</hi>.</fw>
+            <fw facs="#p82" type="pageNum" place="margin-topleft">82</fw>
+
+            <lg type="stanza" n="4">
+               <l n="31">
+                  <app>
+                     <rdg wit="#w">I know all these <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w> have them in my hand.</rdg>
+                     <rdg wit="#b">I know all these, <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w>
+                        <w lemma="have"><choice>
+                              <orig>haue</orig>
+                              <reg>have</reg>
+                           </choice></w> them in my hand.</rdg>
+                     <rdg wit="#p">I know all <w lemma="these"><choice>
+                              <orig>theſe</orig>
+                              <reg>these</reg>
+                           </choice></w>, and have them in my hand:</rdg>
+                     <note><hi rend="italic">have/haue them in my hand</hi>: i.e., by virtue of
+                        having written this poem.</note>
+                  </app>
+               </l>
+
+               <l n="32">
+                  <app>
+                     <rdg wit="#w">Therefore not <w lemma="sealed"><choice>
+                              <orig>seeled</orig>
+                              <reg>sealed</reg>
+                           </choice></w>, but <w lemma="with"><choice>
+                              <orig>w<hi rend="superscript">th</hi></orig>
+                              <reg>with</reg>
+                           </choice></w> open eyes</rdg>
+                     <rdg wit="#b">Therefore not sealed, but with open eyes</rdg>
+                     <rdg wit="#p">Therefore not <w lemma="sealed"><choice>
+                              <orig>ſealed</orig>
+                              <reg>sealed</reg>
+                           </choice></w>, but with open eyes</rdg>
+                  </app>
+               </l>
+
+               <l n="33">
+                  <app>
+                     <rdg wit="#w">I fly to thee, and fully <w lemma="understand"><choice>
+                              <orig>vnderstand</orig>
+                              <reg>understand</reg>
+                           </choice></w></rdg>
+                     <rdg wit="#b">I fly to thee, and fully <w lemma="understand"><choice>
+                              <orig>vnderstand</orig>
+                              <reg>understand</reg>
+                           </choice></w>,</rdg>
+                     <rdg wit="#p">I <w lemma="fly"><choice>
+                              <orig>ﬂie</orig>
+                              <reg>fly</reg>
+                           </choice></w> to thee, and fully <w lemma="understand"><choice>
+                              <orig>underﬅand</orig>
+                              <reg>understand</reg>
+                           </choice></w></rdg>
+                  </app>
+               </l>
+
+               <l n="34">
+                  <app>
+                     <rdg wit="#w">Both the <w lemma="main"><choice>
+                              <orig>maine</orig>
+                              <reg>main</reg>
+                           </choice></w> sale and the Commodities</rdg>
+                     <rdg wit="#b">Both <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w>
+                        <w lemma="main"><choice>
+                              <orig>maine</orig>
+                              <reg>main</reg>
+                           </choice></w> sale, and the commodities:</rdg>
+                     <rdg wit="#p">Both the main <w lemma="sale"><choice>
+                              <orig>ſale</orig>
+                              <reg>sale</reg>
+                           </choice></w>, and the commodities;</rdg>
+                  </app>
+               </l>
+
+               <l n="35">
+                  <app>
+                     <rdg wit="#w">And at what rate <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w> price I <w lemma="have"><choice>
+                              <orig>haue</orig>
+                              <reg>have</reg>
+                           </choice></w> thy love,</rdg>
+                     <rdg wit="#b">And at what rate <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w> price I <w lemma="have"><choice>
+                              <orig>haue</orig>
+                              <reg>have</reg>
+                           </choice></w> thy <w lemma="love"><choice>
+                              <orig>loue</orig>
+                              <reg>love</reg>
+                           </choice></w></rdg>
+                     <rdg wit="#p">And at what rate and price I have thy love;</rdg>
+                     <note><hi rend="italic">Lines 32-35</hi>: Using a cold, mercantile language of
+                        exchange, the speaker arrogantly presumes to comprehend the extent of the
+                        sacrifice required to follow Christ. Worse yet, he fails utterly to
+                        comprehend the extent of Christ's sacrifice relative to his own.</note>
+                  </app>
+               </l>
+
+               <l n="36">
+                  <app>
+                     <rdg wit="#w"><w lemma="with"><choice>
+                              <orig>W<hi rend="superscript">th</hi></orig>
+                              <reg>With</reg>
+                           </choice></w> all the Circumstances <w lemma="that"><choice>
+                              <orig>y<hi rend="superscript">t</hi></orig>
+                              <reg>that</reg>
+                           </choice></w> may <w lemma="move"><choice>
+                              <orig>moue</orig>
+                              <reg>move</reg>
+                           </choice></w>.</rdg>
+                     <rdg wit="#b">With all <w lemma="the"><choice>
+                              <orig>y<hi rend="superscript">e</hi></orig>
+                              <reg>the</reg>
+                           </choice></w> circumstances, <w lemma="that"><choice>
+                              <orig>y<hi rend="superscript">t</hi></orig>
+                              <reg>that</reg>
+                           </choice></w> may <w lemma="move"><choice>
+                              <orig>moue</orig>
+                              <reg>move</reg>
+                           </choice></w>,</rdg>
+                     <rdg wit="#p">With all the <w lemma="circumstance"><choice>
+                              <orig>circumﬅances</orig>
+                              <reg>circumstances</reg>
+                           </choice></w> that may move:</rdg>
+                     <note>"The speaker even claims to be able to anticipate changes in
+                        circumstances and to understand how they will affect the agreement" (Wilcox,
+                        326).</note>
+                  </app>
+               </l>
+
+               <l n="37">
+                  <app>
+                     <rdg wit="#w">Yet <w lemma="through"><choice>
+                              <orig>th<add rend="infralinear">‸</add><add rend="supralinear"
+                                 >r</add>ough</orig>
+                              <reg>through</reg>
+                           </choice></w> these labyrinths not my <w lemma="groveling"><choice>
+                              <orig>groueling</orig>
+                              <reg>groveling</reg>
+                           </choice></w>
+                        <w lemma="wit"><choice>
+                              <orig>witt</orig>
+                              <reg>wit</reg>
+                           </choice></w>,</rdg>
+                     <rdg wit="#b">Yet through these <w lemma="labyrinth"><choice>
+                              <orig>labarinths</orig>
+                              <reg>labyrinths</reg>
+                           </choice></w>, not my <w lemma="groveling"><choice>
+                              <orig>groueling</orig>
+                              <reg>groveling</reg>
+                           </choice></w>
+                        <w lemma="wit"><choice>
+                              <orig>witt</orig>
+                              <reg>wit</reg>
+                           </choice></w>,</rdg>
+                     <rdg wit="#p">Yet through the labyrinths, not my groveling wit,</rdg>
+                     <note><hi rend="italic">labyrinths/labarinths</hi>: mazes, recalling the story
+                        of Theseus and the Minotaur in Ovid's <hi rend="italic">Metamorphoses</hi>
+                        (8.130ff.). After slaying the beast, Theseus finds his way out of the
+                        labyrinth by means of Ariadne's thread (the latter suggested here by the <hi
+                           rend="italic">silk twist/twiﬅ</hi> in the following line). <hi
+                           rend="italic">groueling/groveling witt/wit</hi>: This sudden assertion
+                        that the poem to this point has been merely obsequious seems entirely at
+                        odds with the arrogance of the lines (32-36) immediately preceding. The
+                        crucial question is whether the acknowledgement of such folly has
+                        sufficiently corrected it. But perhaps that is the point: nothing the
+                        speaker says or does can redeem him. The poem's conclusion is the moment
+                        before the <hi rend="italic">clime/climbe</hi> (line 40) has even
+                        begun.</note>
+                  </app>
+               </l>
+
+               <l n="38">
+                  <app>
+                     <rdg wit="#w">But thy silk-twist, <w lemma="let"><choice>
+                              <orig>lett</orig>
+                              <reg>let</reg>
+                           </choice></w>
+                        <w lemma="down"><choice>
+                              <orig>downe</orig>
+                              <reg>down</reg>
+                           </choice></w> from <w lemma="heaven"><choice>
+                              <orig>Heauen</orig>
+                              <reg>Heaven</reg>
+                           </choice></w> to <w lemma="me"><choice>
+                              <orig>mee</orig>
+                              <reg>me</reg>
+                           </choice></w></rdg>
+                     <rdg wit="#b">But thy silk twist, let <w lemma="down"><choice>
+                              <orig>downe</orig>
+                              <reg>down</reg>
+                           </choice></w> from <w lemma="heaven"><choice>
+                              <orig>heauen</orig>
+                              <reg>heaven</reg>
+                           </choice></w> to <w lemma="me"><choice>
+                              <orig>mee</orig>
+                              <reg>me</reg>
+                           </choice></w>,</rdg>
+                     <rdg wit="#p">But thy <w lemma="silk"><choice>
+                              <orig><g ref="#silig">ſi</g>lk</orig>
+                              <reg>silk</reg>
+                           </choice></w>
+                        <w lemma="twist"><choice>
+                              <orig>twiﬅ</orig>
+                              <reg>twist</reg>
+                           </choice></w> let down from <w lemma="heaven">heav'n</w> to me,</rdg>
+                     <note><hi rend="italic">silk-/silk/<g ref="#silig">&#x17f;i</g>lk
+                           twist/twiﬅ</hi>: In addition to the echo of Ovid (see line 37 and note),
+                        Wilcox (326-27) cites three possible interpretations of this much-discussed
+                        phrase: an echo of Jacob's ladder linking heaven and earth (Genesis 28:12);
+                        the proverbial "threefold cord" that "is not quickly broken" (Ecclesiastes
+                        3:12) and therefore a type of the Trinity; and a passage in Calvin's <hi
+                           rend="italic">Institutes</hi> (1.6.3) in which the "twist" of God's Word
+                        is said to lead the Christian to salvation.</note>
+                  </app>
+               </l>
+
+               <l n="39">
+                  <app>
+                     <rdg wit="#w">Did both conduct and teach <w lemma="me"><choice>
+                              <orig>mee</orig>
+                              <reg>me</reg>
+                           </choice></w> how by <w lemma="it"><choice>
+                              <orig>itt</orig>
+                              <reg>it</reg>
+                           </choice></w></rdg>
+                     <rdg wit="#b">Did both conduct, <w lemma="and"><choice>
+                              <orig>&amp;</orig>
+                              <reg>and</reg>
+                           </choice></w> teach <w lemma="me"><choice>
+                              <orig>mee</orig>
+                              <reg>me</reg>
+                           </choice></w>, how by it</rdg>
+                     <rdg wit="#p">Did both <w lemma="conduct"><choice>
+                              <orig>condu<g ref="#ctlig">ct</g></orig>
+                              <reg>conduct</reg>
+                           </choice></w> and teach me, how by it</rdg>
+                  </app>
+               </l>
+
+               <l n="40">
+                  <app>
+                     <rdg wit="#w">To <w lemma="climb"><choice>
+                              <orig>clime</orig>
+                              <reg>climb</reg>
+                           </choice></w> to Thee.</rdg>
+                     <rdg wit="#b">To <w lemma="climb"><choice>
+                              <orig>climbe</orig>
+                              <reg>climb</reg>
+                           </choice></w> to Thee.</rdg>
+                     <rdg wit="#p">To <w lemma="climb"><choice>
+                              <orig>climbe</orig>
+                              <reg>climb</reg>
+                           </choice></w> to thee.</rdg>
+                  </app>
+               </l>
+            </lg>
+         </div>
+
+      </body>
+   </text>
+
+</TEI>
