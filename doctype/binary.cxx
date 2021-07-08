@@ -2,34 +2,14 @@
 
                Binary Multiple Document Handler (DOCTYPE)
 
-   File: binary.cxx
-   Version: $Revision: 1.1 $
-   Path: /home/furball/edz/Dist/Networking/CNIDR/Dist/New/Isearch-1.09/doctype/binary.cxx
    Description: Class BINARY - Binary and associated Text files 
-   Created: Thu Dec 28 21:38:30 MET 1995
    Author: Edward C. Zimmermann, edz@nonmonotonic.net
-   Modified: Fri Dec 29 11:57:19 MET 1995
-   Last maintained by: Edward C. Zimmermann
-
-   RCS $Revision: 1.1 $ $State: Exp $
-
 
    ########################################################################
 
    Note: None 
 
    ########################################################################
-
-   Copyright (c) 1995 : Basis Systeme netzerk. All Rights Reserved.
-
-  This notice is intended as a precaution against inadvertent publication
-  and does not constitute an admission or acknowledgement that publication
-  has occurred or constitute a waiver of confidentiality.
-
-  This software is the proprietary and confidential property of Basis
-  Systeme netzwerk, Munich.
-
-  Basis Systeme netzwerk, Brecherspitzstr. 8, D-81541 Munich, Germany.
 
    ######################################################################## */
 
