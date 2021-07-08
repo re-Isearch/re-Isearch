@@ -1,25 +1,5 @@
 
 /* ########################################################################
-
-			       Autodetect
-
-			 Basis Systeme netzwerk
-			   Brecherspitzstr. 8
-			D-81541 Munich, Germany
-
-   File: autodetect.cxx
-   Description: Doctype autodetection 
-   Created: Sun Aug 18 09:03:31 MET 1996
-   Author: Edward C. Zimmermann
-   Modified: Sun Aug 18 09:03:32 MET 1996
-   Last maintained by: Edward C. Zimmermann
-
-   RCS $Revision: 1.1 $ $State: Exp $
-   
-
-			   (c) Copyright 1996
-		     Basis Systeme netzwerk, Munich
-
    ########################################################################
 
    Note: The more DOCTYPEs defined the better! This module *should* be
