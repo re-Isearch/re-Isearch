@@ -125,7 +125,9 @@ const GDT_BOOLEAN GDT_TRUE = (1==1);
 # define MAX_GPTYPE 0xffffffffffff0000ULL
   typedef UINT8   GPTYPE;
   typedef GPTYPE* PGPTYPE;
-# define __USE_FILE_OFFSET64
+# ifndef __USE_FILE_OFFSET64
+#   define __USE_FILE_OFFSET64
+# endif
 #else
 # define MAX_GPTYPE 0xffffff00U
   typedef UINT4   GPTYPE;

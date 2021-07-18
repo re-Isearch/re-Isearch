@@ -10,6 +10,36 @@ static const char defaultLevelCh = '\\';
 static const char DefaultTypeKeyword[] = "Type";
 
 
+/*
+STRING XMLBASE::Getoption(const STRING& Option, const STRING& defaultVal)
+{
+  STRING string;
+  STRING value;
+
+  if (tagRegistry)
+    tagRegistry->ProfileGetString("XML", Option, defaultVal, &string);
+  else
+    string = defaultVal;
+
+  if (Db)
+    Db->ProfileGetString(Doctype, Option, string, &value);
+  else
+    value = string;
+
+  string.Clear();
+  if (Db) Db->GetDocTypeOptionsPtr ()->GetValue(Option, &string);
+
+  if (string.GetLength())
+    {
+      string.unEscape ();
+      logf (LOG_INFO, "%s: -o %s=%s overrides %s", Doctype.c_str(), Option, string.c_str(), value.c_str());
+      value = string;
+    }
+  return value;
+}
+*/
+
+
 GILSXML::GILSXML (PIDBOBJ DbParent, const STRING& Name) : XMLBASE (DbParent, Name)
 {
   STRING string, value;
@@ -1151,4 +1181,184 @@ void XMLBASE::DocPresent (const RESULT& ResultRecord, const STRING& ElementSet,
 }
 
 
+XMLREC::XMLREC (PIDBOBJ DbParent, const STRING& Name) : XMLBASE (DbParent, Name)
+{
+  RecordSeperator  = Getoption("RecordSeperator");
+  XMLPreface       = Getoption("Preface");
+  XMLTail          = Getoption("Tail");
+  SGMLNORM::SetStoreComplexAttributes (Getoption("Complex", "True").GetBool());
+}
+
+
+
+const char *XMLREC::Description(PSTRLIST List) const
+{
+  const STRING ThisDoctype("XMLREC");
+  if ( List->IsEmpty() && !(Doctype ^= ThisDoctype))
+    List->AddEntry(Doctype);
+  List->AddEntry (ThisDoctype);
+
+  XMLBASE::Description(List);
+  return "\
+XML-like record format. Uses element name to slice-and-dice records: <tag>..</tag>\n\
+For XML retrieval it gets the specified preface and tail added to be XML compliant.\n\
+  Options:\n\
+  [XML]\n\
+  RecordSeperator=<tag>\n\
+  Preface=<XML preface fragment including declaration>\n\
+  Tail=<XML tail fragment>\n";
+}
+
+XMLREC::~XMLREC() { }
+
+
+
+void XMLREC::ParseRecords(const RECORD& FileRecord)
+{
+  // No seperator then let the parent parse...
+  if (RecordSeperator.IsEmpty()) {
+    XMLBASE::ParseRecords(FileRecord);
+    return;
+  }
+
+  size_t count = 0;
+  STRING fn (FileRecord.GetFullFileName ());
+  RECORD Record (FileRecord); // Easy way
+
+  const off_t GlobalRecordStart = FileRecord.GetRecordStart();
+  const off_t GlobalRecordEnd   = FileRecord.GetRecordEnd();
+
+  MMAP mapping (fn,
+        GlobalRecordStart,
+        GlobalRecordEnd ? GlobalRecordEnd+1 : 0,
+        MapSequential);
+  if (!mapping.Ok())
+    {
+      logf (LOG_ERRNO, "%s::ParseRecords: Could not map '%s' into memory", Doctype.c_str(), fn.c_str());
+      SGMLNORM::ParseRecords(FileRecord);
+      return;
+    }
+  const size_t len   = RecordSeperator.GetLength();
+  PCHR RecBuffer     = (PCHR)mapping.Ptr();
+  off_t ActualLength = mapping.Size();
+  off_t length       = ActualLength - len; 
+
+  // Search for <RecordSeperator
+  enum {Scan = 0, Start, SeekEnd} State = Scan;
+  off_t start;
+
+  for (off_t i = 0; i < length; i++) {
+     if (RecBuffer[i] == '<') {
+        start = i;
+	// Skip space to handle <    tag ..>
+	while (++i < length && isspace(RecBuffer[i]))
+		/* */;
+	if (State != Scan && RecBuffer[i] == '/') {
+	  // End-tag
+	  State = SeekEnd;
+          // Skip space to handle  </   tag..>
+          while (++i < length && isspace(RecBuffer[i]))
+	    /* */;
+	} else if (RecBuffer[i] == '/')
+	  continue;
+
+	CHR ch = RecBuffer[i+len];
+        if (ch != '>' && !isspace(ch))
+	  continue;
+	// Know at least the length matches...
+        const char *t = RecordSeperator.c_str();
+	if ( RecordSeperator.CaseMatches (RecBuffer+i)) {
+	  // Found tag ....
+	  switch (State) {
+	     case SeekEnd:
+		// Scan end of tag
+		while (RecBuffer[i] != '>' && i < length ) i++;
+
+		// If followed by space this belongs to the record
+		if (isspace(RecBuffer[i+1])) {
+		  do { i++;} while ( isspace(RecBuffer[i]) );
+		  i--;
+		}
+	        Record.SetRecordEnd ( GlobalRecordStart + i ) ;
+	        Db->DocTypeAddRecord (Record);
+
+#if 0
+if (1) {char tmp[12001];
+bzero(tmp, 12000);
+size_t x = Record.GetRecordStart() - GlobalRecordStart;
+size_t y = Record.GetRecordEnd() - GlobalRecordStart;
+cerr << "RECORD has " << y-x << endl;
+memcpy(tmp, &RecBuffer[x], y -x  + 1 );
+cerr << "LOOKING AT: "<< endl << tmp << endl <<  "##### " << endl;
+}
+#endif
+
+		count++;
+	        State = Scan;
+	        break;
+	     case Start:
+		// A nasty case <tag> ... </><tag> but we also accpet
+		// <tag> ... <tag>  
+		Record.SetRecordEnd ( GlobalRecordStart + start - 1 );
+		Db->DocTypeAddRecord (Record);
+		count++;
+		State == Scan;
+		logf(LOG_WARN, "<%s> before </%s>, assume </><%s>:  (%ld)", t, t, t,  GlobalRecordStart + start); 
+		break;
+	     case Scan:
+		Record.SetRecordStart( GlobalRecordStart + start );
+		// Scan to end of tag >
+		while (RecBuffer[++i] != '>' && i < length) /* loop */;
+		if (RecBuffer[i-1] == '/') {
+		  // <element /> construct
+		  if (isspace(RecBuffer[i+1])) {
+		    do { i++;} while ( isspace(RecBuffer[i]) );
+                    i--;
+		  }
+		  Record.SetRecordEnd( GlobalRecordStart + i);
+		  Db->DocTypeAddRecord (Record);
+cerr << "Construct <../>" << endl;
+		  count++;
+		}  else
+		  State = Start;
+		break;
+	  } 
+      } else if (State == SeekEnd)
+	 State = Start; // False Alarm
+      // Need to find the next instance.. or </RecordSeperator 
+     // i += len - 1;
+     }
+  } // loop 
+  if (State == Start)
+    logf (LOG_WARN, "Missing </%s>. Bytes %ld-%ld skipped in \"%s\".",
+	RecordSeperator.c_str(), Record.GetRecordStart(), GlobalRecordEnd,
+	fn.c_str());
+  if (count == 0) {
+    logf(LOG_WARN, "No <%s> elements found. Fall-back to parent doctype.",
+	RecordSeperator.c_str());
+    XMLBASE::ParseRecords(FileRecord);
+  }
+  logf (LOG_INFO, "Added %ld sub-records", count);
+}
+
+
+
+void XMLREC::DocPresent (const RESULT& ResultRecord, const STRING& ElementSet,
+        const STRING& RecordSyntax, PSTRING StringBuffer) const
+{
+  if (ElementSet == FULLTEXT_MAGIC) {
+    // MIME 
+    STRING tmp;
+    if (RecordSyntax == HtmlRecordSyntax) {
+	SGMLNORM::SourceMIMEContent(ResultRecord, &tmp);
+	*StringBuffer << "Content-type: " << tmp << "\n\n";
+    }
+    XMLBASE::DocPresent(ResultRecord, ElementSet, RawRecordSyntax, &tmp);
+
+    StringBuffer->Cat(XMLPreface);
+    StringBuffer->Cat(tmp);
+    StringBuffer->Cat(XMLTail);
+  } else
+    XMLBASE::DocPresent(ResultRecord, ElementSet, RecordSyntax, StringBuffer);
+}
 

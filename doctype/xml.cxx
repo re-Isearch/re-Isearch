@@ -118,6 +118,8 @@ void XML::ParseRecords(const RECORD& FileRecord)
   } 
 #endif
 
+  // off_t level2_pos = 0;
+
  do {
   off_t   i;
   enum {ScanToStart, ScanToEnd, inComment, inTag, findEnd} State;
@@ -164,10 +166,15 @@ void XML::ParseRecords(const RECORD& FileRecord)
 	    }
 	}
     }
+
+  // level2_pos = i;
+
   if (tag.IsEmpty() || i > (ActualLength-3))
     break; // Can't continue
   // We now have the first tag
   eTag.Clear();
+
+// cerr << "XXXXXXXXXXXXX First Tag: <" << tag << "> ..... </" << tag << ">" << endl; 
   eTag << "</" << tag; // Need to look for this!
 
   logf (LOG_DEBUG, "%s:ParseRecords Looking for %s", Doctype.c_str(), eTag.c_str());
@@ -223,6 +230,18 @@ void XML::ParseRecords(const RECORD& FileRecord)
 
 
  } while (Start < ActualLength);
+
+
+#if 0
+  // 2nd level parse
+  if (recordCount == 1) {
+     Record.SetRecordStart( level2_pos );
+     Record.SetRecordEnd (Record.GetRecordEnd() - level2_pos - 1);
+cerr << "Recurse.." << endl;
+cerr << Record.GetRecordStart() << " -- " << Record.GetRecordEnd() << endl;
+    ParseRecords(Record);
+  }
+#endif
 
  if (recordCount > 1) logf (LOG_INFO, "%s: Added %d records.", Doctype.c_str(), recordCount);
 }

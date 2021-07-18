@@ -1,6 +1,6 @@
 /*--@@@
 File:		dtreg.cxx
-Version:	2.00
+Version:	3.00
 Description:	Class DTREG - Document Type Registry
 Author:		Edward C. Zimmermann
 @@@*/
@@ -122,6 +122,7 @@ enum Doctypes {
   _CAPRSS,	_RSSCORE,
   _HTMLZERO,	_RSSCOREARCHIVE,
   _ATOM,	_NEWSML,
+  _XMLREC,
   /* 80 */
   _IMAGEGIF,
   _IMAGEPNG,
@@ -188,7 +189,8 @@ static const struct {
   { "ISOTEIA",    _ISOTEIA,    GDT_TRUE}, { "CAP",        _CAPRSS,     GDT_TRUE},
   { "RSSCORE",    _RSSCORE,    GDT_TRUE}, { "HTMLZERO",   _HTMLZERO,   GDT_TRUE},
   { "RSSARCHIVE", _RSSCOREARCHIVE, GDT_TRUE}, { "ATOM",       _ATOM,       GDT_TRUE},
-  { "NEWSML",     _NEWSML,     GDT_TRUE},
+  { "NEWSML",     _NEWSML,     GDT_TRUE}, { "XMLREC",     _XMLREC,     GDT_TRUE},
+
 
   /* Image Formats */
   { "GIF",        _IMAGEGIF,   GDT_FALSE}, { "PNG",        _IMAGEPNG,   GDT_FALSE},
@@ -718,6 +720,8 @@ PDOCTYPE        DTREG::GetDocTypePtr(const DOCTYPE_ID& DoctypeId)
       return RegisterDocType (Ident, new XMLBASE(Db, Name));
     case _XPANDOC:
       return RegisterDocType (Ident, new XPANDOC(Db, Name));
+    case _XMLREC:
+      return RegisterDocType (Ident, new XMLREC(Db, Name));
     case _GILSXML:
       return RegisterDocType (Ident, new GILSXML(Db, Name));
     case _RSS091:

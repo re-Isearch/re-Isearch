@@ -2,14 +2,16 @@
 
                Binary Multiple Document Handler (DOCTYPE)
 
-   Description: Class BINARY - Binary and associated Text files 
+   File: binary.cxx
    Author: Edward C. Zimmermann, edz@nonmonotonic.net
+
 
    ########################################################################
 
    Note: None 
 
    ########################################################################
+
 
    ######################################################################## */
 

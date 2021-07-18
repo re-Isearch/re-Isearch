@@ -1009,6 +1009,7 @@ void SGMLNORM::store_attributes (PDFT pdft, PCHR base_ptr, PCHR tag_ptr,
   const GDT_BOOLEAN storeIt = StoreComplexAttributes ? StoreComplexAttributes :
 		StoreTagComplexAttributes(tag_ptr);
 
+
   //
   // hook here to allow for people, resp. doctypes, to define
   // on a tag-by-tag basis what might be allowed to be stored as complex..

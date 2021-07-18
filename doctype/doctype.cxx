@@ -3,13 +3,8 @@
                Generic Document Handler (DOCTYPE)
 
    File: doctype.cxx
-   Version: $Revision: 1.1 $
-   Path: /home/furball/edz/Dist/Networking/CNIDR/Dist/New/Isearch-1.09/doctype/doctype.cxx
    Description: Class DOCTYPE - Document Type
-   Originally Created: Thu Dec 28 21:38:30 MET 1995
    Last maintained by: Edward C. Zimmermann
-
-   RCS $Revision: 1.1 $ $State: Exp $ $Exp: $
 
    ######################################################################## */
 

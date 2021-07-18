@@ -47,6 +47,8 @@ public:
   // Lowest nodes
   GDT_BOOLEAN GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const;
 
+  // STRING GetOption(const STRING& Option, const STRING& defaultValue = NulString);
+
   ~XMLBASE ();
 private:
   char   *_get_value(char *Buffer, size_t val_len);
@@ -185,5 +187,34 @@ public:
   const char *Description(PSTRLIST List) const;
 };
 
+#if 1
+
+class XMLREC:public XMLBASE
+{
+public:
+  XMLREC (PIDBOBJ DbParent, const STRING& Name);
+
+  void ParseRecords(const RECORD& FileRecord);
+  void DocPresent (const RESULT& ResultRecord, const STRING& ElementSet,
+        const STRING& RecordSyntax, PSTRING StringBuffer) const;
+
+/*
+  void setRecordSeperator(const STRING& sep) { RecordSeperator = sep; }
+  void setXMLPreface(const STRING& preface)  { XMLPreface = preface;  }
+  void setXMLTail(const STRING& tail)        { XMLTail = tail;        }
+*/
+
+  const char *Description(PSTRLIST List) const;
+
+  ~XMLREC ();
+
+private:
+
+  STRING RecordSeperator;
+  STRING XMLPreface;
+  STRING XMLTail;
+} ;
+
+#endif
 
 #endif

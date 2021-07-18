@@ -672,7 +672,6 @@ public:
     /** @name lib.string.access */
     //@{
       /// return the character at position n
-      /// std::string at  
       char at(size_t n) const { return GetChar(n); }
       /// returns the writable character at position n
       char& at(size_t n) { return GetWritableChar(n); }
@@ -889,6 +888,12 @@ public:
   GDT_BOOLEAN CaseEquals(const long val) const    { return val == GetLong();};
   GDT_BOOLEAN CaseEquals(const float val) const   { return val == GetFloat();};
   GDT_BOOLEAN CaseEquals(const double val) const  { return val == GetDouble();};
+
+
+  // Does the segment match?
+  GDT_BOOLEAN Matches(const char *buffer) const { return Compare(buffer, Len()) == 0; }
+  GDT_BOOLEAN CaseMatches(const char *buffer) const { return CaseCompare(buffer, Len()) == 0; }
+
 
   STRING  Substring (const size_t Start, const size_t end = 0) const; 
 
