@@ -342,7 +342,11 @@ STRING& MEDLINE::DescriptiveName (const TagTable_t *Table, const size_t Elements
   // Lowercase
   Value->ToLower();
   // Make first Character UpperCase
-  CHR first_char[2] = {toupper ( Value->GetChr(1) ), 0};
+  // CHR first_char[2] = {toupper ( Value->GetChr(1) ), 0};
+  CHR ch  = Value->at(0);
+  CHR first =  _ib_isascii(ch) ? toupper(ch) : ch;
+  CHR first_char[2] = {first, 0};
+
   Value->EraseBefore(2);
   Value->Insert(1, first_char);
   // Replace '-' or '_' to ' '
@@ -792,7 +796,7 @@ DocPresent (const RESULT& ResultRecord,
 
 	  DescriptiveName(Language, FieldName, &LongName);
 	  // Is it a published field?
-	  if (LongName.GetChr(1) != ' ') {
+	  if (LongName.at(0) != ' ') {
 	    // Get Value of the field, use parent
 	    Present (ResultRecord, FieldName, RecordSyntax, &Value); // @@@
 //	    Value.Pack ();
