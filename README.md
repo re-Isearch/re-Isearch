@@ -12,11 +12,5 @@ This project was funded through the NGI0 Discovery Fund, a fund established by N
 
 
 
-<IMG SRC="https://nlnet.nl/image/logo_nlnet.svg" ALT="NLnet Foundation" height=100>
-
-<IMG SRC="https://nlnet.nl/logo/NGI/NGIZero-green.hex.svg" ALT="NGI0 Search" height=100>
-
-
-![NLnet Foundation](https://nlnet.nl/image/logo_nlnet.svg = 100x)
-![NGI0 Search](https://nlnet.nl/logo/NGI/NGIZero-green.hex.svg = 100x)
+<IMG SRC="https://nlnet.nl/image/logo_nlnet.svg" ALT="NLnet Foundation" height=100> <IMG SRC="https://nlnet.nl/logo/NGI/NGIZero-green.hex.svg" ALT="NGI0 Search" height=100>
 
