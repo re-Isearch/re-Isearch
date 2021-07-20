@@ -11,6 +11,12 @@ Portions Copyright (c) 1995 CNIDR/MCNC, (c) 1995-2011 BSn/Munich; (c) 2011-2020 
 This project was funded through the NGI0 Discovery Fund, a fund established by NLnet with financial support from the European Commission's Next Generation Internet programme, under the aegis of DG Communications Networks, Content and Technology under grant agreement No 825322.
 
 
+
+<IMG SRC="https://nlnet.nl/image/logo_nlnet.svg" ALT="NLnet Foundation" height=100>
+
+<IMG SRC="https://nlnet.nl/logo/NGI/NGIZero-green.hex.svg" ALT="NGI0 Search" height=100>
+
+
 ![NLnet Foundation](https://nlnet.nl/image/logo_nlnet.svg = 100x)
 ![NGI0 Search](https://nlnet.nl/logo/NGI/NGIZero-green.hex.svg = 100x)
 
