@@ -1,8 +1,7 @@
 /*@@@
 File:		attrlist.hxx
-Version:	1.00
+Version:	2.00
 Description:	Class ATTRLIST - Attribute List
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #ifndef ATTRLIST_HXX

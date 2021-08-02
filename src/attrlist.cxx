@@ -1,15 +1,13 @@
 /*-@@@
 File:		attrlist.cxx
-Version:	1.00
+Version:	2.00
 Description:	Class ATTRLIST - Attribute List
-Author:		Nassib Nassar, nrn@cnidr.org
-Modifications:	Edward C. Zimmermann, edz@nonmonotonic.com
 @@@*/
 
 #include "attrlist.hxx"
 #include "magic.hxx"
 
-#pragma ident  "@(#)attrlist.cxx  1.19 05/08/01 21:37:14 BSN"
+#pragma ident  "@(#)attrlist.cxx"
 
 static const char *n = "n"; // Numeric
 static const char *r = "r"; // Num Range
