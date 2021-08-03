@@ -10,6 +10,7 @@
 #include "../doctype/binary.hxx"
 #include "../doctype/colondoc.hxx"
 #include "../doctype/tsldoc.hxx"
+#include "../doctype/csvdoc.hxx"
 #include "../doctype/ozsearch.hxx"
 #include "../doctype/iafadoc.hxx"
 #include "../doctype/mailfolder.hxx"

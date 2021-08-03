@@ -94,7 +94,8 @@ const DOCTYPE_ID& NilDoctype  = Nuldoc;
 static const char KeyFile[] = "/opt/nonmonotonic/lib/license";
 
 const char * const __CopyrightData = "\
-(C)opyright 1995-2011 BSn/Munich; 2011-2020 NONMONOTONIC Networks; 2020,2021 re.Isearch Project.\n\
+Portions (C)opyright 1995 CNIDR/MCNC; 1995-2011 BSn/Munich; 2011-2020 NONMONOTONIC Networks;\n\
+(C)opyright 2020,2021 re.Isearch Project.\n\n\
 This software has been made available through a grant 2020/21 from NLnet Foundation and EU NGI0.";
 
 

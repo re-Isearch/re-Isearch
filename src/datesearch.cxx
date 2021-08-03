@@ -1,4 +1,4 @@
-/* $Id: datesearch.cxx,v 1.1 2007/05/15 15:47:23 edz Exp $ */
+/* $Id: datesearch.cxx */
 
 /*@@@
 File:		datesearch.cxx

@@ -1181,10 +1181,12 @@ FILE *NUMERICLIST::OpenForAppend(const STRING& Fn)
 
   STRING TmpName = Fn + "~";
 
+  // Look for a non-existing....
   for (size_t i =0; FileExists(TmpName); i++)
     {
       TmpName.form ("%s.%d", Fn.c_str(), (int)i);
     }
+  // Open it... (Racing condition??)
   FILE *oFp = fopen(TmpName, "wb");
   if (oFp == NULL)
     {

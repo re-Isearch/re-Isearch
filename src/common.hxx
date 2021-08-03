@@ -170,6 +170,8 @@ GDT_BOOLEAN SetUserGroup(const STRING& Id);
 STRING      GetUserGroup();
 
 
+STRING MakeTempFileName(const STRING& Fn);
+
 GDT_BOOLEAN IsRunningProcess(long pid);
 GDT_BOOLEAN IsMyProcess(long uid);
 

@@ -814,6 +814,40 @@ STRING RemoveFileName (const STRING& PathName)
  return NulString;
 }
 
+
+// Make a temporary file name, opens it to write
+// whhen OK, closes it and returns the name...
+STRING MakeTempFileName(const STRING& Fn)
+{
+  STRING TmpName = Fn + "~";
+  unsigned long pid = (long)getpid();
+
+  // Look for a non-existing....
+  for (size_t i =0; FileExists(TmpName); i++)
+    {
+      TmpName.form ("%s%d.%lu", Fn.c_str(), (int)i, pid);
+    }
+  // Open it... (Racing condition??)
+  FILE *oFp = fopen(TmpName, "wb");
+  if (oFp == NULL)
+    {
+      // Fall into scatch (we might not have writing permission
+      char     scratch[ L_tmpnam+1];
+      char    *TempName = tmpnam( scratch );
+
+      logf (LOG_WARN, "Could not create '%s', trying tmp '%s'", TmpName.c_str(),
+        TempName);
+      if ((oFp = fopen(TempName, "wb")) == NULL)
+        {
+          logf (LOG_ERRNO, "Can't create a temporary numlist '%s'", Fn.c_str());
+          return NulString;
+        }
+      TmpName = TempName; // Set it
+    }
+  fclose(oFp);
+ return TmpName;
+}
+
 GDT_BOOLEAN WritableDir(const STRING& path)
 {
   const size_t len = path.Length();

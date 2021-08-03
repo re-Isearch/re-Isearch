@@ -380,7 +380,7 @@ int _Iindex_main (int argc, char **argv)
     char *locale = getenv("LC_CTYPE");
     if (locale == NULL || *locale == 'C')
       {
-	putenv("LC_CTYPE=iso_8859_1");
+	putenv((char *)"LC_CTYPE=iso_8859_1");
       }
   }
   setlocale (LC_ALL, "");

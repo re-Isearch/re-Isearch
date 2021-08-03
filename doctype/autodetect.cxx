@@ -215,6 +215,13 @@ static struct {
   {"WHO",     "IKNOWDOC"},
   {"who",     "IKNOWDOC"}, // Added 2008
 #endif
+#ifdef CSVDOC_HXX
+  {"csv", "CSVDOC"},
+#endif
+#ifdef TSLDOC_HXX
+  {"tsv", "TSVDOC"},
+#endif
+
   {"ignore", "NULL"},
   {"cc", "\"C++ Program Source\"", "text/plain"},
   {"CC", "\"C++ Program Source\"", "text/plain"},
@@ -1194,7 +1201,7 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
 			  if (fgets(buf, BUFSIZ-1, fp) != NULL)
 			    {
 			      if (comma_count == CountCh(buf, ','))
-				doctype = "CSV";
+				doctype = "CSVDOC";
 			    }
 			}
                     }   

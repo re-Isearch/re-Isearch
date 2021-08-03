@@ -969,7 +969,7 @@ GDT_BOOLEAN VIDB::SetLocale (const CHR *LocaleName) const
 	      static STRING x;
 	      x = "LC_ALL=";
 	      x += LocaleName;
-	      putenv ((char *)(const CHR *)x);
+	      putenv ((char *)x.c_str());
 	    }
 	}
 #endif

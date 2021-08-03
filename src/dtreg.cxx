@@ -122,7 +122,7 @@ enum Doctypes {
   _CAPRSS,	_RSSCORE,
   _HTMLZERO,	_RSSCOREARCHIVE,
   _ATOM,	_NEWSML,
-  _XMLREC,
+  _XMLREC,      _CSVDOC,
   /* 80 */
   _IMAGEGIF,
   _IMAGEPNG,
@@ -179,7 +179,7 @@ static const struct {
   { "RSS1",       _RSS1,       GDT_TRUE}, { "RSS2",       _RSS2,       GDT_TRUE},
   { "SGML",       _SGML,       GDT_TRUE}, { "SGMLNORM",   _SGMLNORM,   GDT_TRUE},
   { "SGMLTAG",    _SGMLTAG,    GDT_TRUE}, { "SIMPLE",     _SIMPLE,     GDT_TRUE},
-  { "SOIF",       _SOIF,       GDT_TRUE}, { "TSLDOC",     _TSLDOC,     GDT_TRUE},
+  { "SOIF",       _SOIF,       GDT_TRUE}, { "TSVDOC",     _TSLDOC,     GDT_TRUE},
   { "TSV",        _TSVDOC,     GDT_TRUE}, { "XBINARY",    _XBINARY,    GDT_TRUE},
   { "XFILTER",    _FILTER,     GDT_TRUE}, { "XML",         _XML,       GDT_TRUE},
   { "XMLBASE",    _XMLBASE,    GDT_TRUE}, { "XPANDOC",    _XPANDOC,    GDT_TRUE},
@@ -190,7 +190,7 @@ static const struct {
   { "RSSCORE",    _RSSCORE,    GDT_TRUE}, { "HTMLZERO",   _HTMLZERO,   GDT_TRUE},
   { "RSSARCHIVE", _RSSCOREARCHIVE, GDT_TRUE}, { "ATOM",       _ATOM,       GDT_TRUE},
   { "NEWSML",     _NEWSML,     GDT_TRUE}, { "XMLREC",     _XMLREC,     GDT_TRUE},
-
+  { "CSVDOC",     _CSVDOC,     GDT_TRUE},
 
   /* Image Formats */
   { "GIF",        _IMAGEGIF,   GDT_FALSE}, { "PNG",        _IMAGEPNG,   GDT_FALSE},
@@ -216,6 +216,10 @@ static const struct {
   { "TIF",        _IMAGETIFF,  GDT_FALSE},
 
   { "ODT",        _XPANDOC,    GDT_TRUE},
+
+  { "CSLDOC",     _CSVDOC,     GDT_FALSE}, // Old name
+  { "TSLDOC",     _TSLDOC,     GDT_FALSE}, // Old name
+
 
   { "PLUGIN",     _PLUGIN,     GDT_FALSE}
 };
@@ -668,6 +672,8 @@ PDOCTYPE        DTREG::GetDocTypePtr(const DOCTYPE_ID& DoctypeId)
       return RegisterDocType (Ident, new DIALOGB(Db, Name));
     case _TSLDOC:
       return RegisterDocType (Ident, new TSLDOC(Db, Name));
+    case _CSVDOC:
+      return RegisterDocType (Ident, new CSVDOC(Db, Name));
     case _TSVDOC:
       return RegisterDocType (Ident, new TSVDOC(Db, Name));
     case _OZSEARCH:
