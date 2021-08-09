@@ -5,8 +5,6 @@
 File:		record.hxx
 Version:	1.01
 Description:	Class RECORD - Database Record
-Author:		Nassib Nassar, nrn@cnidr.org
-Modifications:	Edward C. Zimmermann, edz@nonmonotonic.com
 @@@*/
 
 #ifndef RECORD_HXX

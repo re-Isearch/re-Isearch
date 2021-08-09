@@ -72,6 +72,8 @@ int _Iutil_main(int argc, char **argv)
       << " -del key       // Mark individual documents (by key) to be deleted from database." << endl
       << "                // Note: to remove records by file use the Idelete command instead." << endl
       << " -del_expired   // Mark expired documents as deleted." << endl
+      << " -autodelete    // Set the autodelete expired flag to true." << endl
+      << " -deferdelete   // Set the autodelete expired flag to false." << endl
       << " -undel key     // Unmark documents (by key) that were marked for deletion." << endl
       << " -c             // Cleanup database by removing unused data (useful after -del)." << endl
       << " -erase         // Erase the entire database." << endl
@@ -124,6 +126,7 @@ int _Iutil_main(int argc, char **argv)
   INT             PathChange = 0;
   INT             DeleteByKey = 0;
   INT		  DeleteExpired = 0;
+  INT             AutoDelete = -1;
   INT             UndeleteByKey = 0;
   INT             Cleanup = 0;
   INT             View = 0;
@@ -437,6 +440,12 @@ int _Iutil_main(int argc, char **argv)
       } else if (Flag.Equals("-del_expired")) {
 	DeleteExpired = 1;
 	LastUsed = x;
+      } else if (Flag.Equals("-autodelete")) {
+	AutoDelete = 1;
+	LastUsed = x;
+     } else if (Flag.Equals("-deferdelete")) {
+        AutoDelete = 0;
+        LastUsed = x;
       } else if (Flag.Equals("-undel")) {
 	UndeleteByKey = 1;
 	LastUsed = x;
@@ -594,6 +603,7 @@ int _Iutil_main(int argc, char **argv)
       if (expired)
 	cout << expired << " records were expired and marked as deleted." << endl;
   }
+  if (AutoDelete != -1) pdb-> setAutoDeleteExpired( AutoDelete ? GDT_TRUE : GDT_FALSE);
 
   if (ViewInfo) {
     if (RecordID.IsEmpty()) {

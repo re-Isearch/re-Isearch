@@ -1010,6 +1010,8 @@ void SGMLNORM::store_attributes (PDFT pdft, PCHR base_ptr, PCHR tag_ptr,
 		StoreTagComplexAttributes(tag_ptr);
 
 
+  cerr << "DEBUG:    " << tag_ptr << endl;
+
   //
   // hook here to allow for people, resp. doctypes, to define
   // on a tag-by-tag basis what might be allowed to be stored as complex..

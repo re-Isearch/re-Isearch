@@ -30,7 +30,7 @@ Changes:	1.02
 #include "sgmltag.hxx"
 
 // Local prototypes
-char *find_end_tag(char **t, char *tag);
+const char *find_end_tag(char **t, char *tag);
 
 SGMLTAG::SGMLTAG(PIDBOBJ DbParent, const STRING& Name) :
 	DOCTYPE(DbParent, Name)
@@ -181,7 +181,6 @@ void SGMLTAG::ParseFields(PRECORD NewRecord) {
 	PDFT pdft;
 	PCHR *tags;
 	PCHR *tags_ptr;
-	PCHR p;
 	INT val_start;
 	INT val_len;
 	DFD dfd;
@@ -199,7 +198,7 @@ void SGMLTAG::ParseFields(PRECORD NewRecord) {
 	}
 	tags_ptr = tags;	
 	while(*tags_ptr) {
-		p = find_end_tag(tags_ptr, *tags_ptr);
+		const char *p = find_end_tag(tags_ptr, *tags_ptr);
 		if(p && *p) {
 			// We have a tag pair
 			val_start = (*tags_ptr + strlen(*tags_ptr) + 1) - 
@@ -317,7 +316,7 @@ Pre:	t is list of string pointers each NULL-terminated.  The list itself
 	
 Post:	Returns a pointer to found string or NULL.
 */
-char *find_end_tag(char **t, char *tag)
+const char *find_end_tag(char **t, char *tag)
 {
 	if(*t == NULL || *t[0] == '/')
 		return "";

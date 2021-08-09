@@ -10,7 +10,7 @@ Description:    Class HTMLHEAD - HTML documents, <HEAD> only
 Author:         Edward C. Zimmermann <edz@nonmonotonic.net>
 @@@*/
 
-#pragma ident  "@(#)htmlhead.cxx  1.20 02/24/01 17:45:06 BSN"
+#pragma ident  "@(#)htmlhead.cxx"
 
 HTMLHEAD::HTMLHEAD (PIDBOBJ DbParent, const STRING& Name) : HTMLMETA (DbParent, Name)
 {

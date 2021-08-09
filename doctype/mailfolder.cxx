@@ -74,6 +74,7 @@ static const STRING MailOrigin       ("Original-Sender");
 static const STRING MailOriginator   ("Originator");
 static const STRING MailDate         ("Date");
 static const STRING MailExpires      ("Expires");
+static const STRING MailExpiresObsolete ("Expiry-Date");
 static const STRING MailArrivalTime  ("X-OriginalArrivalTime");
 /*
 static const STRING MailXPriority     ("X-Priority");
@@ -113,6 +114,7 @@ static const char * const Keywords[] = {
     "Date",
     "Encrypted",	// added Thu Jul 27 02:23:22 MET DST 1995
     "Expires",
+    "Expiry-Date",      // Obsolete (added 2021 to support old mail archives)
     "Followup-To",
     "Fax", 		// added 7 Oct 2003
     "From",
@@ -591,6 +593,7 @@ ________________________________________________________________________", 72, 0
 
 INT MAILFOLDER::EncodeKey (STRING *Key, const CHR *line, size_t val_len) const
 {
+  // cerr << "DEBUG:     Encode Key: " << line << endl; // EDZ 2021
   char        tmp[64];
   size_t      length = 0;
 
@@ -751,6 +754,8 @@ void MAILFOLDER::ParseFields (RECORD *NewRecord)
       else
 	FieldName = *tags_ptr;
 
+      if (FieldName ^= MailExpiresObsolete) FieldName = MailExpires; // Remap obsolete name 
+
       dfd.SetFieldType( Db->GetFieldType(FieldName) ); // Get the type added 30 Sep 2003
 
       if (FieldName.CaseCompare("List-", 5) == 0)
@@ -764,7 +769,7 @@ void MAILFOLDER::ParseFields (RECORD *NewRecord)
 	  dfd.SetFieldType (FIELDTYPE::date);
         }
       else if (FieldName ^= MailExpires)
-	{
+      {
 	  NewRecord->SetDateExpires( *tags_ptr + FieldName.GetLength() + 1);
           dfd.SetFieldType (FIELDTYPE::date);
 	}
@@ -787,9 +792,15 @@ void MAILFOLDER::ParseFields (RECORD *NewRecord)
 	      STRING Key;
 	      if (EncodeKey(&Key, &RecBuffer[val_start], val_len))
 		{
-		  logf (LOG_DEBUG, "Message-ID encoded as %s", Key.c_str());
+		  logf (LOG_DEBUG, "Message-Id encoded as %s", Key.c_str());
 		  // Make Unique Key
-		  Db->MdtSetUniqueKey(NewRecord, Key);
+		  // Message IDs need to be globally unique!
+		  // if two messages have the same this is a NO-GO!
+		  if (Db->KeyLookup(Key)) {
+		    logf (LOG_WARN, "Encounterd a non-unique MESSAGE-Id: %s", &RecBuffer[val_start] );
+		    // if non-unique we process it.. and it'll get another key (and maybe marked deleted) 
+		    Db->MdtSetUniqueKey(NewRecord, Key);
+		  } else NewRecord->SetKey(Key); // Key was OK.. Set
 		}
 	    }
         }

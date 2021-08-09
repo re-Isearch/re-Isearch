@@ -37,6 +37,15 @@ MDTREC::MDTREC(MDT *Mdt)
   Priority             = 0;
   Category             = 0;
   Property             = 0;
+
+ /*
+  * Rest elements are Dates so 
+  SRCH_DATE      Date; 
+  SRCH_DATE      DateModified;
+  SRCH_DATE      DateCreated;
+  SRCH_DATE      DateExpires;
+*/
+
 }
 
 MDTREC::MDTREC(const MDTREC& OtherMdtRec)
@@ -306,8 +315,7 @@ GDT_BOOLEAN MDTREC::Write(FILE *fp, INT Index) const
 	  return GDT_FALSE; // ERROR
 	}
     }
-  // Purify: Ignore Unitialized Memory Warning!
-
+  // Purify and Valgrind: Ignore Unitialized Memory Warning!
   return fwrite (this, sizeof (MDTREC),  1, fp) == 1;
 }
 

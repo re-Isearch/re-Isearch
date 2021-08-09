@@ -965,7 +965,8 @@ int _Isearch_main (int argc, char **argv)
               switch (*(argv[x]))
                 {
                   case 'b': case 'B': _IB_Qsort =  BentleyQsort; break;
-                  case 's': case 'S': _IB_Qsort =  SedgewickQSort; break;
+                  case 's': case 'S': _IB_Qsort =  SedgewickQsort; break;
+		  case 'd': case 'D': _IB_Qsort =  DualPivotQsort; break;
                 }
               LastUsed = x;
             }

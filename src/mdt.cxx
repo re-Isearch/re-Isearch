@@ -479,6 +479,7 @@ if (!useIndexMap) {
       setmode(fd, O_BINARY);
 #endif
 
+#pragma GCC diagnostic ignored "-Wunused-result"
       read(fd, &version, sizeof(GPTYPE));
       read(fd, &realTotal, sizeof(GPTYPE));
       realTotal = HTONL(realTotal);
@@ -761,13 +762,14 @@ void MDT::ReadTimestamp()
 {
   if (MdtFp)
     {
+      // Seek 12 bytes
       if (fseek(MdtFp, 12, SEEK_SET) != -1)
 	{
 	  SRCH_DATE newTimestamp;
-	  UINT4 x;
+	  UINT4 x = 0;
 	  ::Read(&x, MdtFp);
 	  time_t timeval = x;
-	  if (x == 0) /* Old Indexes */
+	  if (timeval == 0) /* Old Indexes */
 	    newTimestamp.SetTimeOfFile(MdtFp);
 	  else
 	    newTimestamp.Set(&timeval);
@@ -823,7 +825,7 @@ GDT_BOOLEAN MDT::Ok() const
 	  UINT2 val;
  	  UCHR ch;
 	  char  tmp[5];
-
+#pragma GCC diagnostic ignored "-Wunused-result"
 	  fread(tmp, 4, sizeof(char), MdtFp);
 	  if (memcmp(tmp, Magic, 4) != 0)
 	    return GDT_FALSE;
@@ -1659,6 +1661,8 @@ STRING& MDT::GetUniqueKey (PSTRING StringPtr, GDT_BOOLEAN Override)
 	StringPtr->EraseAfterNul(DocumentKeySize-4);
     }
 
+  // Not Unique
+
   STRING NewKey;
   INT x = 0, y = 0;
   // bit encoding..
@@ -1851,6 +1855,7 @@ void MDT::FlushMDTIndexes()
       // Save MDT lookup cache...
       if ((fd = open (MdtIndexName, O_WRONLY|O_CREAT, 0666)) != -1)
 	{
+	  // static_cast<void>(write(int, const void *, size_t));
 #ifdef _WIN32
 	  setmode(fd, O_BINARY);
 #endif
@@ -1858,13 +1863,14 @@ void MDT::FlushMDTIndexes()
 			MdtIndexName.c_str(), (long)CacheVersion, (long)TotalEntries);
 	  const GPTYPE total = (GPTYPE)HTONL(TotalEntries);
 	  // Save Gp Index
-	  (void)write(fd, (const void *)&CacheVersion, sizeof(GPTYPE));
-	  (void)write(fd, (const void *)&total, sizeof(GPTYPE));
-	  (void)write (fd, GpIndex, sizeof(GPREC)*TotalEntries);
+#pragma GCC diagnostic ignored "-Wunused-result"
+	  write(fd, (const void *)&CacheVersion, sizeof(GPTYPE));
+	  write(fd, (const void *)&total, sizeof(GPTYPE));
+	  write (fd, GpIndex, sizeof(GPREC)*TotalEntries);
 	  // Save Key Index
-	  (void)write (fd, KeyIndex, sizeof(KEYREC)*TotalEntries);
+	  write (fd, KeyIndex, sizeof(KEYREC)*TotalEntries);
 	  // Now write the Key Sort
-	  (void)write (fd, KeySortTable, sizeof(KEYSORT)*TotalEntries);
+	  write (fd, KeySortTable, sizeof(KEYSORT)*TotalEntries);
 	  close (fd);
 	}
       WriteTimestamp();

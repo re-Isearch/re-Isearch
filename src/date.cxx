@@ -4080,6 +4080,11 @@ MessageLogger _globalMessageLogger;
 
 int main(int argc, char **argv)
 {
+
+  if (argc < 3) {
+    cerr << "Usage: date1 date2" << endl;
+    return -1;
+  }
   DATERANGE Range (argv[1]);
   STRING s;
 

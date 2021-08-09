@@ -753,6 +753,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
         {
           if (strchr (*tags_ptr, '='))
             {
+	      (*tags_ptr)[tag_len - 1] = 0; // edz 2021 addition
               store_attributes (pdft, RecBuffer, *tags_ptr, GDT_FALSE, &Key, &Datum);
             }
           continue; // No content
@@ -1184,6 +1185,8 @@ void XMLBASE::DocPresent (const RESULT& ResultRecord, const STRING& ElementSet,
 XMLREC::XMLREC (PIDBOBJ DbParent, const STRING& Name) : XMLBASE (DbParent, Name)
 {
   RecordSeperator  = Getoption("RecordSeperator");
+  if (RecordSeperator.IsEmpty())
+    RecordSeperator  = Getoption("Seperator");
   XMLPreface       = Getoption("Preface");
   XMLTail          = Getoption("Tail");
   SGMLNORM::SetStoreComplexAttributes (Getoption("Complex", "True").GetBool());
@@ -1279,6 +1282,8 @@ void XMLREC::ParseRecords(const RECORD& FileRecord)
 		  do { i++;} while ( isspace(RecBuffer[i]) );
 		  i--;
 		}
+
+
 	        Record.SetRecordEnd ( GlobalRecordStart + i ) ;
 	        Db->DocTypeAddRecord (Record);
 
@@ -1306,6 +1311,16 @@ cerr << "LOOKING AT: "<< endl << tmp << endl <<  "##### " << endl;
 		logf(LOG_WARN, "<%s> before </%s>, assume </><%s>:  (%ld)", t, t, t,  GlobalRecordStart + start); 
 		break;
 	     case Scan:
+#if 1
+	     	// edz: 2021 Kludge test
+		if (count == 0 && Start > 2) {
+		  Record.SetRecordStart( GlobalRecordStart );
+		  Record.SetRecordEnd( GlobalRecordStart + start - 1 );
+		  Db->DocTypeAddRecord (Record);
+		}
+#endif
+
+
 		Record.SetRecordStart( GlobalRecordStart + start );
 		// Scan to end of tag >
 		while (RecBuffer[++i] != '>' && i < length) /* loop */;
@@ -1317,7 +1332,7 @@ cerr << "LOOKING AT: "<< endl << tmp << endl <<  "##### " << endl;
 		  }
 		  Record.SetRecordEnd( GlobalRecordStart + i);
 		  Db->DocTypeAddRecord (Record);
-cerr << "Construct <../>" << endl;
+//cerr << "Construct <../>" << endl;
 		  count++;
 		}  else
 		  State = Start;
