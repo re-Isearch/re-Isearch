@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 ////////////////////////////////////////////////////////////////////////////////////////////
 ////////////// TO CONFIGURE   //////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -143,7 +147,7 @@ STRING ResolveBinPath(const STRING& Filename)
  || errno == ENOLINK
 #endif
  	|| errno == EBUSY )
-	   logf (LOG_ERRNO, format, tmp.c_str());
+	   message_log (LOG_ERRNO, format, tmp.c_str());
 	errno = 0;
         if (IsExecutable(tmp.form("%s/contrib/%s", dir, Filename.c_str())))
           return tmp;
@@ -152,7 +156,7 @@ STRING ResolveBinPath(const STRING& Filename)
  || errno == ENOLINK
 #endif
 	|| errno == EBUSY)
-          logf (LOG_ERRNO, format, tmp.c_str());
+          message_log (LOG_ERRNO, format, tmp.c_str());
 	errno = 0;
 	if (IsExecutable (tmp.form("%s/contrib/bin/%s", dir, Filename.c_str())))
 	  return tmp;
@@ -161,7 +165,7 @@ STRING ResolveBinPath(const STRING& Filename)
 	 || errno == ENOLINK
 #endif
 	|| errno == EBUSY )
-	  logf (LOG_ERRNO, format, tmp.c_str());
+	  message_log (LOG_ERRNO, format, tmp.c_str());
 	if (IsExecutable (tmp.form("%s/local/bin/%s", dir, Filename.c_str())))
 	  return tmp;
       }
@@ -303,24 +307,24 @@ STRING ResolveConfigPath(const STRING& Filename)
 #define ENOLINK ENODEV
 #endif
 	  if (errno ==  EACCES || errno == ENOLINK)
-	    logf (LOG_ERRNO, format, tmp.c_str());
+	    message_log (LOG_ERRNO, format, tmp.c_str());
 	  errno = 0;
 	  if (Exists(tmp.form("%s/.%s", dir, Filename.c_str())))
 	    return tmp;
 	  if (errno ==  EACCES || errno == ENOLINK)
-	    logf (LOG_ERRNO, format, tmp.c_str());
+	    message_log (LOG_ERRNO, format, tmp.c_str());
 	}
 	if (state > 1) {
 	  errno = 0;
 	  if (Exists(tmp.form("%s/conf/%s", dir, Filename.c_str())))
 	    return tmp;
 	  if (errno ==  EACCES || errno == ENOLINK)
-	    logf (LOG_ERRNO, format, tmp.c_str());
+	    message_log (LOG_ERRNO, format, tmp.c_str());
 	  errno = 0;
 	  if (Exists(tmp.form("%s/etc/%s", dir, Filename.c_str())))
 	    return tmp;
 	  if (errno ==  EACCES || errno == ENOLINK)
-	    logf (LOG_ERRNO, format, tmp.c_str());
+	    message_log (LOG_ERRNO, format, tmp.c_str());
 
 	}
       }
@@ -381,12 +385,12 @@ STRING ResolveHtdocPath(const STRING& Filename, GDT_BOOLEAN AsUrl)
 	if (Exists(tmp.form("%s/htdocs/%s", dir, Filename.c_str())))
 	  break;
 	if (errno ==  EACCES || errno == ENOLINK)
-	  logf (LOG_ERRNO, format, tmp.c_str());
+	  message_log (LOG_ERRNO, format, tmp.c_str());
         errno = 0;
         if (Exists(tmp.form("%s/html/%s", dir, Filename.c_str())))
           break;
         if (errno ==  EACCES || errno == ENOLINK)
-          logf (LOG_ERRNO, format, tmp.c_str());
+          message_log (LOG_ERRNO, format, tmp.c_str());
 	tmp.Clear();
       }
   } // for()

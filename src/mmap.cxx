@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)mmap.cxx  1.23 02/05/01 00:33:17 BSN"
 
 /*
@@ -265,24 +269,24 @@ UCHR *MMAP::map(int fd, int permit, off_t from, off_t to,
 	  const char msg[] = "VM Page Map failed";
 	  switch (errno) {
 	    default:
-	      logf (LOG_ERRNO, "handle %d failed to map [%d].", fd, (int)errno);
+	      message_log (LOG_ERRNO, "handle %d failed to map [%d].", fd, (int)errno);
 	    case 0:
-	      logf (errno == 0 ? LOG_PANIC : LOG_DEBUG, "%s: Can't map bytes from %ld to %ld in fd=%d.",
+	      message_log (errno == 0 ? LOG_PANIC : LOG_DEBUG, "%s: Can't map bytes from %ld to %ld in fd=%d.",
 			msg, (long)start, (long)end, (int)fd);
 	      break;
 	    case EMFILE:
-	      logf (LOG_ERROR, "%s: The number of mapped regions exceeded an OS implementation-dependent limit", msg);
+	      message_log (LOG_ERROR, "%s: The number of mapped regions exceeded an OS implementation-dependent limit", msg);
 	      break;
 	    case EINVAL:
-	      logf (LOG_ERROR, "%s: Bad values (EINVAL) length=%lu offset=%lu.", msg,
+	      message_log (LOG_ERROR, "%s: Bad values (EINVAL) length=%lu offset=%lu.", msg,
 		(long)length, (long)start);
 	      break;
 	    case ENOMEM:
-	      logf (LOG_ERROR, "%s: Requested and previous mmappings exceed RLIMIT_VMEM", msg);
+	      message_log (LOG_ERROR, "%s: Requested and previous mmappings exceed RLIMIT_VMEM", msg);
 	      break;
 #ifdef EOVERFLOW
 	    case EOVERFLOW:
-	      logf (LOG_ERROR, "%s: Region exceeds  the  offset  maximum", msg);
+	      message_log (LOG_ERROR, "%s: Region exceeds  the  offset  maximum", msg);
 	      break;
 #endif
 	  }
@@ -292,7 +296,7 @@ UCHR *MMAP::map(int fd, int permit, off_t from, off_t to,
           size  = 0;
 
 	} else {
-	  logf (LOG_DEBUG, "%d mapped %lu-%lu[%lu bytes]", fd, (long)start, (long)(start+length),(long)length);
+	  message_log (LOG_DEBUG, "%d mapped %lu-%lu[%lu bytes]", fd, (long)start, (long)(start+length),(long)length);
 	  offset = from - start;
 	  size = end - from;
 	  inode = s.st_ino;

@@ -62,7 +62,7 @@ void LISTDIGEST::ParseRecords (const RECORD& FileRecord)
   PFILE Fp = ffopen (Fn, "rb");
   if (!Fp)
     {
-      logf (LOG_ERRNO, "Couldn't access '%s'", Fn.c_str());
+      message_log (LOG_ERRNO, "Couldn't access '%s'", Fn.c_str());
       return;			// File not accessed
     }
 
@@ -71,7 +71,7 @@ void LISTDIGEST::ParseRecords (const RECORD& FileRecord)
       if (-1 == fseek (Fp, Start, SEEK_SET))
 	{
 	  ffclose(Fp);
-	  logf (LOG_ERRNO, "%s: Bad record boundary", Doctype.c_str()); 
+	  message_log (LOG_ERRNO, "%s: Bad record boundary", Doctype.c_str()); 
 	  return; // Bad start
 	}
       SavePosition = Position = Start;

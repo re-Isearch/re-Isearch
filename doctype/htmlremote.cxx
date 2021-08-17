@@ -62,14 +62,14 @@ GDT_BOOLEAN HTMLREMOTE::URL(const RESULT& ResultRecord, PSTRING StringBuffer, GD
     {
       if (GetResourcePath(ResultRecord, &Path) == GDT_FALSE)
 	{
-//	  logf (LOG_DEBUG, "URL: No Resource Path defined");
+//	  message_log (LOG_DEBUG, "URL: No Resource Path defined");
 	  return GDT_FALSE;
 	}
     }
   if (root_len)
     {
 	  // Is the document in the WWW tree?
-//	  logf (LOG_DEBUG, "Looking for %s in %s", (const char *)DocumentRoot, (const char *)Path);
+//	  message_log (LOG_DEBUG, "Looking for %s in %s", (const char *)DocumentRoot, (const char *)Path);
 	  if (Path.SubString(1, root_len) ==  DocumentRoot)
 	    {
 	      Path.EraseBefore(root_len + 1);

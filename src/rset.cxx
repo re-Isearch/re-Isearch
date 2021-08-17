@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)$Id: rset.cxx,v 1.2 2021/01/17 13:15:45 edz Exp $ Project re:iSearch"
 
 
@@ -84,7 +88,7 @@ UCHR RSET::GetVirtualIndex(size_t i) const
 
 RSET& RSET::Join(const RSET& OtherSet)
 {
-  logf (LOG_PANIC, "RSET::Join not yet implemented");
+  message_log (LOG_PANIC, "RSET::Join not yet implemented");
  enum SortBy mySort = Sort;
  if (OtherSet.Sort == ByKey)
    {
@@ -96,7 +100,7 @@ RSET& RSET::Join(const RSET& OtherSet)
 // like Cat but adds the hits
 RSET& RSET::Union(const RSET& OtherSet)
 {
-  logf (LOG_PANIC, "RSET::Union not yet implemented");
+  message_log (LOG_PANIC, "RSET::Union not yet implemented");
   return *this;
 }
 /////////////////////////////////////////////////////////////////
@@ -249,12 +253,12 @@ bool RSET::GetEntry (const size_t Index, PRESULT ResultRecord) const
 //cerr << "@@@@@@@@@@@@@@ GET ENTRY " << Index << endl;
   if ((Index > 0) && ((size_t)Index <= TotalEntries))
     {
-      logf (LOG_DEBUG, "Fetching RSET element %d", Index);
+      message_log (LOG_DEBUG, "Fetching RSET element %d", Index);
       *ResultRecord = Table[Index - 1];
 //cerr << "Score = " << ResultRecord->GetScore() << endl;
       return GDT_TRUE;
     }
-//logf (LOG_DEBUG, "RSET Element %d does not exist", Index);
+//message_log (LOG_DEBUG, "RSET Element %d does not exist", Index);
   return GDT_FALSE;
 }
 
@@ -262,7 +266,7 @@ bool RSET::GetEntry (const size_t Index, PRESULT ResultRecord) const
 const RESULT& RSET::GetEntry(const size_t Index) const
 {
 //cerr << "@@@@@@@@@@@@@@ WANT " << Index << endl;
-//logf (LOG_DEBUG, "Want RSET Element %d of %d", Index, TotalEntries);
+//message_log (LOG_DEBUG, "Want RSET Element %d of %d", Index, TotalEntries);
 #if 1
   if (Index > 0 && Index <= TotalEntries)
      return Table[Index-1];
@@ -370,7 +374,7 @@ void RSET::Resize (const size_t Entries)
 	{
 	  TotalEntries = 0;
 	  MaxEntries = 0;
-	  logf (LOG_PANIC|LOG_ERRNO, "RSET::Resize: Could not allocate %ld", (long)MaxEntries);
+	  message_log (LOG_PANIC|LOG_ERRNO, "RSET::Resize: Could not allocate %ld", (long)MaxEntries);
 	}
     }
   else
@@ -430,10 +434,10 @@ void RSET::SortByFunction(int (*func)(const void *, const void *))
 	{
 	  if (func)
 	    {
-	      logf (LOG_DEBUG, "Sorting RSET by Function");
+	      message_log (LOG_DEBUG, "Sorting RSET by Function");
 	      QSORT(Table, TotalEntries, sizeof(RESULT), func);
 	    }
-	  else logf (LOG_WARN, "Application Error: Request to sort RSET by undefined Function");
+	  else message_log (LOG_WARN, "Application Error: Request to sort RSET by undefined Function");
 	}
       Sort = ByFunction;
     }
@@ -475,7 +479,7 @@ void RSET::SortByKey()
 {
   if (Sort != ByKey)
     {
-      logf (LOG_DEBUG, "RSET::SortByKey()");
+      message_log (LOG_DEBUG, "RSET::SortByKey()");
       QSORT(Table, TotalEntries, sizeof(RESULT), RsetCompareKeys);
       Sort = ByKey;
     }

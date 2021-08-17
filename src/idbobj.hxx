@@ -1,11 +1,9 @@
-/************************************************************************
-************************************************************************/
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 
 /*@@@
 File:		idbobj.hxx
-Version:	1.00
 Description:	Class IDBOBJ: Database object virtual class
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #ifndef IDBOBJ_HXX
@@ -64,7 +62,9 @@ public:
   GDT_BOOLEAN     ValidateDocType(const DOCTYPE_ID& Id) const { return Id.IsDefined(); }
 
   virtual GDT_BOOLEAN GetDateRange(DATERANGE *DateRange = NULL) const {
-     if (DateRange) DateRange->Clear(); return GDT_FALSE; }
+     if (DateRange) DateRange->Clear();
+     return GDT_FALSE;
+  }
 
 
   virtual GDT_BOOLEAN ValidNodeName(const STRING& nodeName) const { return GDT_TRUE; }
@@ -99,7 +99,8 @@ public:
   virtual GDT_BOOLEAN GetFieldData(GPTYPE, STRING*) {return GDT_FALSE; }
 
   virtual GDT_BOOLEAN GetFieldData(const FC&, const STRING&, STRING* Buffer) {
-    if (Buffer) Buffer->Clear(); return GDT_FALSE;
+    if (Buffer) Buffer->Clear();
+    return GDT_FALSE;
   }
 
  virtual  GDT_BOOLEAN GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
@@ -321,7 +322,8 @@ public:
   }
 
   virtual size_t GetAncestorContent (RESULT& Result, const STRING& NodeName, STRLIST *StrlistPtr) {
-    if (StrlistPtr) StrlistPtr->Clear(); return 0;
+    if (StrlistPtr) StrlistPtr->Clear();
+    return 0;
   }
 
   virtual void   Present(const RESULT& ResultRecord, const STRING& ElementSet,

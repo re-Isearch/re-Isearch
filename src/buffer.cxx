@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #include <stdlib.h>
 #include <memory.h>
 #include "common.hxx"
@@ -49,7 +53,7 @@ GDT_BOOLEAN BUFFER::Free(const char *Class, const char *What)
     {
       if (!Ok())
 	{
-          logf (LOG_PANIC, "Buffer %s::%s (%u kbytes) got corrupted (%x != %x)!",
+          message_log (LOG_PANIC, "Buffer %s::%s (%u kbytes) got corrupted (%x != %x)!",
 		Class ? Class : "", What && *What ? What : "<Unknown>",
 		(unsigned)Buffer_size, Buffer[Buffer_size], (unsigned char)(((Buffer_size+1)/1024)&0xFF) );
 	  res = GDT_FALSE;
@@ -88,7 +92,7 @@ void *BUFFER::Expand (size_t want, size_t size)
       try {
         Buffer = new unsigned char [Buffer_size+1];
       } catch (...) {
-	logf (LOG_ERRNO|LOG_PANIC, "Could not expand buffer from %u to %u bytes",
+	message_log (LOG_ERRNO|LOG_PANIC, "Could not expand buffer from %u to %u bytes",
 	   (unsigned)oldsize, (unsigned)Buffer_size);
         Buffer = NULL;
         Buffer_size = 0;
@@ -114,7 +118,7 @@ void *BUFFER::Want (size_t want, size_t size)
       try {
 	Buffer = new unsigned char [Buffer_size+1];
       } catch (...) {
-	logf (LOG_ERRNO|LOG_PANIC, "Could not create a %u byte buffer", (unsigned)Buffer_size);
+	message_log (LOG_ERRNO|LOG_PANIC, "Could not create a %u byte buffer", (unsigned)Buffer_size);
 	Buffer_size = 0;
       }
       if (Buffer_size)

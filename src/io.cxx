@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /*=======================================================
  *
  *  CLASS IO - manipulate generalized input/output objects
@@ -77,7 +81,7 @@ off_t IO::iseek(off_t pos)
 {
   off_t curPos;
   
-  if(debug) logf (LOG_DEBUG, "Seek to position %ld, from top of file",pos);
+  if(debug) message_log (LOG_DEBUG, "Seek to position %ld, from top of file",pos);
   switch(type){
   case LFILE:
     fseek(ptr.fp,pos,0);
@@ -97,7 +101,7 @@ off_t IO::iseek(off_t pos)
 CHR* IO::igets(char *b, int len)
 {
   char *q;
-  if(debug) logf(LOG_DEBUG,"read %d bytes as fgets",len);
+  if(debug) message_log(LOG_DEBUG,"read %d bytes as fgets",len);
   switch(type){
   case LFILE:
     q=fgets(b,len,ptr.fp);
@@ -131,7 +135,7 @@ off_t IO::iseek(off_t pos, int offset)
 {
   off_t curPos;
   
-  if(debug) logf(LOG_DEBUG,"Seek to position %ld, offset %d",pos,offset);
+  if(debug) message_log(LOG_DEBUG,"Seek to position %ld, offset %d",pos,offset);
   switch(type){
   case LFILE:
     fseek(ptr.fp,pos,offset);
@@ -166,7 +170,7 @@ off_t IO::itell()
   off_t xPos;
   
 
-  if(debug) logf(LOG_DEBUG,"Tell position in %s",id.c_str());
+  if(debug) message_log(LOG_DEBUG,"Tell position in %s",id.c_str());
   switch(type){
   case LFILE:
     xPos=ftell(ptr.fp);
@@ -201,31 +205,31 @@ GDT_BOOLEAN IO::open(const STRING& Fname, const STRING& mmode)
       if((ptr.fp=fopen(id,mode)) != NULL)
 	{
 	  type=LFILE;
-	  if(debug) logf(LOG_DEBUG,"Open of '%s' Succeeded", id.c_str());
+	  if(debug) message_log(LOG_DEBUG,"Open of '%s' Succeeded", id.c_str());
 	  return GDT_TRUE;
 	}
     }
   else
     {
       /* it is a URL*/
-      if(debug) logf(LOG_DEBUG, "Open %s as %s",id.c_str(), "URL");
+      if(debug) message_log(LOG_DEBUG, "Open %s as %s",id.c_str(), "URL");
 #ifndef NO_RLDCACHE
       if (Cache == NULL)
-	logf (LOG_ERROR, "IO:open() Failed, Cache is NULL");
+	message_log (LOG_ERROR, "IO:open() Failed, Cache is NULL");
       else if((Buf = Cache->GetFile(id, 0,-1,(size_t*)&BufLength, (time_t)360,0))==NULL)
-	logf(LOG_ERROR, "IO:open():Cache->GetFile() failed!");
+	message_log(LOG_ERROR, "IO:open():Cache->GetFile() failed!");
       else
 	{
 	  type=URL;
-	  if(debug) logf(LOG_DEBUG,"Open of '%s' Succeeded", id.c_str());
+	  if(debug) message_log(LOG_DEBUG,"Open of '%s' Succeeded", id.c_str());
 	  return GDT_TRUE; // Success
 	}
 #else
-      logf (LOG_ERROR, "IO:open() Failed, Cache is NULL");
+      message_log (LOG_ERROR, "IO:open() Failed, Cache is NULL");
 #endif
      }
 
-  if(debug) logf(LOG_DEBUG, "Open Failed for '%s'",id.c_str());
+  if(debug) message_log(LOG_DEBUG, "Open Failed for '%s'",id.c_str());
   return GDT_FALSE;
 }
 
@@ -241,14 +245,14 @@ GDT_BOOLEAN IO::open(const STRING& Fname, const STRING& mmode)
  *=================================================================*/
 void IO::close()
 {
-  if (debug) logf(LOG_DEBUG,"Close %s",id.c_str());
+  if (debug) message_log(LOG_DEBUG,"Close %s",id.c_str());
   switch (type) {
   case LFILE:
     if(ptr.fp){
       fclose(ptr.fp);
       ptr.fp=NULL;
     }else{
-      if(debug) logf(LOG_DEBUG,"Attempt to close closed LFILE");
+      if(debug) message_log(LOG_DEBUG,"Attempt to close closed LFILE");
     }
     break;
   case URL:
@@ -284,7 +288,7 @@ int IO::remove()
 {
   int status = -1;
   
-  if(debug) logf(LOG_DEBUG,"Close and unlink %s",id.c_str());
+  if(debug) message_log(LOG_DEBUG,"Close and unlink %s",id.c_str());
   switch(type){
   case LFILE:
     close();
@@ -316,16 +320,16 @@ size_t IO::read(char *buffer, size_t length, size_t size)
   size_t readSize;
   
   if(debug){
-    logf(LOG_DEBUG,"Read %d items of %d bytes from %s\n",length, size,id.c_str());
+    message_log(LOG_DEBUG,"Read %d items of %d bytes from %s\n",length, size,id.c_str());
   }
   switch(type){
   case LFILE:
     if(ptr.fp){
       readSize=fread((void *)buffer,length,size,ptr.fp);
-      if(debug) logf(LOG_DEBUG,"Read  %d items",readSize);
+      if(debug) message_log(LOG_DEBUG,"Read  %d items",readSize);
     }
     else{
-      if(debug) logf(LOG_DEBUG,"Attempt to read from closed file %s",id.c_str());
+      if(debug) message_log(LOG_DEBUG,"Attempt to read from closed file %s",id.c_str());
       readSize=0;
     }
     break;
@@ -359,19 +363,19 @@ size_t IO::write(char *buffer, size_t length, size_t size)
 {
   size_t writeSize;
   
-  if(debug) logf(LOG_DEBUG,"Write %d items of %d bytes to %s",length, size,id.c_str());
+  if(debug) message_log(LOG_DEBUG,"Write %d items of %d bytes to %s",length, size,id.c_str());
   switch(type){
   case LFILE:
     if(ptr.fp)
       writeSize=fwrite(buffer,size,length,ptr.fp);
     else{
-      if(debug) logf(LOG_DEBUG,"Attempt to write to closed file %s",id.c_str());
+      if(debug) message_log(LOG_DEBUG,"Attempt to write to closed file %s",id.c_str());
       writeSize=0;
     }
     break;
   case URL:			// write operation not permitted
     writeSize=0;
-    if(debug) logf(LOG_DEBUG,"Write operation not permitted to URL %s",id.c_str());
+    if(debug) message_log(LOG_DEBUG,"Write operation not permitted to URL %s",id.c_str());
     break;
   }
   return(writeSize);
@@ -380,13 +384,13 @@ size_t IO::write(char *buffer, size_t length, size_t size)
 
 void IO::top()
 {
-  if(debug) logf(LOG_DEBUG,"set file %s pointer to 0",id.c_str());
+  if(debug) message_log(LOG_DEBUG,"set file %s pointer to 0",id.c_str());
   switch(type){
   case LFILE:
     if(ptr.fp)
       rewind(ptr.fp);
     else
-      if(debug) logf(LOG_DEBUG,"File %s not open for rewind",id.c_str());
+      if(debug) message_log(LOG_DEBUG,"File %s not open for rewind",id.c_str());
     break;
   case URL:
     cachePtr=0;

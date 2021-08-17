@@ -1,4 +1,8 @@
-#pragma ident "@(#)log.cxx  1.46 06/29/00 14:16:26 BSN"
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
+#pragma ident "@(#)log.cxx"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,14 +71,14 @@ static void sig_hangup(int sig)
        if (l_console)
 	{
 	  log_init (syslog_stream);
-	  logf (iLOG_ERROR, "*** Terminal hangup. Messages to <syslog>");
+	  message_log (iLOG_ERROR, "*** Terminal hangup. Messages to <syslog>");
 	}
        else
 	{
 	  char text[] =  "Hangup detected (Sig#XX)";
 	  text[21] = (sig /10) % 10;
 	  test[22] = sig % 10;
-	  logf (iLOG_DEBUG, text);
+	  message_log (iLOG_DEBUG, text);
 	}
     }
   signal (sig, sig_hangup);
@@ -331,15 +335,15 @@ GDT_BOOLEAN log_init (int level, const char *prefix, const char *name)
 
 void log_message(int level, const char *string)
 {
-  logf (level, "%s", string);
+  message_log (level, "%s", string);
 }
 
-void logf (int level, const char *fmt,...)
+void message_log (int level, const char *fmt,...)
 {
   static char last_error[1024];
   static char *login = NULL;
 
-//cerr << "logf (....) being called" << endl;
+//cerr << "message_log (....) being called" << endl;
 
   va_list ap;
   char buf[4096], flags[127];

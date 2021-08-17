@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /************************************************************************
 ************************************************************************/
 
@@ -125,7 +129,7 @@ GDT_BOOLEAN METADATA::Load (const STRING& MdType, const STRING& DefaultsPath)
     }
   if (Exists(DefaultsPath))
     {
-      logf (LOG_DEBUG, "Loading Metadata from '%s'", (const char *)DefaultsPath);
+      message_log (LOG_DEBUG, "Loading Metadata from '%s'", (const char *)DefaultsPath);
       return mdRegistry->ReadFromSgml(DefaultsPath);
     }
   return GDT_FALSE;
@@ -486,7 +490,7 @@ LOCATOR::LOCATOR(const STRING& Path)
     {
       path.Cat("about.xml");
     }
-  logf (LOG_DEBUG, "Create METADATA(\"GILS\", \"%s\")", (const char *)path);
+  message_log (LOG_DEBUG, "Create METADATA(\"GILS\", \"%s\")", (const char *)path);
   Metadata = new METADATA("GILS", path);
 }
 

@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)rcache.cxx  1.24 02/05/01 00:33:41 BSN"
 
 #include "gdt.h"
@@ -119,7 +123,7 @@ INT RCACHE::Check(const SearchObj& SearchObject)
     {
       if(Table[i].Data == SearchObject)
 	{
-	  logf (LOG_DEBUG, "Found %s/\"%s\" (rel=%d) in slot %d",
+	  message_log (LOG_DEBUG, "Found %s/\"%s\" (rel=%d) in slot %d",
 		SearchObject.FieldName.c_str(),
 		SearchObject.Term.c_str(),
 		SearchObject.Relation,
@@ -137,7 +141,7 @@ RCACHE::~RCACHE()
 {
   if (Table)
     {
-      logf (LOG_DEBUG, "Deleting RCACHE: %d objects", Count);
+      message_log (LOG_DEBUG, "Deleting RCACHE: %d objects", Count);
       delete[] Table;
       Count=0;
    }
@@ -170,7 +174,7 @@ GDT_BOOLEAN RCACHE::Read (PFILE Fp)
       BYTE version = 0;
       ::Read(&version, Fp);
       if (version != RCACHE_VERSION) {
-	logf (LOG_DEBUG, "Stale RCACHE, version %d!=%d", version, RCACHE_VERSION); 
+	message_log (LOG_DEBUG, "Stale RCACHE, version %d!=%d", version, RCACHE_VERSION); 
       } else {
       UINT2 TotalEntries;
       ::Read(&TotalEntries, Fp); // Fetch Count
@@ -178,13 +182,13 @@ GDT_BOOLEAN RCACHE::Read (PFILE Fp)
       STRING Fn;
       Fn.Read(Fp);
       if (Fn != Parent->GetDbFileStem())
-	logf (LOG_WARN, "Cache Clash in %s, check your %s.ini and %s.ini files",
+	message_log (LOG_WARN, "Cache Clash in %s, check your %s.ini and %s.ini files",
 		Parent->PersistantCacheName().c_str(),
 		Fn.c_str(),
 		Parent->GetDbFileStem().c_str());
-      logf (LOG_DEBUG, "Reading %d Cache %s IRSET Objects", TotalEntries, Fn.c_str());
+      message_log (LOG_DEBUG, "Reading %d Cache %s IRSET Objects", TotalEntries, Fn.c_str());
 #else
-      logf (LOG_DEBUG, "Reading %d Cache IRSET Objects", TotalEntries);
+      message_log (LOG_DEBUG, "Reading %d Cache IRSET Objects", TotalEntries);
 #endif
       for (Count = 0; Count < TotalEntries; Count++)
 	Table[Count].Read(Fp);

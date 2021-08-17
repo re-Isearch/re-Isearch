@@ -76,11 +76,11 @@ void IAFADOC::ParseFields (PRECORD NewRecord)
       NewRecord->GetDocumentType (&doctype);
       if (tags)
 	{
-	  logf (LOG_WARN, "No `" + doctype + "' fields/tags in " + fn);
+	  message_log (LOG_WARN, "No `" + doctype + "' fields/tags in " + fn);
 	}
       else
 	{
-	  logf (LOG_ERROR, "Unable to parse `" + doctype + "' record in " + fn);
+	  message_log (LOG_ERROR, "Unable to parse `" + doctype + "' record in " + fn);
 	}
       delete[]RecBuffer;
       NewRecord->SetBadRecord();
@@ -150,7 +150,7 @@ void IAFADOC::ParseFields (PRECORD NewRecord)
 
 	  if (Db->KeyLookup (pstr))
 	    {
-	      logf (LOG_ERROR, "Record in \"%s\" uses a non-unique %s '%s'",
+	      message_log (LOG_ERROR, "Record in \"%s\" uses a non-unique %s '%s'",
 		 (const char *)fn, (const char *)FieldName, pstr);
 	    }
 	  else

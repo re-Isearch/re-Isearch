@@ -1,8 +1,9 @@
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 #pragma ident  "@(#)vidb.cxx"
 
 /*-@@@
 File:           vidb.cxx
-Version:        1.00
 Description:    Class VIDB, Virtual IDB
 Author:         Kevin Gamiel, kgamiel@cnidr.org
 		Nassib Nassar, nrn@cnidr.org
@@ -136,7 +137,7 @@ VIDB::VIDB (const STRING& NewPathName, const STRING& NewFileName,
 GDT_BOOLEAN VIDB::Open (const STRING& DBname, const STRLIST& NewDocTypeOptions,
 	const GDT_BOOLEAN SearchOnly)
 {
-  logf (LOG_DEBUG, "VIDB::Open('%s',..,%d)", DBname.c_str(), SearchOnly);
+  message_log (LOG_DEBUG, "VIDB::Open('%s',..,%d)", DBname.c_str(), SearchOnly);
   size_t t = DBname.Search("<");
   if (t > 0 && t < 5 && DBname.Search(">")>t)
     {
@@ -151,7 +152,7 @@ GDT_BOOLEAN VIDB::Open (const STRING& DBname, const STRLIST& NewDocTypeOptions,
   else
     {
       STRING  fullpath ( DBname.IsEmpty() ? ExpandFileSpec(__IB_DefaultDbName) : ExpandFileSpec(DBname) );
-      //logf (LOG_DEBUG, "VIDB::Open '%s'", fullpath.c_str());
+      //message_log (LOG_DEBUG, "VIDB::Open '%s'", fullpath.c_str());
       return Open (RemoveFileName(fullpath),  RemovePath (fullpath), NewDocTypeOptions, SearchOnly);
     }
 }
@@ -184,10 +185,10 @@ static STRLIST& CollectDBs(STRLIST *FilenameList, const STRING& Path)
       const STRING    db((IsAbsoluteFilePath(p->Value()) ? p->Value() : Path + p->Value()));
       const STRING    ini = db + (STRING) DbExtDbInfo;
       if (newList.Search(db) != 0) {
-	logf(LOG_ERROR, "Circular collection around %s", db.c_str());
+	message_log(LOG_ERROR, "Circular collection around %s", db.c_str());
 	continue;
       }
-      logf(LOG_DEBUG, "Opening '%s'", ini.c_str());
+      message_log(LOG_DEBUG, "Opening '%s'", ini.c_str());
       if ((Fp = fopen(ini, "r")) != NULL) {
 	REGISTRY        Registry("VirtualIsearch");
 	GDT_BOOLEAN     loaded = Registry.Read(Fp);
@@ -204,15 +205,15 @@ static STRLIST& CollectDBs(STRLIST *FilenameList, const STRING& Path)
 	  if (!tmpList.IsEmpty()) {
 	    newList += tmpList;
 	  } else {
-	    logf(LOG_WARN, "'%s' did not have a '%s' specified in [%s]",
+	    message_log(LOG_WARN, "'%s' did not have a '%s' specified in [%s]",
 		 ini.c_str(), DatabasesEntry.c_str(), DbInfoSection.c_str());
 	    newList.Cat(db);
 	  }
 	}
       } else
-	logf(LOG_ERRNO, "Could not open '%s'", ini.c_str());
+	message_log(LOG_ERRNO, "Could not open '%s'", ini.c_str());
     }
-    logf(LOG_DEBUG, "Sorting list of indexes..");
+    message_log(LOG_DEBUG, "Sorting list of indexes..");
     newList.UniqueSort();	// Sort
     *FilenameList = newList;
   }
@@ -230,10 +231,10 @@ static size_t ReadFromFile(const STRING& vdb, STRLIST *FilenameListPtr, int dept
     return 0;
   if (depth > 20)
     {
-      logf(LOG_ERROR, "Virtual db include too deep (%d). Circular includes in '%s'?", depth,  vdb.c_str());
+      message_log(LOG_ERROR, "Virtual db include too deep (%d). Circular includes in '%s'?", depth,  vdb.c_str());
       return 0;
     }
-  if (depth) logf (LOG_DEBUG, "Virtual db include (depth=%d) of '%s'", depth, vdb.c_str());
+  if (depth) message_log (LOG_DEBUG, "Virtual db include (depth=%d) of '%s'", depth, vdb.c_str());
 
   STRING  RawFilenameList, Filename;
   STRLIST AddList;
@@ -288,7 +289,7 @@ GDT_BOOLEAN VIDB::Open(const STRING& NewPathName, const STRING& NewFileName,
 
   Opened = GDT_TRUE;
 
-  logf (LOG_DEBUG, "Initializing virtual DB \"%s%s\" ",  NewPathName.c_str(), NewFileName.c_str());
+  message_log (LOG_DEBUG, "Initializing virtual DB \"%s%s\" ",  NewPathName.c_str(), NewFileName.c_str());
 
   // Clear
 #ifdef BSD
@@ -378,11 +379,11 @@ GDT_BOOLEAN VIDB::Open(const STRING& NewPathName, const STRING& NewFileName,
 	}
     }
 
-  logf (LOG_DEBUG, "Virtual list of %d indexes...", DatabaseCount);
+  message_log (LOG_DEBUG, "Virtual list of %d indexes...", DatabaseCount);
 
   if (DatabaseCount > VolIndexCapacity)
     {
-      logf (LOG_FATAL, "Virtual specified with %d databases: \
+      message_log (LOG_FATAL, "Virtual specified with %d databases: \
 A virtual database may contain a MAX. of %u databases!", DatabaseCount, VolIndexCapacity);
       exit(0);
     }
@@ -417,12 +418,12 @@ A virtual database may contain a MAX. of %u databases!", DatabaseCount, VolIndex
       }
       if (c_dblist[c_dbcount] == NULL)
 	{
-	  logf (LOG_WARN, "Could not open database \"%s\"", Fn.c_str());
+	  message_log (LOG_WARN, "Could not open database \"%s\"", Fn.c_str());
 	  continue; // Not inited.
 	}
       else if (!c_dblist[c_dbcount]->IsDbCompatible())
 	{
-	  logf (LOG_WARN, "Can't open database \"%s\": %s.",
+	  message_log (LOG_WARN, "Can't open database \"%s\": %s.",
 		Fn.c_str(), c_dblist[c_dbcount]->ErrorMessage(), Fn.c_str());
 	  delete c_dblist[c_dbcount];
 	  c_dblist[c_dbcount] = NULL;
@@ -432,7 +433,7 @@ A virtual database may contain a MAX. of %u databases!", DatabaseCount, VolIndex
 	{
 	  if (p->Value() != __IB_DefaultDbName)
 	    {
-	      logf (LOG_WARN, "Database \"%s\" is \"Empty\" or \"Undefined\"! Ignoring.", Fn.c_str());
+	      message_log (LOG_WARN, "Database \"%s\" is \"Empty\" or \"Undefined\"! Ignoring.", Fn.c_str());
 	      delete c_dblist[c_dbcount];
 	      c_dblist[c_dbcount] = NULL;
 	      continue;
@@ -440,7 +441,7 @@ A virtual database may contain a MAX. of %u databases!", DatabaseCount, VolIndex
 	}
       else
 	{
-	  logf (LOG_DEBUG, "Adding Index '%s' to virtual database.", Fn.c_str());
+	  message_log (LOG_DEBUG, "Adding Index '%s' to virtual database.", Fn.c_str());
 	  c_dblist[c_dbcount]->SetParent(this, c_dbcount);
 #if USE_STD_MAP
 	  Segments[c_dblist[c_dbcount]->GetSegmentName()] = c_dbcount;
@@ -976,7 +977,7 @@ GDT_BOOLEAN VIDB::SetLocale (const CHR *LocaleName) const
       LOCALE myLocale (LocaleName);
 
       if (!SetGlobalCharset(myLocale.GetCharsetId()))
-	logf(LOG_ERROR, "Could set set character set '%s'", myLocale.GetCharsetName());
+	message_log(LOG_ERROR, "Could set set character set '%s'", myLocale.GetCharsetName());
       else
 	return GDT_TRUE;
     }
@@ -1114,7 +1115,7 @@ size_t VIDB::ScanSearch(SCANLIST *ListPtr, const QUERY& SearchQuery, const STRIN
 	*ListPtr = Scanlist;
       return Scanlist.GetTotalEntries();
     }
-  logf (LOG_PANIC, "ScanSearch passed a NULL pointer as list?");
+  message_log (LOG_PANIC, "ScanSearch passed a NULL pointer as list?");
   return 0; // Can't
 }
 
@@ -1142,7 +1143,7 @@ PRSET  VIDB::VSearchRpn(const STRING& QueryString, enum SortBy Sort, size_t Tota
   SQUERY squery;
   if (!squery.SetRpnTerm (QueryString))
    {
-     logf (LOG_NOTICE|LOG_ERROR, "Bad RPN Query: %s", squery.LastErrorMessage().c_str());
+     message_log (LOG_NOTICE|LOG_ERROR, "Bad RPN Query: %s", squery.LastErrorMessage().c_str());
      if (TotalFound) *TotalFound = 0;
      return NULL;
    }
@@ -1155,7 +1156,7 @@ PRSET  VIDB::VSearchInfix(const STRING& QueryString, enum SortBy Sort, size_t To
   SQUERY squery;
   if (!squery.SetInfixTerm (QueryString))
    {
-     logf (LOG_NOTICE|LOG_ERROR, "Bad Infix Query: %s", squery.LastErrorMessage().c_str());
+     message_log (LOG_NOTICE|LOG_ERROR, "Bad Infix Query: %s", squery.LastErrorMessage().c_str());
      if (TotalFound) *TotalFound = 0;
      return NULL;
    }
@@ -1273,10 +1274,10 @@ PRSET VIDB::VSearch (const QUERY& Query)
 	}
     }
   if (i == 0)
-    logf (LOG_ERROR, "No database is opened for search!");
+    message_log (LOG_ERROR, "No database is opened for search!");
   if (QueryError)
     {
-      logf (LOG_DEBUG, "VIDB::VSearch() returning undefined result set (NULL)");
+      message_log (LOG_DEBUG, "VIDB::VSearch() returning undefined result set (NULL)");
       return NULL; // Undefined result set
     }
 
@@ -1302,7 +1303,7 @@ PRSET VIDB::VSearch (const QUERY& Query)
   else if (c_dbcount <= 1)
     {
       if ( c_dblist[i-1]->GetErrorCode() > 0)
-	logf (LOG_INFO, "Search Failure: %s",  c_dblist[i-1]->ErrorMessage() );
+	message_log (LOG_INFO, "Search Failure: %s",  c_dblist[i-1]->ErrorMessage() );
       return new RSET(); // Nothing found
     }
 
@@ -1467,7 +1468,7 @@ PIRSET VIDB::Search(const QUERY& Query, VIDB_STATS *Stats)
       if ((sem_init(& semaphores[i], 0, 0) < 0 ) ||
 	 (pthread_create(& idthreads[i], NULL, c_dblist[i]->Search, (void *)&myQuery) != 0))
 	{
-	  logf (LOG_ERRNO, "VIDB:: Could not run threaded!");
+	  message_log (LOG_ERRNO, "VIDB:: Could not run threaded!");
 	  c_irsetlist[i] = c_dblist[i]->Search (myQuery);
 	}
 #else
@@ -1506,17 +1507,17 @@ PIRSET VIDB::Search(const QUERY& Query, VIDB_STATS *Stats)
   // TODO: Wait untill the threads are finished
 
   if (i == 0)
-    logf (LOG_ERROR, "No database is opened for search!");
+    message_log (LOG_ERROR, "No database is opened for search!");
 
   if (QueryError)
     {
-      logf (LOG_DEBUG, "VIDB::Search() returning undefined result set (NULL)");
+      message_log (LOG_DEBUG, "VIDB::Search() returning undefined result set (NULL)");
       return NULL; // Undefined result set
     }
   // If only 1 database or result save some effort...
   if (hit_set > 0)
     {
-      logf(LOG_DEBUG, "Only one hit set (%d)", hit_set);
+      message_log(LOG_DEBUG, "Only one hit set (%d)", hit_set);
       // delete what we don't need...
       for (i=0; i < c_dbcount; i++)
 	{
@@ -1539,7 +1540,7 @@ PIRSET VIDB::Search(const QUERY& Query, VIDB_STATS *Stats)
   else if (c_dbcount <= 1)
     {
       if ( c_dblist[i-1]->GetErrorCode() > 0)
-        logf (LOG_INFO, "Search Failure: %s",  c_dblist[i-1]->ErrorMessage() );
+        message_log (LOG_INFO, "Search Failure: %s",  c_dblist[i-1]->ErrorMessage() );
       // delete what we are done with
       for (i=0; i < c_dbcount; i++)
 	{
@@ -1564,7 +1565,7 @@ PIRSET VIDB::Search(const QUERY& Query, VIDB_STATS *Stats)
       if (Stats) Stats->SetHits(i, c_irsetlist[i]->GetHitTotal());
       if ((int)i != smallest_hit_set_idx && c_irsetlist[i])
 	{
-	  logf(LOG_DEBUG, "Adding %d [Set #%d]", c_irsetlist[i]->GetTotalEntries(), i);
+	  message_log(LOG_DEBUG, "Adding %d [Set #%d]", c_irsetlist[i]->GetTotalEntries(), i);
 	  NewIrset->Concat (*(c_irsetlist[i]));
 	  delete c_irsetlist[i];; // Done with it
 	}
@@ -1578,7 +1579,7 @@ PIRSET  VIDB::SearchRpn(const STRING& QueryString, enum SortBy Sort, enum Normal
   SQUERY squery;
   if (!squery.SetRpnTerm (QueryString))
    {
-     logf (LOG_NOTICE|LOG_ERROR, "Bad RPN Query: %s", squery.LastErrorMessage().c_str());
+     message_log (LOG_NOTICE|LOG_ERROR, "Bad RPN Query: %s", squery.LastErrorMessage().c_str());
      return NULL;
    }
   return Search(squery, Sort, Method);
@@ -1589,7 +1590,7 @@ PIRSET  VIDB::SearchInfix(const STRING& QueryString, enum SortBy Sort, enum Norm
   SQUERY squery;
   if (!squery.SetInfixTerm (QueryString))
    {
-     logf (LOG_NOTICE|LOG_ERROR, "Bad Infix Query: %s", squery.LastErrorMessage().c_str());
+     message_log (LOG_NOTICE|LOG_ERROR, "Bad Infix Query: %s", squery.LastErrorMessage().c_str());
      return NULL;
    }
   return Search(squery, Sort, Method);
@@ -2419,7 +2420,7 @@ GDT_BOOLEAN VIDB::SetSortIndexes(int Which, atomicIRSET *Irset)
       index_id = Irset->GetIndex(i);
       db_id    = index_id.GetVirtualIndex();
       if (db_id > (int)c_dbcount)
-	logf (LOG_PANIC, "Virtual Index %d exceeds db count %d!", db_id, c_dbcount);
+	message_log (LOG_PANIC, "Virtual Index %d exceeds db count %d!", db_id, c_dbcount);
       else
         res = Irset->SetSortIndex(i,  c_dblist[ db_id - 1 ]->GetSortIndex(Which, index_id) ) && res;
     }
@@ -2493,7 +2494,7 @@ PIRSET VIDB::SearchSmart(const SQUERY& Squery, const STRING& DefaultField,
 
   if (Squery.isPlainQuery(&QueryString) == GDT_FALSE)
     {
-      if (SqueryPtr) *SqueryPtr = Squery; // 17 Dec 2007
+      if (SqueryPtr) *SqueryPtr = Squery; 
       return Search(Squery, Sort, Method);
     }
 
@@ -2605,17 +2606,17 @@ PIRSET VIDB::FileSearch(const STRING& FileSpec)
     }
 
   if (i == 0)
-    logf (LOG_ERROR, "No database is opened for search!");
+    message_log (LOG_ERROR, "No database is opened for search!");
 
   if (QueryError)
     {
-      logf (LOG_DEBUG, "VIDB::FileSearch() returning undefined result set (NULL)");
+      message_log (LOG_DEBUG, "VIDB::FileSearch() returning undefined result set (NULL)");
       return NULL; // Undefined result set
     }
   // If only 1 database or result save some effort...
   if (hit_set > 0)
     {
-      logf(LOG_DEBUG, "Only one hit set (%d)", hit_set);
+      message_log(LOG_DEBUG, "Only one hit set (%d)", hit_set);
       // delete what we don't need...
       for (i=0; i < c_dbcount; i++)
 	{
@@ -2632,7 +2633,7 @@ PIRSET VIDB::FileSearch(const STRING& FileSpec)
   else if (c_dbcount <= 1)
     {
       if ( c_dblist[i-1]->GetErrorCode() > 0)
-        logf (LOG_INFO, "Search Failure: %s",  c_dblist[i-1]->ErrorMessage() );
+        message_log (LOG_INFO, "Search Failure: %s",  c_dblist[i-1]->ErrorMessage() );
       // delete what we are done with
       for (i=0; i < c_dbcount; i++)
 	{
@@ -2656,7 +2657,7 @@ PIRSET VIDB::FileSearch(const STRING& FileSpec)
     {
       if ((int)i != smallest_hit_set_idx && c_irsetlist[i])
 	{
-	  logf(LOG_DEBUG, "Adding %d [Set #%d]", c_irsetlist[i]->GetTotalEntries(), i);
+	  message_log(LOG_DEBUG, "Adding %d [Set #%d]", c_irsetlist[i]->GetTotalEntries(), i);
 	  NewIrset->Concat (*(c_irsetlist[i]));
 	  delete c_irsetlist[i];; // Done with it
 	  c_irsetlist[i] = NULL;

@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)common.cxx  1.98 08/08/01 15:32:55 BSN"
 /************************************************************************
 ************************************************************************/
@@ -128,7 +132,7 @@ static GDT_BOOLEAN _remove(const STRING& Fn)
   if (Fn.Unlink() && FileExists(Fn))
     {
       if (FinalGarbageCollect)
-	logf (LOG_WARN|LOG_ERRNO, "Could not remove '%s'. Remove by hand.", Fn.c_str());
+	message_log (LOG_WARN|LOG_ERRNO, "Could not remove '%s'. Remove by hand.", Fn.c_str());
       return GDT_FALSE;
     }
   return GDT_TRUE;
@@ -143,7 +147,7 @@ static int _CollectFileGarbage(GDT_BOOLEAN Final = GDT_FALSE)
       if ((count = GarbageFileList.Do(_remove)) != 0 )
 	{
 	  if (Final)
-	    logf (LOG_WARN|LOG_ERRNO, "Some litter left on disk: '%d' files. Remove by hand.", count);
+	    message_log (LOG_WARN|LOG_ERRNO, "Some litter left on disk: '%d' files. Remove by hand.", count);
 	}
     }
   return count;
@@ -208,7 +212,7 @@ STRING WinGetLongPathName(const STRING& Path)
     if (tmp.Want(maxL+1) == NULL)
       {
         // Memory error
-        logf (LOG_PANIC, "WinGetLongPathName: Memory exhausted. Wanted %u", maxL+1);
+        message_log (LOG_PANIC, "WinGetLongPathName: Memory exhausted. Wanted %u", maxL+1);
 	err = ERROR_NOT_ENOUGH_MEMORY; // 8
         res = 0; // Failure
       }
@@ -230,7 +234,7 @@ STRING WinGetLongPathName(const STRING& Path)
 	    maxL = res;
 	    if (tmp.Want(maxL+1) == NULL)
 	      {
-		logf (LOG_PANIC, "WinGetLongPathName: Memory exhausted. Wanted %u", maxL+1);
+		message_log (LOG_PANIC, "WinGetLongPathName: Memory exhausted. Wanted %u", maxL+1);
 		err = ERROR_NOT_ENOUGH_MEMORY; // 8
 		res = 0;
 	      }
@@ -252,7 +256,7 @@ STRING WinGetLongPathName(const STRING& Path)
 	res = (longPath = Path).GetLength(); // Assume its already long format
      else {
         errno = err;
-	logf (LOG_WARN|LOG_ERRNO, "Could not get the Win32 long path for '%s' (Err #%ld).", Path.c_str(), err);
+	message_log (LOG_WARN|LOG_ERRNO, "Could not get the Win32 long path for '%s' (Err #%ld).", Path.c_str(), err);
      }
     }
   errno = 0; // Reset error
@@ -337,7 +341,7 @@ STRING FindSharedLibrary(const STRING& Argv0)
 	  void *addr = (void *)&FindSharedLibrary;
 	  if (dladdr(addr, &info))
 	    {
-	      logf (LOG_DEBUG, "Base shared Library=%s\n", info.dli_fname);
+	      message_log (LOG_DEBUG, "Base shared Library=%s\n", info.dli_fname);
 
 	      if (_sglobalSharedLibraryName.IsEmpty())
 		_sglobalSharedLibraryName = RemovePath(info.dli_fname);
@@ -354,7 +358,7 @@ STRING FindSharedLibrary(const STRING& Argv0)
 	      if (FileExists(exe = dir + "../contrib/lib/" + Argv0))
 		return exe;
 	    }
-	   else logf (LOG_DEBUG, "FindSharedLibrary: Could not find own symbol.");
+	   else message_log (LOG_DEBUG, "FindSharedLibrary: Could not find own symbol.");
 	  }
 	//Name was not set
 	if(_sglobalSharedLibraryName == NulString) return NulString; 
@@ -398,7 +402,7 @@ STRING FindExecutable(const STRING& Argv0)
   if (res > 0)
     {
       if (res >= sizeof(tmp))
-	logf (LOG_PANIC, "Internal path length %u > %u. Contact support.", res, sizeof(tmp));
+	message_log (LOG_PANIC, "Internal path length %u > %u. Contact support.", res, sizeof(tmp));
       STRING exe ( WinGetLongPathName(tmp) );
       if (Argv0.GetLength())
 	{
@@ -835,11 +839,11 @@ STRING MakeTempFileName(const STRING& Fn)
       char     scratch[ L_tmpnam+1];
       char    *TempName = tmpnam( scratch );
 
-      logf (LOG_WARN, "Could not create '%s', trying tmp '%s'", TmpName.c_str(),
+      message_log (LOG_WARN, "Could not create '%s', trying tmp '%s'", TmpName.c_str(),
         TempName);
       if ((oFp = fopen(TempName, "wb")) == NULL)
         {
-          logf (LOG_ERRNO, "Can't create a temporary numlist '%s'", Fn.c_str());
+          message_log (LOG_ERRNO, "Can't create a temporary numlist '%s'", Fn.c_str());
           return NulString;
         }
       TmpName = TempName; // Set it
@@ -981,7 +985,7 @@ off_t GetFileSize (int fd)
       // OK
 #else
       if (sb.st_size > (off_t)(0x7fffffffU))
-	logf (LOG_WARN, "File possibly too large (%ldMB)",
+	message_log (LOG_WARN, "File possibly too large (%ldMB)",
 		(long)(sb.st_size/(1024*1024L)) );
 #endif
       return sb.st_size;
@@ -1004,7 +1008,7 @@ off_t GetFileSize (const CHR *path)
       // OK
 #else
       if (sb.st_size > (off_t)(0x7fffffffU))
-	logf (LOG_WARN, "File %s possibly too large (%ldMB)", path, (long)(sb.st_size/(1024*1024L)) );
+	message_log (LOG_WARN, "File %s possibly too large (%ldMB)", path, (long)(sb.st_size/(1024*1024L)) );
 #endif
       return sb.st_size;
     }
@@ -1140,17 +1144,17 @@ STRING _win_MyFiles()
 
 	  myFiles = drive;
 	  myFiles.Cat(path);
-	  if (want_msg) logf (LOG_WARN, "Home directory unavailable! Using %s", myFiles.c_str());
+	  if (want_msg) message_log (LOG_WARN, "Home directory unavailable! Using %s", myFiles.c_str());
 	}
     } 
   if(!DirectoryExists(myFiles))
     {
-      logf (LOG_WARN, "Home directory '%s' does not exist! Creating '%s'", myFiles.c_str(), myFiles.c_str());
+      message_log (LOG_WARN, "Home directory '%s' does not exist! Creating '%s'", myFiles.c_str(), myFiles.c_str());
       MkDirs(myFiles);
     }
   if(!DirectoryExists(myFiles))
     {
-      logf (LOG_ERROR, "Home directory '%s' unavailable!", myFiles.c_str());
+      message_log (LOG_ERROR, "Home directory '%s' unavailable!", myFiles.c_str());
       return NulString;
     }
    return myFiles;
@@ -1167,10 +1171,10 @@ const char *_GetUserHome(const char *user)
   if (homeDir.IsEmpty()) {
     static int tries = 0;
     if (tries++ < 2)
-      logf (LOG_ERROR, "Can't find a home directory! Check Windows installation.");
+      message_log (LOG_ERROR, "Can't find a home directory! Check Windows installation.");
      return NULL;
   } else if(user != NULL && *user != '\0')
-    logf (LOG_WARN, "Home directory for '%s' can not be retrieved. Using '%s'", user, homeDir.c_str());
+    message_log (LOG_WARN, "Home directory for '%s' can not be retrieved. Using '%s'", user, homeDir.c_str());
 
    return (char *)(homeDir.c_str());
 #else
@@ -1493,7 +1497,7 @@ STRING SetCwd(const STRING& Dir)
       const char *wd = getcwd(Cwd, sizeof(Cwd)-2);
       if (wd == NULL || *wd == '\0')
 	{
-	  logf (LOG_ERRNO, "Can't determine current working directory!");
+	  message_log (LOG_ERRNO, "Can't determine current working directory!");
 	}
       else
 	{
@@ -1929,7 +1933,7 @@ int FileLink(const STRING& Source, const STRING& Dest)
       MMAP mapping (Source);
       if (!mapping.Ok())
         {
-          logf(LOG_FATAL|LOG_ERRNO, "Couldn't map '%s' into memory", Source.c_str());
+          message_log(LOG_FATAL|LOG_ERRNO, "Couldn't map '%s' into memory", Source.c_str());
           return FileCopy(Source, Dest);
         }
       mapping.Advise(MapSequential);
@@ -1940,7 +1944,7 @@ int FileLink(const STRING& Source, const STRING& Dest)
   
       if ((fp = fopen(Dest, "wb")) == NULL)
         {
-          logf (LOG_ERRNO, "Could not create file stream '%s'", Dest.c_str());
+          message_log (LOG_ERRNO, "Could not create file stream '%s'", Dest.c_str());
           return -1;
         }
       errno = 0;
@@ -1951,7 +1955,7 @@ int FileLink(const STRING& Source, const STRING& Dest)
       fclose(fp);
       if (length < MemSize)
 	{
-          logf (LOG_WARN|LOG_ERRNO, "File: '%s' short write by %d bytes", Dest.c_str(),
+          message_log (LOG_WARN|LOG_ERRNO, "File: '%s' short write by %d bytes", Dest.c_str(),
                 (int)(MemSize-length));
 	}
     }
@@ -2182,7 +2186,7 @@ INT StrCaseCmp (const UCHR *p1, const UCHR *p2)
 
   if (p1 == NULL || p2 == NULL)
     { 
-      logf (LOG_PANIC, "Nilpointer passed to StrCaseCmp (\"%s\", \"%s\")!",   
+      message_log (LOG_PANIC, "Nilpointer passed to StrCaseCmp (\"%s\", \"%s\")!",   
         p1 ? (const char *)p1 : "NULL",   
         p2 ? (const char *)p2 : "NULL");
       return p1 - p2;
@@ -2205,7 +2209,7 @@ INT StrNCaseCmp (const UCHR *p1, const UCHR *p2, const INT n)
 {
   if (p1 == NULL || p2 == NULL)
     {
-      logf (LOG_PANIC, "Nilpointer passed to StrNCaseCmp (\"%s\", \"%s\", %d)!",
+      message_log (LOG_PANIC, "Nilpointer passed to StrNCaseCmp (\"%s\", \"%s\", %d)!",
 	p1? (const char*)p1 : "NULL",
 	p2? (const char*)p2 : "NULL",
 	(int)n);
@@ -2619,7 +2623,7 @@ STRING GetTempFilename(const char *prefix, GDT_BOOLEAN Secure)
 	  return tfilename; 
 	}
     }
-  logf (LOG_PANIC, "Problems creating temporary file names.");
+  message_log (LOG_PANIC, "Problems creating temporary file names.");
   if (prefix && *prefix)
     {
       // Maybe path too long?
@@ -2848,7 +2852,7 @@ long  _IB_Hostid()
 #endif
       if (hostid == 0)
 	{
-	  logf (LOG_WARN, "\
+	  message_log (LOG_WARN, "\
 Platform seems to be missing a unique hostid! PC Platform? \
 Set hostid to the Ethernet MAC address of its main networking card.");
 	}
@@ -2877,13 +2881,13 @@ Set hostid to the Ethernet MAC address of its main networking card.");
 		    }
 		  if (hostid == 0)
 		    {
-		      logf (LOG_ERROR, "Can't determine a valid hostid for this platform!");
+		      message_log (LOG_ERROR, "Can't determine a valid hostid for this platform!");
 		      hostid = STRING(name).Hash() +  0x7f000001U;
 		    }
 		}
 	      else
 		{
-		  logf (LOG_ERROR, "No hostid or network address on this platform !?");
+		  message_log (LOG_ERROR, "No hostid or network address on this platform !?");
 		}
 	    }
 	}
@@ -3149,11 +3153,11 @@ int _IB_open(const char *
   if ((fd = _IB_Extern_open(path, oflag, mode)) == -1)
     {
       if (errno == EMFILE)
-        logf (LOG_PANIC, "Can't open(%s,%d,0x%lx) : Aleady have >%d open files!",
+        message_log (LOG_PANIC, "Can't open(%s,%d,0x%lx) : Aleady have >%d open files!",
                 path, oflag, (long)mode, open_file_handles) ;
     }
   else if ( ++open_file_handles > _IB_kernel_max_file_descriptors() - 20)
-    logf (LOG_NOTICE,  "Too many descriptors %d. Increase hard/soft file handle limit. Contact your Sysadmin!",
+    message_log (LOG_NOTICE,  "Too many descriptors %d. Increase hard/soft file handle limit. Contact your Sysadmin!",
 	open_file_handles);
   return fd;
 }

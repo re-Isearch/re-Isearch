@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)lang-codes.cxx  1.61 02/05/01 00:35:30 BSN"
 
 #ifndef HAVE_LOCALE
@@ -2443,7 +2447,7 @@ BYTE Charset2Id (const STRING& Name)
 	  return charsets[i].Id;
 	}
     }
-//  logf (LOG_WARN, "Charset '%s' not supported", (const char *)Name);
+//  message_log (LOG_WARN, "Charset '%s' not supported", (const char *)Name);
   return 0xFF; // NOT FOUND
 }
 
@@ -4630,28 +4634,28 @@ static GDT_BOOLEAN _setcharset(BYTE Charset,
 	*trans_upper = _trans_upper_ASCII;
 	*trans_lower = _trans_lower_ASCII;
 	*cclass      = _cclass_ASCII;
-	logf (LOG_DEBUG, msgfmt, "ASCII");
+	message_log (LOG_DEBUG, msgfmt, "ASCII");
 	break;
       case  1:
 	*ctype = _ib_ctype_8859_1;
         *trans_upper = _trans_upper_8859_1;
         *trans_lower = _trans_lower_8859_1;
 	*cclass      = _cclass_8859_1;
-	logf (LOG_DEBUG, msgfmt, "ISO 8859-1");
+	message_log (LOG_DEBUG, msgfmt, "ISO 8859-1");
 	break;
       case  2:
 	*ctype = _ib_ctype_8859_2;
 	*trans_upper = _trans_upper_8859_2;
 	*trans_lower = _trans_lower_8859_2;
 	*cclass      = _cclass_8859_2;
-	logf (LOG_DEBUG, msgfmt, "ISO 8859-2");
+	message_log (LOG_DEBUG, msgfmt, "ISO 8859-2");
 	break;
       case  3:
 	*ctype = _ib_ctype_8859_3;
 	*trans_upper = _trans_upper_8859_3;
 	*trans_lower = _trans_lower_8859_3;
 	*cclass      = _cclass_8859_3;
-	logf (LOG_DEBUG, msgfmt, "ISO 8859-3");
+	message_log (LOG_DEBUG, msgfmt, "ISO 8859-3");
 	break;
       case 4:
 #ifdef HAVE_8859_4
@@ -4659,7 +4663,7 @@ static GDT_BOOLEAN _setcharset(BYTE Charset,
 	*trans_upper = _trans_upper_8859_4;
 	*trans_lower = _trans_lower_8859_4;
 	*cclass      = _cclass_8859_4;
-	logf (LOG_DEBUG, msgfmt, "ISO 8859-4");
+	message_log (LOG_DEBUG, msgfmt, "ISO 8859-4");
 #else
 	_setcharset(0, ctype, trans_upper, trans_lower, cclass);
 #endif
@@ -4669,7 +4673,7 @@ static GDT_BOOLEAN _setcharset(BYTE Charset,
 	*trans_upper = _trans_upper_8859_5;
 	*trans_lower = _trans_lower_8859_5;
 	*cclass      = _cclass_8859_5;
-	logf (LOG_DEBUG, msgfmt, "ISO 8859-5");
+	message_log (LOG_DEBUG, msgfmt, "ISO 8859-5");
 	break;
       case 6:
 #ifdef HAVE_8859_6
@@ -4677,7 +4681,7 @@ static GDT_BOOLEAN _setcharset(BYTE Charset,
 	*trans_upper = _trans_upper_8859_6;
 	*trans_lower = _trans_lower_8859_6;
 	*cclass      = _cclass_8859_6;
-	logf (LOG_DEBUG, msgfmt, "ISO 8859-6");
+	message_log (LOG_DEBUG, msgfmt, "ISO 8859-6");
 #else
 	_setcharset(0, ctype, trans_upper, trans_lower, cclass);
 #endif
@@ -4687,7 +4691,7 @@ static GDT_BOOLEAN _setcharset(BYTE Charset,
 	*trans_upper = _trans_upper_8859_7;
 	*trans_lower = _trans_lower_8859_7;
 	*cclass      = _cclass_8859_7;
-	logf (LOG_DEBUG, msgfmt, "ISO 8859-7");
+	message_log (LOG_DEBUG, msgfmt, "ISO 8859-7");
 	break;
       case  8:
 #ifdef HAVE_8859_8
@@ -4695,7 +4699,7 @@ static GDT_BOOLEAN _setcharset(BYTE Charset,
 	*trans_upper = _trans_upper_8859_8;
 	*trans_lower = _trans_lower_8859_8;
 	*cclass      = _cclass_8859_8;
-	logf (LOG_DEBUG, msgfmt, "ISO 8859-8");
+	message_log (LOG_DEBUG, msgfmt, "ISO 8859-8");
 #else
 	_setcharset(0, ctype, trans_upper, trans_lower, cclass);
 #endif
@@ -4706,7 +4710,7 @@ static GDT_BOOLEAN _setcharset(BYTE Charset,
 	*trans_upper = _trans_upper_8859_9;
 	*trans_lower = _trans_lower_8859_9;
 	*cclass      = _cclass_8859_9;
-	logf (LOG_DEBUG, msgfmt, "ISO 8859-9");
+	message_log (LOG_DEBUG, msgfmt, "ISO 8859-9");
 	break;
 #endif
 #ifdef HAVE_8859_10
@@ -4715,7 +4719,7 @@ static GDT_BOOLEAN _setcharset(BYTE Charset,
 	*trans_upper = _trans_upper_8859_10;
 	*trans_lower = _trans_lower_8859_10;
 	*cclass      = _cclass_8859_10;
-	logf (LOG_DEBUG, msgfmt, "ISO 8859-10");
+	message_log (LOG_DEBUG, msgfmt, "ISO 8859-10");
 	break;
 #endif
       case 0xFF: 
@@ -4726,7 +4730,7 @@ static GDT_BOOLEAN _setcharset(BYTE Charset,
 	}
 	// fall into...
       default: /* Not available */
-	logf (LOG_DEBUG, "Using old character set %d", oldCharsetId);
+	message_log (LOG_DEBUG, "Using old character set %d", oldCharsetId);
 	CharsetId = oldCharsetId;
 	return GDT_FALSE;
     }

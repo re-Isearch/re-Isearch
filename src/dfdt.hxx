@@ -1,8 +1,8 @@
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 /*@@@
 File:		dfdt.hxx
-Version:	1.00
 Description:	Class DFDT - Data Field Definitions Table
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #ifndef DFDT_HXX

@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #include "common.hxx"
 
 #define INPUT_BLOCK_SIZE  16	/* size in 32-bit words of an input block to
@@ -1235,7 +1239,7 @@ STRING SnefruHash(const char *ptr, size_t length)
 
 	  byteCount = (i + CHUNK_SIZE*4) < length ? CHUNK_SIZE*4 : length - i - 1;
 	  if (byteCount > CHUNK_SIZE*4)
-	    logf (LOG_PANIC, "Memory address overflow in SnefruHash (%d>%d). \
+	    message_log (LOG_PANIC, "Memory address overflow in SnefruHash (%d>%d). \
 Contact edz@nonmonotonic.com!!", byteCount, CHUNK_SIZE*4);
 	  memcpy(charBuf, &ptr[i], byteCount);
 	  /* Zero out rest of buffer  */

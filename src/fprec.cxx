@@ -1,12 +1,9 @@
-/************************************************************************
-************************************************************************/
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 
 /*@@@
 File:		fprec.cxx
-Version:	1.00
 Description:	Class FPREC - File Pointer Record
-Author:		Nassib Nassar, nrn@cnidr.org
-		Edward C. Zimmermann, edz@nonmonotonic.com
 @@@*/
 
 #include "common.hxx"
@@ -15,7 +12,7 @@ Author:		Nassib Nassar, nrn@cnidr.org
 # include <io.h>
 #endif
 
-#pragma ident  "@(#)fprec.cxx  1.8 06/27/00 20:29:42 BSN"
+#pragma ident  "@(#)fprec.cxx"
 
 
 FPREC::FPREC() {
@@ -69,7 +66,7 @@ void FPREC::Dispose()
     {
 if (FilePointer == stdout || FilePointer == stderr) cerr << "DISOSE Stdio?" << endl;
       if (RefCount > 1)
-	logf (LOG_WARN, "FPREC::Dispose(): Streams were still open to '%s' (RefCount=%d)?",
+	message_log (LOG_WARN, "FPREC::Dispose(): Streams were still open to '%s' (RefCount=%d)?",
 		FileName.c_str(), RefCount-1);
       fclose (FilePointer);
       FilePointer = NULL;

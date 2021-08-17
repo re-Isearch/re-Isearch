@@ -115,7 +115,7 @@ void SOIF::ParseFields(RECORD *NewRecord)
   const STRING fn ( NewRecord->GetFullFileName() );
   if ((fp = ffopen(fn, "rb")) == NULL)
     {
-      logf (LOG_ERRNO, "SOIF::ParseRecords(): Failed to open '%s'", fn.c_str());
+      message_log (LOG_ERRNO, "SOIF::ParseRecords(): Failed to open '%s'", fn.c_str());
       return;
     }
 
@@ -125,14 +125,14 @@ void SOIF::ParseFields(RECORD *NewRecord)
 
   if (RecEnd == 0) {
     if(fseek(fp, 0L, SEEK_END) == -1) {
-      logf (LOG_ERRNO, "SOIF::ParseRecords(): Seek failed - %s", fn.c_str());
+      message_log (LOG_ERRNO, "SOIF::ParseRecords(): Seek failed - %s", fn.c_str());
       ffclose(fp);
       return;	
     }
     RecStart = 0;
     RecEnd = ftell(fp);
     if(RecEnd == 0) {
-      logf(LOG_ERROR, "SOIF::ParseRecords(): Skipping zero-length record -%s", fn.c_str());
+      message_log(LOG_ERROR, "SOIF::ParseRecords(): Skipping zero-length record -%s", fn.c_str());
       ffclose(fp);
       return;
     }
@@ -143,14 +143,14 @@ void SOIF::ParseFields(RECORD *NewRecord)
   RecLength = RecEnd - RecStart + 1;
   RecBuffer = (PCHR)tmpBuffer.Want (RecLength + 1);
   if(RecBuffer == NULL) {
-    logf(LOG_ERRNO, "SOIF::ParseRecords(): Failed to allocate %ld bytes - %s", RecLength + 1, fn.c_str());
+    message_log(LOG_ERRNO, "SOIF::ParseRecords(): Failed to allocate %ld bytes - %s", RecLength + 1, fn.c_str());
     ffclose(fp);
     return;
   }
 
   if ((ActualLength = ::pfread(fp, RecBuffer, RecLength, (long)RecStart)) != RecLength)
     {
-      logf (LOG_ERRNO, "SOIF::ParseRecords(): Failed to fread %ld bytes, got %ld instead", RecLength, ActualLength);
+      message_log (LOG_ERRNO, "SOIF::ParseRecords(): Failed to fread %ld bytes, got %ld instead", RecLength, ActualLength);
       if (ActualLength == 0)
 	{
 	  ffclose(fp);
@@ -173,7 +173,7 @@ void SOIF::ParseFields(RECORD *NewRecord)
 
   PDFT pdft = new DFT();
   if(!pdft) {
-    logf (LOG_ERRNO, "SOIF::ParseRecords(): Failed to allocate DFT - %s", fn.c_str());
+    message_log (LOG_ERRNO, "SOIF::ParseRecords(): Failed to allocate DFT - %s", fn.c_str());
     return;
   }
 
@@ -189,7 +189,7 @@ void SOIF::ParseFields(RECORD *NewRecord)
     else if (*p == '@' && strncmp(p, "@FILE { ", 8) /* } */ == 0) {
       PCHR q = strchr(p, '\n');
       if (q  == NULL) {
-	logf (LOG_ERROR, "SOIF::ParseRecords(): Badly started record - %s (%ld-%ld)",
+	message_log (LOG_ERROR, "SOIF::ParseRecords(): Badly started record - %s (%ld-%ld)",
                 fn.c_str(), RecStart, RecEnd);
         return;
       }
@@ -200,7 +200,7 @@ void SOIF::ParseFields(RECORD *NewRecord)
     } else if (*p == '@' && (strncmp(p, "@DELETE ", 8) == 0 ||
              strncmp(p, "@REFRESH ", 9) == 0 ||
 	     strncmp(p, "@UPDATE", 8) == 0)) {
-	logf (LOG_DEBUG, "SOIF::ParseRecords(): Skipping %s", p); 
+	message_log (LOG_DEBUG, "SOIF::ParseRecords(): Skipping %s", p); 
 	return;
     } else if (sscanf(p, "%127[^{:\n \t]{%u}:%c", name, &val_len, &c) == 3 && /* } */
 	     c == '\t' && strchr(p, '\t') + val_len < RecBuffer + RecLength) {
@@ -208,11 +208,11 @@ void SOIF::ParseFields(RECORD *NewRecord)
       val_start = strchr(p, '\t') - RecBuffer + 1;
       val_end = val_start + val_len;
     } else if (c == ' ') {
-	logf (LOG_ERROR, "SOIF::ParseRecords(): Bad Record. Expecting tab @%ld but got space. Bad record-  %s (%ld-%ld).",
+	message_log (LOG_ERROR, "SOIF::ParseRecords(): Bad Record. Expecting tab @%ld but got space. Bad record-  %s (%ld-%ld).",
 		RecStart+p-RecBuffer, fn.c_str(), RecStart, RecEnd);
         return;
     } else if /* { */ (*p != '}') {
-        logf (LOG_ERROR, "SOIF::ParseRecords(): Bad token (offset=%d) in record - %s (%ld-%ld)",
+        message_log (LOG_ERROR, "SOIF::ParseRecords(): Bad token (offset=%d) in record - %s (%ld-%ld)",
 		p-RecBuffer, fn.c_str(), RecStart, RecEnd);
         return;
       }
@@ -221,7 +221,7 @@ void SOIF::ParseFields(RECORD *NewRecord)
 
     // We have a attr/val pair
     if (RecBuffer[val_end] != '\n') {
-      logf (LOG_ERROR, "SOIF::ParseRecords(): Badly formatted record (missing nl) - %s", fn.c_str());
+      message_log (LOG_ERROR, "SOIF::ParseRecords(): Badly formatted record (missing nl) - %s", fn.c_str());
       return;
     }
    const INT Total = UnifiedNames(name, &FieldNames);

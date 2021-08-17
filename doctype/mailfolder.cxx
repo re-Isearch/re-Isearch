@@ -304,11 +304,11 @@ MAILFOLDER::MAILFOLDER (PIDBOBJ DbParent, const STRING& Name) :
   const char msg[] = "%s: %s=%d";
 
   ParseMessageStructure = Getoption(PARSE_MESSAGE_STRUCTURE, YES).GetBool();
-  logf (LOG_DEBUG, msg, Doctype.c_str(), PARSE_MESSAGE_STRUCTURE, (int)ParseMessageStructure);
+  message_log (LOG_DEBUG, msg, Doctype.c_str(), PARSE_MESSAGE_STRUCTURE, (int)ParseMessageStructure);
 
 
   RestrictFields = Getoption(RESTRICT_FIELDS, YES).GetBool();
-  logf (LOG_DEBUG, msg, Doctype.c_str(), RESTRICT_FIELDS, (int)RestrictFields);
+  message_log (LOG_DEBUG, msg, Doctype.c_str(), RESTRICT_FIELDS, (int)RestrictFields);
 
   loadFieldTable = GDT_TRUE;
   LoadFieldTable();
@@ -331,7 +331,7 @@ void MAILFOLDER::ParseRecords (const RECORD& FileRecord)
   PFILE Fp = ffopen (Fn, "rb");
   if (!Fp)
     {
-      logf (LOG_ERRNO, "Couldn't access '%s'", (const char *)Fn);
+      message_log (LOG_ERRNO, "Couldn't access '%s'", (const char *)Fn);
       return;			// File not accessed
     }
 
@@ -341,7 +341,7 @@ void MAILFOLDER::ParseRecords (const RECORD& FileRecord)
     }
   if (End <= Start)
     {
-      logf (LOG_WARN, "Truncated record, skipping..");
+      message_log (LOG_WARN, "Truncated record, skipping..");
       ffclose(Fp);
       return;
     }
@@ -351,7 +351,7 @@ void MAILFOLDER::ParseRecords (const RECORD& FileRecord)
     {
       if (-1 == fseek (Fp, Start, SEEK_SET))
 	{
-	  logf (LOG_WARN, "Can't seek '%s' to record start", (const char *)Fn);
+	  message_log (LOG_WARN, "Can't seek '%s' to record start", (const char *)Fn);
 	  ffclose(Fp);
 	  return; // Bad start
 	}
@@ -545,7 +545,7 @@ ________________________________________________________________________", 72, 0
 		  IsDigest = GDT_FALSE;
 		  Record.SetDocumentType (Digests[i].doctype);
 		  DigestKnown = GDT_TRUE;
-		  logf (LOG_INFO, "Identified %s (Digest)", Digests[i].doctype);
+		  message_log (LOG_INFO, "Identified %s (Digest)", Digests[i].doctype);
 		  LookFor = Header;
 		  break;
 		}
@@ -681,7 +681,7 @@ void MAILFOLDER::ParseFields (RECORD *NewRecord)
   if (RecBuffer == NULL)
     {
       ffclose(fp);
-      logf (LOG_PANIC, "Can't Parse %s Fields in '%s'. Allocation failed",
+      message_log (LOG_PANIC, "Can't Parse %s Fields in '%s'. Allocation failed",
 	Doctype.c_str(), fn.c_str());
       return;
     }
@@ -691,7 +691,7 @@ void MAILFOLDER::ParseFields (RECORD *NewRecord)
   PCHR *tags = parse_tags (RecBuffer, ActualLength);
   if (tags == NULL || tags[0] == NULL)
     {
-      logf (LOG_ERROR,
+      message_log (LOG_ERROR,
 #ifdef _WIN32
 	"%s: %s '%s' record (%I64d - %I64d)"
 #else
@@ -792,12 +792,12 @@ void MAILFOLDER::ParseFields (RECORD *NewRecord)
 	      STRING Key;
 	      if (EncodeKey(&Key, &RecBuffer[val_start], val_len))
 		{
-		  logf (LOG_DEBUG, "Message-Id encoded as %s", Key.c_str());
+		  message_log (LOG_DEBUG, "Message-Id encoded as %s", Key.c_str());
 		  // Make Unique Key
 		  // Message IDs need to be globally unique!
 		  // if two messages have the same this is a NO-GO!
 		  if (Db->KeyLookup(Key)) {
-		    logf (LOG_WARN, "Encounterd a non-unique MESSAGE-Id: %s", &RecBuffer[val_start] );
+		    message_log (LOG_WARN, "Encounterd a non-unique MESSAGE-Id: %s", &RecBuffer[val_start] );
 		    // if non-unique we process it.. and it'll get another key (and maybe marked deleted) 
 		    Db->MdtSetUniqueKey(NewRecord, Key);
 		  } else NewRecord->SetKey(Key); // Key was OK.. Set
@@ -854,7 +854,7 @@ void MAILFOLDER::ParseFields (RECORD *NewRecord)
 	    }
 	  else
 	    {
-	      logf (LOG_WARN, "No %s tags, only body [%s(%lu-%lu)]..",
+	      message_log (LOG_WARN, "No %s tags, only body [%s(%lu-%lu)]..",
 		Doctype.c_str(), RemovePath(fn).c_str(), RecStart, RecEnd);
 	    }
 	}

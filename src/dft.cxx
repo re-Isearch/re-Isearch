@@ -1,15 +1,14 @@
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 /*-@@@
 File:		dft.cxx
-Version:	1.00
 Description:	Class DFT - Data Field Table
-Author:		Nassib Nassar, nrn@cnidr.org
-Modifications:	Edward C. Zimmermann, edz@nonmonotonic.com
 @@@*/
 
 #include "common.hxx"
 #include "dft.hxx"
 
-#pragma ident  "@(#)dft.cxx  1.11 06/27/00 20:29:11 BSN"
+#pragma ident  "@(#)dft.cxx"
 #define INCREMENT 50
 
 

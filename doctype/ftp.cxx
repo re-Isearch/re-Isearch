@@ -86,7 +86,7 @@ void FTP::ParseRecords(const RECORD& FileRecord)
 
   GPTYPE RecEnd = GetFileSize(IafaFn);
   if (RecEnd == 0) {
-    logf (LOG_ERROR, "%s: no '%s' or '%s'", Doctype.c_str(), (Fn+PostFix).c_str(), IafaFn.c_str() );;
+    message_log (LOG_ERROR, "%s: no '%s' or '%s'", Doctype.c_str(), (Fn+PostFix).c_str(), IafaFn.c_str() );;
   } else {
     RECORD Record (FileRecord);
     Record.SetFullFileName( IafaFn );

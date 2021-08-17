@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /*-@@@
 File:		fct.cxx
 Version:	1.21
@@ -59,7 +63,7 @@ FCLIST *FCLIST::AddEntry(const FC& FcRecord)
 	  newNode->Fc = FcRecord;
 	  VLIST::AddNode (newNode);
 	}
-      else logf (LOG_PANIC|LOG_ERRNO, "FCLIST Alloc failed"); 
+      else message_log (LOG_PANIC|LOG_ERRNO, "FCLIST Alloc failed"); 
     }
   return this;
 }
@@ -273,7 +277,7 @@ FCLIST::~FCLIST()
 {
 #ifdef DEBUG_MEMORY
   if (--__IB_FCLIST_allocated_count < 0)
-    logf (LOG_PANIC, "FCLIST global allocated count %ld < 0!", (long)__IB_FCLIST_allocated_count);
+    message_log (LOG_PANIC, "FCLIST global allocated count %ld < 0!", (long)__IB_FCLIST_allocated_count);
 #endif
 }
 

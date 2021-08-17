@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #ifndef NUMBERS_HXX
 # define NUMBERS_HXX 1
 
@@ -59,7 +63,7 @@ public:
   friend void Write(const NUMERICOBJ& s, FILE *Fp);
   friend GDT_BOOLEAN Read(NUMERICOBJ *p, PFILE Fp);
 
-  // IO Streams
+  // STD IO Streams
   friend ostream& operator <<(ostream& os, const NUMERICOBJ& val) { return os << (long double) val.val; }
   friend istream& operator >>(istream& os, NUMERICOBJ& val) {
 	long double value; istream& res =  os >> value; val.val = value; return res; }
@@ -314,7 +318,7 @@ public:
   friend void Write(const MONETARYOBJ& s, FILE *Fp);
   friend GDT_BOOLEAN Read(MONETARYOBJ *p, PFILE Fp);
 
-  // IO Streams
+  // STD IO Streams
   friend ostream& operator <<(ostream& os, const MONETARYOBJ& val) {
     return os << val.Amount << "." << val.Fract;
   }

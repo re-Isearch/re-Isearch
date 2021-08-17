@@ -52,7 +52,7 @@ void OZSEARCH::ParseFields (PRECORD NewRecord)
       FileMap.CreateMap(fn, MapSequential);
       if (!FileMap.Ok())
 	{
-	  logf (LOG_ERROR, "%s:ParseFields Could not address file '%s'", Doctype.c_str(), fn.c_str());
+	  message_log (LOG_ERROR, "%s:ParseFields Could not address file '%s'", Doctype.c_str(), fn.c_str());
 	  return;
 	}
       Lineno = 0;
@@ -86,7 +86,7 @@ void OZSEARCH::ParseFields (PRECORD NewRecord)
 	  Columns = 0;
 	  if (tcp) do {
 	    Columns++;
-	    logf (LOG_DEBUG, "%s Column #%d is \"%s\"", Doctype.c_str(), Columns, tcp);
+	    message_log (LOG_DEBUG, "%s Column #%d is \"%s\"", Doctype.c_str(), Columns, tcp);
 	    FieldNames.Add(tcp);
 	    dfd.SetFieldName (tcp);
 	    Db->DfdtAddEntry (dfd);
@@ -115,10 +115,10 @@ void OZSEARCH::ParseFields (PRECORD NewRecord)
 	if (RecStart != 0)
 	  {
 	    if (Lineno > 0)
-	      logf (LOG_WARN, "File '%s', line %ld (%ld-%ld), has irregular number of columns (%d), adjusting.",
+	      message_log (LOG_WARN, "File '%s', line %ld (%ld-%ld), has irregular number of columns (%d), adjusting.",
 		fn.c_str(), Lineno, RecStart, RecEnd, i+1);
 	    else
-	      logf (LOG_WARN, "File '%s' (%ld-%ld) has irregular number of columns (%d), adjusting.",
+	      message_log (LOG_WARN, "File '%s' (%ld-%ld) has irregular number of columns (%d), adjusting.",
                 fn.c_str(), RecStart, RecEnd, i+1);
 	  }
 	else
@@ -133,10 +133,10 @@ void OZSEARCH::ParseFields (PRECORD NewRecord)
 	if (i > Columns && RecStart != 0)
 	  {
 	    if (Lineno > 0)
-	     logf (LOG_WARN, "File '%s', line %ld (%ld-%ld), has more than %ld columns (%d).",
+	     message_log (LOG_WARN, "File '%s', line %ld (%ld-%ld), has more than %ld columns (%d).",
 		fn.c_str(), Lineno, RecStart, RecEnd, Columns, i);
 	    else
-	      logf (LOG_WARN, "File '%s' (%ld-%ld) has more than %d columns (%d).",
+	      message_log (LOG_WARN, "File '%s' (%ld-%ld) has more than %d columns (%d).",
 		fn.c_str(), RecStart, RecEnd, Columns, i);
 	  }
         fieldName = FieldNames[i++];
@@ -150,7 +150,7 @@ void OZSEARCH::ParseFields (PRECORD NewRecord)
       {
 	if (Db->KeyLookup (tcp))
 	  {
-	    logf (LOG_ERROR, "%s record in \"%s\" uses a non-unique %s '%s'",
+	    message_log (LOG_ERROR, "%s record in \"%s\" uses a non-unique %s '%s'",
 		Doctype.c_str(), fn.c_str(), fieldName.c_str(), tcp);
 	  }
 	else

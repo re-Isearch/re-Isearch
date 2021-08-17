@@ -1,14 +1,12 @@
-#pragma ident  "@(#)index.cxx  1.265 06/07/01 02:41:02 BSN"
-/************************************************************************
-************************************************************************/
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
+#pragma ident  "@(#)index.cxx"
+
 #define PHONETIC_SKIP_INITIALS 1
 
 /*-@@@
 File:   	index.cxx
-Version:	1.01
 Description:	Class INDEX
-Author:   	Nassib Nassar, nrn@cnidr.org
-Modifications:	Edward C. Zimmermann, edz@nonmonotonic.com
 @@@*/
 /*
 TODO:
@@ -298,7 +296,7 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
 {
   if (DbParent == NULL)
     {
-      logf (LOG_PANIC, "Bogus request to create an orphaned INDEX class for '%s'!",
+      message_log (LOG_PANIC, "Bogus request to create an orphaned INDEX class for '%s'!",
             NewFileName.c_str());
       return;
     }
@@ -365,10 +363,10 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
   }
 
   if (MaxCPU_ticks > CLOCKS_PER_SEC);
-    logf (LOG_DEBUG, "Term search limit set to %.1f sec / Query total %1.f CPU.",
+    message_log (LOG_DEBUG, "Term search limit set to %.1f sec / Query total %1.f CPU.",
 	MaxCPU_ticks*1.0/CLOCKS_PER_SEC, MaxQueryCPU_ticks*1.0/CLOCKS_PER_SEC);
 
-  logf (LOG_DEBUG, "Creating Index of '%s' with CacheSize=%ld", NewFileName.c_str(),
+  message_log (LOG_DEBUG, "Creating Index of '%s' with CacheSize=%ld", NewFileName.c_str(),
         (long)CacheSize);
 
   IndexingTotalBytesCount= Parent->ProfileGetGPTYPE(DbIndexingStatisticsSection, DbTotalBytes);
@@ -386,7 +384,7 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
 
   if (IndexFileName.GetLength() == 0)
     {
-      logf (LOG_WARN, "Index called with Nothing???");
+      message_log (LOG_WARN, "Index called with Nothing???");
       Parent->SetErrorCode(0);
     }
   else if (GetFileSize(IndexFileName) % sizeof(GPTYPE) == sizeof(IndexMagic))
@@ -402,13 +400,13 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
               // Old versions ? Update magic to new magic system
               if ((IndexMagic == ((objINDEXl << 8) | (6 + OPTIM))) || IndexMagic == ((objINDEXm << 8) | (6 + OPTIM)) )
 		{
-		  logf (LOG_INFO, "Old version index (%d), updating ..", (int)IndexMagic);
+		  message_log (LOG_INFO, "Old version index (%d), updating ..", (int)IndexMagic);
                   IndexMagic = ((indexTypus << 14) | ((IndexMagic & 0xFF00 >> 8) << 5) | (IndexVersion + OPTIM));
 		}
             }
           if (((IndexMagic & 0xFF00) >> 14) != indexTypus)
             {
-              logf (LOG_INFO, "ERROR: %u indexes (%x) are not compatible with %u-bit libs",
+              message_log (LOG_INFO, "ERROR: %u indexes (%x) are not compatible with %u-bit libs",
                     (unsigned)(32*(indexTypus+1)), (unsigned)IndexMagic,  (unsigned)(8*sizeof(GPTYPE)));
               Parent->SetErrorCode(-8*(int)sizeof(GPTYPE));
               OK = GDT_FALSE;
@@ -416,25 +414,25 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
           else
             {
               int bits = (IndexMagic & 0xFF00)>>14;
-              logf (LOG_DEBUG, "%u-bit Indexes v.%d (%sEndian)",
+              message_log (LOG_DEBUG, "%u-bit Indexes v.%d (%sEndian)",
                     (unsigned)(32*(bits+1)), (int)(IndexMagic&0x1F),
                     ((IndexMagic>> 5) & 0xFF) == objINDEXm ? "Little" : "Big");
             }
         }
       else
         {
-          logf (LOG_ERRNO, "Couldn't access '%s' (Index)", IndexFileName.c_str());
+          message_log (LOG_ERRNO, "Couldn't access '%s' (Index)", IndexFileName.c_str());
           Parent->SetErrorCode(2);
           OK = GDT_FALSE;
         }
     }
   else
-    logf (LOG_DEBUG, "NO INDEX MAGIC");
+    message_log (LOG_DEBUG, "NO INDEX MAGIC");
 
   wrongEndian = (((IndexMagic>> 5) & 0xFF) == objINDEXm) ? host : !host;
   if (wrongEndian != host && ((IndexMagic >> 5) & 0xFF) != objINDEXl)
     {
-      logf (LOG_ERROR, "Index magic is corrupt (%x)?", IndexMagic);
+      message_log (LOG_ERROR, "Index magic is corrupt (%x)?", IndexMagic);
       Parent->SetErrorCode(1);
       OK = GDT_FALSE;
     }
@@ -442,14 +440,14 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
     {
       const char *little = "littleEndian";
       const char *big    = "bigEndian";
-      logf (LOG_INFO, "Platform is %s. Index is %s.",  host ? big : little, host ? little : big);
+      message_log (LOG_INFO, "Platform is %s. Index is %s.",  host ? big : little, host ? little : big);
     }
   SIScount = 0;
 
   SetCache = CacheSize ? new RCACHE(Parent, CacheSize) : NULL;
   if (SetCache)
     {
-      logf (LOG_DEBUG, "RCACHE(Parent, %ld)", (long)CacheSize);
+      message_log (LOG_DEBUG, "RCACHE(Parent, %ld)", (long)CacheSize);
       if (Parent->UsePersistantCache())
         {
           FILE *fp = fopen(Parent->PersistantCacheName(), "rb");
@@ -482,7 +480,7 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
         if (Parent) Parent->ProfileWriteString(CommonWordsSection, ThresholdEntry, VERY_COMMON_TERM);
       }
     else
-      logf (LOG_DEBUG, "Common words threshold is %lu", (unsigned long)CommonWordsThreshold);
+      message_log (LOG_DEBUG, "Common words threshold is %lu", (unsigned long)CommonWordsThreshold);
 
     s.Clear();
     if (Parent)
@@ -494,7 +492,7 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
         if (Parent) Parent->ProfileWriteString(Section, WaterlimitEntry, PhraseWaterlimit);
       }
     else
-      logf (LOG_DEBUG, "Phrase heuristic water limit is %lu", (long)PhraseWaterlimit);
+      message_log (LOG_DEBUG, "Phrase heuristic water limit is %lu", (long)PhraseWaterlimit);
   }
 }
 
@@ -565,12 +563,12 @@ void INDEX::DumpPersistantCache()
                   fclose(fp);
                   if (RenameFile(tmp, Fn) == -1)
                     {
-                      logf(LOG_ERRNO, "Could not install cache %s into %s", tmp.c_str(), Fn.c_str());
+                      message_log(LOG_ERRNO, "Could not install cache %s into %s", tmp.c_str(), Fn.c_str());
 #ifdef _WIN32
                       ::chmod (tmp.c_str(), S_IWRITE); // Ignore result
 #endif
                       if (::remove(tmp) == -1)
-                        logf (LOG_ERRNO, "Could not remove '%s' (Old Persistant Cache). Please remove by hand!", tmp.c_str());
+                        message_log (LOG_ERRNO, "Could not remove '%s' (Old Persistant Cache). Please remove by hand!", tmp.c_str());
                       Parent->SetErrorCode(2);
                     }
 #ifndef MSDOS
@@ -582,13 +580,13 @@ void INDEX::DumpPersistantCache()
                 }
               else
                 {
-                  logf(LOG_NOTICE, "Can't write temporary file %s", tmp.c_str());
+                  message_log(LOG_NOTICE, "Can't write temporary file %s", tmp.c_str());
                   Parent->SetErrorCode(2);
                 }
             }
           else
             {
-              logf (LOG_ERROR, "Search Cache temporary file '%s' already exists. Deadlock condition?", tmp.c_str());
+              message_log (LOG_ERROR, "Search Cache temporary file '%s' already exists. Deadlock condition?", tmp.c_str());
               Parent->SetErrorCode(2);
             }
         }
@@ -609,7 +607,7 @@ void INDEX::SetCacheSize(size_t newCacheSize)
         }
       catch (...)
         {
-          logf (LOG_ERRNO, "INDEX::SetCacheSize(%ld) allocation failed.", (long)newCacheSize);
+          message_log (LOG_ERRNO, "INDEX::SetCacheSize(%ld) allocation failed.", (long)newCacheSize);
           newSetCache = NULL;
         }
     }
@@ -637,7 +635,7 @@ void INDEX::SetSisLimit(size_t NewLimit)
 {
   if (NewLimit > 2 && NewLimit < StringCompLength)
     SisLimit = NewLimit;
-  logf (LOG_INFO, "SISLimit is %d", SisLimit);
+  message_log (LOG_INFO, "SISLimit is %d", SisLimit);
 }
 
 
@@ -681,7 +679,7 @@ INT INDEX::ffclose (PFILE FilePointer) const
 GDT_BOOLEAN INDEX::SetDateRange(const DATERANGE& Range)
 {
   DateRange = Range;
-  if (DebugMode) logf(LOG_DEBUG, "Date Range Set: %s", (const char *)((STRING)Range));
+  if (DebugMode) message_log(LOG_DEBUG, "Date Range Set: %s", (const char *)((STRING)Range));
   return DateRange.Ok();
 }
 
@@ -697,18 +695,18 @@ GDT_BOOLEAN INDEX::SetIndexNum(INT Num)
 {
   if (Parent == NULL)
     {
-      logf (LOG_ERROR, "Can't set the Index number in orphan'd INDEX");
+      message_log (LOG_ERROR, "Can't set the Index number in orphan'd INDEX");
       return GDT_FALSE;
     }
   MDT *mdt = Parent->GetMainMdt();
   if (mdt == NULL)
     {
-      logf (LOG_ERROR, "Can't set the index number, lost MDT in INDEX?");
+      message_log (LOG_ERROR, "Can't set the index number, lost MDT in INDEX?");
       return GDT_FALSE;
     }
   if (mdt->SetIndexNum(Num) == GDT_FALSE)
     {
-      logf (LOG_ERRNO, "Couldn't set index number to %d.", Num);
+      message_log (LOG_ERRNO, "Couldn't set index number to %d.", Num);
       Parent->SetErrorCode(2);
       return GDT_FALSE;
     }
@@ -888,7 +886,7 @@ GPTYPE INDEX::GpFread(off_t Pos, FILE *Stream) const
   {
     if (-1 == fseek(Stream, PositionOf(Pos), SEEK_SET))
       {
-        logf(LOG_ERRNO,
+        message_log(LOG_ERRNO,
 #ifdef _WIN32
 	  "Can't seek to %I64d in index.", (__int64)PositionOf(Pos));
 #else
@@ -904,7 +902,7 @@ INT INDEX::GpFread(GPTYPE *Ptr, size_t NumElements, off_t Pos, FILE *Stream) con
   {
     if (-1 == fseek(Stream, PositionOf(Pos), SEEK_SET))
       {
-        logf(LOG_ERRNO,
+        message_log(LOG_ERRNO,
 #ifdef _WIN32
 	  "Can't seek to %I64d in index.", (__int64)PositionOf(Pos));
 
@@ -1025,7 +1023,7 @@ FILE *INDEX::OpenForAppend(const STRING& FieldName, FIELDTYPE FieldType)
 
   if (Parent->DfdtGetFileName(FieldName, FieldType, &FileName) == GDT_FALSE)
     {
-      logf (LOG_ERROR, "Could not get a filename for '%s' of type %s. DFD Defect?",
+      message_log (LOG_ERROR, "Could not get a filename for '%s' of type %s. DFD Defect?",
 	FieldName.c_str(), FieldType.c_str());
     }
   else // We want the right method to open for append
@@ -1065,7 +1063,7 @@ FILE *INDEX::OpenForAppend(const STRING& FieldName, FIELDTYPE FieldType)
           fp = INTERVALLIST().OpenForAppend(FileName);
           break;
         default:
-          logf (LOG_WARN, "No OpenForAppend method defined for type %s, using default", FieldType.c_str());
+          message_log (LOG_WARN, "No OpenForAppend method defined for type %s, using default", FieldType.c_str());
         case FIELDTYPE::daterange:
 	  // fall into..
 	case FIELDTYPE::any:
@@ -1086,7 +1084,7 @@ GDT_BOOLEAN INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
   size_t errors = 0;
 
   if (DebugMode && total)
-    logf (LOG_DEBUG, "Writing field data, %d elements", total);
+    message_log (LOG_DEBUG, "Writing field data, %d elements", total);
 
   DOCTYPE *DocTypePtr =  Parent->GetDocTypePtr ( Record.GetDocumentType() );
   BUFFER Buffer;
@@ -1100,17 +1098,17 @@ GDT_BOOLEAN INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 
       if (res == GDT_FALSE)
         {
-          logf (LOG_ERROR, "Can't append '%s' field data, DFD Defect!", FieldName.c_str());
+          message_log (LOG_ERROR, "Can't append '%s' field data, DFD Defect!", FieldName.c_str());
           errors++;
           continue;
         }
       else
         {
-          if (DebugMode) logf (LOG_DEBUG, "Dumping %s FCs to %s",
+          if (DebugMode) message_log (LOG_DEBUG, "Dumping %s FCs to %s",
                                  FieldName.c_str(), FileName.c_str());
           if ((fp = fopen (FileName.c_str(), "ab")) == NULL)
             {
-              logf (LOG_ERRNO, "Can't append '%s' field data to '%s'!",
+              message_log (LOG_ERRNO, "Can't append '%s' field data to '%s'!",
                     FieldName.c_str(), FileName.c_str());
               errors++;
               continue; // ERROR
@@ -1120,7 +1118,7 @@ GDT_BOOLEAN INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
       int fd = fileno(fp);
       if (-1 == lockfd(fd, 1))
         {
-          logf (LOG_ERRNO, "Can't lock %s", FieldName.c_str());
+          message_log (LOG_ERRNO, "Can't lock %s", FieldName.c_str());
         }
 #endif
 
@@ -1128,20 +1126,20 @@ GDT_BOOLEAN INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 #ifndef DONT_LOCK
       if (-1 == unlockfd(fd))
         {
-          logf (LOG_ERRNO, "Can't unlock %s", FieldName.c_str());
+          message_log (LOG_ERRNO, "Can't unlock %s", FieldName.c_str());
         }
 #endif
       fclose (fp);
 
       if (DocTypePtr == NULL)
         {
-          logf (LOG_PANIC, "Null pointer to doctype in Write????");
+          message_log (LOG_PANIC, "Null pointer to doctype in Write????");
           continue;
         }
 
       if (!FieldType.Ok())
         {
-          logf (LOG_WARN, "Unknown Fieldtype keyword specified for '%s'.", FieldName.c_str());
+          message_log (LOG_WARN, "Unknown Fieldtype keyword specified for '%s'.", FieldName.c_str());
           continue;
         }
 
@@ -1153,7 +1151,7 @@ GDT_BOOLEAN INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 
 
       INT         type = (INT)FieldType;
-      logf (LOG_DEBUG, "Handle fieldtype: %d", type);
+      message_log (LOG_DEBUG, "Handle fieldtype: %d", type);
       switch (type)
 	{
 #if 0
@@ -1176,7 +1174,7 @@ GDT_BOOLEAN INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 	  default:
 	    if ((fp = OpenForAppend(FieldName, FieldType)) == NULL)
 	      {
-		logf (LOG_ERRNO, "Can't append '%s' %s-field data!", FieldName.c_str(), FieldType.c_str());
+		message_log (LOG_ERRNO, "Can't append '%s' %s-field data!", FieldName.c_str(), FieldType.c_str());
 		errors++;
 		continue;
 	      }
@@ -1311,7 +1309,7 @@ GDT_BOOLEAN INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 			}
 		    }
 		}
-	      else logf (LOG_WARN, "Empty metaphone field '%s': %s", FieldName.c_str(), (const char *)Buffer);
+	      else message_log (LOG_WARN, "Empty metaphone field '%s': %s", FieldName.c_str(), (const char *)Buffer);
               break;
 	    }
             case FIELDTYPE::metaphone2:
@@ -1387,7 +1385,7 @@ GDT_BOOLEAN INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
                   NUMERICFLD(gp, val).Write(fp);
                   items++;
                 }
-              else logf (LOG_WARN,
+              else message_log (LOG_WARN,
 #ifdef _WIN32
 			"In '%s' \"%s\" not numeric (%I64d) // %ld",
 #else
@@ -1465,22 +1463,22 @@ GDT_BOOLEAN INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
               break;
             }
             default:
-              logf (LOG_WARN, "Unimplemented/Unsupported data-type '%s' specified for field '%s'",
+              message_log (LOG_WARN, "Unimplemented/Unsupported data-type '%s' specified for field '%s'",
                     FieldType.c_str(), FieldName.c_str());
               type = FIELDTYPE::unknown;
             }
         } // for()
       fclose(fp);
       if (items)
-        logf (LOG_DEBUG, "Appended %d item(s) of type '%s' for field '%s'",
+        message_log (LOG_DEBUG, "Appended %d item(s) of type '%s' for field '%s'",
               items, FieldType.c_str(), FieldName.c_str() );
       else if (type != FIELDTYPE::unknown)
-        logf (LOG_WARN, "Despite definition, field '%s' had no valid items of type '%s'.",
+        message_log (LOG_WARN, "Despite definition, field '%s' had no valid items of type '%s'.",
               FieldName.c_str(), FieldType.c_str() );
     } // for()
 
   Buffer.Free("INDEX::WriteFieldData", "Buffer");
-  if (total && DebugMode) logf (LOG_DEBUG, "%d errors", errors);
+  if (total && DebugMode) message_log (LOG_DEBUG, "%d errors", errors);
   return errors == 0;
 }
 
@@ -1583,7 +1581,7 @@ GDT_BOOLEAN INDEX::CreateCentroid()
           if (db_mod <= centroid_mod)
             {
               // The centroid is newer than the database so its done..
-              logf (LOG_INFO, "Existing Centroid \"%s\" is up-to-date.", fn.c_str());
+              message_log (LOG_INFO, "Existing Centroid \"%s\" is up-to-date.", fn.c_str());
               return GDT_TRUE;
             }
         }
@@ -1593,7 +1591,7 @@ GDT_BOOLEAN INDEX::CreateCentroid()
   FILE *fp = fopen(out_fn, "w");
   if (fp)
     {
-      logf (LOG_INFO, "Writing Centroid to \"%s\".", out_fn.c_str());
+      message_log (LOG_INFO, "Writing Centroid to \"%s\".", out_fn.c_str());
       result = WriteCentroid(fp);
       fclose(fp);
     }
@@ -1656,7 +1654,7 @@ src=\"%s\" version=\"0.1\">\n",
           if ((fread(tmp, 1, compLength, inp) != compLength) ||
 		 fread(&p, sizeof(GPTYPE), 1, inp) < 1) /* Position in .inx */
 	    {
-               logf (LOG_ERROR, "Read error on %s. Centroid Truncated!", sis.c_str());
+               message_log (LOG_ERROR, "Read error on %s. Centroid Truncated!", sis.c_str());
 	       break;
 	    }
           pos = GP(&p, 0);
@@ -1693,11 +1691,11 @@ src=\"%s\" version=\"0.1\">\n",
               if (pos <= old_pos && pos > 0)
                 {
 #ifdef WIN32
-		  logf (LOG_PANIC, "SIS '%s' corrupt! Gp %I64x < %I64x",
+		  message_log (LOG_PANIC, "SIS '%s' corrupt! Gp %I64x < %I64x",
                         sis.c_str(), (UINT8)pos, (UINT8)old_pos);
 
 #else
-                  logf (LOG_PANIC, "SIS '%s' corrupt! Gp %llx < %llx",
+                  message_log (LOG_PANIC, "SIS '%s' corrupt! Gp %llx < %llx",
                         sis.c_str(), (long long)pos, (long long)old_pos);
 #endif
                 }
@@ -1822,13 +1820,13 @@ GDT_BOOLEAN INDEX::AddRecordList (FILE *RecordListFp)
   if (ActiveIndexing)
     {
       Parent->SetErrorCode(29); // Locked db
-      logf (LOG_ERROR, "Indexing already running on '%s' (Indexing or Importing).",
+      message_log (LOG_ERROR, "Indexing already running on '%s' (Indexing or Importing).",
 	Parent->GetDbFileStem ().c_str());
       return GDT_FALSE;
     }
   if (RecordListFp == NULL)
     {
-      logf (LOG_PANIC, "INDEX::AddRecordList(<NULL>)!");
+      message_log (LOG_PANIC, "INDEX::AddRecordList(<NULL>)!");
       return GDT_FALSE;
     }
   else
@@ -1839,16 +1837,16 @@ GDT_BOOLEAN INDEX::AddRecordList (FILE *RecordListFp)
 
       if (qlen < (off_t)(sizeof(RECORD)/2))
         {
-          logf (LOG_WARN, "Record index queue empty (len=%d). Nothing to do!", (int)qlen);
+          message_log (LOG_WARN, "Record index queue empty (len=%d). Nothing to do!", (int)qlen);
           return GDT_TRUE; // Nothing to do
         }
       else if ((qlen - pos) < (off_t)(sizeof(RECORD)/2))
         {
-          logf (LOG_INFO, "Nothing new to process in record index queue!");
+          message_log (LOG_INFO, "Nothing new to process in record index queue!");
           return GDT_TRUE;
         }
       if (DebugMode)
-        logf (LOG_INFO, "Adding to Index from Queue Stream (%lu bytes) from byte %lu",
+        message_log (LOG_INFO, "Adding to Index from Queue Stream (%lu bytes) from byte %lu",
               (unsigned long)qlen, (unsigned long)pos);
     }
 
@@ -1864,7 +1862,7 @@ memory_allocation: // This is where we try to get memory
   if (++tries > 4)
     {
       Parent->SetErrorCode(2); // "Temporary system error";
-      logf (LOG_PANIC, "Can't get indexing memory. Giving up.");
+      message_log (LOG_PANIC, "Can't get indexing memory. Giving up.");
       return GDT_FALSE;
     }
   IndexingMemory /= tries;
@@ -1876,7 +1874,7 @@ memory_allocation: // This is where we try to get memory
 
   // Was DEBUG
   if (DebugMode || (tries>1))
-    logf (LOG_INFO, "MEMORY: Want to allocate %ld%cB (%lu of %lu pages) for read buffer.",
+    message_log (LOG_INFO, "MEMORY: Want to allocate %ld%cB (%lu of %lu pages) for read buffer.",
           MemorySizeKb < 1024 ? (long)MemorySizeKb : (long)MemorySizeKb/1024L,
           MemorySizeKb < 1024 ? 'K' : 'M',
           (unsigned long) DataMemorySize/PAGESIZE,
@@ -1891,7 +1889,7 @@ memory_allocation: // This is where we try to get memory
     }
   if (MemoryData == NULL)
     {
-      logf (LOG_WARN|LOG_ERRNO, "Could not allocate %ldk bytes for read buffer",
+      message_log (LOG_WARN|LOG_ERRNO, "Could not allocate %ldk bytes for read buffer",
             (unsigned long)((IndexingMemory*sizeof(UCHR))/1024L));
       goto memory_allocation;
     }
@@ -1902,7 +1900,7 @@ memory_allocation: // This is where we try to get memory
   UINT4 IndexMemorySize = (UINT4) ((IndexingMemory / 3) -1); // jw patch
 
   if (DebugMode || (tries>1))
-    logf (LOG_INFO, "MEMORY: Want to allocate %ldk term pointers (from %lu pages available memory).",
+    message_log (LOG_INFO, "MEMORY: Want to allocate %ldk term pointers (from %lu pages available memory).",
           IndexMemorySize/1024, (unsigned long)_IB_GetFreeMemory()/PAGESIZE );
   try
     {
@@ -1919,12 +1917,12 @@ memory_allocation: // This is where we try to get memory
 	  delete[] MemoryData;
 	  MemoryData = NULL;
 	}
-      logf (LOG_WARN|LOG_ERRNO, "Could not allocate %ld %d-byte term pointers (%ld Mb)",
+      message_log (LOG_WARN|LOG_ERRNO, "Could not allocate %ld %d-byte term pointers (%ld Mb)",
 	IndexMemorySize, sizeof(GPTYPE), (IndexMemorySize*sizeof(GPTYPE))/(1024L*1024L));
       goto memory_allocation;
     }
 
-  logf (tries > 1 ? LOG_NOTICE : LOG_DEBUG,
+  message_log (tries > 1 ? LOG_NOTICE : LOG_DEBUG,
 	"MEMORY:%luMB allocated. System has %lu Pages core still available.",
         (long)((IndexingMemory + (sizeof(GPTYPE)*(long long)IndexMemorySize))/(1024*1024)) ,
         (unsigned long)_IB_GetFreeMemory()/PAGESIZE);
@@ -1965,7 +1963,7 @@ memory_allocation: // This is where we try to get memory
   {
     STRING s;
     int    id = (BYTE)GetGlobalCharset(&s);
-    logf (LOG_DEBUG, "Indexing using Charset (#%d) %s", id, s.c_str());
+    message_log (LOG_DEBUG, "Indexing using Charset (#%d) %s", id, s.c_str());
   }
 
 
@@ -2010,7 +2008,7 @@ memory_allocation: // This is where we try to get memory
                 {
                   if (record.Read (RecordListFp) == GDT_FALSE)
                     {
-                      logf (LOG_PANIC, "Read error on indexer input record queue");
+                      message_log (LOG_PANIC, "Read error on indexer input record queue");
                       break;
                     }
                 }
@@ -2018,7 +2016,7 @@ memory_allocation: // This is where we try to get memory
               if (record.IsBadRecord())
                 {
                   if (DebugMode || record.GetDocumentType().IsDefined())
-                    logf(LOG_INFO, skipping_msg,
+                    message_log(LOG_INFO, skipping_msg,
                          record.GetDocumentType().ClassName(GDT_FALSE).c_str(),
                          record.GetFullFileName ().c_str(),
                          (long long)record.GetRecordStart (), (long long)record.GetRecordEnd ());
@@ -2029,13 +2027,13 @@ memory_allocation: // This is where we try to get memory
 
               if ((Doctype = record.GetDocumentType()) == NulDoctype)
                 {
-                  logf(LOG_INFO, skipping_msg, "", DataFileName.c_str(),
+                  message_log(LOG_INFO, skipping_msg, "", DataFileName.c_str(),
                        (long long)record.GetRecordStart (), (long long)record.GetRecordEnd ());
                   continue; // Skip NULL docs
                 }
               if (Doctype.Name == ZeroDoctype)
                 {
-                  if (DebugMode) logf(LOG_INFO, skipping_msg, "",
+                  if (DebugMode) message_log(LOG_INFO, skipping_msg, "",
                                         DataFileName.c_str(),
                                         (long long)record.GetRecordStart (), (long long)record.GetRecordEnd ());
                   continue; // Its also a NULL
@@ -2044,7 +2042,7 @@ memory_allocation: // This is where we try to get memory
               Break = GDT_FALSE;
 
               if (DebugMode)
-                logf(LOG_DEBUG, "Parse %s fields in %s", Doctype.Name.c_str(), DataFileName.c_str());
+                message_log(LOG_DEBUG, "Parse %s fields in %s", Doctype.Name.c_str(), DataFileName.c_str());
 
               Parent->IndexingStatus (IndexingStatusParsingRecord, DataFileName);
               Parent->ParseFields (&record);
@@ -2061,7 +2059,7 @@ memory_allocation: // This is where we try to get memory
                   Parent->IndexingStatus (IndexingStatusIndexingDocument, DataFileName);
                   MyMemoryMap.CreateMap(DataFileName, MapSequential);
                   if ((Ok = MyMemoryMap.Ok()) == GDT_FALSE)
-                    logf (LOG_ERRNO|LOG_INFO, "Error accessing/mapping %s, skipping..", DataFileName.c_str());
+                    message_log (LOG_ERRNO|LOG_INFO, "Error accessing/mapping %s, skipping..", DataFileName.c_str());
                   Parent->ffdispose(OldDataFileName); // Don't cache anymore...
                   OldDataFileName = DataFileName;
 
@@ -2090,7 +2088,7 @@ memory_allocation: // This is where we try to get memory
                 {
                   if ((RecordStart = record.GetRecordStart()) < oldEnd)
                     {
-                      logf (LOG_DEBUG, "Old End %lu > Start %lu",
+                      message_log (LOG_DEBUG, "Old End %lu > Start %lu",
                             (unsigned long)oldEnd, (unsigned long)RecordStart);
                       endOffset = 0;
                     }
@@ -2131,7 +2129,7 @@ memory_allocation: // This is where we try to get memory
                       // This should NEVER happen since we now adjust the
                       // memory in "idb.cxx" to be at least as large as
                       // the largest record!
-                      logf (LOG_PANIC, "Internal Buffers too small (%ld>%ld)!",
+                      message_log (LOG_PANIC, "Internal Buffers too small (%ld>%ld)!",
                             (long)DataFileSize, (long)DataMemorySize);
                       exit (1);
                     }
@@ -2149,16 +2147,16 @@ memory_allocation: // This is where we try to get memory
                       if ((bytes = MyMemoryMap.Size() - RecordStart) == DataFileSize-1 && bytes > 0)
 			{
 			  if (RecordEnd)
-			    logf (LOG_NOTICE, "Record End position set to length, should be length-1!");
+			    message_log (LOG_NOTICE, "Record End position set to length, should be length-1!");
 			  else
-			    logf (LOG_NOTICE, "Can't read last byte of '%s' (read %lu of %lu bytes from %lu)?",
+			    message_log (LOG_NOTICE, "Can't read last byte of '%s' (read %lu of %lu bytes from %lu)?",
 				DataFileName.c_str(),
 				bytes, (unsigned long)DataFileSize, (unsigned long)RecordStart);
 			}
 		      else
 			{
 			  // This is an error condition
-                          logf (LOG_NOTICE|LOG_ERROR, "Wanted %ld bytes but only %u bytes availble from '%s'(%ld-%ld)",
+                          message_log (LOG_NOTICE|LOG_ERROR, "Wanted %ld bytes but only %u bytes availble from '%s'(%ld-%ld)",
                             (long)DataFileSize, bytes, DataFileName.c_str(), (long)RecordStart, (long)RecordEnd);
 			  Error++; // Tag as error?
 			}
@@ -2166,7 +2164,7 @@ memory_allocation: // This is where we try to get memory
 //cerr << "MAP from " << RecordStart << endl;
                   PUCHR p = (PUCHR)memcpy(MemoryData + MemoryDataLength,
                                           MyMemoryMap.Ptr() + RecordStart, bytes);
-                  if (DebugMode) logf (LOG_DEBUG, "Copied %u bytes from '%s' (%lu)", bytes,
+                  if (DebugMode) message_log (LOG_DEBUG, "Copied %u bytes from '%s' (%lu)", bytes,
                                          DataFileName.c_str(), (unsigned long)RecordStart );
                   memset(p+bytes, ' ', StringCompLength); // Pad an EXTRA StringCompLength
 
@@ -2181,14 +2179,14 @@ memory_allocation: // This is where we try to get memory
 #if 0
                   if (GpListSize == 0 && Doctype.)
                     {
-                      logf (LOG_WARN, "No words were indexed in %s record '%s'(%ld-%ld) bytes. Skipping!",
+                      message_log (LOG_WARN, "No words were indexed in %s record '%s'(%ld-%ld) bytes. Skipping!",
                             Doctype.Name.c_str(), DataFileName.c_str(), RecordStart, RecordStart+bytes);
                     }
                   else
 #endif
                     if (endOffset <= TrueGlobalStart)
                       {
-                        if (DebugMode) logf (LOG_DEBUG, "Indexed %d words (%s)", GpListSize, Doctype.c_str());
+                        if (DebugMode) message_log (LOG_DEBUG, "Indexed %d words (%s)", GpListSize, Doctype.c_str());
                         mdtrec.SetDocumentType ( Doctype );
                         if (record.IsBadRecord())
                           mdtrec.SetDeleted( GDT_TRUE);
@@ -2227,11 +2225,11 @@ memory_allocation: // This is where we try to get memory
 			      {
 				if (Parent->GetMainMdt()->LookupByKey(Key))
 				  {
-				    logf (LOG_PANIC, "Duplicate KEY '%s'. Inode defective?", Key.c_str());
+				    message_log (LOG_PANIC, "Duplicate KEY '%s'. Inode defective?", Key.c_str());
 				    checkKey = GDT_TRUE;
 				  }
 				else
-			          logf (LOG_DEBUG, "Created key '%s'", Key.c_str());
+			          message_log (LOG_DEBUG, "Created key '%s'", Key.c_str());
 			      }
                           }
                         else
@@ -2239,7 +2237,7 @@ memory_allocation: // This is where we try to get memory
                         if (checkKey || isLinked)
                           {
                             if (DebugMode)
-                              logf(LOG_DEBUG, "%s Key '%s'", Override ? "Setting"  : "Getting Unique", Key.c_str());
+                              message_log(LOG_DEBUG, "%s Key '%s'", Override ? "Setting"  : "Getting Unique", Key.c_str());
                             Parent->GetMainMdt ()->GetUniqueKey (&Key, Override);
                           }
 
@@ -2257,13 +2255,13 @@ memory_allocation: // This is where we try to get memory
                         if (WriteFieldData (record, position) // edz: Thu Jul  8 14:37:22 MET DST 1999 moved position to *before* AddEntry()
                             == GDT_FALSE)
                           {
-                            logf (LOG_ERROR, "Errors writing field data!");
+                            message_log (LOG_ERROR, "Errors writing field data!");
                             Error++;
                           }
                       }
                     else
                       {
-                        logf (LOG_ERROR|LOG_PANIC,
+                        message_log (LOG_ERROR|LOG_PANIC,
 #ifdef _WIN32
 			"Internal [%s] record overflow (%I64d > %I64d) [%I64d-%I64d]."
 #else
@@ -2292,7 +2290,7 @@ memory_allocation: // This is where we try to get memory
               TermSort (MemoryData, MemoryIndex, MemoryIndexLength);
 //	      clock_t end      = clock();
 //	      static const double factor = sqrt(CLOCKS_PER_SEC);
-//	      logf (LOG_INFO, "Processed %.2f words/s (%.4f) CPU.",
+//	      message_log (LOG_INFO, "Processed %.2f words/s (%.4f) CPU.",
 //		MemoryIndexLength*factor/(end/factor - start/factor), (end-start)/(double)CLOCKS_PER_SEC);
 
               if (GDT_FALSE == FlushIndexFiles(MemoryData,
@@ -2319,7 +2317,7 @@ memory_allocation: // This is where we try to get memory
   if (MemoryData)  { delete[]MemoryData; MemoryData = NULL; }
   if (MemoryIndex) { delete[]MemoryIndex; MemoryIndex = NULL; }
 
-  if (DebugMode) logf (LOG_INFO, "Sort numeric field data...");
+  if (DebugMode) message_log (LOG_INFO, "Sort numeric field data...");
   SortNumericFieldData();
 
   // now, do our *experimental* merge
@@ -2331,19 +2329,19 @@ memory_allocation: // This is where we try to get memory
       s.form("%s.%d", IndexFileName.c_str(), IndexNum);
       if (RenameFile(s, IndexFileName) == 0)
         {
-          if (DebugMode) logf(LOG_DEBUG, "Moved %s to %s", s.c_str(), IndexFileName.c_str());
+          if (DebugMode) message_log(LOG_DEBUG, "Moved %s to %s", s.c_str(), IndexFileName.c_str());
           SetIndexNum(0);
           // Move the .sis.1 file...
           if (RenameFile( s.form("%s.1", SisFileName.c_str()), SisFileName) == 0)
             {
-              if (DebugMode) logf(LOG_DEBUG, "Moved %s to %s", s.c_str(), SisFileName.c_str());
+              if (DebugMode) message_log(LOG_DEBUG, "Moved %s to %s", s.c_str(), SisFileName.c_str());
             }
           else
-            logf(LOG_ERRNO, "Could not move %s to %s", s.c_str(), SisFileName.c_str());
+            message_log(LOG_ERRNO, "Could not move %s to %s", s.c_str(), SisFileName.c_str());
         }
       else
         {
-          logf (LOG_ERRNO, "Could not move %s to %s", s.c_str(), IndexFileName.c_str());
+          message_log (LOG_ERRNO, "Could not move %s to %s", s.c_str(), IndexFileName.c_str());
         }
     }
   else if (MergeStatus==iOptimize)
@@ -2352,14 +2350,14 @@ memory_allocation: // This is where we try to get memory
     CollapseIndexFiles();
   else if (IndexNum > 0 && Exists(IndexFileName))
     {
-      if (DebugMode) logf(LOG_DEBUG, "Removing '%s'", IndexFileName.c_str());
+      if (DebugMode) message_log(LOG_DEBUG, "Removing '%s'", IndexFileName.c_str());
       if (UnlinkFile(IndexFileName) == -1) // Remove .inx
-        logf (LOG_ERRNO, "Could not remove '%s' (old Index)", IndexFileName.c_str());
+        message_log (LOG_ERRNO, "Could not remove '%s' (old Index)", IndexFileName.c_str());
       if (Exists(SisFileName))
         {
-          if (DebugMode) logf(LOG_DEBUG, "Removing '%s'", SisFileName.c_str());
+          if (DebugMode) message_log(LOG_DEBUG, "Removing '%s'", SisFileName.c_str());
           if (UnlinkFile(SisFileName) == -1) // Zap old..
-            logf (LOG_ERRNO, "Could not remove '%s' (old Sis)", SisFileName.c_str());
+            message_log (LOG_ERRNO, "Could not remove '%s' (old Sis)", SisFileName.c_str());
         }
     }
 
@@ -2413,7 +2411,7 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
   const size_t First=LocalIndexNum-1;
   const size_t Second=LocalIndexNum;
 
-  logf(LOG_INFO, "Collapsing Sub-Indexes %u and %u -> %u", (unsigned)First, (unsigned)Second, (unsigned)First);
+  message_log(LOG_INFO, "Collapsing Sub-Indexes %u and %u -> %u", (unsigned)First, (unsigned)Second, (unsigned)First);
 
   STRING TmpIndexFile, TmpSisFile, OutFile;
   STRING Current;
@@ -2452,24 +2450,24 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
           }
         if ((Inx_buff[j] = InxFiles[j].Ptr()) == NULL)
           {
-            logf (((GetFileSize(s) >  (0x7fffffff-100)) ? LOG_INFO : LOG_ERRNO),
+            message_log (((GetFileSize(s) >  (0x7fffffff-100)) ? LOG_INFO : LOG_ERRNO),
                   "CollapseIndexFiles: Could not Map '%s'. Won't collapse %d+%d->%d.",
                   s.c_str(), First, Second, First);
             return GDT_FALSE;
           }
         total_words += ((GPTYPE)InxFiles[j].Size())/sizeof(GPTYPE);
 
-        if (DebugMode) logf (LOG_DEBUG, "Mapped %s", s.c_str());
+        if (DebugMode) message_log (LOG_DEBUG, "Mapped %s", s.c_str());
         // MAP SIS
         s.form("%s.%d", SisFileName.c_str(), i);
         SisFiles[j].CreateMap(s, MapSequential);
         const unsigned char *Map = SisFiles[j].Ptr();
         if (Map == NULL)
           {
-            logf (LOG_ERRNO, "Collapse: Could not Map '%s'", s.c_str());
+            message_log (LOG_ERRNO, "Collapse: Could not Map '%s'", s.c_str());
             return GDT_FALSE;
           }
-        if (DebugMode) logf (LOG_DEBUG, "Mapped %s", s.c_str());
+        if (DebugMode) message_log (LOG_DEBUG, "Mapped %s", s.c_str());
 
         const size_t compLength = (unsigned char)Map[0];
         //size of a sistring record
@@ -2488,24 +2486,24 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
     if (total_words >=  maxWordsCapacity)
       {
 #ifdef _WIN32
-        logf (LOG_ERROR, "Sorry can't merge %I64u words (Capacity with %d-bit files systems is %I64u)" 
+        message_log (LOG_ERROR, "Sorry can't merge %I64u words (Capacity with %d-bit files systems is %I64u)" 
               , (UINT8)total_words, sizeof(GPTYPE) *8, (UINT8)maxWordsCapacity);
 #else
-	logf (LOG_ERROR, "Sorry can't merge %I64u words (Capacity with %d-bit files systems is %I64u)"
+	message_log (LOG_ERROR, "Sorry can't merge %I64u words (Capacity with %d-bit files systems is %I64u)"
 		,total_words, sizeof(GPTYPE) *8, maxWordsCapacity);
 #endif
         return GDT_FALSE;
       }
 #ifdef _WIN32
-    logf (LOG_INFO, "Merging %I64u words from %u indexes.", (UINT8)total_words, Second-First+1);
+    message_log (LOG_INFO, "Merging %I64u words from %u indexes.", (UINT8)total_words, Second-First+1);
 #else
-    logf (LOG_INFO, "Merging %llu words from %u indexes.", total_words, Second-First+1);
+    message_log (LOG_INFO, "Merging %llu words from %u indexes.", total_words, Second-First+1);
 #endif
 
   }
   if (SisInfo[0].charsetId != SisInfo[0].charsetId)
     {
-      logf (LOG_WARN, "Can't collapse sub-indices with different base charsets (%d != %d) at this time.",
+      message_log (LOG_WARN, "Can't collapse sub-indices with different base charsets (%d != %d) at this time.",
             SisInfo[0].charsetId, SisInfo[1].charsetId);
       return GDT_FALSE;
     }
@@ -2518,7 +2516,7 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
   FILE *inx_fp=fopen(TmpIndexFile,"wb");
   if (inx_fp == NULL)
     {
-      logf (LOG_ERRNO, "Couldn't open '%s' for writing (index).", TmpIndexFile.c_str());
+      message_log (LOG_ERRNO, "Couldn't open '%s' for writing (index).", TmpIndexFile.c_str());
       return GDT_FALSE;
     }
 
@@ -2527,8 +2525,8 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
     {
       fclose(inx_fp);
       if (UnlinkFile(TmpIndexFile) == -1) // Remove trash
-        logf (LOG_ERRNO, "Could not remove '%s' (Trash)", TmpIndexFile.c_str());
-      logf (LOG_ERRNO, "Couldn't open '%s' for writing (sis).", TmpSisFile.c_str());
+        message_log (LOG_ERRNO, "Could not remove '%s' (Trash)", TmpIndexFile.c_str());
+      message_log (LOG_ERRNO, "Couldn't open '%s' for writing (sis).", TmpSisFile.c_str());
       return GDT_FALSE;
 
     }
@@ -2545,7 +2543,7 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
   const unsigned char *term1 = NULL;
   const unsigned char *term2 = NULL;
 
-  if (DebugMode) logf (LOG_DEBUG, "Dumping to (sis/inx).%d.%d", First, mypid);
+  if (DebugMode) message_log (LOG_DEBUG, "Dumping to (sis/inx).%d.%d", First, mypid);
   if (CommonWords) CommonWords->Clear();
   for (;;)
     {
@@ -2583,7 +2581,7 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
 
           if (PositionOf(end) > InxFiles[0].Size())
             {
-              logf(LOG_PANIC, "Collapse(1): Sub-Index %d is corrupt (overflow): %d (%ld > %ld) [%ld]",
+              message_log(LOG_PANIC, "Collapse(1): Sub-Index %d is corrupt (overflow): %d (%ld > %ld) [%ld]",
                    First, start, PositionOf(end), InxFiles[0].Size(), end);
               add = 0;
             }
@@ -2592,16 +2590,16 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
               const off_t entries = end-start+1;
               const off_t position = PositionOf(start);
               // Write the region of the .inx
-              if (DebugMode) logf (LOG_DEBUG, "Writing Index#1 %ld entries (%ld)", entries,  position);
+              if (DebugMode) message_log (LOG_DEBUG, "Writing Index#1 %ld entries (%ld)", entries,  position);
               add = fwrite(Inx_buff[0]+position, sizeof(GPTYPE), entries, inx_fp);
               if ((off_t)add != entries)
-                logf(LOG_ERRNO, "Write error to %s (Temporary Index) (%ld!=%ld)",
+                message_log(LOG_ERRNO, "Write error to %s (Temporary Index) (%ld!=%ld)",
                      TmpIndexFile.c_str(), (long)add, entries);
             }
 #if XXX_DEBUG
 # undef  XXX_DEBUG
 # define XXX_DEBUG(X)	if (DebugMode) { static UCHR buffer[127]; \
-	    logf (LOG_INFO, "(%d) Start = %d, End = %d, Total = %d, TERM=%s First=%ld", \
+	    message_log (LOG_INFO, "(%d) Start = %d, End = %d, Total = %d, TERM=%s First=%ld", \
 		X, start, end, end-start+1, term##X+1, GP(Inx_buff[(X)-1], PositionOf(start)) ); \
 	    for (GPTYPE i=0; i <= end-start; i++) { \
 	      const GPTYPE off = PositionOf(start+i); \
@@ -2616,7 +2614,7 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
 	      } \
 	      TermExtract(buffer, (*term##X) + 1); \
 	      if (strcmp( (char *) term##X+1, (char *)buffer) != 0) \
-	      logf (LOG_PANIC, "Expected %s at GP=%ld TERM = \"%s\" (Indirect Buffer)", \
+	      message_log (LOG_PANIC, "Expected %s at GP=%ld TERM = \"%s\" (Indirect Buffer)", \
 		term##X+1, gp, (const char *)buffer); \
 	    } }
 #else
@@ -2635,17 +2633,17 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
           const GPTYPE start = (term2 - SisInfo[1].buf) ? GP(term2, -(int)sizeof(GPTYPE)) + 1 : 0;
           if (2+end*sizeof(GPTYPE) > InxFiles[1].Size())
             {
-              logf(LOG_PANIC, "Collapse(2): Sub-Index %d is corrupt (overflow): %d", First, start);
+              message_log(LOG_PANIC, "Collapse(2): Sub-Index %d is corrupt (overflow): %d", First, start);
             }
           else
             {
               const size_t entries = end-start+1;
               const off_t position = PositionOf(start);
               if (DebugMode)
-                logf (LOG_DEBUG, "Writing Index#2 %ld entries (%ld)", entries, position);
+                message_log (LOG_DEBUG, "Writing Index#2 %ld entries (%ld)", entries, position);
               size_t     wrote = fwrite(Inx_buff[1]+position, sizeof(GPTYPE), entries, inx_fp);
               if (wrote != entries)
-                logf(LOG_ERRNO, "Write error to %s (Temporary Index) (%ld!=%ld)",
+                message_log(LOG_ERRNO, "Write error to %s (Temporary Index) (%ld!=%ld)",
                      TmpIndexFile.c_str(), (long)wrote, entries);
               add += wrote;
             }
@@ -2664,12 +2662,12 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
                 CommonWords = new STRLIST();
               const char *word = (const char *)(ptr+1);
               CommonWords->AddEntry(word);
-              logf (LOG_INFO, "Term '%s' is common: frequency %u (>%d)!", word, add, CommonWordsThreshold);
+              message_log (LOG_INFO, "Term '%s' is common: frequency %u (>%d)!", word, add, CommonWordsThreshold);
             }
-//	  if (DebugMode) logf (LOG_DEBUG, "Added '%s'[%d] (%d)", word, *ptr, add);
+//	  if (DebugMode) message_log (LOG_DEBUG, "Added '%s'[%d] (%d)", word, *ptr, add);
         }
     }
-  if (DebugMode) logf (LOG_DEBUG, "%ld Terms dumped", sis_count);
+  if (DebugMode) message_log (LOG_DEBUG, "%ld Terms dumped", sis_count);
 
   fclose(inx_fp);
   fclose(sis_fp);
@@ -2677,10 +2675,10 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
   // We are finished and MS Windows really needs them unmaped before we can write!
   // in Unix it does not hurt.
   const char unmap_errmsg[] = "Could not unmap %s.%d";
-  if (InxFiles[0].Unmap() == GDT_FALSE) logf (LOG_ERRNO, unmap_errmsg, IndexFileName.c_str(), First);
-  if (SisFiles[0].Unmap() == GDT_FALSE) logf (LOG_ERRNO, unmap_errmsg, SisFileName.c_str(), First);
-  if (InxFiles[1].Unmap() == GDT_FALSE) logf (LOG_ERRNO, unmap_errmsg, IndexFileName.c_str(), Second);
-  if (SisFiles[1].Unmap() == GDT_FALSE) logf (LOG_ERRNO, unmap_errmsg, SisFileName.c_str(), Second);
+  if (InxFiles[0].Unmap() == GDT_FALSE) message_log (LOG_ERRNO, unmap_errmsg, IndexFileName.c_str(), First);
+  if (SisFiles[0].Unmap() == GDT_FALSE) message_log (LOG_ERRNO, unmap_errmsg, SisFileName.c_str(), First);
+  if (InxFiles[1].Unmap() == GDT_FALSE) message_log (LOG_ERRNO, unmap_errmsg, IndexFileName.c_str(), Second);
+  if (SisFiles[1].Unmap() == GDT_FALSE) message_log (LOG_ERRNO, unmap_errmsg, SisFileName.c_str(), Second);
 
   static const char err_msg[] =  "Could not remove '%s'(%s). Please remove by hand!";
   //////////////////////////////////////////////////////////////////////////
@@ -2688,16 +2686,16 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
   //////////////////////////////////////////////////////////////////////////
   if ((LocalIndexNum == 2) && (LocalIndexNum==GetIndexNum()))
     {
-      if (DebugMode) logf(LOG_DEBUG, "Creating %s", IndexFileName.c_str());
+      if (DebugMode) message_log(LOG_DEBUG, "Creating %s", IndexFileName.c_str());
       if (RenameFile(TmpIndexFile, IndexFileName) != 0) // Install new .inx
         {
-          logf(LOG_ERRNO, "Could not install '%'s as '%s'", TmpIndexFile.c_str(), IndexFileName.c_str());
+          message_log(LOG_ERRNO, "Could not install '%'s as '%s'", TmpIndexFile.c_str(), IndexFileName.c_str());
           return GDT_FALSE;
         }
-      if (DebugMode) logf(LOG_DEBUG, "Creating %s", SisFileName.c_str());
+      if (DebugMode) message_log(LOG_DEBUG, "Creating %s", SisFileName.c_str());
       if (RenameFile(TmpSisFile, SisFileName) != 0)
         {
-          logf(LOG_ERRNO, "Could not install '%s' as '%s'", TmpSisFile.c_str(), SisFileName.c_str());
+          message_log(LOG_ERRNO, "Could not install '%s' as '%s'", TmpSisFile.c_str(), SisFileName.c_str());
           return GDT_FALSE;
         }
       SetIndexNum(0);
@@ -2707,18 +2705,18 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
         {
           // Zap .inx.*
           TmpIndexFile.form("%s.%d", IndexFileName.c_str(), i);
-          if (DebugMode) logf(LOG_DEBUG, "Deleting %s", TmpIndexFile.c_str());
+          if (DebugMode) message_log(LOG_DEBUG, "Deleting %s", TmpIndexFile.c_str());
           if (UnlinkFile(TmpIndexFile) == -1)
 	    {
-              logf (LOG_ERRNO, err_msg, TmpIndexFile.c_str(), "Index(2)");
+              message_log (LOG_ERRNO, err_msg, TmpIndexFile.c_str(), "Index(2)");
 	      AddtoGarbageFileList(TmpIndexFile);
 	    }
           // Zap .sis.*
           TmpIndexFile.form("%s.%d", SisFileName.c_str(), i);
-          if (DebugMode) logf(LOG_DEBUG, "Deleting %s", TmpIndexFile.c_str());
+          if (DebugMode) message_log(LOG_DEBUG, "Deleting %s", TmpIndexFile.c_str());
           if (UnlinkFile(TmpIndexFile) == -1)
 	    {
-              logf (LOG_ERRNO, err_msg, TmpIndexFile.c_str(), "SIS(2)");
+              message_log (LOG_ERRNO, err_msg, TmpIndexFile.c_str(), "SIS(2)");
 	      AddtoGarbageFileList(TmpIndexFile);
 	    }
         }
@@ -2729,37 +2727,37 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
       STRING Tmp;
 
       Tmp.form("%s.%d", SisFileName.c_str(), First);
-      if (DebugMode) logf(LOG_DEBUG, "Creating collapsed %s", Tmp.c_str());
+      if (DebugMode) message_log(LOG_DEBUG, "Creating collapsed %s", Tmp.c_str());
       if (RenameFile(TmpSisFile,Tmp) != 0)
         {
-          logf(LOG_ERRNO, "Could not install '%s' as '%s'", TmpSisFile.c_str(), Tmp.c_str());
+          message_log(LOG_ERRNO, "Could not install '%s' as '%s'", TmpSisFile.c_str(), Tmp.c_str());
           return GDT_FALSE;
         }
       Tmp.form("%s.%d", SisFileName.c_str(), Second);
-      if (DebugMode) logf(LOG_DEBUG, "Deleting %s", Tmp.c_str());
+      if (DebugMode) message_log(LOG_DEBUG, "Deleting %s", Tmp.c_str());
       if (UnlinkFile(Tmp) == -1)
 	{
-          logf (LOG_ERRNO, err_msg, Tmp.c_str(), "SIS");
+          message_log (LOG_ERRNO, err_msg, Tmp.c_str(), "SIS");
 	  AddtoGarbageFileList(Tmp);
 	}
 
       Tmp.form("%s.%d", IndexFileName.c_str(), First);
-      if (DebugMode) logf(LOG_DEBUG, "Creating collapsed %s", Tmp.c_str());
+      if (DebugMode) message_log(LOG_DEBUG, "Creating collapsed %s", Tmp.c_str());
       if (RenameFile(TmpIndexFile,Tmp) == 0)
         {
           if (LocalIndexNum==GetIndexNum())
             SetIndexNum(First); // Decrement
           Tmp.form("%s.%d", IndexFileName.c_str(), Second);
-          if (DebugMode) logf(LOG_DEBUG, "Deleting %s", Tmp.c_str());
+          if (DebugMode) message_log(LOG_DEBUG, "Deleting %s", Tmp.c_str());
           if (UnlinkFile(Tmp) == -1)
 	    {
-              logf (LOG_ERRNO, err_msg, Tmp.c_str(), "Index");
+              message_log (LOG_ERRNO, err_msg, Tmp.c_str(), "Index");
 	      AddtoGarbageFileList(Tmp);
 	    }
         }
       else
         {
-          logf(LOG_ERRNO, "Could not install '%s' as '%s'", TmpIndexFile.c_str(), Tmp.c_str());
+          message_log(LOG_ERRNO, "Could not install '%s' as '%s'", TmpIndexFile.c_str(), Tmp.c_str());
           return GDT_FALSE;
         }
     }
@@ -2790,11 +2788,11 @@ GDT_BOOLEAN INDEX::MergeIndexFiles()
       // Get PID
       tmp[0] = '\0';
       if (fscanf(fj, "%ld %ld %s\n", &pid, &uid, tmp) != 3)
-        logf (LOG_WARN, "Optimizer lockfile '%s' is corrupt!", lockName.c_str());
+        message_log (LOG_WARN, "Optimizer lockfile '%s' is corrupt!", lockName.c_str());
       fclose(fj);
       if (tmp[0] && strcasecmp(hostname, tmp) != 0 && strcmp(hostname, tmp) != 0)
         {
-          logf(LOG_ERROR, "\
+          message_log(LOG_ERROR, "\
                There might be a merge of %s running on %s (owned by uid=%ld and pid=%ld). If its a stale lock \
                you can remove it (%s) by hand.", db.c_str(), tmp, uid, pid, lockName.c_str());
           return GDT_FALSE;
@@ -2803,14 +2801,14 @@ GDT_BOOLEAN INDEX::MergeIndexFiles()
       if (IsRunningProcess(pid))
         {
 #ifdef _WIN32
-          logf(LOG_ERROR, "You already have a merge of %s running (pid=%ld)! Check locks",
+          message_log(LOG_ERROR, "You already have a merge of %s running (pid=%ld)! Check locks",
                db.c_str(), pid);
 #else
           if (IsMyProcess(uid))
-            logf(LOG_ERROR, "You already have a merge of %s running (pid=%ld)! Check locks",
+            message_log(LOG_ERROR, "You already have a merge of %s running (pid=%ld)! Check locks",
                  db.c_str(), pid);
           else
-            logf (LOG_ERROR, "Index optimizer on %s already running by %s (pid=%ld). Check locks",
+            message_log (LOG_ERROR, "Index optimizer on %s already running by %s (pid=%ld). Check locks",
                   db.c_str(), ProcessOwner(uid).c_str(), pid);
 #endif
           return GDT_FALSE;
@@ -2819,9 +2817,9 @@ GDT_BOOLEAN INDEX::MergeIndexFiles()
         {
           // Stale Lock
 #ifdef _WIN32
-          logf (LOG_WARN,  "An optimizer process broke down (pid=%ld). Index might be corrupt.", pid);
+          message_log (LOG_WARN,  "An optimizer process broke down (pid=%ld). Index might be corrupt.", pid);
 #else
-          logf (LOG_WARN, "An optimizer process run by %s broke down (pid=%ld). \
+          message_log (LOG_WARN, "An optimizer process run by %s broke down (pid=%ld). \
                 Index might be corrupt.", ProcessOwner(uid).c_str(), pid );
 #endif
 
@@ -2830,15 +2828,15 @@ GDT_BOOLEAN INDEX::MergeIndexFiles()
             {
               STRING s;
               if (UnlinkFile (s = STRING().form("%s.%d.%d", IndexFileName.c_str(), i, pid) ) == -1)
-                logf (LOG_ERRNO, "Could not unlink '%s'", s.c_str());
+                message_log (LOG_ERRNO, "Could not unlink '%s'", s.c_str());
               if (UnlinkFile (s = STRING().form("%s.%d.%d", SisFileName.c_str(), i, pid) ) == -1)
-                logf (LOG_ERRNO, "Could not unlink '%s'", s.c_str());
+                message_log (LOG_ERRNO, "Could not unlink '%s'", s.c_str());
               errno = 0;
             }
         }
     }
   else if (FileExists(lockName))
-    logf (LOG_WARN, "Can't read optimizer lockfile '%s'.", lockName.c_str());
+    message_log (LOG_WARN, "Can't read optimizer lockfile '%s'.", lockName.c_str());
   if ((fj = fopen(lockName, "wt")) != NULL)
     {
 #ifdef _WIN32
@@ -2849,10 +2847,10 @@ GDT_BOOLEAN INDEX::MergeIndexFiles()
     }
   else
     {
-      logf(LOG_WARN|LOG_ERRNO, "Can't set optimizer lock '%s'!", lockName.c_str());
+      message_log(LOG_WARN|LOG_ERRNO, "Can't set optimizer lock '%s'!", lockName.c_str());
     }
 
-// logf (LOG_INFO, "%d Sub-Indexes to Merge", IndexNum);
+// message_log (LOG_INFO, "%d Sub-Indexes to Merge", IndexNum);
   // Collapse down to 1...
   do
     {
@@ -2862,7 +2860,7 @@ GDT_BOOLEAN INDEX::MergeIndexFiles()
   while ((IndexNum=GetIndexNum()) > 1);
 
   if (UnlinkFile(lockName) == -1) // Zap the lock!
-    logf (LOG_ERRNO, "Could not remove optimizer lock '%s'!", lockName.c_str());
+    message_log (LOG_ERRNO, "Could not remove optimizer lock '%s'!", lockName.c_str());
   return GDT_TRUE;
 }				// end function
 
@@ -2890,14 +2888,14 @@ STRING INDEX::GetFlushIndexSlot()
                 }
               while (Exists(TmpIndexFileName));
               FileLink(IndexFileName, TmpIndexFileName); // Link it
-              if (DebugMode) logf(LOG_DEBUG, "Linked %s to %s", IndexFileName.c_str(), TmpIndexFileName.c_str());
+              if (DebugMode) message_log(LOG_DEBUG, "Linked %s to %s", IndexFileName.c_str(), TmpIndexFileName.c_str());
               // Link .sis.*
               TmpIndexFileName.form("%s.%d", SisFileName.c_str(), IndexNum);
               FileLink(SisFileName, TmpIndexFileName);
             }
           else
             {
-              logf(LOG_NOTICE, "%s already linked (n=%d)?", IndexFileName.c_str(), st_buf.st_nlink);
+              message_log(LOG_NOTICE, "%s already linked (n=%d)?", IndexFileName.c_str(), st_buf.st_nlink);
             }
         }
     }
@@ -2907,7 +2905,7 @@ STRING INDEX::GetFlushIndexSlot()
     TmpIndexFileName.form("%s.%d", IndexFileName.c_str(), ++IndexNum);
     tries++;
   } while (Exists(TmpIndexFileName));
-  logf ((tries > 2 && MergeStatus) ? LOG_WARN : LOG_DEBUG,
+  message_log ((tries > 2 && MergeStatus) ? LOG_WARN : LOG_DEBUG,
           "%d indexer slots were occupied on '%s'.%s", IndexNum, IndexFileName.c_str(),
   return TmpIndexFileName;
 }
@@ -2938,14 +2936,14 @@ GDT_BOOLEAN INDEX::FlushIndexFiles(PUCHR MemoryData,
                 }
               while (Exists(TmpIndexFileName));
               FileLink(IndexFileName, TmpIndexFileName); // Link it
-              if (DebugMode) logf(LOG_DEBUG, "Linked %s to %s", IndexFileName.c_str(), TmpIndexFileName.c_str());
+              if (DebugMode) message_log(LOG_DEBUG, "Linked %s to %s", IndexFileName.c_str(), TmpIndexFileName.c_str());
               // Link .sis.*
               TmpIndexFileName.form("%s.%d", SisFileName.c_str(), IndexNum);
               FileLink(SisFileName, TmpIndexFileName);
             }
           else
             {
-              logf(LOG_NOTICE, "%s already linked (n=%d)?", IndexFileName.c_str(), st_buf.st_nlink);
+              message_log(LOG_NOTICE, "%s already linked (n=%d)?", IndexFileName.c_str(), st_buf.st_nlink);
             }
         }
     }
@@ -2959,17 +2957,17 @@ GDT_BOOLEAN INDEX::FlushIndexFiles(PUCHR MemoryData,
         tries++;
       }
     while (Exists(TmpIndexFileName));
-    logf ((tries > 2 && MergeStatus) ? LOG_WARN : LOG_DEBUG,
+    message_log ((tries > 2 && MergeStatus) ? LOG_WARN : LOG_DEBUG,
           "%d indexer slots were occupied on '%s'.%s", IndexNum, IndexFileName.c_str(),
           IndexNum > 2 ? " Unmerged or other indexer running?" : "");
   }
 
-  if (DebugMode) logf(LOG_DEBUG, "Dumping index to %s", TmpIndexFileName.c_str());
+  if (DebugMode) message_log(LOG_DEBUG, "Dumping index to %s", TmpIndexFileName.c_str());
 
   PFILE fp = fopen(TmpIndexFileName, "wb");
   if (!fp)
     {
-      logf(LOG_ERRNO, "Can't write to %s!", TmpIndexFileName.c_str());
+      message_log(LOG_ERRNO, "Can't write to %s!", TmpIndexFileName.c_str());
       return GDT_FALSE;
     }
   // Mark index number for other processes (search engine would just skip it)
@@ -2980,11 +2978,11 @@ GDT_BOOLEAN INDEX::FlushIndexFiles(PUCHR MemoryData,
   putINT2((INT2)IndexMagic, fp);
 
   TmpIndexFileName.form ("%s.%d", SisFileName.c_str(), IndexNum);
-  if (DebugMode) logf (LOG_DEBUG, "Dumping SIStrings to '%s'", TmpIndexFileName.c_str());
+  if (DebugMode) message_log (LOG_DEBUG, "Dumping SIStrings to '%s'", TmpIndexFileName.c_str());
 
   FILE *dp = fopen(TmpIndexFileName, "wb");
   if (dp == NULL)
-    logf (LOG_ERRNO, "Could not open %s for writing!", TmpIndexFileName.c_str());
+    message_log (LOG_ERRNO, "Could not open %s for writing!", TmpIndexFileName.c_str());
   int repeat = 0;
 #define SISDEBUG 0
 #if SISDEBUG
@@ -3004,7 +3002,7 @@ GDT_BOOLEAN INDEX::FlushIndexFiles(PUCHR MemoryData,
 #endif
       fputc(SisLimit & 0xFF, dp);
       fputc(cset, dp); // CHARACTER SET
-      logf (LOG_DEBUG, "Dumping strings using charset ID#%d", (int)cset);
+      message_log (LOG_DEBUG, "Dumping strings using charset ID#%d", (int)cset);
     }
 //GPTYPE old_i = 0;
   for (GPTYPE i=0; i<=MemoryIndexLength; i++)
@@ -3104,7 +3102,7 @@ GDT_BOOLEAN INDEX::FlushIndexFiles(PUCHR MemoryData,
 
   // Flush DFDT
   STRING DFDTFN = Parent->ComposeDbFn(DbExtDfd);
-  if (DebugMode) logf (LOG_DEBUG, "Flushing DFDT to '%s'", DFDTFN.c_str());
+  if (DebugMode) message_log (LOG_DEBUG, "Flushing DFDT to '%s'", DFDTFN.c_str());
   Parent->GetMainDfdt ()->Flush( DFDTFN );
 
   if (Parent)
@@ -3136,7 +3134,7 @@ GDT_BOOLEAN INDEX::SetStoplist(const STRING& Value)
       return GDT_TRUE;
     }
 #if _WIN32
-  logf (LOG_WARN, "WIN32: '%s' Stoplists are not supported at this time.", Value.c_str());
+  message_log (LOG_WARN, "WIN32: '%s' Stoplists are not supported at this time.", Value.c_str());
   return GDT_FALSE;
 #else
   if (StopWords == NULL)
@@ -3228,7 +3226,7 @@ size_t INDEX::BuildGpList(const DOCTYPE_ID& Doctype,
   if (IndexLength == 0 || DataLength <= Start)
     {
       if (DataLength < Start)
-        logf (LOG_WARN,
+        message_log (LOG_WARN,
 #ifdef _WIN32
 	"GpList data=%I64d <= %I64d (start). Buffer overrun (Index length=%I64d)?" 
 #else
@@ -3236,7 +3234,7 @@ size_t INDEX::BuildGpList(const DOCTYPE_ID& Doctype,
 #endif
               , (long long)DataLength, (long long)Start, (long long)IndexLength);
       else
-        logf (LOG_DEBUG,
+        message_log (LOG_DEBUG,
 #ifdef _WIN32
 		"BuildGpList, Length=%I64d"
 #else
@@ -3306,7 +3304,7 @@ PIRSET INDEX::Search (const QUERY& Query)
   t_Operator op_t;
   clock_t      startClock = clock();
 
-  logf (LOG_DEBUG, "Entering Search loop");
+  message_log (LOG_DEBUG, "Entering Search loop");
 
   int terms = 0; // Term count (not stopwords)
   while (Stack >> OpPtr)
@@ -3319,7 +3317,7 @@ PIRSET INDEX::Search (const QUERY& Query)
               TempStack >> Op1;
               if (Op1 == NULL)
                 {
-                  logf (LOG_DEBUG, "108   Malformed query (Complement of NIL undefined)");
+                  message_log (LOG_DEBUG, "108   Malformed query (Complement of NIL undefined)");
                   Parent->SetErrorCode(108);
                   return ERROR_SET; // Malformed query 
                 }
@@ -3410,7 +3408,7 @@ PIRSET INDEX::Search (const QUERY& Query)
 		case OperatorInclusive: Op1->Inclusive(fieldName ); break;
                 case OperatorXWithin:   Op1->XWithin ( fieldName ); break;
 		case OperatorSortBy:    Op1->SortBy  ( fieldName ); break;
-                default: logf (LOG_PANIC, "INTERNAL ERROR: Unknown Unary Operator %d!", (int)op_t );
+                default: message_log (LOG_PANIC, "INTERNAL ERROR: Unknown Unary Operator %d!", (int)op_t );
                 }
 	      Stack << Op1;
 	      Op1 = NULL;
@@ -3424,7 +3422,7 @@ PIRSET INDEX::Search (const QUERY& Query)
                 {
                   if (Op1) delete Op1;
                   if (Op2) delete Op2;
-                  logf (LOG_DEBUG, "108   Malformed Boolean query  (NIL Term)");
+                  message_log (LOG_DEBUG, "108   Malformed Boolean query  (NIL Term)");
                   Parent->SetErrorCode(108);
                   return ERROR_SET;	// Error
 
@@ -3562,7 +3560,7 @@ PIRSET INDEX::Search (const QUERY& Query)
                       break;
 
                     default:
-                      logf (LOG_ERROR, "RPN Stack contains bogus ops.");
+                      message_log (LOG_ERROR, "RPN Stack contains bogus ops.");
                       // Bad case
                       if (Op1) delete Op1;
                       if (Op2) delete Op2;
@@ -3574,7 +3572,7 @@ PIRSET INDEX::Search (const QUERY& Query)
             }
 	  if ((clock() - startClock) > MaxQueryCPU_ticks)
 	    {
-	      logf (LOG_INFO, "Search time limit (%u ms) exceeded: Unpredictable partial results available",
+	      message_log (LOG_INFO, "Search time limit (%u ms) exceeded: Unpredictable partial results available",
                         (int)((MaxQueryCPU_ticks*1000.0)/CLOCKS_PER_SEC) );
 	      // "Resources exhausted - unpredictable partial results available";
 	      Parent->SetErrorCode(32);
@@ -3696,9 +3694,9 @@ PIRSET INDEX::Search (const QUERY& Query)
                       Structure=ZStructDateRange;
                     }
 		  if (FieldType.Defined())
-		    logf (LOG_DEBUG, "Unspecified field '%s' is '%s' (Rel=%d)", FieldName.c_str(), FieldType.c_str(), Relation);
+		    message_log (LOG_DEBUG, "Unspecified field '%s' is '%s' (Rel=%d)", FieldName.c_str(), FieldType.c_str(), Relation);
 		  else
-		    logf (LOG_DEBUG, "Field '%s' has unknown type. Assuming any.", FieldName.c_str());
+		    message_log (LOG_DEBUG, "Field '%s' has unknown type. Assuming any.", FieldName.c_str());
 //cerr << "Fieldtype=" << FieldType.c_str() << endl;
                 }
 
@@ -3762,7 +3760,7 @@ PIRSET INDEX::Search (const QUERY& Query)
 		  if (Term.GetLength() < 3)
 		    {
 		      // "9     Truncated words too short  (unspecified)"
-		      logf (LOG_DEBUG, "9 Term \"%s\": Left/Right truncated words too short.", Term.c_str());
+		      message_log (LOG_DEBUG, "9 Term \"%s\": Left/Right truncated words too short.", Term.c_str());
 		      Parent->SetErrorCode(9);
 		      NewIrset = new IRSET (Parent);
 		    }
@@ -3777,7 +3775,7 @@ PIRSET INDEX::Search (const QUERY& Query)
                 {
 		  if (Term.GetLength() < 3)
 		    {
-		      logf (LOG_DEBUG, "9 Term \"%s\": Left truncated words too short.", Term.c_str());
+		      message_log (LOG_DEBUG, "9 Term \"%s\": Left truncated words too short.", Term.c_str());
 		      Parent->SetErrorCode(9);
 		      NewIrset = new IRSET (Parent);
 		    }
@@ -3794,7 +3792,7 @@ PIRSET INDEX::Search (const QUERY& Query)
                   if (Term.GetLength() < 2)
                     {
                       // "9     Truncated words too short  (unspecified)"
-                      logf (LOG_DEBUG, "9 Term \"%s\": Right truncated words too short.", Term.c_str());
+                      message_log (LOG_DEBUG, "9 Term \"%s\": Right truncated words too short.", Term.c_str());
                       Parent->SetErrorCode(9);
                       NewIrset = new IRSET (Parent);
                     }
@@ -3816,7 +3814,7 @@ PIRSET INDEX::Search (const QUERY& Query)
                 {
                   if (gotRelation==GDT_FALSE) Relation=ZRelEQ;
 		  const NUMERICOBJ val = _IB_private_hash(FieldName, Term, Term.Len());
-		  logf (LOG_DEBUG, "Numeric search \"%s\"->%F", Term.c_str(), (double)val);
+		  message_log (LOG_DEBUG, "Numeric search \"%s\"->%F", Term.c_str(), (double)val);
                   NewIrset=NumericSearch( val, FieldName, Relation);
                 }
 	      else if (aFieldType.IsPhonetic())
@@ -3936,12 +3934,12 @@ error:
 #if 1
   if (!Stack.IsEmpty())
     {
-      logf (LOG_INFO, "Query stack was not empty. Malformed query.");
+      message_log (LOG_INFO, "Query stack was not empty. Malformed query.");
       Parent->SetErrorCode(108); // "Malformed query";
     }
   if (!TempStack.IsEmpty())
     {
-      logf (LOG_INFO, "Search stack was not empty. Malformed RPN.");
+      message_log (LOG_INFO, "Search stack was not empty. Malformed RPN.");
       Parent->SetErrorCode(108); // "Malformed query";
     }
 #endif
@@ -3956,7 +3954,7 @@ error:
 
   if (terms == 0)
     {
-      logf (LOG_DEBUG, "4     Terms only exclusion (stop) words   (unspecified)");
+      message_log (LOG_DEBUG, "4     Terms only exclusion (stop) words   (unspecified)");
       Parent->SetErrorCode(4);
     }
 #if 1 /* EXPERIMENTAL 2006 */
@@ -4005,7 +4003,7 @@ INT INDEX::GetIndirectBuffer (const GPTYPE gp, PUCHR Dest, INT Off, INT Length) 
 
 #ifndef _WIN32
     if (DebugMode)
-      logf (LOG_DEBUG, "Get Indirect buffer for %llx (off=%d)", (long long)gp, (int)Off);
+      message_log (LOG_DEBUG, "Get Indirect buffer for %llx (off=%d)", (long long)gp, (int)Off);
 #endif
 
     if (Parent && Parent->GetMainMdt ()->GetMdtRecord (gp, &Mdtrec))
@@ -4042,7 +4040,7 @@ INT INDEX::GetIndirectBuffer (const GPTYPE gp, PUCHR Dest, INT Off, INT Length) 
             if (DoctypePtr)
               {
                 if (DebugMode)
-                  logf (LOG_DEBUG, "Getting indirect term via %s::GetTerm(%s,%lu,%d)",
+                  message_log (LOG_DEBUG, "Getting indirect term via %s::GetTerm(%s,%lu,%d)",
                         DoctypePtr->Name().c_str(), filename.c_str(), (unsigned long)Offset, (int)Length );
                 x = DoctypePtr->GetTerm(filename, (char *)Buffer, Offset, Length);
               }
@@ -4057,13 +4055,13 @@ INT INDEX::GetIndirectBuffer (const GPTYPE gp, PUCHR Dest, INT Off, INT Length) 
               }
           }
         if (DebugMode)
-          logf(LOG_DEBUG, "*::GetTerm() returned %d of max. %d characters", x, Length);
+          message_log(LOG_DEBUG, "*::GetTerm() returned %d of max. %d characters", x, Length);
         Buffer[x] = '\000';
         return (INT)x;
       }
     // Deleted record or Error!
     if (DebugMode)
-      logf (errno == EIDRM ? LOG_ERROR : LOG_DEBUG, "%s indirect buffer for GP=%lx, Off=%d, Length=%d%s",
+      message_log (errno == EIDRM ? LOG_ERROR : LOG_DEBUG, "%s indirect buffer for GP=%lx, Off=%d, Length=%d%s",
             errno == 0 ? "Empty" : "Could not get",
             gp, Off, Length, errno == ENOENT ? ": Deleted record." : "!");
     Buffer[0] = '\000';
@@ -4080,7 +4078,7 @@ INT INDEX::GetIndirectTerm(const GPTYPE Gp, PUCHR Buffer, INT MaxLength) const
           }
         catch (...)
           {
-            logf (LOG_PANIC, "Memory Exhausted");
+            message_log (LOG_PANIC, "Memory Exhausted");
             return 0; // No memory
           }
       }
@@ -4207,7 +4205,7 @@ PIRSET INDEX::MetaphoneSearch (const STRING& QueryTerm, const STRING& FieldName,
         {
           Charset.SetSet((BYTE)Map[1]);
           if (!Charset.Ok())
-            logf (LOG_ERROR, "Can't set Charset %d!", (int)((BYTE)Map[1]));
+            message_log (LOG_ERROR, "Can't set Charset %d!", (int)((BYTE)Map[1]));
         }
 
       // Find any match..
@@ -4445,7 +4443,7 @@ PIRSET INDEX::SoundexSearch (const STRING& QueryTerm, const STRING& FieldName, G
         {
           Charset.SetSet((BYTE)Map[1]);
           if (!Charset.Ok())
-            logf (LOG_ERROR, "Can't set Charset %d!", (int)((BYTE)Map[1]));
+            message_log (LOG_ERROR, "Can't set Charset %d!", (int)((BYTE)Map[1]));
         }
 
       // Find any match..
@@ -4794,7 +4792,7 @@ PIRSET INDEX::LeftTruncatedSearch(const STRING& QueryTerm, const STRING& FieldNa
 
 void INDEX::CPU_ResourcesExhausted()
 {
-  logf (LOG_INFO, "Term search limit (%u ms) exceeded: Valid subset of results available",
+  message_log (LOG_INFO, "Term search limit (%u ms) exceeded: Valid subset of results available",
                        (int)((MaxCPU_ticks*1000.0)/CLOCKS_PER_SEC) );
   // Resources exhausted - valid subset of results available
   Parent->SetErrorCode(33); // 
@@ -4814,7 +4812,7 @@ PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& fieldName, GDT_B
   STRING FieldName( fieldName);
 
   if (DebugMode)
-    logf (LOG_DEBUG, "GlobSearch(%s, %s, %d)", QueryTerm.c_str(), fieldName.c_str(), (int)useCase);
+    message_log (LOG_DEBUG, "GlobSearch(%s, %s, %d)", QueryTerm.c_str(), fieldName.c_str(), (int)useCase);
 #if 1
   // Handle wildcards in field names
   if (FieldName.GetLength())
@@ -5386,7 +5384,7 @@ int INDEX::findIt(MMAP *MemoryMap, const UCHR *Term, size_t TermLength, GDT_BOOL
 
       if (DebugMode)
         {
-          logf (LOG_DEBUG, "Looking for Term = '%s' (length=%d, Truncate=%s)",
+          message_log (LOG_DEBUG, "Looking for Term = '%s' (length=%d, Truncate=%s)",
                 (const char *)Term, TermLength, Truncate ? "True" : "False" );
         }
 
@@ -5406,7 +5404,7 @@ int INDEX::findIt(MMAP *MemoryMap, const UCHR *Term, size_t TermLength, GDT_BOOL
         {
           Charset.SetSet((BYTE)Map[1]);
           if (!Charset.Ok())
-            logf (LOG_ERROR, "Can't set Charset %d!", (int)((BYTE)Map[1]));
+            message_log (LOG_ERROR, "Can't set Charset %d!", (int)((BYTE)Map[1]));
         }
 
       // Copy lower case into a BCPL-style string...
@@ -5419,7 +5417,7 @@ int INDEX::findIt(MMAP *MemoryMap, const UCHR *Term, size_t TermLength, GDT_BOOL
       unsigned char  *n = (unsigned char *)alloca(compLength + sizeof(GPTYPE)); // was +3
       if (n == NULL)
         {
-          logf (LOG_PANIC|LOG_ERRNO, "findIt(): Stack allocation failed");
+          message_log (LOG_PANIC|LOG_ERRNO, "findIt(): Stack allocation failed");
           Parent->SetErrorCode(2);
           return 0;
         }
@@ -5453,7 +5451,7 @@ int INDEX::findIt(MMAP *MemoryMap, const UCHR *Term, size_t TermLength, GDT_BOOL
       if (t)
         {
 
-          if (DebugMode) logf (LOG_DEBUG, "Found any match t='%s'(%u) [overflow=%d, *n=%d]",
+          if (DebugMode) message_log (LOG_DEBUG, "Found any match t='%s'(%u) [overflow=%d, *n=%d]",
 		t+1, (int)((unsigned char)(*t)), *overflow, (int)(n[0]));
 
           // We now have ANY Match...
@@ -5480,7 +5478,7 @@ int INDEX::findIt(MMAP *MemoryMap, const UCHR *Term, size_t TermLength, GDT_BOOL
 		  High = tp;
 		}
 	      if (DebugMode)
-		logf (LOG_DEBUG, "Low:='%s' %s High:='%s'", Low+1, High==Low ? "=" : "<>", High+1);
+		message_log (LOG_DEBUG, "Low:='%s' %s High:='%s'", Low+1, High==Low ? "=" : "<>", High+1);
             }
 
           const GPTYPE    to = GP((unsigned char *)High, compLength+1);
@@ -5493,7 +5491,7 @@ int INDEX::findIt(MMAP *MemoryMap, const UCHR *Term, size_t TermLength, GDT_BOOL
         }
     }
   if (DebugMode)
-    logf (LOG_DEBUG, "Term = '%s' found %d hits",
+    message_log (LOG_DEBUG, "Term = '%s' found %d hits",
           (const char *)Term, num_hits );
   return num_hits;
 }
@@ -5515,17 +5513,17 @@ INT INDEX::find(const STRING& SisFn, const INT Slot, const STRING& Word, GDT_BOO
   if (MemorySISCache == NULL)
     {
       IndexNum = GetIndexNum();
-      if (DebugMode) logf (LOG_DEBUG, "%d sub-indicies (%d slots)", IndexNum, IndexNum+5);
+      if (DebugMode) message_log (LOG_DEBUG, "%d sub-indicies (%d slots)", IndexNum, IndexNum+5);
       MemorySISCache = new MMAP_TABLE (IndexNum+5); // Add 5 for extra .sis.# files
       if (MemorySISCache == NULL)
         {
-          logf (LOG_PANIC, "Could not allocate Memory Map Cache with %ld slots.", IndexNum+5);
+          message_log (LOG_PANIC, "Could not allocate Memory Map Cache with %ld slots.", IndexNum+5);
           return -1; // Bad Error!
         }
     }
   if (MemorySISCache->CreateMap(Slot, SisFn))
     return findIt (MemorySISCache->Map(Slot), Term, TermLength, Truncate, start, overflow);
-  logf (LOG_ERRNO, "Could not create MAP in Slot %d for '%s'!", Slot, SisFn.c_str());
+  message_log (LOG_ERRNO, "Could not create MAP in Slot %d for '%s'!", Slot, SisFn.c_str());
   Parent->SetErrorCode(2);
   return -1; // Err
 }
@@ -5624,7 +5622,7 @@ class HITLIST {
           return GDT_FALSE;
       if (GpTable == NULL || LenTable == NULL)
         {
-          logf (LOG_PANIC, "Hitlist got zapped to NIL!!!?");
+          message_log (LOG_PANIC, "Hitlist got zapped to NIL!!!?");
           return GDT_FALSE;
         }
       GpTable[TotalElements] = gp;
@@ -5645,7 +5643,7 @@ class HITLIST {
       else
         {
           newMax = maxHits + 1;
-          logf (LOG_PANIC, "Result record capacity exceeded %d>%ld!", maxHits, INT_MAX);
+          message_log (LOG_PANIC, "Result record capacity exceeded %d>%ld!", maxHits, INT_MAX);
         }
       if (newMax <= maxHits)
         return GDT_TRUE; // Already got enough!
@@ -5653,14 +5651,14 @@ class HITLIST {
       GPTYPE    *newGpTable = new GPTYPE[newMax];
       if (newGpTable == NULL)
         {
-          logf (LOG_PANIC|LOG_ERRNO, "Could not get %ld bytes for hit lists.", newMax*sizeof(GPTYPE));
+          message_log (LOG_PANIC|LOG_ERRNO, "Could not get %ld bytes for hit lists.", newMax*sizeof(GPTYPE));
           return GDT_FALSE;
         }
       short     *newLenTable = new short[newMax];
       if (newLenTable == NULL)
         {
           delete[] newGpTable; // Don't need it since we failed!
-          logf (LOG_PANIC|LOG_ERRNO, "Could not get %ld bytes for hit lists.", newMax*sizeof(GPTYPE));
+          message_log (LOG_PANIC|LOG_ERRNO, "Could not get %ld bytes for hit lists.", newMax*sizeof(GPTYPE));
           return GDT_FALSE;
         }
       if (GpTable)
@@ -5702,7 +5700,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
   STRING          FieldName(fieldName);
 
  if (DebugMode)
-    logf (LOG_DEBUG, "TermSearch(%s, %s, %d)", QueryTerm.c_str(), fieldName.c_str(), (int)Typ);
+    message_log (LOG_DEBUG, "TermSearch(%s, %s, %d)", QueryTerm.c_str(), fieldName.c_str(), (int)Typ);
 
 #if 1
   // Handle wildcards in field names
@@ -5751,7 +5749,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
 #else
       while ( _ib_isspace ( *FullTerm ) ) FullTerm++;
 #endif
-      if (DebugMode) logf (LOG_DEBUG, "TermSearch (\"%s\", \"%s\", %s(%d)) --> %s",
+      if (DebugMode) message_log (LOG_DEBUG, "TermSearch (\"%s\", \"%s\", %s(%d)) --> %s",
                              QueryTerm.c_str(), FieldName.c_str(), MatchType(Typ), (int)Typ, (const char *)FullTerm);
     }
 
@@ -5923,7 +5921,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
     {
       if (x == 0 || !Special)
         {
-          if (DebugMode) logf (LOG_DEBUG, "Empty term or exluded term, ErrorCode 4");
+          if (DebugMode) message_log (LOG_DEBUG, "Empty term or exluded term, ErrorCode 4");
           Parent->SetErrorCode(4);
           return new IRSET ( Parent );
         }
@@ -5997,14 +5995,14 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
         GDT_BOOLEAN     overflow;
 
 #if 1
-        if (DebugMode) logf (LOG_DEBUG, "Find '%s' in %s", Word.c_str(), SisFn.c_str());
+        if (DebugMode) message_log (LOG_DEBUG, "Find '%s' in %s", Word.c_str(), SisFn.c_str());
         // New SIS code
         ip = find( SisFn, jj, Word, (Typ == LeftAlwaysMatches || Typ == LeftMatch)
                    && (FullTerm_length == Term_length) /* Added  Fri Jul 23 00:31:08 MET DST 1999 */
                    , &first, &overflow );
         if ( ip == 0 )
           {
-	    if (DebugMode) logf (LOG_DEBUG, "[%d] %s not found.", jj, Word.c_str()) ;
+	    if (DebugMode) message_log (LOG_DEBUG, "[%d] %s not found.", jj, Word.c_str()) ;
             continue;		// Found nothing
           }
 
@@ -6083,7 +6081,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
                   {
                     if (!heuristic)
                       {
-                        logf (LOG_INFO, "Phrase \"%s\" uses all common words (%ld > %ld : %ld) [%d]!",
+                        message_log (LOG_INFO, "Phrase \"%s\" uses all common words (%ld > %ld : %ld) [%d]!",
                               FullTerm, (long)ip,  (long)PhraseWaterlimit, (long)CommonWordsThreshold, jj);
                       }
                     else
@@ -6096,13 +6094,13 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
                           {
                             STRING S;
                             query.GetRpnTerm (&S);
-                            logf (LOG_INFO, "Phrase \"%s\" uses all common words (%ld > %ld : %ld) [%d]. \
+                            message_log (LOG_INFO, "Phrase \"%s\" uses all common words (%ld > %ld : %ld) [%d]. \
                                   Using alternative search heuristic: %s",
                                   FullTerm, (long)ip,  (long)PhraseWaterlimit, (long)CommonWordsThreshold, jj, S.c_str());
                             return Search(query);
                           }
                         else
-                          logf (LOG_WARN, "Could not convert \"%s\" to a proximity expression.", FullTerm);
+                          message_log (LOG_WARN, "Could not convert \"%s\" to a proximity expression.", FullTerm);
                       }
                   }
               }
@@ -6289,7 +6287,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
         //----------------------------------------------------------------------------
         if (first > last)
           {
-            logf (LOG_PANIC,
+            message_log (LOG_PANIC,
 #ifdef _WIN32
 		"INDEX::TermSearch Last(%I64d)>first(%I64d)!" 
 #else
@@ -6307,7 +6305,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
         if ((ClippingThreshold > 0) && (x > ClippingThreshold*C_FACTOR))
           {
             if (DebugMode)
-              logf (LOG_INFO, "Clipping from %d looks ('%s' frequency) down to %d (%d threshold/%d factor)",
+              message_log (LOG_INFO, "Clipping from %d looks ('%s' frequency) down to %d (%d threshold/%d factor)",
                     x, Word.c_str(), ClippingThreshold*C_FACTOR, ClippingThreshold, C_FACTOR);
             x = ClippingThreshold*C_FACTOR;
           }
@@ -6320,9 +6318,9 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
         catch (...)
           {
 #ifdef _WIN32
-	    logf (LOG_ERRNO, "INDEX::TermSearch/%d allocation %lu failed.", jj, (unsigned long)x);
+	    message_log (LOG_ERRNO, "INDEX::TermSearch/%d allocation %lu failed.", jj, (unsigned long)x);
 #else
-            logf (LOG_ERRNO, "INDEX::TermSearch/%d allocation %lld failed.", jj, (long long)x);
+            message_log (LOG_ERRNO, "INDEX::TermSearch/%d allocation %lld failed.", jj, (long long)x);
 #endif
             ffclose(fpi);
             if (x < (2L<<24) )
@@ -6340,7 +6338,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
         if ( x == 0 )
           {
             delete[] gplist;
-            logf ( LOG_ERROR, "Could not read elements %ld-%ld in .inx %d", first, last, jj );
+            message_log ( LOG_ERROR, "Could not read elements %ld-%ld in .inx %d", first, last, jj );
             Parent->SetErrorCode ( 2 );
             continue;
           }
@@ -6723,7 +6721,7 @@ cerr << "ERR: x=" << x << " " << mdtrec.GetFileName() << "(" << pos << "): \"" <
       ffclose (fpi);
     }
   if (notFound)
-    logf (LOG_INFO, "INDEX: %lu addresses not found (deleted).",  notFound);
+    message_log (LOG_INFO, "INDEX: %lu addresses not found (deleted).",  notFound);
   return errors;
 }
 
@@ -6740,7 +6738,7 @@ INDEX::~INDEX ()
       if (Parent)
         {
           // Parent->ProfileWriteString("CommonWords", "Threshold",  CommonWordsThreshold);
-          logf (LOG_DEBUG, "Writing Common Words file");
+          message_log (LOG_DEBUG, "Writing Common Words file");
           FILE *fp = fopen(Parent->ComposeDbFn(CommonWordsFileExtension), "w");
           if (fp)
             {
@@ -6774,7 +6772,7 @@ INDEX::~INDEX ()
       if (Parent->UsePersistantCache())
         DumpPersistantCache();
       delete SetCache;
-      if (DebugMode) logf (LOG_DEBUG, "Disposed of in-memory Set Cache");
+      if (DebugMode) message_log (LOG_DEBUG, "Disposed of in-memory Set Cache");
       SetCache = NULL;
     }
   if (FieldCache) delete FieldCache;
@@ -6782,16 +6780,16 @@ INDEX::~INDEX ()
   if (MemorySISCache)
     {
       delete MemorySISCache;
-      if (DebugMode) logf (LOG_DEBUG, "Disposed of Memory SIS Cache");
+      if (DebugMode) message_log (LOG_DEBUG, "Disposed of Memory SIS Cache");
       MemorySISCache = NULL;
     }
   if (MemoryIndexCache)
     {
       delete MemoryIndexCache;
-      if (DebugMode) logf (LOG_DEBUG, "Disposed of Memory Index Cache");
+      if (DebugMode) message_log (LOG_DEBUG, "Disposed of Memory Index Cache");
       MemoryIndexCache = NULL;
     }
-  logf (LOG_DEBUG, "Disposed of INDEX instance of '%s'", IndexFileName.c_str());
+  message_log (LOG_DEBUG, "Disposed of INDEX instance of '%s'", IndexFileName.c_str());
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -6802,7 +6800,7 @@ GDT_BOOLEAN INDEX::KillAll ()
   STRING s;
   const INT y = GetIndexNum();
 
-  logf (LOG_DEBUG, "INDEX::KillAll GetIndexNum() = %d", y);
+  message_log (LOG_DEBUG, "INDEX::KillAll GetIndexNum() = %d", y);
 
   IndexingTotalBytesCount=0;
   IndexingTotalWordsCount=0;
@@ -6824,7 +6822,7 @@ GDT_BOOLEAN INDEX::KillAll ()
 
   SetIndexNum(0); // Zap index count
   if (0 == UnlinkFile(IndexFileName))
-    if (DebugMode) logf(LOG_DEBUG, "Removed %s", IndexFileName.c_str());
+    if (DebugMode) message_log(LOG_DEBUG, "Removed %s", IndexFileName.c_str());
   s = IndexFileName + _lock;
   if (Exists(s))
     {
@@ -6837,18 +6835,18 @@ GDT_BOOLEAN INDEX::KillAll ()
         }
       if (FileExists(s) && -1 == UnlinkFile(s))
 	{
-          logf(LOG_ERRNO, "Could not remove %s", s.c_str());
+          message_log(LOG_ERRNO, "Could not remove %s", s.c_str());
 	}
     }
   for (INT i=1; i <= y; i++)
     {
       // Zap .inx.*
       s.form("%s.%d", IndexFileName.c_str(), i);
-      if (DebugMode) logf(LOG_DEBUG, "Removing %s", s.c_str());
+      if (DebugMode) message_log(LOG_DEBUG, "Removing %s", s.c_str());
       if (FileExists(s) && -1 == UnlinkFile(s))
 	{
 	  if (EraseFileContents(s) == -1)
-	    logf (LOG_ERROR|LOG_ERRNO, "Could not remove/erase contents of '%s'", s.c_str()); 
+	    message_log (LOG_ERROR|LOG_ERRNO, "Could not remove/erase contents of '%s'", s.c_str()); 
 	}
       if (pid)
         {
@@ -6856,25 +6854,25 @@ GDT_BOOLEAN INDEX::KillAll ()
           if (Exists(s))
             {
               if (FileExists(s) && -1 == UnlinkFile(s))
-                logf(LOG_ERRNO, "Could not remove %s", s.c_str());
+                message_log(LOG_ERRNO, "Could not remove %s", s.c_str());
             }
         }
       // Zap .sis.*
       s.form("%s.%d", SisFileName.c_str(), i);
-      if (DebugMode) logf(LOG_DEBUG, "Removing %s", s.c_str());
+      if (DebugMode) message_log(LOG_DEBUG, "Removing %s", s.c_str());
       if (FileExists(s) && -1 == UnlinkFile(s))
 	{
 	  if (EraseFileContents(s) == -1)
-	    logf (LOG_ERROR|LOG_ERRNO, "Could not remove/erase contents of '%s'", s.c_str());
+	    message_log (LOG_ERROR|LOG_ERRNO, "Could not remove/erase contents of '%s'", s.c_str());
 	}
       if (pid)
         {
           s.form("%s.%d.%d", SisFileName.c_str(), i, pid);
           if (Exists(s))
             {
-              if (DebugMode) logf(LOG_DEBUG, "Removing %s", s.c_str());
+              if (DebugMode) message_log(LOG_DEBUG, "Removing %s", s.c_str());
               if (FileExists(s) && -1 == UnlinkFile(s))
-                logf(LOG_ERRNO, "Could not remove %s", s.c_str());
+                message_log(LOG_ERRNO, "Could not remove %s", s.c_str());
             }
         }
     }
@@ -6895,7 +6893,7 @@ size_t INDEX::SisCheck()
     count = 0;
     if ((inp = fopen(argv[1], "rb")) == NULL)
       {
-        logf (LOG_ERRNO, "Can't open '%s'", (const char *)filename);
+        message_log (LOG_ERRNO, "Can't open '%s'", (const char *)filename);
         continue;
       }
     last[0] = 0;
@@ -6903,7 +6901,7 @@ size_t INDEX::SisCheck()
     int charset = (unsigned char)fgetc(inp);
 
     CHARSET Set(charset);
-    logf (LOG_INFO, "Character set id=%d (%s)\n", charset, (const char *)Set);
+    message_log (LOG_INFO, "Character set id=%d (%s)\n", charset, (const char *)Set);
     int (* SisCompare)(const void *, const void *) = Set.SisCompare();
 
     while ((len = fgetc(inp)) != EOF)
@@ -6920,7 +6918,7 @@ size_t INDEX::SisCheck()
         fread(&pos, sizeof(GPTYPE), 1, inp); /* Position in .inx */
       }
     fclose(inp);
-    logf (LOG_INFO, "%d Terms processed", count);
+    message_log (LOG_INFO, "%d Terms processed", count);
   }
   return errors;
 }
@@ -6933,7 +6931,7 @@ INT INDEX::Cleanup ()
   if (MergeIndexFiles() == GDT_FALSE)
     return 0; // Failed
 
-  logf (LOG_DEBUG, "INDEX::Cleanup() [Right now does nothing]");
+  message_log (LOG_DEBUG, "INDEX::Cleanup() [Right now does nothing]");
 
 #if 0  /* THIS NO LONGER WORKS */
   // Compute offset GP changes for each MDTREC
@@ -6977,14 +6975,14 @@ INT INDEX::Cleanup ()
       if (FileNum == 0)
         {
           Fn = Parent->ComposeDbFn (DbExtIndex);
-          logf (LOG_INFO, "Cleaning up index: '%s'.", Fn.c_str());
+          message_log (LOG_INFO, "Cleaning up index: '%s'.", Fn.c_str());
         }
       else
         {
           Parent->GetMainDfdt()->GetEntry (FileNum, &Dfd);
           Dfd.GetFieldName (&S);
           Parent->DfdtGetFileName (S, &Fn);
-          logf (LOG_INFO, "Cleaning up '%s' field data: '%s'.",
+          message_log (LOG_INFO, "Cleaning up '%s' field data: '%s'.",
                 (const char *)S, (const char *)Fn);
         }
       Fpo = fopen(Fn, "rb"); // Old Index
@@ -7205,7 +7203,7 @@ loop:   SWAPINIT(a);
 
 size_t INDEX::ScanSearch(SCANLIST *ListPtr, const QUERY& Query, const STRING& Fieldname, size_t MaxRecordsThreshold, GDT_BOOLEAN Cat)
 {
-  logf (LOG_DEBUG, "ScanSearch in Field '%s'", Fieldname.c_str());
+  message_log (LOG_DEBUG, "ScanSearch in Field '%s'", Fieldname.c_str());
   if (ListPtr)
     {
       SCANLIST Scanlist = ScanSearch(Query, Fieldname, MaxRecordsThreshold);
@@ -7236,11 +7234,11 @@ SCANLIST INDEX::ScanSearch(const QUERY& SearchQuery, const STRING& Fieldname, /*
                            size_t MaxRecordsThreshold)
 {
   SCANLIST Scanlist;
-  logf (LOG_DEBUG, "ScanSearch in Field '%s'", Fieldname.c_str());
+  message_log (LOG_DEBUG, "ScanSearch in Field '%s'", Fieldname.c_str());
 
   if (Parent == NULL)
     {
-      logf (LOG_ERROR, "Orphaned INDEX::ScanSearch ?");
+      message_log (LOG_ERROR, "Orphaned INDEX::ScanSearch ?");
       return Scanlist; // Sorry need parents
     }
   const size_t      d_pos = Fieldname.SearchReverse( __AncestorDescendantSeperator );
@@ -7249,7 +7247,7 @@ SCANLIST INDEX::ScanSearch(const QUERY& SearchQuery, const STRING& Fieldname, /*
 
   if (Fieldname.IsEmpty() || !Parent->ValidNodeName(Fieldname))
     {
-      logf (LOG_DEBUG, "25      Specified element set name not valid for specified database");
+      message_log (LOG_DEBUG, "25      Specified element set name not valid for specified database");
       Parent->SetErrorCode(25);
       return Scanlist;
     }
@@ -7274,13 +7272,13 @@ SCANLIST INDEX::ScanSearch(const QUERY& SearchQuery, const STRING& Fieldname, /*
           delete iptr;
           if (total)
             {
-              logf (LOG_DEBUG, "12     Too many records retrieved");
+              message_log (LOG_DEBUG, "12     Too many records retrieved");
               Parent->SetErrorCode(12);
             }
         }
       else
         {
-          logf (LOG_DEBUG, "ScanSearch (in %s) got %lu records for query", Fieldname.c_str(), (unsigned long)total);
+          message_log (LOG_DEBUG, "ScanSearch (in %s) got %lu records for query", Fieldname.c_str(), (unsigned long)total);
           // Loads of looping and other fun bits....
           PRSET prset = iptr->GetRset();
 
@@ -7485,7 +7483,7 @@ PIRSET INDEX::KeySearch(const STRING& KeySpec)
         }
     }
 
-  logf (LOG_DEBUG, "KeySearch(\"%s\") returns set with %lu elements", KeySpec.c_str(), count);
+  message_log (LOG_DEBUG, "KeySearch(\"%s\") returns set with %lu elements", KeySpec.c_str(), count);
 
   return pirset;
 }
@@ -7615,7 +7613,7 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
   if (!IndexPtr->Ok())
     {
       Parent->SetErrorCode(2); // Temp System error
-      logf (LOG_ERROR, "To be imported index '%s' is not OK!",
+      message_log (LOG_ERROR, "To be imported index '%s' is not OK!",
 		IndexPtr->Parent->GetDbFileStem ().c_str());
       return 0;
     }
@@ -7623,13 +7621,13 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
     {
       Parent->SetErrorCode(29); // Locked db
       if (IndexPtr->ActiveIndexing == ActiveIndexing)
-	logf (LOG_ERROR, "Can't import: Alreadying Indexing/Importing to target ('%s' importing '%s').",
+	message_log (LOG_ERROR, "Can't import: Alreadying Indexing/Importing to target ('%s' importing '%s').",
 		Parent->GetDbFileStem ().c_str(),  IndexPtr->Parent->GetDbFileStem ().c_str() );
       else if (ActiveIndexing)
-	logf (LOG_ERROR, "Can't import and index to same target '%s' at the same time.",
+	message_log (LOG_ERROR, "Can't import and index to same target '%s' at the same time.",
 		Parent->GetDbFileStem ().c_str());
       else
-	logf (LOG_ERROR, "Can't import from an index '%s' that's being updated.",
+	message_log (LOG_ERROR, "Can't import from an index '%s' that's being updated.",
 		IndexPtr->Parent->GetDbFileStem ().c_str());
       return 0;
     }
@@ -7667,24 +7665,24 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
 
   MDTREC       Mdtrec;
 
-  logf (LOG_INFO, "Import db '%s' into %s [%lu records].", import_db.c_str(), Parent->GetDbFileStem().c_str(),
+  message_log (LOG_INFO, "Import db '%s' into %s [%lu records].", import_db.c_str(), Parent->GetDbFileStem().c_str(),
 	oTotal);
 
   // First add the other MDTRECs
-  logf (LOG_DEBUG, "Importing records (offset=%lu)..", offset);
+  message_log (LOG_DEBUG, "Importing records (offset=%lu)..", offset);
   for (size_t i=1; i<=oTotal; i++)
     {
       if (oMdtPtr->GetEntry (i, &Mdtrec) == GDT_TRUE)
 	{
 	  STRING fn =  Mdtrec.GetFullFileName();
-	  logf (LOG_DEBUG, "Adding '%s' [%s]..", fn.c_str(), Mdtrec.GetKey().c_str());
+	  message_log (LOG_DEBUG, "Adding '%s' [%s]..", fn.c_str(), Mdtrec.GetKey().c_str());
 
 	  Mdtrec.SetHashTable (MdtPtr->GetMDTHashTable());
           Mdtrec.SetFullFileName(fn);
 	  
 	  if (MdtPtr->AddEntry(Mdtrec+=offset) == 0)
 	    {
-	      logf (LOG_FATAL, "ImportIndex: Could not import '%s' MDTREC#%d", import_db.c_str(), i);
+	      message_log (LOG_FATAL, "ImportIndex: Could not import '%s' MDTREC#%d", import_db.c_str(), i);
 	      errors++;
 	    }
 	  else
@@ -7692,13 +7690,13 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
 	}
        else
 	{
-	  logf (LOG_FATAL, "ImportIndex: Could not read '%s' MDTREC#%d", import_db.c_str(), i);
+	  message_log (LOG_FATAL, "ImportIndex: Could not read '%s' MDTREC#%d", import_db.c_str(), i);
 	  errors++;
 	}
    }
   // Now write the text field data
   DFDT *oDfdtptr = IndexPtr->Parent->GetDfdt ();
-  logf (LOG_DEBUG, "Importing Fields..");
+  message_log (LOG_DEBUG, "Importing Fields..");
   if (oDfdtptr)
     {
       DFDT         *Dfdtptr = Parent->GetDfdt();
@@ -7728,7 +7726,7 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
 	      Parent->DfdtGetFileName(fieldName, &out_fn);
 	      if (out_fn.IsEmpty())
 		{
-		  logf (LOG_PANIC, "ImportIndex: Can't find field '%s'", fieldName.c_str());
+		  message_log (LOG_PANIC, "ImportIndex: Can't find field '%s'", fieldName.c_str());
 		  continue;
 		}
 	      // Now copy;
@@ -7738,7 +7736,7 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
 		  size_t   elements = GetFileSize(in_fp)/sizeof(FC);
 		  size_t   wrote = 0;
 
-		  logf (LOG_DEBUG, "%s %ld field elements of '%s' into '%s'",
+		  message_log (LOG_DEBUG, "%s %ld field elements of '%s' into '%s'",
 			newField ? "Importing" : "Adding" , (long)elements, fieldName.c_str(), out_fn.c_str()); 
 		  if ((out_fp = fopen(out_fn, "ab")) != NULL)
 		    {
@@ -7747,14 +7745,14 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
 			  fc.Write(out_fp, offset);
 			  wrote++;
 			}
-		      if (wrote != elements) logf (LOG_ERROR, "Wrote %ld!=%ld elements", (long)wrote, (long)elements);
+		      if (wrote != elements) message_log (LOG_ERROR, "Wrote %ld!=%ld elements", (long)wrote, (long)elements);
 		      fclose(out_fp);
 		    }
-		  else logf (LOG_ERROR|LOG_ERRNO, "ImportIndex: Can't open '%s' for append", out_fn.c_str());
+		  else message_log (LOG_ERROR|LOG_ERRNO, "ImportIndex: Can't open '%s' for append", out_fn.c_str());
 		  fclose(in_fp);
 		}
 	      else
-		logf (LOG_ERROR|LOG_ERRNO, "ImportIndex: Can't open '%s' for reading", in_fn.c_str());
+		message_log (LOG_ERROR|LOG_ERRNO, "ImportIndex: Can't open '%s' for reading", in_fn.c_str());
 	      if (fieldType.IsText())
 		continue;
 
@@ -7794,9 +7792,9 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
 				}
 			      fclose(out_fp);
 			      objects += count;
-			      logf (LOG_DEBUG, "Imported %lu %s field(s) [%s].", (long)count, fieldType.c_str(), "NUMERICLIST");
+			      message_log (LOG_DEBUG, "Imported %lu %s field(s) [%s].", (long)count, fieldType.c_str(), "NUMERICLIST");
 			    }
-			  else logf (LOG_ERROR|LOG_ERRNO, "Could not append to field '%s':%s [%s].",
+			  else message_log (LOG_ERROR|LOG_ERRNO, "Could not append to field '%s':%s [%s].",
 				fieldName.c_str(), fieldType.c_str(), "NUMERICALIST");
 		       }
 		    }
@@ -7818,9 +7816,9 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
                                 List[i].Write(out_fp, offset);
                               fclose(out_fp);
 			      objects += count;
-			      logf (LOG_DEBUG, "Imported %lu %s field(s) [%s].", (long)count, fieldType.c_str(), "INTERVALLIST");
+			      message_log (LOG_DEBUG, "Imported %lu %s field(s) [%s].", (long)count, fieldType.c_str(), "INTERVALLIST");
                             }
-                          else logf (LOG_ERROR|LOG_ERRNO, "Could not append to field '%s':%s [%s].",
+                          else message_log (LOG_ERROR|LOG_ERRNO, "Could not append to field '%s':%s [%s].",
                                 fieldName.c_str(), fieldType.c_str(), "INTERVALLIST");
                        }
                     }
@@ -7842,9 +7840,9 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
 			    List[i].Write(out_fp, offset);
 			  fclose(out_fp);
 			  objects += count;
-			  logf (LOG_DEBUG, "Imported %lu %s field(s) [%s].", (long)count, fieldType.c_str(), "DATELIST");
+			  message_log (LOG_DEBUG, "Imported %lu %s field(s) [%s].", (long)count, fieldType.c_str(), "DATELIST");
 			}
-		     else logf (LOG_ERROR|LOG_ERRNO, "Could not append to field '%s':%s [%s].",
+		     else message_log (LOG_ERROR|LOG_ERRNO, "Could not append to field '%s':%s [%s].",
 			fieldName.c_str(), fieldType.c_str(), "DATELIST");
 		   }
 		  break;
@@ -7862,19 +7860,19 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
 		case FIELDTYPE::daterange:
 
 	        default: // TODO: Add type code
-	        logf (LOG_WARN, "**** Can't Import field data of type '%s' (%s) yet ****", fieldType.c_str(), fieldName.c_str());
+	        message_log (LOG_WARN, "**** Can't Import field data of type '%s' (%s) yet ****", fieldType.c_str(), fieldName.c_str());
 	     }
 	}
       if (objects)
 	{
 	  SortNumericFieldData();
-	  logf (LOG_INFO, "Updated %lu objects.", (long)objects);
+	  message_log (LOG_INFO, "Updated %lu objects.", (long)objects);
 	}
     } // if other has fields 
   } // if other has field DFDT ptr 
 
   // Now add the indexes and sis files 
-  logf (LOG_DEBUG, "Importing indexes...");
+  message_log (LOG_DEBUG, "Importing indexes...");
   for (int j = 0 ; j <= ocount; j++)
    {
       if (j)
@@ -7899,10 +7897,10 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
 	    }
 	  fclose(in_fp);
 	  // Copy the .sis file
-	  logf (LOG_DEBUG, "Install %s into %s", sis_in.c_str(), sis_out.c_str());
+	  message_log (LOG_DEBUG, "Install %s into %s", sis_in.c_str(), sis_out.c_str());
 	  if (FileLink(sis_in, sis_out) != 0)
 	    {
-	      logf (LOG_FATAL|LOG_ERRNO, "ImportIndex: Could not import '%s' SIS#%d", import_db.c_str(), j);
+	      message_log (LOG_FATAL|LOG_ERRNO, "ImportIndex: Could not import '%s' SIS#%d", import_db.c_str(), j);
 	      errors++;
 	    }
 	}
@@ -7914,7 +7912,7 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
       Parent->ffdispose(IndexFileName); // Make sure handle is not open
       if (RenameFile(IndexFileName, out) != 0)
 	{
-	  logf (LOG_FATAL|LOG_ERRNO, "ImportIndex: Could not move '%s' to '%s'",
+	  message_log (LOG_FATAL|LOG_ERRNO, "ImportIndex: Could not move '%s' to '%s'",
 		IndexFileName.c_str(), out.c_str());
 	  errors++;
 	}
@@ -7922,7 +7920,7 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
       Parent->ffdispose(SisFileName); // Make sure handle is not open
       if (RenameFile(SisFileName, out) != 0)
 	{
-	  logf (LOG_FATAL|LOG_ERRNO, "ImportIndex: Could not move '%s' to '%s'",
+	  message_log (LOG_FATAL|LOG_ERRNO, "ImportIndex: Could not move '%s' to '%s'",
                 SisFileName.c_str(), out.c_str());
 	  errors++;
 	}
@@ -7931,9 +7929,9 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
    count = 1;
   count += (ocount ? ocount : 1);
   SetIndexNum(count);
-  logf (LOG_DEBUG, "Set %d sub-indexes", count);
+  message_log (LOG_DEBUG, "Set %d sub-indexes", count);
   if (errors)
-    logf (LOG_FATAL, "ImportIndex: %d errors encounted.", errors);
+    message_log (LOG_FATAL, "ImportIndex: %d errors encounted.", errors);
   else if (count == 2 || MergeStatus==iMerge || MergeStatus==iOptimize)
     MergeIndexFiles();
 #endif

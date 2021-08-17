@@ -54,7 +54,7 @@ void YAHOOLIST::ParseRecords (const RECORD& FileRecord)
   PFILE Fp = ffopen (Fn, "rb");
   if (!Fp)
     {
-      logf (LOG_ERRNO, "Couldn't access '%s'", Fn.c_str());
+      message_log (LOG_ERRNO, "Couldn't access '%s'", Fn.c_str());
       return;			// File not accessed
     }
 
@@ -63,7 +63,7 @@ void YAHOOLIST::ParseRecords (const RECORD& FileRecord)
       if (-1 == fseek (Fp, Start, SEEK_SET))
 	{
 	  ffclose(Fp);
-	  logf (LOG_ERRNO, "%s: Bad record boundary", Doctype.c_str()); 
+	  message_log (LOG_ERRNO, "%s: Bad record boundary", Doctype.c_str()); 
 	  return; // Bad start
 	}
       SavePosition = Position = Start;
@@ -114,7 +114,7 @@ void YAHOOLIST::ParseRecords (const RECORD& FileRecord)
 
   if (processed == 0)
     {
-      logf (LOG_INFO, "%s fallthrough, passing to MAILDIGEST::", Doctype.c_str());
+      message_log (LOG_INFO, "%s fallthrough, passing to MAILDIGEST::", Doctype.c_str());
       MAILDIGEST::ParseRecords (FileRecord);
       return;
     }
@@ -130,7 +130,7 @@ void YAHOOLIST::ParseRecords (const RECORD& FileRecord)
       Record.SetBadRecord(); // Ignore this stuff!
       Db->DocTypeAddRecord(Record);
     }
-  logf (LOG_DEBUG, "%s: %d sub-messages", Doctype.c_str(), sub_messages);
+  message_log (LOG_DEBUG, "%s: %d sub-messages", Doctype.c_str(), sub_messages);
 }
 
 

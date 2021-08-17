@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /*@@@
 File:           nodetree.hxx
 Version:        1.30
@@ -128,9 +132,9 @@ public:
   NODETREE& operator= (const NODETREE& table) {
     if (table.p_ == NULL)
       {
-	logf (LOG_PANIC, "NODETREE pointer backstore nulled!?");
+	message_log (LOG_PANIC, "NODETREE pointer backstore nulled!?");
 	Clear();
-	logf (LOG_DEBUG, "Cleared");
+	message_log (LOG_DEBUG, "Cleared");
 	return *this;
       }
     ++table.p_->count_;

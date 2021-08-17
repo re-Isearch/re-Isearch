@@ -1,3 +1,5 @@
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 
 void do_directory( const STRING& dir,
   int (*do_file)(const STRING&),

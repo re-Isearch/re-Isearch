@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)registry.cxx  1.43 04/26/01 14:29:54 BSN"
 
 /************************************************************************
@@ -606,16 +610,16 @@ size_t REGISTRY::AddFromSgml(const STRLIST& Position, FILE *fp)
 #endif
 				)
 		    {
-		      logf (LOG_DEBUG, "Registry: include \"%s\"", fn.c_str());
+		      message_log (LOG_DEBUG, "Registry: include \"%s\"", fn.c_str());
 		      PREGISTRY Node = GetNode (path);
 		      if (Node)
 			return Node->ProfileAddFromFile (fn);
 		    }
                   else
-                    logf (LOG_WARN, "Registry: Included file '%s' not available.", include);
+                    message_log (LOG_WARN, "Registry: Included file '%s' not available.", include);
 		}
 	     else
-		logf (LOG_WARN, "Registry: Incorrect include format: %s", token);
+		message_log (LOG_WARN, "Registry: Incorrect include format: %s", token);
 	    }
 	  else
 	    path.AddEntry(token + 1);
@@ -1252,11 +1256,11 @@ size_t REGISTRY::ProfileAddFromFile (FILE *Fp, int depth)
 	    {
 	      size_t len = strlen(buf);
 	      if (len >= buffer.Size()-2)
-		logf (LOG_ERROR, "Line too long (%ld > %ld) in .ini file, truncated", len - offset, Maxline);
+		message_log (LOG_ERROR, "Line too long (%ld > %ld) in .ini file, truncated", len - offset, Maxline);
 	      else if ((len - offset) >= Maxline-1)
-		logf (LOG_WARN, "Line too long (%u > %u) in .ini file", (unsigned)(len - offset), (unsigned)Maxline);
+		message_log (LOG_WARN, "Line too long (%u > %u) in .ini file", (unsigned)(len - offset), (unsigned)Maxline);
 	      else if ((len-offset) > Stdline)
-		logf (LOG_INFO, "Long line (%u > %u) in .ini file", (unsigned)len, (unsigned)Stdline);
+		message_log (LOG_INFO, "Long line (%u > %u) in .ini file", (unsigned)len, (unsigned)Stdline);
 
 	      for (tcp = &buf[len-1]; isspace(*tcp) && tcp > buf; tcp--)
 		/* loop */;
@@ -1297,7 +1301,7 @@ size_t REGISTRY::ProfileAddFromFile (FILE *Fp, int depth)
 		  // We don't want to include too deep
 		  if (++depth > MAX_DEPTH)
 		    {
-		      logf(LOG_ERROR, ".ini includes too deep (%d)", depth);
+		      message_log(LOG_ERROR, ".ini includes too deep (%d)", depth);
 		      continue;
 		    }
 		  // Have an include
@@ -1320,7 +1324,7 @@ size_t REGISTRY::ProfileAddFromFile (FILE *Fp, int depth)
 		  if (FileExists(FileName))
 		    count += ProfileAddFromFile(FileName, depth);
 		  else
-		    logf (LOG_WARN, "Registry include file \"%s\" not found.", FileName.c_str());
+		    message_log (LOG_WARN, "Registry include file \"%s\" not found.", FileName.c_str());
 		}
 	      // else ignore line
 	    }

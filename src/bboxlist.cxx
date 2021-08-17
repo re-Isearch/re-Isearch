@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /*@@@
 File:		bboxlist.cxx
 Version:	1.00
@@ -78,7 +82,7 @@ void BBOXLIST::WriteTable()
   FILE  *fp;
   
   if (FileName.IsEmpty())
-    logf (LOG_ERROR, "BBOXLIST::WriteTable: FileName not set");
+    message_log (LOG_ERROR, "BBOXLIST::WriteTable: FileName not set");
   else if ((fp = fopen(FileName,"wb")) != NULL)
     {
       SortByGp();  // Make sure its sorted
@@ -86,7 +90,7 @@ void BBOXLIST::WriteTable()
       fclose(fp);
     }
   else
-    logf (LOG_ERRNO, "BBOXLIST: Could not write table to '%s'", FileName.c_str());
+    message_log (LOG_ERRNO, "BBOXLIST: Could not write table to '%s'", FileName.c_str());
 }
 
 // Write the combined table
@@ -118,7 +122,7 @@ void BBOXLIST::WriteTable(INT Offset)
           for (_Count_t x=0; x<Count; x++)
             table[x].Write(fp);
         }
-      else logf (LOG_ERRNO, "Seek error in BBOXLIST");
+      else message_log (LOG_ERRNO, "Seek error in BBOXLIST");
       fclose(fp);
    }
 }
@@ -134,7 +138,7 @@ INT4 BBOXLIST::LoadRawTable()
 {
   size_t n = 0;
   if (FileName.IsEmpty()) {
-    logf(LOG_ERROR, "BBOXLIST::LoadRawTable: FileName not set");
+    message_log(LOG_ERROR, "BBOXLIST::LoadRawTable: FileName not set");
   } else {
     FILE *fp = fopen(FileName,"rb");
     if (fp)
@@ -403,7 +407,7 @@ FILE * BBOXLIST::OpenForAppend(const STRING& Fn)
 
   if (fp == NULL)
    {
-      logf (LOG_ERRNO, "BBOXLIST:: Can't open '%s' for reading.", Fn.c_str());
+      message_log (LOG_ERRNO, "BBOXLIST:: Can't open '%s' for reading.", Fn.c_str());
       return NULL;
    }
   if (getObjID(fp)!= objBBOXLIST)
@@ -434,11 +438,11 @@ FILE * BBOXLIST::OpenForAppend(const STRING& Fn)
       char     scratch[ L_tmpnam+1];
       char    *TempName = tmpnam( scratch ); 
 
-      logf (LOG_WARN, "Could not create '%s', trying tmp '%s'", TmpName.c_str(),
+      message_log (LOG_WARN, "Could not create '%s', trying tmp '%s'", TmpName.c_str(),
 	TempName);
       if ((ofp = fopen(TempName, "wb")) == NULL)
 	{
-	  logf (LOG_ERRNO, "Can't create a temporary numlist '%s'", Fn.c_str());
+	  message_log (LOG_ERRNO, "Can't create a temporary numlist '%s'", Fn.c_str());
 	  fclose(fp);
 	  return NULL;
 	}
@@ -455,15 +459,15 @@ FILE * BBOXLIST::OpenForAppend(const STRING& Fn)
   fclose(fp);
   fclose(ofp);
   if (::remove(Fn) == -1)
-    logf (LOG_ERRNO, "Can't remove '%s'", Fn.c_str());
+    message_log (LOG_ERRNO, "Can't remove '%s'", Fn.c_str());
   if (RenameFile(TmpName, Fn) == -1)
-    logf (LOG_ERRNO, "Can't rename '%s' to '%s'", TmpName.c_str(), Fn.c_str());
+    message_log (LOG_ERRNO, "Can't rename '%s' to '%s'", TmpName.c_str(), Fn.c_str());
 
   // Now open for append
   if ((fp = fopen(Fn, "a+b")) == NULL)
-    logf (LOG_ERRNO, "Could not open '%s' for bounding-box append", Fn.c_str());
+    message_log (LOG_ERRNO, "Could not open '%s' for bounding-box append", Fn.c_str());
   else
-    logf (LOG_DEBUG, "Opening '%s' for bboxlist append", Fn.c_str());
+    message_log (LOG_DEBUG, "Opening '%s' for bboxlist append", Fn.c_str());
   return fp;
 }
   

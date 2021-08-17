@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /*-@@@
 File:		attrlist.cxx
 Version:	2.00
@@ -242,7 +246,7 @@ FIELDTYPE::FIELDTYPE(const STRING& TypeName)
 		  if (!_IB_private_hash)
 		    {
 		      Type = FIELDTYPE::any;
-		      logf (LOG_ERROR, undef_msg, TypeName.c_str());
+		      message_log (LOG_ERROR, undef_msg, TypeName.c_str());
 		    }
 		}
 	    }
@@ -266,7 +270,7 @@ FIELDTYPE::FIELDTYPE(const char * TypeName)
 		  if (!_IB_private_hash)
 		    {
 		      Type = FIELDTYPE::any;
-		      logf (LOG_ERROR, undef_msg, TypeName);
+		      message_log (LOG_ERROR, undef_msg, TypeName);
 		    }
 		}
 	    }

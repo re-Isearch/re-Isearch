@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /* $Id: numsearch.cxx,v 1.2 2007/06/19 06:24:03 edz Exp $ */
 
 // TODO: The INT4 references need to be replaced with a GPTYPE
@@ -82,17 +86,17 @@ void INDEX::SortNumericFieldData()
       continue;
     if (Parent->DfdtGetFileName(DfdRecord,&Fn) == GDT_FALSE)
       {
-        logf (LOG_ERROR, "Could not find %s [%s] in DFD", DfdRecord.GetFieldName().c_str(), FieldType.c_str());
+        message_log (LOG_ERROR, "Could not find %s [%s] in DFD", DfdRecord.GetFieldName().c_str(), FieldType.c_str());
         continue; // ERROR
       }
     if (!FileExists(Fn))
       {
-        logf (LOG_DEBUG, "Field data for %s of type %s not found [%s].",
+        message_log (LOG_DEBUG, "Field data for %s of type %s not found [%s].",
 		DfdRecord.GetFieldName().c_str(), FieldType.c_str(), Fn.c_str());
 	continue;
       }
 
-    logf (LOG_INFO, "Creating %s [%s]", DfdRecord.GetFieldName().c_str(), FieldType.c_str());
+    message_log (LOG_INFO, "Creating %s [%s]", DfdRecord.GetFieldName().c_str(), FieldType.c_str());
 
 //  GDT_BOOLEAN    IsNumeric() const { return Type == numerical || Type == computed || Type == currency || Type == dotnumber; }
 //  GDT_BOOLEAN    IsNumerical() const{ return Type == numerical || Type == ttl; }
@@ -128,7 +132,7 @@ void INDEX::SortNumericFieldData()
     } else if (FieldType.IsGPoly()) {
       GPOLYLIST().WriteIndex(Fn);
     } else {
-      logf (LOG_PANIC, "INDEX: No indexing method defined for field type '%s'???",  FieldType.c_str());
+      message_log (LOG_PANIC, "INDEX: No indexing method defined for field type '%s'???",  FieldType.c_str());
       continue;
     }
   }
@@ -138,7 +142,7 @@ void INDEX::SortNumericFieldData()
 PIRSET INDEX::HashSearch(const STRING& Contents, const STRING& FieldName, INT4 Relation, GDT_BOOLEAN useCase)
 {
   const NUMERICOBJ  fKey = useCase ? encodeCaseHash(Contents) : encodeHash(Contents);
-  logf (LOG_DEBUG, "Numeric search Hash(\"%s\")->%F", Contents.c_str(), (double)fKey);
+  message_log (LOG_DEBUG, "Numeric search Hash(\"%s\")->%F", Contents.c_str(), (double)fKey);
 
 #ifdef FIELD_WILD_MATCH
   STRING          pattern(FieldName);
@@ -347,7 +351,7 @@ PIRSET INDEX::NumericSearch(const NUMBER fKey, const STRING& FieldName, INT4 Rel
   if (ft.IsText())
     {
       Parent->SetErrorCode(113); // "Unsupported attribute type"
-      logf(LOG_DEBUG, "Can't search numeric in a mundane text field '%s'", FieldName.c_str());
+      message_log(LOG_DEBUG, "Can't search numeric in a mundane text field '%s'", FieldName.c_str());
       return pirset;
     }
   if (ft.IsDate())
@@ -359,7 +363,7 @@ PIRSET INDEX::NumericSearch(const NUMBER fKey, const STRING& FieldName, INT4 Rel
   if (!Parent->DfdtGetFileName(FieldName, ft, &Fn))
     {
       Parent->SetErrorCode(1); // Permanent System Error 
-      logf (LOG_PANIC, "Could not create a table name for field '%s'", FieldName.c_str());
+      message_log (LOG_PANIC, "Could not create a table name for field '%s'", FieldName.c_str());
       return pirset;
     }
 
@@ -634,7 +638,7 @@ complement:
 
   //  SetCache->Add(T1,Relation,FieldName,DBName,pirset);
 #if DEBUG
-  logf (LOG_DEBUG, "NumericSearch - %ld hits in %s for term='%f' relation=%d",
+  message_log (LOG_DEBUG, "NumericSearch - %ld hits in %s for term='%f' relation=%d",
 	pirset->GetTotalEntries(), FieldName.c_str(), fKey, Relation);
 #endif
   return(pirset);

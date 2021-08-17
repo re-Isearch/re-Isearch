@@ -85,11 +85,11 @@ void IKNOWDOC::ParseFields (PRECORD NewRecord)
     {
       if (tags)
 	{
-	  logf (LOG_WARN, "No `" + Doctype + "' fields/tags in " + fn);
+	  message_log (LOG_WARN, "No `" + Doctype + "' fields/tags in " + fn);
 	}
       else
 	{
-	  logf (LOG_ERROR, "Unable to parse `" + Doctype + "' record in " + fn);
+	  message_log (LOG_ERROR, "Unable to parse `" + Doctype + "' record in " + fn);
 	}
       return;
     }
@@ -136,7 +136,7 @@ void IKNOWDOC::ParseFields (PRECORD NewRecord)
 	      // Template (IKNOW) or Template-Type (IAFA/ROADS)
 	      if ((FieldName != "Template") && (FieldName != "Template-Type"))
 		{
-		  logf (LOG_ERROR, "\
+		  message_log (LOG_ERROR, "\
 %s Record in \"%s\" (%ld-%ld) does not begin with a Template type!",
 			(const char *)Doctype, (const char *)fn, RecStart, RecEnd);
 		  return;
@@ -151,7 +151,7 @@ void IKNOWDOC::ParseFields (PRECORD NewRecord)
 	    }
 	  else if (cnt == 2 && (Doctype == "IKNOWDOC") && (FieldName != "Handle"))
 	    {
-	      logf (LOG_ERROR, "\
+	      message_log (LOG_ERROR, "\
 Record in \"%s\" does not have 'Handle' as its 2nd field", (const char *)fn);
 	      return;
 	    }
@@ -163,7 +163,7 @@ Record in \"%s\" does not have 'Handle' as its 2nd field", (const char *)fn);
 	  pstr[val_len + 1] = '\0';
 	  if (Db->KeyLookup (pstr))
 	    {
-	      logf (LOG_ERROR, "Record in \"%s\" uses a non-unique %s '%s'",
+	      message_log (LOG_ERROR, "Record in \"%s\" uses a non-unique %s '%s'",
 		(const char *)fn, (const char *)FieldName, pstr);
 	    }
 	  else
@@ -196,7 +196,7 @@ Record in \"%s\" does not have 'Handle' as its 2nd field", (const char *)fn);
     }
 
   if (!sawHandle)
-    logf(LOG_INFO, "\
+    message_log(LOG_INFO, "\
 Record in \"%s\" did not specify a handle.", (const char *)fn);
 
 // End addition 

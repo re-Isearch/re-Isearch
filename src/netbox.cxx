@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /*@@@
 File:           netbox.cxx
 Version:        1.01.01
@@ -154,7 +158,7 @@ int NETBOXPROFILE::Open() {
     return 0;
   rc = connect(s, (struct sockaddr FAR*)&addr_in, sizeof(addr_in));
   if (rc == -1) {
-    logf (LOG_ERRNO, "Error connecting to %s (%d)", HostName, Port);
+    message_log (LOG_ERRNO, "Error connecting to %s (%d)", HostName, Port);
     return 0;
   }
   Socket = s;

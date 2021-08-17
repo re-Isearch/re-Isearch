@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident "%Z%%Y%%M%  %I% %G% %U% BSN"
 #define _GLOBAL_MESSAGE_LOGGER_INTERNALS 1
 
@@ -383,7 +387,7 @@ void MessageLogger::log_message(int level, const char *string)
 }
 
 
-// This is where the log is written. A global instance is what the vararg call logf(..) calls
+// This is where the log is written. A global instance is what the vararg call message_log(..) calls
 void MessageLogger::log (int Mask, const char *fmt,...)
 {
   static char *login = NULL;

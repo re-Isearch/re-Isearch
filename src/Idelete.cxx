@@ -1,8 +1,8 @@
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 /*@@@
-File:		Iutil.cxx
-Version:	1.01
-Description:	Command-line utilities for Isearch databases
-Author:		Nassib Nassar, nrn@cnidr.org
+File:		Idelete.cxx
+Description:	Command-line delete utility for re-Isearch databases
 @@@*/
 
 #include <stdlib.h>
@@ -62,7 +62,7 @@ Usage: Idelete [options] file ...\n\
               // like Iutil -del but by file name and not by key.\n\
   -shredder   // WARNING: Dangerous option!!\n\
               // Don't move things to wastebasket but REMOVE/DELETE!\n\
-              // WARMING: THIS REMOVES AND DESTROYS THE SOURCE!!!!!!!\n\
+              // WARNING: THIS REMOVES AND DESTROYS THE SOURCE!!!!!!!\n\
   -debug      // debug...\n\n\
 Example: " << argv[0] << " -d DATABASE foo\n\
   // this marks the records in foo as deleted and moves\n\
@@ -92,7 +92,7 @@ override the command line arguments!" << endl;
 	    {
 	      if (++x >= argc)
 		{
-		  logf(LOG_ERROR, "Usage Error: No option specified after -o.");
+		  message_log(LOG_ERROR, "Usage Error: No option specified after -o.");
 		  return 0;
 		}
 	      STRING S;
@@ -109,7 +109,7 @@ override the command line arguments!" << endl;
 	    {
 	      if (++x >= argc)
 		{
-		  logf(LOG_ERROR, "Usage Error: No database specified after -d.");
+		  message_log(LOG_ERROR, "Usage Error: No database specified after -d.");
 		  return 0;
 		}
 	      DBName = argv[x];
@@ -119,7 +119,7 @@ override the command line arguments!" << endl;
             {
               if (++x >= argc)
                 {
-		  logf(LOG_ERROR, "Usage Error: No prepend directory specified after -%s.", Flag.c_str());
+		  message_log(LOG_ERROR, "Usage Error: No prepend directory specified after -%s.", Flag.c_str());
                   return 0;
                 }
               prepend = argv[x];
@@ -129,7 +129,7 @@ override the command line arguments!" << endl;
 	    {
               if (++x >= argc)
                 {
-		  logf(LOG_ERROR, "Usage Error: Nothing specified after -%s.", Flag.c_str());
+		  message_log(LOG_ERROR, "Usage Error: Nothing specified after -%s.", Flag.c_str());
                   return 0;
                 }
 	      char *arg = argv[x];
@@ -139,7 +139,7 @@ override the command line arguments!" << endl;
 		fp = stdin;
 	      else if ((fp = fopen(arg, "rt")) == NULL)
 		{
-		  logf (LOG_ERRNO, "ERROR: can't open filelist %s!", arg);
+		  message_log (LOG_ERRNO, "ERROR: can't open filelist %s!", arg);
 		  return -1;
 		}
 	      char buf[BUFSIZ+1];
@@ -160,7 +160,7 @@ override the command line arguments!" << endl;
 	    {
               if (++x >= argc)
                 {
-		  logf(LOG_ERROR, "Usage Error: No wastedir specified after -sub.");
+		  message_log(LOG_ERROR, "Usage Error: No wastedir specified after -sub.");
                   return 0;
                 }
               wastebasket = argv[x];
@@ -310,7 +310,7 @@ override the command line arguments!" << endl;
 #define mask (S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)
 #endif
 		  if (-1 == MkDir (Path, mask))
-		    logf (LOG_ERRNO, "Error: could not make directory '%s'", Path.c_str());
+		    message_log (LOG_ERRNO, "Error: could not make directory '%s'", Path.c_str());
 		  INT count = 0;
 		  do
 		    {
@@ -328,10 +328,10 @@ override the command line arguments!" << endl;
 
 		  if ((last != Fullname) && Link (Fullname, NewPath) == -1)
 		    {
-		      logf (LOG_ERRNO, "Error: could not link '%s' to '%s'", Fullname.c_str(),
+		      message_log (LOG_ERRNO, "Error: could not link '%s' to '%s'", Fullname.c_str(),
 			NewPath.c_str());
 		      if (Exists (NewPath))
-			logf (LOG_ERROR, "! Only 1 (one) revision currently supported!");
+			message_log (LOG_ERROR, "! Only 1 (one) revision currently supported!");
 		    }
 		  else
 		    {
@@ -349,9 +349,9 @@ override the command line arguments!" << endl;
 
 		      pdb->SetDocumentInfo (x, Record);
 
-		      logf (LOG_DEBUG, "Unlinking '%s'", Fullname.c_str());
+		      message_log (LOG_DEBUG, "Unlinking '%s'", Fullname.c_str());
 		      if (unlink((const char *)Fullname) < 0)
-			logf (LOG_ERRNO, "Could not unlink '%s'", Fullname.c_str());
+			message_log (LOG_ERRNO, "Could not unlink '%s'", Fullname.c_str());
 		    }
 		}
 	    }

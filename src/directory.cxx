@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)directory.cxx  1.6 02/05/01 00:33:04 BSN"
 
 #include "common.hxx"
@@ -123,9 +127,9 @@ void do_directory(const STRING& Dir, int (*do_file)(const STRING&),
   if (!dir_p)			// can't open: skip
     {
       if (is_directory(dirName))
-        logf (LOG_ERRNO, "(2) Can't open directory '%s'", dirName.c_str());
+        message_log (LOG_ERRNO, "(2) Can't open directory '%s'", dirName.c_str());
        else
-        logf (LOG_ERRNO, "Having trouble accessing '%s'. Not a directory?", dir.c_str());
+        message_log (LOG_ERRNO, "Having trouble accessing '%s'. Not a directory?", dir.c_str());
       return;
     }
 
@@ -187,9 +191,9 @@ void do_directory(const STRING& dir, int (*do_file)(const STRING&),
   if (!dir_p)			// can't open: skip
     {
       if (is_directory(dirName))
-	logf (LOG_ERRNO, "(1) Can't open directory '%s'", dirName.c_str());
+	message_log (LOG_ERRNO, "(1) Can't open directory '%s'", dirName.c_str());
        else
-	logf (LOG_ERRNO, "Having trouble accessing '%s'", dir.c_str()); 
+	message_log (LOG_ERRNO, "Having trouble accessing '%s'", dir.c_str()); 
       return;
     }
 

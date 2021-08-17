@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /*@@@
 File:		geosearch.cxx
 Version:	1.0
@@ -170,7 +174,7 @@ void INDEX::SetSpatialScores(IRSET* pirset,
 
     if (target == NULL)
       {
-	logf (LOG_DEBUG, "INDEX::SetSpatialScores: Empty target");
+	message_log (LOG_DEBUG, "INDEX::SetSpatialScores: Empty target");
 	continue;
       }
 
@@ -214,28 +218,28 @@ void INDEX::LoadBoundingBoxFieldNames()
       if (opts == NULL || opts->GetValue (field, &NorthBC) == 0)
 	NorthBC = field + suffix;
       Parent->ProfileGetString(section, field, NorthBC, &NorthFieldName);
-      logf (LOG_DEBUG, message, section.c_str(), field.c_str(), NorthFieldName.c_str());
+      message_log (LOG_DEBUG, message, section.c_str(), field.c_str(), NorthFieldName.c_str());
 
 
       field = "EAST";
       if (opts == NULL || opts->GetValue (field, &EastBC) == 0)
         EastBC = field + suffix;
       Parent->ProfileGetString(section, field, EastBC, &EastFieldName);
-      logf (LOG_DEBUG, message, section.c_str(), field.c_str(), EastFieldName.c_str());
+      message_log (LOG_DEBUG, message, section.c_str(), field.c_str(), EastFieldName.c_str());
 
 
       field = "SOUTH";
       if (opts == NULL || opts->GetValue (field, &SouthBC) == 0)
         SouthBC = field + suffix;
       Parent->ProfileGetString(section, field, SouthBC, &SouthFieldName);
-       logf (LOG_DEBUG, message, section.c_str(), field.c_str(), SouthFieldName.c_str());
+       message_log (LOG_DEBUG, message, section.c_str(), field.c_str(), SouthFieldName.c_str());
 
 
       field = "WEST";
       if (opts == NULL || opts->GetValue (field, &WestBC) == 0)
         WestBC = field + suffix;
       Parent->ProfileGetString(section, field, WestBC, &WestFieldName);
-      logf (LOG_DEBUG, message, section.c_str(), field.c_str(), WestFieldName.c_str());
+      message_log (LOG_DEBUG, message, section.c_str(), field.c_str(), WestFieldName.c_str());
    }
 //cerr << "BoundingBoxFieldNames Loaded" << endl;
 
@@ -496,13 +500,13 @@ IRSET* INDEX::BoundingRectangle(NUMBER NorthBC, NUMBER SouthBC, NUMBER WestBC, N
 
   if (EastLatitude)
     {
-      logf (LOG_DEBUG, "%i Hits from Rect", (int) EastLatitude->GetTotalEntries());
+      message_log (LOG_DEBUG, "%i Hits from Rect", (int) EastLatitude->GetTotalEntries());
       EastLatitude->Or(*LessThanNorth);
       delete LessThanNorth;
       return(EastLatitude);	// our combined set of hits...
     }
 
-  logf (LOG_DEBUG, "EastLatitude not defined, returning North case");
+  message_log (LOG_DEBUG, "EastLatitude not defined, returning North case");
   return LessThanNorth;
 }
 
@@ -531,13 +535,13 @@ IRSET* INDEX::Interval(NUMBER WestLongitude, NUMBER EastLongitude,
   // Put a cacheing structure here to avoid search duplication
 
   ResultA=NumericSearch(EastLongitude, WestFieldName, ZRelLE);
-  logf(LOG_DEBUG, "Got %i entries <= %f in %s", (int)ResultA->GetTotalEntries(),
+  message_log(LOG_DEBUG, "Got %i entries <= %f in %s", (int)ResultA->GetTotalEntries(),
 	 (double)EastLongitude, WestFieldName.c_str());
   
   if (ResultA->GetTotalEntries() == 0) {
     // no hits rules out entire search
   if (DebugMode)
-    logf(LOG_DEBUG, "No hits in last search, so bailing out.");
+    message_log(LOG_DEBUG, "No hits in last search, so bailing out.");
 
     return(ResultA);
   }  
@@ -545,14 +549,14 @@ IRSET* INDEX::Interval(NUMBER WestLongitude, NUMBER EastLongitude,
 
   ResultB=NumericSearch(WestLongitude, EastFieldName, ZRelGE);
   if (DebugMode)
-    logf(LOG_DEBUG, "Got %i entries >= %f in %s", ResultB->GetTotalEntries(),
+    message_log(LOG_DEBUG, "Got %i entries >= %f in %s", ResultB->GetTotalEntries(),
 	 (double)WestLongitude, EastFieldName.c_str());
   
   if (ResultB->GetTotalEntries() == 0) {
     // no hits rules out entire search
     delete ResultA;
   if (DebugMode)
-    logf(LOG_DEBUG, "No hits in last search, so bailing out");
+    message_log(LOG_DEBUG, "No hits in last search, so bailing out");
     return(ResultB);
   }
   
@@ -563,51 +567,51 @@ IRSET* INDEX::Interval(NUMBER WestLongitude, NUMBER EastLongitude,
   if (ResultA->GetTotalEntries() == 0) {
     // no hits rules out entire search
     if (DebugMode)
-      logf(LOG_DEBUG, "No hits in last search, so bailing out");
+      message_log(LOG_DEBUG, "No hits in last search, so bailing out");
     return(ResultA);
   }
   if (DebugMode)
-    logf(LOG_DEBUG, "Now have %i entries in range.", ResultA->GetTotalEntries());
+    message_log(LOG_DEBUG, "Now have %i entries in range.", ResultA->GetTotalEntries());
   
   // ResultA Now contains a valid interval set
   
   ResultC=NumericSearch(SouthLatitude, NorthFieldName, ZRelGE);
-  logf(LOG_DEBUG, "Got %i entries >= %f in %s", ResultC->GetTotalEntries(),
+  message_log(LOG_DEBUG, "Got %i entries >= %f in %s", ResultC->GetTotalEntries(),
 	(double)SouthLatitude, NorthFieldName.c_str());
   
   if (ResultC->GetTotalEntries() == 0) {
     // no hits rules out entire search
     delete ResultA;
     if (DebugMode)
-      logf(LOG_DEBUG, "No hits in last search, so bailing out");
+      message_log(LOG_DEBUG, "No hits in last search, so bailing out");
     return(ResultC);
   }
   
   ResultD=NumericSearch(NorthLatitude, SouthFieldName, ZRelLE);
-  logf(LOG_DEBUG, "Got %i entries <= %f in %s", ResultD->GetTotalEntries(),
+  message_log(LOG_DEBUG, "Got %i entries <= %f in %s", ResultD->GetTotalEntries(),
 	 (double)NorthLatitude, SouthFieldName.c_str());
   
   if (ResultD->GetTotalEntries() == 0) {
     // no hits rules out entire search
     delete ResultA;
     delete ResultC;
-    if (DebugMode) logf(LOG_DEBUG, "No hits in last search, so bailing out");
+    if (DebugMode) message_log(LOG_DEBUG, "No hits in last search, so bailing out");
     return(ResultD);
   }
   ResultC->And(*ResultD);
-  if (DebugMode) logf(LOG_DEBUG, "Now have %i entries in range.", ResultC->GetTotalEntries());
+  if (DebugMode) message_log(LOG_DEBUG, "Now have %i entries in range.", ResultC->GetTotalEntries());
   delete ResultD;
   
   if (ResultC->GetTotalEntries() == 0) {
     // no hits rules out entire search
-    if (DebugMode) logf(LOG_DEBUG, "No hits in last search, so bailing out");
+    if (DebugMode) message_log(LOG_DEBUG, "No hits in last search, so bailing out");
     return(ResultC);
   }
   
   // ResultA and ResultC contain our Lat/Long intrsections.  AND them
   ResultA->And(*ResultC);
   delete ResultC;
-  if (DebugMode) logf(LOG_DEBUG, "Now have %i entries in range, heading back",
+  if (DebugMode) message_log(LOG_DEBUG, "Now have %i entries in range, heading back",
 	 ResultA->GetTotalEntries());
   return(ResultA);		// full 'o hits (maybe)
   

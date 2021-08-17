@@ -134,7 +134,7 @@ void HTML::SourceMIMEContent(const RESULT&, PSTRING StringPtr) const
 
 void HTML::ParseRecords (const RECORD& FileRecord)
 {
-  logf (LOG_DEBUG, "%s(HTML):ParseRecord Level %d of \"%s\"",
+  message_log (LOG_DEBUG, "%s(HTML):ParseRecord Level %d of \"%s\"",
 	Doctype.c_str(), HTML_Level, FileRecord.GetFullFileName().c_str() );
   if (HTML_Level < 0)
     {
@@ -492,7 +492,7 @@ void HTML::ParseFields (PRECORD NewRecord)
 
   if (fp == NULL)
     {
-      logf (LOG_ERRNO, "Couldn't access '%s'", fn.c_str());
+      message_log (LOG_ERRNO, "Couldn't access '%s'", fn.c_str());
       NewRecord->SetBadRecord();
       return;                   // ERROR
     }
@@ -508,9 +508,9 @@ void HTML::ParseFields (PRECORD NewRecord)
   Datum.SetTimeOfFile(fp);
   if (RecEnd <= RecStart)
     {
-      logf (LOG_WARN, "%s: zero-length record - '%s' [%u-%u]...",
+      message_log (LOG_WARN, "%s: zero-length record - '%s' [%u-%u]...",
 	Doctype.c_str(), fn.c_str(), (unsigned)RecStart, (unsigned)RecEnd );
-      logf (LOG_NOTICE, "%s skipping record", Doctype.c_str());
+      message_log (LOG_NOTICE, "%s skipping record", Doctype.c_str());
       ffclose(fp);
       NewRecord->SetBadRecord();
       return; // ERR
@@ -518,7 +518,7 @@ void HTML::ParseFields (PRECORD NewRecord)
 
   if (RecStart && -1 == fseek (fp, RecStart, SEEK_SET))
     {
-      logf (LOG_ERRNO, "%s::ParseRecords(): Seek failed - '%s', skipping.", Doctype.c_str(), fn.c_str());
+      message_log (LOG_ERRNO, "%s::ParseRecords(): Seek failed - '%s', skipping.", Doctype.c_str(), fn.c_str());
       ffclose(fp);
       NewRecord->SetBadRecord();
       return; // ERR
@@ -540,7 +540,7 @@ void HTML::ParseFields (PRECORD NewRecord)
   PCHR *tags = parse_tags (RecBuffer, ActualLength);
   if (tags == NULL)
     {
-      logf (LOG_WARN, "Unable to parse `%s' tags in file '%s'", Doctype.c_str(), fn.c_str() );
+      message_log (LOG_WARN, "Unable to parse `%s' tags in file '%s'", Doctype.c_str(), fn.c_str() );
       NewRecord->SetBadRecord();
       return; // ERROR
     }
@@ -598,7 +598,7 @@ eof:
 	      // For <html>, <body> and <pre> its end-of-file
 	      p = RecBuffer + ActualLength; 
 #if BSN_EXTENSIONS
-	      logf (LOG_INFO, "\
+	      message_log (LOG_INFO, "\
 \"%s\"(%u): Bogus use of <%s> using EOF as implied end.",
 		(const char *)fn,
 		(unsigned) (*tags_ptr - RecBuffer),
@@ -733,7 +733,7 @@ eof:
 	if (p != NULL && complain)
 	  {
 	    // Give some information
-	    logf (LOG_INFO, "\
+	    message_log (LOG_INFO, "\
 \"%s\"(%u): Bogus use of <%s> using <%s> as end tag.",
                 (const char *)fn, (unsigned) (*tags_ptr - RecBuffer),
                 *tags_ptr, p);
@@ -784,7 +784,7 @@ eof:
 		strncpy (entry_id, &RecBuffer[val_start], val_len + 1);
 		entry_id[val_len + 1] = '\0';
 		if (!Key.IsEmpty())
-		  logf(LOG_WARN, "Duplicate Keys defined: overwriting %s with %s", Key.c_str(), entry_id);
+		  message_log(LOG_WARN, "Duplicate Keys defined: overwriting %s with %s", Key.c_str(), entry_id);
 		Key = entry_id;
 	      }
 	    df.SetFct (fc);
@@ -804,7 +804,7 @@ eof:
 	  if (HTML_Level > 2)
 	    {
 	      // Give some information
-	      logf (LOG_INFO, "%s Warning: '%s'(%u): No end tag for <%s> found, skipping field.",
+	      message_log (LOG_INFO, "%s Warning: '%s'(%u): No end tag for <%s> found, skipping field.",
 		Doctype.c_str(), fn.c_str(), (unsigned)(*tags_ptr - RecBuffer), *tags_ptr);
 	    }
 #endif
@@ -818,7 +818,7 @@ eof:
     {
       if (Db->KeyLookup (Key))
 	{
-	  logf (LOG_WARN, "Record in \"%s\" used a non-unique %s '%s'",
+	  message_log (LOG_WARN, "Record in \"%s\" used a non-unique %s '%s'",
 		fn.c_str(), KeyField.c_str(), Key.c_str());
 	  Db->MdtSetUniqueKey(NewRecord, Key);
 	}

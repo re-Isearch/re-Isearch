@@ -1,9 +1,8 @@
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 /*@@@
 File:		fprec.hxx
-Version:	1.00
 Description:	Class FPREC - File Pointer Record
-Author:		Nassib Nassar, nrn@cnidr.org
-		Edward C. Zimmermann, edz@nonmonotonic.com
 @@@*/
 
 #ifndef FPREC_HXX

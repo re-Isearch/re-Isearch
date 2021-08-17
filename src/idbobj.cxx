@@ -1,11 +1,10 @@
-/************************************************************************
-************************************************************************/
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 
 /*@@@
 File:        idbobj.cxx
 Version:     1.00
 Description: Class IDBOBJ
-Author:      Nassib Nassar, nrn@cnidr.org
 @@@ */
 #ifdef __GNUG__
 #pragma implementation "idbobj.hxx"
@@ -38,7 +37,7 @@ void IDBOBJ::AddFieldType(const STRING& FieldName, FIELDTYPE FieldType)
     {
       // Have an old value
       if (old_val != val)
-	logf (LOG_WARN, "Field %s had a type change from %s to %s", name.c_str(), old_val.c_str(), val.c_str());
+	message_log (LOG_WARN, "Field %s had a type change from %s to %s", name.c_str(), old_val.c_str(), val.c_str());
       else
 	return; // Already in table
     }
@@ -116,7 +115,7 @@ void  IDBOBJ::SetWorkingDirectory()
 {
   if (WorkingDirectory.IsEmpty() || WorkingDirectory.Equals(".")) {
     if ((WorkingDirectory = GetCwd()).IsEmpty()) {
-      logf (LOG_ERRNO, "Could not determine current directory.");
+      message_log (LOG_ERRNO, "Could not determine current directory.");
       WorkingDirectory = "./";
     } else
       AddTrailingSlash(&WorkingDirectory);

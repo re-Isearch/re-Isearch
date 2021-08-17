@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)string.cxx  1.93 04/17/01 00:38:17 BSN"
 /* ########################################################################
 
@@ -418,7 +422,7 @@ STRINGData *STRING::AllocBuffer(size_t nLen)
       m_pchData           = pData->data();  // data starts after STRINGData
     }
   else
-    logf (LOG_ERRNO|LOG_PANIC, "Could not allocate string space for %ld characters.", (long)want);
+    message_log (LOG_ERRNO|LOG_PANIC, "Could not allocate string space for %ld characters.", (long)want);
   wxASSERT(want > nLen);
   return pData;
 }
@@ -448,7 +452,7 @@ void STRING::Clear()
   STRINGData* ptr = GetStringData();
   if ( ptr == NULL)
     {
-      logf(LOG_PANIC, "String data corruption in Clear(). Call your vendor!");
+      message_log(LOG_PANIC, "String data corruption in Clear(). Call your vendor!");
     }
   else if (ptr->IsConstant())
     {
@@ -491,7 +495,7 @@ GDT_BOOLEAN STRING::AllocBeforeWrite(size_t nLen)
     pData->Unlock();
     if (AllocBuffer(nLen) == NULL)
       {
-	logf (LOG_PANIC, "Can't allocate string space: %u KB", (unsigned)(nLen/1024));
+	message_log (LOG_PANIC, "Can't allocate string space: %u KB", (unsigned)(nLen/1024));
 	return GDT_FALSE;
       }
   } else {
@@ -529,7 +533,7 @@ void * STRING::Copy (void *buf, size_t len) const
       }
       if (ptr == NULL)
 	{
-	  logf (LOG_ERRNO, "Could not allocate string space for %u characters.", (unsigned)len+1);
+	  message_log (LOG_ERRNO, "Could not allocate string space for %u characters.", (unsigned)len+1);
 	  len = 0;
 	}
       else
@@ -658,7 +662,7 @@ STRINGINDEX STRING::CatFile (PFILE fp)
 	  const unsigned long max_size = (unsigned long)UINT_MAX - length - 1024;
 	  if ((unsigned long)sb.st_size > max_size) 
 	    {
-	      logf (LOG_ERROR, "%luKb+%luKb exceeds the string capacity (%luKb) of this platform.",
+	      message_log (LOG_ERROR, "%luKb+%luKb exceeds the string capacity (%luKb) of this platform.",
 		(long)length/1024, (long)sb.st_size/1024, max_size/1024);
 	    }
           else if (sb.st_size)
@@ -751,7 +755,7 @@ int STRING::RawRead(int fd)
       if (res != sizeof(STRINGData))
 	{
 	  if (res != 0)
-	    logf (LOG_PANIC, "Short read in STRING::RawRead(%d) %d < %u ",
+	    message_log (LOG_PANIC, "Short read in STRING::RawRead(%d) %d < %u ",
 		fd, res, (unsigned)sizeof(STRINGData) );
 	  Clear();
 	  return -1;
@@ -789,14 +793,14 @@ int STRING::RawRead(void *ptr, size_t i)
 
   if (!map->Ok())
     {
-      logf (LOG_PANIC, "Can't read from memory mapped file! Corrupt MMAP?" );
+      message_log (LOG_PANIC, "Can't read from memory mapped file! Corrupt MMAP?" );
       return -1;
     }
   const size_t  fLength = map->Size();
   const size_t  dOffset  = i + sizeof(STRINGData);
   if (dOffset > fLength)
     {
-      logf (LOG_PANIC, "Lookup bounds error in memory mapped STRING::RawRead (%ld>%ld)!",
+      message_log (LOG_PANIC, "Lookup bounds error in memory mapped STRING::RawRead (%ld>%ld)!",
 	(long)dOffset, (long)fLength);
       return -1;
     }
@@ -810,13 +814,13 @@ int STRING::RawRead(void *ptr, size_t i)
 //cerr << "If pData is null..." << endl;
   if (pData == NULL)
     {
-      logf (LOG_PANIC, "Null pointer in mapped I/O?");
+      message_log (LOG_PANIC, "Null pointer in mapped I/O?");
       return -1;
     }
 //cerr << "Check nRefs..." << endl;
   if (pData->nRefs != -1)
     {
-      logf (LOG_PANIC, "Wrong Refcount on memory mapped STRING (%d)", pData->nRefs);
+      message_log (LOG_PANIC, "Wrong Refcount on memory mapped STRING (%d)", pData->nRefs);
       return -1;
     }
 //cerr << "Check Bound..." << endl;
@@ -824,7 +828,7 @@ int STRING::RawRead(void *ptr, size_t i)
   if ((pData->nDataLength + dOffset) > fLength)
     {
 //cerr << "Bound err!" << endl;
-      logf (LOG_PANIC, "Lookup bounds error (%d) in memory mapped STRING::RawRead! Truncated file (%ld>%ld)?",
+      message_log (LOG_PANIC, "Lookup bounds error (%d) in memory mapped STRING::RawRead! Truncated file (%ld>%ld)?",
 	i, pData->nDataLength + sizeof(STRINGData) + i, file_len);
     }
 
@@ -880,7 +884,7 @@ STRING& STRING::form(const char *pszFormat, ...)
       va_end(argptr);
     }
   else
-    logf (LOG_PANIC, "Null format passed to STRING::form()");
+    message_log (LOG_PANIC, "Null format passed to STRING::form()");
   return *this;
 }
 
@@ -1302,7 +1306,7 @@ STRING& STRING::Insert (const STRINGINDEX InsertionPt, const STRING& OtherString
   }
   if (pData == NULL)
     {
-      logf (LOG_ERRNO|LOG_PANIC, "Could not allocate string space %ld", (long)want);
+      message_log (LOG_ERRNO|LOG_PANIC, "Could not allocate string space %ld", (long)want);
       return *this;
     }
 
@@ -3236,7 +3240,7 @@ STRINGINDEX STRING::Fread(FILE *fp, size_t Len, off_t Offset)
   if (-1 == fseek (fp, Offset, SEEK_SET))
     {
       Clear(); // Error
-      if (Offset) logf (LOG_DEBUG, "Can't Fread %lu bytes: Seek to %ld in stream failed", (long)Len, Offset);
+      if (Offset) message_log (LOG_DEBUG, "Can't Fread %lu bytes: Seek to %ld in stream failed", (long)Len, Offset);
       return 0;
     }
   return Fread(fp, Len);

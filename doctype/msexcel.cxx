@@ -76,18 +76,18 @@ IBDOC_MSEXCEL::IBDOC_MSEXCEL(PIDBOBJ DbParent, const STRING& Name) : TSLDOC(DbPa
       Filter = ResolveBinPath(s);
       if (!IsAbsoluteFilePath(Filter))
 	{
-	  logf (LOG_WARN, "%s: Specified filter '%s' not found. Check Installation.",
+	  message_log (LOG_WARN, "%s: Specified filter '%s' not found. Check Installation.",
 		Doctype.c_str(), Filter.c_str()); 
 	  //Filter.Clear();
 	}
       else if (!ExeExists(Filter))
 	{
-	  logf (LOG_ERROR, "%s: Filter '%s' %s!", Doctype.c_str(), Filter.c_str(),
+	  message_log (LOG_ERROR, "%s: Filter '%s' %s!", Doctype.c_str(), Filter.c_str(),
 	    Exists(Filter) ?  "is not executable" : "does not exist");
 	  Filter.Clear();
 	}
       else
-	logf (LOG_DEBUG, "%s: External filter set to '%s'", Doctype.c_str(), Filter.c_str());
+	message_log (LOG_DEBUG, "%s: External filter set to '%s'", Doctype.c_str(), Filter.c_str());
     }
   else
     Filter = s;
@@ -107,18 +107,18 @@ void IBDOC_MSEXCEL::ParseRecords(const RECORD& FileRecord)
   if (!Inode.Ok())
     {
       if (Inode.isDangling())
-        logf(LOG_ERROR, "%s: '%s' is a dangling symbollic link", Doctype.c_str(), Fn.c_str());
+        message_log(LOG_ERROR, "%s: '%s' is a dangling symbollic link", Doctype.c_str(), Fn.c_str());
       else
-        logf(LOG_ERRNO, "%s: Can't stat '%s'.", Doctype.c_str(), Fn.c_str());
+        message_log(LOG_ERRNO, "%s: Can't stat '%s'.", Doctype.c_str(), Fn.c_str());
       return;
     }
   if (Inode.st_size == 0)
     {
-      logf(LOG_ERROR, "'%s' has ZERO (0) length? Skipping.", Fn.c_str());
+      message_log(LOG_ERROR, "'%s' has ZERO (0) length? Skipping.", Fn.c_str());
       return;
     }
 
-  logf (LOG_DEBUG, "%s: Input = '%s'", Doctype.c_str(), Fn.c_str());
+  message_log (LOG_DEBUG, "%s: Input = '%s'", Doctype.c_str(), Fn.c_str());
 
   off_t start = FileRecord.GetRecordStart();
   off_t end   = FileRecord.GetRecordEnd();
@@ -131,13 +131,13 @@ void IBDOC_MSEXCEL::ParseRecords(const RECORD& FileRecord)
     key.form("%s.%04x", s.c_str(), i);
 
   // Now we have a good key
-  logf (LOG_DEBUG, "Key set to '%s'", key.c_str());
+  message_log (LOG_DEBUG, "Key set to '%s'", key.c_str());
 
 
   Db->ComposeDbFn (&s, DbExtCat);
   if (MkDir(s, 0, GDT_TRUE) == -1)
     {
-      logf (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
+      message_log (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
       return;
     }
   // <db_ext>.cat/<Hash>/<Key>.memo
@@ -150,7 +150,7 @@ void IBDOC_MSEXCEL::ParseRecords(const RECORD& FileRecord)
 
   if (Db->_write_resource_path(outfile, FileRecord, mime_type, &urifile) == GDT_FALSE) 
     {
-      logf (LOG_ERRNO, "%s: Could not create '%s'", urifile.c_str());
+      message_log (LOG_ERRNO, "%s: Could not create '%s'", urifile.c_str());
       return;
     }
 
@@ -159,7 +159,7 @@ void IBDOC_MSEXCEL::ParseRecords(const RECORD& FileRecord)
   if ((fp = fopen(outfile, "w")) == NULL)
    {
      unlink(urifile);
-     logf (LOG_ERRNO, "%s: Could not create '%s'", outfile.c_str());
+     message_log (LOG_ERRNO, "%s: Could not create '%s'", outfile.c_str());
      return;
    }
 
@@ -186,14 +186,14 @@ void IBDOC_MSEXCEL::ParseRecords(const RECORD& FileRecord)
   FILE *pp = _IB_popen(argv, "r");
   if (pp == NULL)
     {
-      logf (LOG_ERRNO, "%s: Could not open pipe '%s'", Doctype.c_str(), STRING(argv).c_str());
+      message_log (LOG_ERRNO, "%s: Could not open pipe '%s'", Doctype.c_str(), STRING(argv).c_str());
       fclose(fp);
       unlink(urifile);
       unlink(outfile);
 
       if (!IsAbsoluteFilePath (Filter))
 	{
-	  logf (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.",
+	  message_log (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.",
 		Doctype.c_str(), argv[0]);
 	  Filter.Clear();
 	}
@@ -211,7 +211,7 @@ void IBDOC_MSEXCEL::ParseRecords(const RECORD& FileRecord)
   if (len <= 8)
     {
       fclose(fp);
-      logf (LOG_ERROR, "%s: Pipe '%s' returned only %u bytes. Skipping.", Doctype.c_str(), argv[0], len);
+      message_log (LOG_ERROR, "%s: Pipe '%s' returned only %u bytes. Skipping.", Doctype.c_str(), argv[0], len);
       return;
     }
   len = ftell(fp);
@@ -273,11 +273,11 @@ void IBDOC_MSEXCEL::ParseRecords(const RECORD& FileRecord)
 			      {
 				STRING  line(start_of_line, ptr-start_of_line);
 				line.Replace("\t", "|");
-				logf (LOG_DEBUG, "LINE= %s", line.c_str());
+				message_log (LOG_DEBUG, "LINE= %s", line.c_str());
 			      }
 #endif
 			    
-			    logf (LOG_INFO, "\
+			    message_log (LOG_INFO, "\
 %s: '%s' has irregular columns (line #%d, %d != %d). ONELINE turned off",
 				Doctype.c_str(), outfile.c_str(), lineno+1, column+1, column0+1);
 			    oneline = GDT_FALSE;
@@ -294,7 +294,7 @@ void IBDOC_MSEXCEL::ParseRecords(const RECORD& FileRecord)
 	}
       if (oneline)
 	{
-	  logf (LOG_INFO, "Parsing '%s' records", outfile.c_str());
+	  message_log (LOG_INFO, "Parsing '%s' records", outfile.c_str());
 	  TSLDOC::ParseRecords( NewRecord );
 	  return;
 	}

@@ -1,22 +1,13 @@
-// $Id: rldcache.cxx,v 1.1 2007/05/15 15:47:23 edz Exp $
-/************************************************************************
-Copyright Notice
-
-Copyright (c) MCNC, Clearinghouse for Networked Information Discovery and
-Retrieval, 1996. 
-
-All Rights Reserved.
-************************************************************************/
-
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 /*@@@
 File:		rldcache.cxx
-Version:	$Revision: 1.1 $
 Description:	Cache & cache entry class
 Author:		Kevin Gamiel (CNIDR)
 Notes:          Converted to C++ class by A. Warnock (warnock@clark.net)
 @@@*/
 
-#define NOCODE_XX 1
+#define NOCODE_XX 0
 
 //
 // Remote/local document caching
@@ -110,12 +101,12 @@ void RLDCACHE::CreateInit(const STRING& NewPath, GDT_BOOLEAN ForceNew)
 
   if (NewPath.IsEmpty())
     {
-      logf (LOG_ERROR, "RLDCACHE::Init: Invalid Path [NULL]");
+      message_log (LOG_ERROR, "RLDCACHE::Init: Invalid Path [NULL]");
       return;
     }
   if (!WritableDir( RemoveFileName (NewPath) ))
     {
-      logf (LOG_ERRNO, "RLDCACHE::CreateInit '%s': Not in writable directory.", NewPath.c_str());
+      message_log (LOG_ERRNO, "RLDCACHE::CreateInit '%s': Not in writable directory.", NewPath.c_str());
       return;
     }
   // Build the class path variable  
@@ -125,19 +116,19 @@ void RLDCACHE::CreateInit(const STRING& NewPath, GDT_BOOLEAN ForceNew)
   if ((ret = db_create(&dbp, NULL, 0)) != 0)
     {
       // Not created - bail out
-      logf (LOG_ERROR, "RLDCACHE::CreateInit %s", DataFile.c_str());
+      message_log (LOG_ERROR, "RLDCACHE::CreateInit %s", DataFile.c_str());
       return;
     }
 #endif
   if (ForceNew || stat(DataFile.c_str(), &Stats) != 0) {
     // The cache does not exist, co create it
-    logf (LOG_DEBUG, "RLDCACHE::CreateInit: Creating new cache [%s]", DataFile.c_str());
+    message_log (LOG_DEBUG, "RLDCACHE::CreateInit: Creating new cache [%s]", DataFile.c_str());
     read_write = 0; // DBM does not need any special flags
     if ((CacheState = CacheOpen(read_write)) != OPEN_WRITE) {
       if (CacheState !=  NO_CACHE)
 	{
 	  // Something is clearly wrong...
-	  logf (LOG_ERRNO, "RLDCACHE::CreateInit '%s'",  DataFile.c_str());
+	  message_log (LOG_ERRNO, "RLDCACHE::CreateInit '%s'",  DataFile.c_str());
 	}
       return;
     }
@@ -145,7 +136,7 @@ void RLDCACHE::CreateInit(const STRING& NewPath, GDT_BOOLEAN ForceNew)
     // The file exists
     if (!S_ISREG(Stats.st_mode)) {
       // Something is horribly wrong - not a regular file
-      logf (LOG_ERRNO, "RLDCACHE::CreateInit '%s' not a regular file?", DataFile.c_str());
+      message_log (LOG_ERRNO, "RLDCACHE::CreateInit '%s' not a regular file?", DataFile.c_str());
       return;
     } 
 #ifdef RLDCACHE_DEBUG
@@ -165,7 +156,7 @@ cerr << "Readonly?" << endl;
       CacheState = CacheOpenReadonly();
       if (CacheState != OPEN_READ) {
 	// Something is clearly wrong...
-	logf (LOG_ERRNO, "RLDCACHE::CreateInit '%s' other owner?", DataFile.c_str());
+	message_log (LOG_ERRNO, "RLDCACHE::CreateInit '%s' other owner?", DataFile.c_str());
 	return;
       }
     } 
@@ -193,7 +184,7 @@ RLD_State RLDCACHE::CacheOpen(INT read_write)
 cerr << "CacheOpen.." << endl;
 #endif
 
-  logf (LOG_DEBUG, "CacheOpen(%d)", read_write);
+  message_log (LOG_DEBUG, "CacheOpen(%d)", read_write);
 
   // If the database is open for read and the request is to open it for
   // a write, we have to close it and reopen it.
@@ -214,7 +205,10 @@ cerr << "Open.. " << endl;
 #if NOCODE_XX 
 	1
 #else
+	// B->open(DB *db, DB_TXN *txnid, const char *file,
+	//     const char *database, DBTYPE type, u_int32_t flags, int mode);
 	(ret = dbp->open(dbp, 
+			 NULL, 
 			 DataFile.c_str(), 
 			 NULL, 
 			 DB_HASH, 
@@ -229,7 +223,7 @@ cerr << "Nope!" << endl;
       dbp->err(dbp, ret, "%s", DataFile.c_str());
 #endif
       CacheState = NO_CACHE;
-      logf (LOG_ERRNO, "Could not open cache"); 
+      message_log (LOG_ERRNO, "Could not open cache"); 
       return CacheState;
     }
   } 
@@ -246,7 +240,7 @@ cerr << "Got it!" << endl;
     return CacheState;
   } 
 
-  logf(LOG_DEBUG, "Cache opened for write");
+  message_log(LOG_DEBUG, "Cache opened for write");
   return CacheState;
 }
 
@@ -260,14 +254,14 @@ RLD_State RLDCACHE::CacheOpenReadonly()
 
 void RLDCACHE::CacheClose()
 {
-  logf (LOG_DEBUG, "CacheClose()");
+  message_log (LOG_DEBUG, "CacheClose()");
   if (dbp)
     {
 #if !NOCODE_XX
       dbp->close(dbp, 0);
 #endif
       CacheState = CLOSED;
-      logf (LOG_DEBUG, "Cache closed");
+      message_log (LOG_DEBUG, "Cache closed");
     } else
       CacheState = NO_CACHE;
 }
@@ -325,8 +319,7 @@ cerr << File << " Not in Cache" << endl;
 
 #ifdef RLDCACHE_DEBUG
     strbox_TheTime(GTime);
-    fprintf(rldcache_log, "%s %i Checking in/out [%s]\n",
-	    GTime, GPid, File);
+    fprintf(rldcache_log, "%s %i Checking in/out [%s]\n", GTime, GPid, File);
 #endif
 
     State = NEW_ENTRY;
@@ -347,8 +340,7 @@ cerr << "Get " << File << " from Cache" << endl;
 
 #ifdef RLDCACHE_DEBUG
 	strbox_TheTime(GTime);
-	fprintf(rldcache_log, "%s %i Refreshing [%s]\n",
-		GTime, GPid, File);
+	fprintf(rldcache_log, "%s %i Refreshing [%s]\n", GTime, GPid, File);
 #endif
 
 	State = UPDATE_ENTRY;
@@ -356,8 +348,7 @@ cerr << "Get " << File << " from Cache" << endl;
 
 #ifdef RLDCACHE_DEBUG
 	strbox_TheTime(GTime);
-	fprintf(rldcache_log, "%s %i Checking out [%s]\n",
-		GTime, GPid, File);
+	fprintf(rldcache_log, "%s %i Checking out [%s]\n", GTime, GPid, File);
 #endif
 	
 	State = CORRECT_ENTRY;
@@ -375,16 +366,16 @@ cerr << "Get " << File << " from Cache" << endl;
     char     scratch[ L_tmpnam+1];
     char    *TmpName = tmpnam( scratch );
     if ((fp = fopen(TmpName, "w")) == NULL) {
-      logf (LOG_ERRNO, "RLDCACHE::GetFile: Can''t open '%s'", TmpName);
+      message_log (LOG_ERRNO, "RLDCACHE::GetFile: Can''t open '%s'", TmpName);
       return NULL;
     }
 #endif
     // Retrieve the file by URL and stuff in into the file TmpName
     if ((err=ResolveURL(File,fp, Len)) <= 0) {
       if (err==URL_NOT_AVAILABLE)
-	logf (LOG_ERROR, "Resolve '%s': Non-existent URL.", File.c_str());
+	message_log (LOG_ERROR, "Resolve '%s': Non-existent URL.", File.c_str());
       else 
-	logf (LOG_ERROR, "RLDCACHE::GetFile: Bad URL type in '%s'", File.c_str());
+	message_log (LOG_ERROR, "RLDCACHE::GetFile: Bad URL type in '%s'", File.c_str());
       fclose(fp);
       return NULL;
     }
@@ -413,7 +404,7 @@ cerr << "File in the cache now.." << endl;
 
   buf = new BYTE[NewEntry->_Length];
   if (buf == NULL)
-    logf (LOG_PANIC|LOG_ERRNO, "RLDCACHE::GetFile: Out of memory");
+    message_log (LOG_PANIC|LOG_ERRNO, "RLDCACHE::GetFile: Out of memory");
 
   if ((fp = fopen(NewEntry->_FileName, "r")) == NULL) {
     perror("RLDCACHE::GetFile");
@@ -456,7 +447,7 @@ PRLDENTRY RLDCACHE::GetEntryByName(const STRING& Name)
     CacheState = CacheOpenReadonly();
 
   if (CacheState == CLOSED) {
-    logf (LOG_ERRNO, "RLDCACHE::GetEntryByName: %s", DataFile.c_str());
+    message_log (LOG_ERRNO, "RLDCACHE::GetEntryByName: %s", DataFile.c_str());
     return NULL_RLDENTRY;
   }
 
@@ -498,7 +489,7 @@ GDT_BOOLEAN RLDCACHE::EntryExists(const STRING& Name)
     CacheState = CacheOpenReadonly();
 
   if (CacheState == CLOSED) {
-    logf (LOG_ERRNO, "RLDCACHE::EntryExists: %s", DataFile.c_str());
+    message_log (LOG_ERRNO, "RLDCACHE::EntryExists: %s", DataFile.c_str());
     return GDT_FALSE;
   }
 
@@ -528,7 +519,7 @@ INT RLDCACHE::UpdateEntry(RLDENTRY *e)
     CacheState = CacheOpen( CacheState );
 
   if (CacheState == CLOSED) {
-    logf (LOG_ERRNO, "RLDCACHE::UpdateEntry:Can't open cache %s", DataFile.c_str());
+    message_log (LOG_ERRNO, "RLDCACHE::UpdateEntry:Can't open cache %s", DataFile.c_str());
     return -1;
   }
 
@@ -559,7 +550,7 @@ INT RLDCACHE::UpdateEntry(RLDENTRY *e)
     printf ("data is ->%s<-\n\n", dbm_data.dptr);
   }
 #endif
-  logf (LOG_DEBUG, "Writing %s to cache.", e->Name.c_str());
+  message_log (LOG_DEBUG, "Writing %s to cache.", e->Name.c_str());
   if(EntryExists(e->Name)) {
     // Open up the cache index and replace the entry
     err = gdbm_store(dbf, dbm_key, dbm_data, GDBM_REPLACE);
@@ -589,7 +580,7 @@ INT RLDCACHE::DeleteEntry(RLDENTRY *e)
     CacheState = CacheOpen( CacheState );
 
   if (!CacheState) {
-    logf (LOG_ERRNO, "RLDCACHE::DeleteEntry: %s", DataFile);
+    message_log (LOG_ERRNO, "RLDCACHE::DeleteEntry: %s", DataFile);
     return -1;
   }
 
@@ -629,7 +620,7 @@ void RLDCACHE::DeleteFiles(off_t Minutes)
   Entry    = new RLDENTRY;
 
   if (Entry == NULL_RLDENTRY) {
-    logf (LOG_ERRNO, "RLDCACHE::DeleteFiles: failed to allocate RLDENTRY");
+    message_log (LOG_ERRNO, "RLDCACHE::DeleteFiles: failed to allocate RLDENTRY");
     return;
   }
 
@@ -639,7 +630,7 @@ void RLDCACHE::DeleteFiles(off_t Minutes)
     CacheState = CacheOpen(GDBM_READER);
 
     if (CacheState == CLOSED) {
-      logf (LOG_ERRNO, "RLDCACHE::CleanCache: %s",  DataFile.c_str());
+      message_log (LOG_ERRNO, "RLDCACHE::CleanCache: %s",  DataFile.c_str());
       return;
     }
   }
@@ -697,7 +688,7 @@ RLDENTRY *RLDCACHE::CleanCache(off_t Minutes)
   Entry    = new RLDENTRY;
 
   if (Entry == NULL_RLDENTRY) {
-    logf (LOG_ERRNO, "RLDCACHE::CleanCache: failed to allocate RLDENTRY");
+    message_log (LOG_ERRNO, "RLDCACHE::CleanCache: failed to allocate RLDENTRY");
     return NULL_RLDENTRY;
   }
 
@@ -705,7 +696,7 @@ RLDENTRY *RLDCACHE::CleanCache(off_t Minutes)
     CacheState = CacheOpen(GDBM_WRITER);
 
     if (CacheState == CLOSED) {
-      logf (LOG_ERRNO, "RLDCACHE::CleanCache: %s", DataFile.c_str());
+      message_log (LOG_ERRNO, "RLDCACHE::CleanCache: %s", DataFile.c_str());
       return NULL_RLDENTRY;
     }
   }
@@ -765,7 +756,7 @@ RLDCACHE::WalkCache()
     return NULL_RLDENTRY;
 
   if((fp = fopen(DataFile, "r")) == NULL) {
-    logf (LOG_ERRNO, "RLDCACHE::WalkCache: %s",  DataFile.c_str());
+    message_log (LOG_ERRNO, "RLDCACHE::WalkCache: %s",  DataFile.c_str());
     return NULL_RLDENTRY;
   }
   do {

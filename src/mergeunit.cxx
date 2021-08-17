@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)mergeunit.cxx  1.15 02/05/01 00:33:15 BSN"
 
 /* $Id: mergeunit.cxx,v 1.1 2007/05/15 15:47:23 edz Exp $ */
@@ -50,7 +54,7 @@ GDT_BOOLEAN MERGEUNIT::CacheLoad()
 
   CachePosition=0;
 
-  logf(LOG_DEBUG, "Load Unit #%d", ID);
+  message_log(LOG_DEBUG, "Load Unit #%d", ID);
 
   size_t found = 0;
   if (fp && !feof(fp)){
@@ -65,12 +69,12 @@ GDT_BOOLEAN MERGEUNIT::CacheLoad()
 
   if(found<LoadLim)
     LoadLim=found;
-  logf(LOG_DEBUG, "Build Starting Keys..(got %d)", LoadLim);
+  message_log(LOG_DEBUG, "Build Starting Keys..(got %d)", LoadLim);
   for(size_t j=0; j<LoadLim; j++){
     Tag[j]=0;
     Start[j]=Map->GetKeyByGlobal(list[j]);
   }
-  logf(LOG_DEBUG, "Key Build Complete - Commence Merge Load... %ld of %ld Complete",
+  message_log(LOG_DEBUG, "Key Build Complete - Commence Merge Load... %ld of %ld Complete",
 	TotalLoaded-found, ItemsToMerge);
 
 //  STRING x;
@@ -99,7 +103,7 @@ GDT_BOOLEAN MERGEUNIT::CacheLoad()
       size_t got = Parent->ReadIndirect(Fn, p, LocalStart, size, Doctype);
       if (got != size)
 	{
-	  logf(LOG_ERRNO, "Read error on '%s'(%ld). Wanted %ld bytes but got %ld",
+	  message_log(LOG_ERRNO, "Read error on '%s'(%ld). Wanted %ld bytes but got %ld",
 			(const char *)Fn, LocalStart, size, got);
 	  size = got;
 	}
@@ -121,7 +125,7 @@ GDT_BOOLEAN MERGEUNIT::CacheLoad()
 	}
       }
       if(ncount>(LoadLim/5)){
-        logf(LOG_DEBUG, "Finished %d of %d", count, q);
+        message_log(LOG_DEBUG, "Finished %d of %d", count, q);
 	ncount=0;
       }
     }
@@ -133,7 +137,7 @@ GDT_BOOLEAN MERGEUNIT::CacheLoad()
 // flush entire unit to file
 GDT_BOOLEAN MERGEUNIT::Flush(FILE *fout, FILE *sout)
 { 
-  logf(LOG_DEBUG, "Merge Flush..");
+  message_log(LOG_DEBUG, "Merge Flush..");
 
 //  Parent->GpFwrite(Gp, fout);
 //  ++FlushWritten;
@@ -245,7 +249,7 @@ GDT_BOOLEAN MERGEUNIT::Initialize(STRING& IndexFileName,const PINDEX iParent, FI
     if (Off) {
       UINT2 magic = getINT2 (fp);
       if ((INT)((magic & 0xFF) + 6) != Parent->Version()) {
-	logf (LOG_ERROR, "MERGEUNIT: Bad index magic in %s. Expected %d but got %d!",
+	message_log (LOG_ERROR, "MERGEUNIT: Bad index magic in %s. Expected %d but got %d!",
 		(const char *)IndexFileName, (int)(magic&0xFF), (int)Parent->Version()-6);
 	Parent->ffclose(fp);
 	fp = NULL;
@@ -254,7 +258,7 @@ GDT_BOOLEAN MERGEUNIT::Initialize(STRING& IndexFileName,const PINDEX iParent, FI
       // Move past magic
       if (fseek(fp, Off, SEEK_SET) == -1)
 	{
-	  logf (LOG_ERRNO, "Could not seek on '%s' to %ld", (const char *)IndexFileName, Off);
+	  message_log (LOG_ERRNO, "Could not seek on '%s' to %ld", (const char *)IndexFileName, Off);
 	}
     }
     val=Load();
@@ -277,8 +281,8 @@ MERGEUNIT::~MERGEUNIT()
   delete Tag;
   delete Start;
 
-  logf(LOG_DEBUG, "Unit #%d Written From Cache: %ld", ID, CacheWritten);
-  logf(LOG_DEBUG, "Unit #%d Remaining Items Flushed From Cache: %ld", ID, CacheFlush);
-  logf(LOG_DEBUG, "Unit #%d Remaining Items Flushed From Disk: %ld", ID, FlushWritten);
+  message_log(LOG_DEBUG, "Unit #%d Written From Cache: %ld", ID, CacheWritten);
+  message_log(LOG_DEBUG, "Unit #%d Remaining Items Flushed From Cache: %ld", ID, CacheFlush);
+  message_log(LOG_DEBUG, "Unit #%d Remaining Items Flushed From Disk: %ld", ID, FlushWritten);
 }
 

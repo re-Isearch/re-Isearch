@@ -94,6 +94,8 @@ const char *FILTER2TEXTDOC::Description(PSTRLIST List) const
     List->AddEntry(Doctype);
   List->AddEntry (ThisDoctype);
 
+  PTEXT::Description(List);
+
   if (Help.IsEmpty())
     Help = ::Help("TEXT (PTEXT)", Doctype);
   return Help;
@@ -142,17 +144,17 @@ static STRING SetFilter(const STRING& arg, const STRING& Doctype)
       STRING Filter (ResolveBinPath(arg));
       if (!IsAbsoluteFilePath(Filter))
         {
-	  logf (LOG_WARN, "%s: %s '%s' must be in $PATH.", Doctype.c_str(),
+	  message_log (LOG_WARN, "%s: %s '%s' must be in $PATH.", Doctype.c_str(),
 		ini_filter_tag, Filter.c_str());
         }
       else if (!ExeExists(Filter))
         {
-          logf (LOG_ERROR, "%s: %s '%s' %s!", Doctype.c_str(), ini_filter_tag, Filter.c_str(),
+          message_log (LOG_ERROR, "%s: %s '%s' %s!", Doctype.c_str(), ini_filter_tag, Filter.c_str(),
             Exists(Filter) ?  "is not executable" : "does not exist");
           Filter.Clear();
         }
       else
-        logf (LOG_DEBUG, "%s: External filter set to '%s'", Doctype.c_str(), Filter.c_str());
+        message_log (LOG_DEBUG, "%s: External filter set to '%s'", Doctype.c_str(), Filter.c_str());
       return Filter;
     }
   return NulString;
@@ -191,22 +193,22 @@ void FILTER2HTMLDOC::BeforeIndexing()
 
   MIME_Type = Getoption(ini_content_type_tag, mime_application_binary);
   Filter = ::SetFilter( Getoption(ini_filter_tag, GetDefaultFilter()) , Doctype);
-  if (Filter.IsEmpty()) logf (LOG_ERROR, "%s: No %s set. Nothing to do?", Doctype.c_str(), ini_filter_tag);
+  if (Filter.IsEmpty()) message_log (LOG_ERROR, "%s: No %s set. Nothing to do?", Doctype.c_str(), ini_filter_tag);
   else if (Filter.Equals(  NulFilter ))
     Filter.Clear();
   else
-    logf (LOG_INFO, "%s: Using '%s' to filter to HTML.", Doctype.c_str(), Filter.c_str());
+    message_log (LOG_INFO, "%s: Using '%s' to filter to HTML.", Doctype.c_str(), Filter.c_str());
 }
 void FILTER2XMLDOC::BeforeIndexing()
 {
   DOCTYPE::BeforeIndexing();
   MIME_Type = Getoption(ini_content_type_tag, mime_application_binary);
   Filter = ::SetFilter( Getoption(ini_filter_tag, GetDefaultFilter()) , Doctype);
-  if (Filter.IsEmpty()) logf (LOG_ERROR, "%s: No %s set. Nothing to do?", Doctype.c_str(), ini_filter_tag);
+  if (Filter.IsEmpty()) message_log (LOG_ERROR, "%s: No %s set. Nothing to do?", Doctype.c_str(), ini_filter_tag);
   else if (Filter.Equals (  NulFilter ))
     Filter.Clear();
   else
-    logf (LOG_INFO, "%s: Using '%s' to filter to XML.", Doctype.c_str(), Filter.c_str());
+    message_log (LOG_INFO, "%s: Using '%s' to filter to XML.", Doctype.c_str(), Filter.c_str());
 }
 void FILTER2TEXTDOC::BeforeIndexing()
 {
@@ -214,11 +216,11 @@ void FILTER2TEXTDOC::BeforeIndexing()
   MIME_Type = Getoption(ini_content_type_tag, mime_application_binary);
   Filter = ::SetFilter( Getoption(ini_filter_tag, GetDefaultFilter()) , Doctype);
   if (Filter.IsEmpty())
-    logf (LOG_ERROR, "%s: No %s set. Nothing to do?", Doctype.c_str(), ini_filter_tag);
+    message_log (LOG_ERROR, "%s: No %s set. Nothing to do?", Doctype.c_str(), ini_filter_tag);
   else if (Filter.Equals(  NulFilter ))
     Filter.Clear();
   else
-    logf (LOG_INFO, "%s: Using '%s' to filter to Ascii text (PTEXT).", Doctype.c_str(), Filter.c_str());
+    message_log (LOG_INFO, "%s: Using '%s' to filter to Ascii text (PTEXT).", Doctype.c_str(), Filter.c_str());
 }
 void FILTER2MEMODOC::BeforeIndexing()
 {
@@ -226,11 +228,11 @@ void FILTER2MEMODOC::BeforeIndexing()
   MIME_Type = Getoption(ini_content_type_tag, mime_application_binary);
   Filter = ::SetFilter( Getoption(ini_filter_tag, GetDefaultFilter()) , Doctype);
   if (Filter.IsEmpty())
-    logf (LOG_ERROR, "%s: No %s set. Nothing to do?", Doctype.c_str(), ini_filter_tag);
+    message_log (LOG_ERROR, "%s: No %s set. Nothing to do?", Doctype.c_str(), ini_filter_tag);
   else if (Filter.Equals(  NulFilter ))
     Filter.Clear();
   else
-    logf (LOG_INFO, "%s: Using '%s' to filter to MEMO.", Doctype.c_str(), Filter.c_str());
+    message_log (LOG_INFO, "%s: Using '%s' to filter to MEMO.", Doctype.c_str(), Filter.c_str());
 }
 
 
@@ -284,7 +286,7 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord,
   const char *doctype = Doctype ? Doctype->c_str() : "Filter2";
   if (Filter == NULL || Filter->IsEmpty())
     {
-      logf (LOG_WARN, "%s: Filter is NIL", doctype);
+      message_log (LOG_WARN, "%s: Filter is NIL", doctype);
       return GDT_TRUE; // Do nothing
     }
 
@@ -293,21 +295,21 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord,
 
   Fn = FileRecord.GetFullFileName ();
 
-  logf (LOG_DEBUG, "%s: Input = '%s'", doctype, Fn.c_str());
+  message_log (LOG_DEBUG, "%s: Input = '%s'", doctype, Fn.c_str());
 
   INODE Inode (Fn);
 
   if (!Inode.Ok())
     {
       if (Inode.isDangling())
-	logf(LOG_ERROR, "%s: '%s' is a dangling symbollic link", doctype, Fn.c_str());
+	message_log(LOG_ERROR, "%s: '%s' is a dangling symbollic link", doctype, Fn.c_str());
       else
-	logf(LOG_ERRNO, "%s: Can't stat '%s'.", doctype , Fn.c_str());
+	message_log(LOG_ERRNO, "%s: Can't stat '%s'.", doctype , Fn.c_str());
       return GDT_FALSE;
     }
   if (Inode.st_size == 0)
     {
-      logf(LOG_ERROR, "'%s' has ZERO (0) length? Skipping.", Fn.c_str());
+      message_log(LOG_ERROR, "'%s' has ZERO (0) length? Skipping.", Fn.c_str());
       return GDT_FALSE;
     }
 
@@ -324,12 +326,12 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord,
     key.form("%s.%ld", s.c_str(), version); 
   // Now we have a good key
 
-  logf (LOG_DEBUG, "%s: Key set to '%s'", doctype, key.c_str());
+  message_log (LOG_DEBUG, "%s: Key set to '%s'", doctype, key.c_str());
 
   Db->ComposeDbFn (&s, DbExtCat);
   if (MkDir(s, 0, GDT_TRUE) == -1) // Force creation
     {
-      logf (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
+      message_log (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
       return GDT_FALSE;
     }
 //  outfile.form ("%s/%s", s.c_str(), key.c_str());
@@ -346,12 +348,12 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord,
   outfile.Cat (key);
 
   // So we pipe Fn bytes Start to End into outfile
-  logf (LOG_DEBUG, "Output to '%s'", outfile.c_str());
+  message_log (LOG_DEBUG, "Output to '%s'", outfile.c_str());
 
   FILE *fp;
   if ((fp = fopen(outfile, "w")) == NULL)
    {
-     logf (LOG_ERRNO, "%s: Could not create '%s'",  doctype, outfile.c_str());
+     message_log (LOG_ERRNO, "%s: Could not create '%s'",  doctype, outfile.c_str());
      return GDT_FALSE;
    }
   off_t len = 0;
@@ -370,13 +372,13 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord,
   FILE *pp = _IB_popen(pipe, "r");
   if (pp == NULL)
     {
-      logf (LOG_ERRNO, "%s: Could not open pipe '%s'", doctype, pipe.c_str());
+      message_log (LOG_ERRNO, "%s: Could not open pipe '%s'", doctype, pipe.c_str());
       fclose(fp);
       UnlinkFile(outfile);
 
       if (!IsAbsoluteFilePath (*Filter))
 	{
-	  logf (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.", doctype, Filter->c_str());
+	  message_log (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.", doctype, Filter->c_str());
 	  Filter->Clear();
 	}
       return GDT_FALSE;
@@ -409,12 +411,12 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord,
 
       STRING urifile;
       if (Db->_write_resource_path(outfile, FileRecord, &urifile) == GDT_FALSE)
-	logf (LOG_ERRNO, "%s: Could not create '%s'", doctype, urifile.c_str());
+	message_log (LOG_ERRNO, "%s: Could not create '%s'", doctype, urifile.c_str());
 
       Db->DocTypeAddRecord(NewRecord);
       return GDT_TRUE;
     }
-  logf (LOG_ERROR, "%s: pipe '%s' returned ONLY %d bytes!", doctype, pipe.c_str(), len);
+  message_log (LOG_ERROR, "%s: pipe '%s' returned ONLY %d bytes!", doctype, pipe.c_str(), len);
   // Remove junk
   UnlinkFile(outfile);
   return GDT_FALSE;
@@ -425,7 +427,7 @@ void FILTER2XMLDOC::ParseRecords(const RECORD& FileRecord)
 {
   if (Filter.Equals( NulFilter ))
     {
-      logf (LOG_WARN, "%s:BeforeIndexing() not called", Doctype.c_str());
+      message_log (LOG_WARN, "%s:BeforeIndexing() not called", Doctype.c_str());
       BeforeIndexing();
     }
   GenRecord(Db, FileRecord, &Filter, this);
@@ -434,7 +436,7 @@ void FILTER2TEXTDOC::ParseRecords(const RECORD& FileRecord)
 {
   if (Filter.Equals( NulFilter ))
     {
-      logf (LOG_WARN, "%s:BeforeIndexing() not called", Doctype.c_str());
+      message_log (LOG_WARN, "%s:BeforeIndexing() not called", Doctype.c_str());
       BeforeIndexing();
     }
   GenRecord(Db, FileRecord, &Filter, this);
@@ -443,7 +445,7 @@ void FILTER2HTMLDOC::ParseRecords(const RECORD& FileRecord)
 {
   if (Filter.Equals( NulFilter ))
     {
-      logf (LOG_WARN, "%s:BeforeIndexing() not called", Doctype.c_str());
+      message_log (LOG_WARN, "%s:BeforeIndexing() not called", Doctype.c_str());
       BeforeIndexing();
     }
   GenRecord(Db, FileRecord, &Filter, this);
@@ -452,7 +454,7 @@ void FILTER2MEMODOC::ParseRecords(const RECORD& FileRecord)
 {
   if (Filter.Equals( NulFilter ))
     {
-      logf (LOG_WARN, "%s:BeforeIndexing() not called", Doctype.c_str());
+      message_log (LOG_WARN, "%s:BeforeIndexing() not called", Doctype.c_str());
       BeforeIndexing();
     }
   GenRecord(Db, FileRecord, &Filter, this);

@@ -91,13 +91,13 @@ void COLONGRP::ParseFields (PRECORD NewRecord)
       NewRecord->GetDocumentType (&doctype);
       if (tags)
 	{
-	  logf (LOG_WARN, "Found no `%s' fields/tags in \"%s\"[%ld-%ld].",
+	  message_log (LOG_WARN, "Found no `%s' fields/tags in \"%s\"[%ld-%ld].",
 		(const char *)doctype, (const char *)fn,
 		(long)RecStart, (long)RecEnd);
 	}
       else
 	{
-	  logf (LOG_WARN, "%s parser was unable to process \"%s\"[%ld-%ld].",
+	  message_log (LOG_WARN, "%s parser was unable to process \"%s\"[%ld-%ld].",
 		(const char *)doctype, (const char *)fn,
 		(long)RecStart, (long)RecEnd);
 	}
@@ -135,7 +135,7 @@ void COLONGRP::ParseFields (PRECORD NewRecord)
 	    val_len--;
 	  if (val_len < 0)
 	    {
-	      logf (LOG_WARN, "Record in \"%s\" had an 'empty' field '%s'",
+	      message_log (LOG_WARN, "Record in \"%s\" had an 'empty' field '%s'",
                   (const char *)fn, *tags_ptr);
 	      continue;           // Don't bother with empty fields
 	    }
@@ -147,7 +147,7 @@ void COLONGRP::ParseFields (PRECORD NewRecord)
 	      entry_id[val_len + 1] = '\0';
 
 	      if (Db->KeyLookup (entry_id))
-		logf (LOG_ERROR, "Record in \"%s\" uses a non-unique %s '%s'",
+		message_log (LOG_ERROR, "Record in \"%s\" uses a non-unique %s '%s'",
 		  (const char *)fn, *tags_ptr, entry_id);
 	      else
 		NewRecord->SetKey (entry_id);
@@ -376,7 +376,7 @@ PCHR * COLONGRP::parse_Groups (PCHR b, size_t len)
   // Bail out if we don't have the same number of starting and ending tags
   if (tc_start != tc_end)
     {
-      logf (LOG_WARN, "Warning: unable to parse Groups. Mismatched starting and ending tags.");
+      message_log (LOG_WARN, "Warning: unable to parse Groups. Mismatched starting and ending tags.");
       t[0] = (PCHR) NULL;
       return t;
     }

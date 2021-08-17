@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)fcache.cxx  1.19 02/24/01 17:32:27 BSN"
 
 //#include <arpa/inet.h>
@@ -76,12 +80,12 @@ size_t FCACHE::LoadFieldCache(const STRING& fieldName, GDT_BOOLEAN useDisk)
 	  {
 	    if (Cache.CreateMap(Fn, MapRandom))
 	      {
-		logf (LOG_DEBUG, "Created Field Cache for %s", FieldName.c_str());
+		message_log (LOG_DEBUG, "Created Field Cache for %s", FieldName.c_str());
 		Disk = GDT_FALSE;
 		FieldTotal =  Cache.Size() / sizeof (FC);
 	      }
 	    else
-	      logf(LOG_ERRNO, "Could not map field table %s (%s)", Fn.c_str(), FieldName.c_str());
+	      message_log(LOG_ERRNO, "Could not map field table %s (%s)", Fn.c_str(), FieldName.c_str());
 	  }
 	if (Disk)
 	  {
@@ -93,7 +97,7 @@ size_t FCACHE::LoadFieldCache(const STRING& fieldName, GDT_BOOLEAN useDisk)
 	      }
 	    else
 	      {
-		logf(LOG_ERRNO, "Could not open field table %s (%s)", Fn.c_str(), FieldName.c_str());
+		message_log(LOG_ERRNO, "Could not open field table %s (%s)", Fn.c_str(), FieldName.c_str());
 	      }
 	  }
       }

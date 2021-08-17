@@ -109,7 +109,7 @@ HTMLMETA::HTMLMETA(PIDBOBJ DbParent, const STRING& Name):COLONDOC(DbParent, Name
 {
   fieldTableLoaded = 0;
   defaultDirMetadata = Getoption("DefaultMetadata", ".default.metadata.xml") ;
-  logf (LOG_DEBUG, "Default directory metadata filename = '%s'", defaultDirMetadata.c_str());
+  message_log (LOG_DEBUG, "Default directory metadata filename = '%s'", defaultDirMetadata.c_str());
 }
 
 void HTMLMETA::SourceMIMEContent(STRING *stringPtr) const
@@ -444,7 +444,7 @@ size_t HTMLMETA::CatMetaInfoIntoFile(FILE *outFp, const STRING& Fn, off_t Start,
                   }
 		else if (!ispunct(*fld)) // We'll be quiet on punctuation
 		  {
-		    logf (LOG_DEBUG, "%s: Encountered non meta line in '%s': %s",
+		    message_log (LOG_DEBUG, "%s: Encountered non meta line in '%s': %s",
 			Doctype.c_str(), metaInfoFile.c_str(), fld);
 		  }
               }
@@ -495,14 +495,14 @@ void HTMLMETA::ParseRecords (const RECORD& FileRecord)
       if (!Inode.Ok())
 	{
 	  if (Inode.isDangling())  
-	    logf(LOG_ERROR, "%s: '%s' is a dangling symbollic link", Doctype.c_str(), filename.c_str());
+	    message_log(LOG_ERROR, "%s: '%s' is a dangling symbollic link", Doctype.c_str(), filename.c_str());
 	  else
-	    logf(LOG_ERRNO, "%s: Can't stat '%s'.", Doctype.c_str(), filename.c_str());
+	    message_log(LOG_ERRNO, "%s: Can't stat '%s'.", Doctype.c_str(), filename.c_str());
 	  return;
 	}
       if (Inode.st_size == 0)
 	{
-	  logf(LOG_ERROR, "'%s' has ZERO (0) length? Skipping.", filename.c_str());
+	  message_log(LOG_ERROR, "'%s' has ZERO (0) length? Skipping.", filename.c_str());
 	  return;
 	}
       off_t start = FileRecord.GetRecordStart();
@@ -515,12 +515,12 @@ void HTMLMETA::ParseRecords (const RECORD& FileRecord)
       while (Db->KeyLookup (key)) key.form("%s.%ld", s.c_str(), ++version); 
       // Now we have a good key
 
-      logf (LOG_DEBUG, "%s: Key set to '%s'", Doctype.c_str(), key.c_str());
+      message_log (LOG_DEBUG, "%s: Key set to '%s'", Doctype.c_str(), key.c_str());
 
       Db->ComposeDbFn (&s, DbExtCat);
       if (MkDir(s, 0, GDT_TRUE) == -1)
 	{
-	  logf (LOG_ERRNO, "%s: Can't create filter directory '%s'", Doctype.c_str(), s.c_str() );
+	  message_log (LOG_ERRNO, "%s: Can't create filter directory '%s'", Doctype.c_str(), s.c_str() );
 	  return;
 	}
       // <db_ext>.cat/<Hash>/<Key>.html
@@ -538,7 +538,7 @@ void HTMLMETA::ParseRecords (const RECORD& FileRecord)
 
       if ((fp = fopen(outfile, "w")) == NULL)
 	{
-	  logf (LOG_ERRNO, "%s: Could not create '%s'", Doctype.c_str(), outfile.c_str());
+	  message_log (LOG_ERRNO, "%s: Could not create '%s'", Doctype.c_str(), outfile.c_str());
 	  return;
 	}
       CatMetaInfoIntoFile(fp, filename, start, end);
@@ -548,7 +548,7 @@ void HTMLMETA::ParseRecords (const RECORD& FileRecord)
       if (recordLength < 5)
 	{
 	  unlink(outfile);
-	  logf (LOG_WARN, "%s: Skipping '%s': Contained %d chars text?", Doctype.c_str(),
+	  message_log (LOG_WARN, "%s: Skipping '%s': Contained %d chars text?", Doctype.c_str(),
 		FileRecord.GetFileName().c_str(), (int)recordLength);
 	  return;
 	}
@@ -570,7 +570,7 @@ void HTMLMETA::ParseRecords (const RECORD& FileRecord)
 
       STRING urifile;
       if (Db->_write_resource_path(outfile, FileRecord, &urifile) == GDT_FALSE)
-	logf (LOG_ERRNO, "%s: Could not create '%s'", Doctype.c_str(), urifile.c_str());
+	message_log (LOG_ERRNO, "%s: Could not create '%s'", Doctype.c_str(), urifile.c_str());
 
       Db->DocTypeAddRecord(NewRecord);
       return;
@@ -586,7 +586,7 @@ void HTMLMETA::ParseRecords (const RECORD& FileRecord)
 	  ffclose(fp);
 	  if (memcmp(buf, "%PDF-", 5) == 0)
 	    {
-	      logf (LOG_WARN, "File %s is NOT HTML but PDF!", filename.c_str());
+	      message_log (LOG_WARN, "File %s is NOT HTML but PDF!", filename.c_str());
 	      RECORD Record(FileRecord);
 	      DOCTYPE_ID Id("PDF");
 	      if (Id.IsDefined())
@@ -614,7 +614,7 @@ void HTMLMETA::ParseRecords (const RECORD& FileRecord)
 	    }
 	  if (err && (tcp - buf > 512))
 	    {
-              logf (LOG_WARN, "File %s is NOT HTML! Trying autodetection.", filename.c_str());
+              message_log (LOG_WARN, "File %s is NOT HTML! Trying autodetection.", filename.c_str());
               RECORD Record(FileRecord);
               DOCTYPE_ID Id("AUTODETECT");
               if (Id.IsDefined())
@@ -651,7 +651,7 @@ void HTMLMETA::ParseFields(RECORD *NewRecord)
   const STRING    filename ( NewRecord->GetFullFileName() );
 
   if ((fp = ffopen(filename, "rb")) == NULL) {
-    logf (LOG_ERRNO, "%s::ParseFields(): Failed to open file '%s'",
+    message_log (LOG_ERRNO, "%s::ParseFields(): Failed to open file '%s'",
 	Doctype.c_str(), filename.c_str());
     NewRecord->SetBadRecord();
     return;
@@ -697,7 +697,7 @@ void HTMLMETA::ParseFields(RECORD *NewRecord)
   if (position == -1) // Error Condition
     {
       ffclose(fp);
-      logf (LOG_ERRNO, "%s::ParseFields(): Failed to seek on '%s' to RecordStart (%ld)",
+      message_log (LOG_ERRNO, "%s::ParseFields(): Failed to seek on '%s' to RecordStart (%ld)",
         Doctype.c_str(), filename.c_str(), RecordStart);
       NewRecord->SetBadRecord();
       return;
@@ -719,7 +719,7 @@ void HTMLMETA::ParseFields(RECORD *NewRecord)
       } else {
 	switch (ch) {
 	case 0:
-	  logf (LOG_WARN, "<NUL> character (\\000) in '%s'(%ld) stream. Are you sure its %s (HTML)?",
+	  message_log (LOG_WARN, "<NUL> character (\\000) in '%s'(%ld) stream. Are you sure its %s (HTML)?",
 		filename.c_str(), position, Doctype.c_str());
 	  ffclose(fp);
 	  NewRecord->SetBadRecord();
@@ -729,7 +729,7 @@ void HTMLMETA::ParseFields(RECORD *NewRecord)
 	case 17: case 18: case 19: case 20: case 21: case 22:
 	case 23: case 24: case 25: case 26: case 27: case 28:
 	case 29: case 30: case 31: case 127:
-	  logf (LOG_DEBUG, "%s Shunchar Control 0x%x encountered in '%s'(%ld)!",
+	  message_log (LOG_DEBUG, "%s Shunchar Control 0x%x encountered in '%s'(%ld)!",
 		Doctype.c_str(), (int)ch, filename.c_str(), position);
 	  break;
 	case '<':
@@ -872,7 +872,7 @@ void HTMLMETA::ParseFields(RECORD *NewRecord)
 
 	    if (fieldName.Length() == 0)
 	      {
-		logf(LOG_WARN, "NIL FieldName encountered in %s.", filename.c_str());
+		message_log(LOG_WARN, "NIL FieldName encountered in %s.", filename.c_str());
 	      }
 	    else
 	      {
@@ -978,7 +978,7 @@ void HTMLMETA::ParseFields(RECORD *NewRecord)
                     if (locale.Ok())
 		      NewRecord->SetLocale( locale );
                     else
-                      logf (LOG_WARN, "Could not parse HTTP-EQUIV Locale '%s'", Value.c_str());
+                      message_log (LOG_WARN, "Could not parse HTTP-EQUIV Locale '%s'", Value.c_str());
 		  }
 		else if (strncasecmp(name, "Last-Modified", 4) == 0)
 		  {
@@ -989,7 +989,7 @@ void HTMLMETA::ParseFields(RECORD *NewRecord)
 		    if (Date.Ok())
 		      NewRecord->SetDate( Date );
 		    else
-		      logf (LOG_WARN, "Could not parse HTTP-EQUIV Date '%s'", Value.c_str());
+		      message_log (LOG_WARN, "Could not parse HTTP-EQUIV Date '%s'", Value.c_str());
 		  }
 		else
 		for (size_t i=0; skip == 0 && IgnoreEQUIV[i].len; i++)
@@ -1044,13 +1044,13 @@ void HTMLMETA::ParseFields(RECORD *NewRecord)
 		if (Date.Ok())
 		  NewRecord->SetDate( Date );
 		else
-		  logf (LOG_WARN, "Could not parse %s Date '%s'", fieldName.c_str(), Value.c_str());
+		  message_log (LOG_WARN, "Could not parse %s Date '%s'", fieldName.c_str(), Value.c_str());
 	      }
 
 	    if (fieldName.GetLength() != 0)
 	      {
 		if (fieldName.GetChar(0) == '<')
-		  logf(LOG_WARN, "Oddball Field '%s' encountered in %s",
+		  message_log(LOG_WARN, "Oddball Field '%s' encountered in %s",
 			fieldName.c_str(), filename.c_str());
 
 		// Check if "date", 26 Dec 2007
@@ -1099,7 +1099,7 @@ void HTMLMETA::ParseFields(RECORD *NewRecord)
 #endif
 
   if (tagCount == 0)
-    logf (LOG_WARN, "File %s was not of type %s (no tags)!",
+    message_log (LOG_WARN, "File %s was not of type %s (no tags)!",
 	filename.c_str(), Doctype.c_str() );
 
   NewRecord->SetDft(dft);
@@ -1107,7 +1107,7 @@ void HTMLMETA::ParseFields(RECORD *NewRecord)
     {
       if (Db->KeyLookup (Key))
 	{
-	  logf (LOG_WARN, "Record in \"%s\" used a non-unique %s '%s'",
+	  message_log (LOG_WARN, "Record in \"%s\" used a non-unique %s '%s'",
 		filename.c_str(), KeyField.c_str(), Key.c_str());
 	  Db->MdtSetUniqueKey(NewRecord, Key);
 	}
@@ -1164,7 +1164,7 @@ INT HTMLMETA::GetTerm(const STRING& Filename, CHR *Buffer, off_t Offset, size_t 
   char         *tmp = (char *)tagBuffer.Want(want+1); 
   if (tmp == NULL)
     {
-      logf (LOG_PANIC|LOG_ERRNO, "%s GetTerm buffer exhausted, wanted %d bytes", Doctype.c_str(), want);
+      message_log (LOG_PANIC|LOG_ERRNO, "%s GetTerm buffer exhausted, wanted %d bytes", Doctype.c_str(), want);
       Buffer[0] = '\0';
       return 0;
     }
@@ -1212,7 +1212,7 @@ INT HTMLMETA::GetTerm(const STRING& Filename, CHR *Buffer, off_t Offset, size_t 
     Buffer[0] = '\0';
 
   if ((size_t)count > Length)
-    logf (LOG_PANIC, "%s::GetTerm: read too much", Doctype.c_str());
+    message_log (LOG_PANIC, "%s::GetTerm: read too much", Doctype.c_str());
 
   return count;
 }

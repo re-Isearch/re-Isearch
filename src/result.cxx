@@ -1,13 +1,13 @@
-#pragma ident  "@(#)result.cxx  1.69 02/05/01 01:44:14 BSN"
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
+#pragma ident  "@(#)result.cxx"
 
 /************************************************************************
 ************************************************************************/
 
 /*@@@
 File:		result.cxx
-Version:	1.01
 Description:	Class RESULT - Search Result
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #include <ctype.h>
@@ -124,9 +124,9 @@ void RESULT::GetRecordData(STRING *StringBuffer, DOCTYPE *DoctypePtr) const
 
   StringBuffer->Clear();
   if (RecordEnd <= RecordStart)
-    logf (LOG_ERROR, "Element Error (%ld-%ld) in '%s'!", RecordStart, RecordEnd, fn.c_str());
+    message_log (LOG_ERROR, "Element Error (%ld-%ld) in '%s'!", RecordStart, RecordEnd, fn.c_str());
   else if (::GetRecordData(fn, StringBuffer, RecordStart, (size_t)(RecordEnd - RecordStart + 1), DoctypePtr) == 0)
-    logf (LOG_ERRNO, "Element %ld-%ld read error in '%s'!", RecordStart, RecordEnd, fn.c_str()); // ERROR
+    message_log (LOG_ERRNO, "Element %ld-%ld read error in '%s'!", RecordStart, RecordEnd, fn.c_str()); // ERROR
 }
 
 void RESULT::Write(FILE *fp) const
@@ -473,7 +473,7 @@ GDT_BOOLEAN RESULT::XMLPresentNthHit(size_t N, STRING *StringBuffer, const STRIN
 
       if (localStart > localEnd)
 	{
-	  logf (LOG_PANIC, "Start after End in RESULT::XMLPresentNthHit()");
+	  message_log (LOG_PANIC, "Start after End in RESULT::XMLPresentNthHit()");
 StringBuffer->form("ERROR (%ld,%ld) not inside Record (%ld,%ld)",  start, end, RecordStart, RecordEnd);
 	  return GDT_FALSE;
 	}
@@ -645,7 +645,7 @@ RESULT::~RESULT()
 {
 #ifdef DEBUG_MEMORY
   if (--__IB_RESULT_allocated_count < 0)
-    logf (LOG_PANIC, "RESULT global allocated count %ld < 0!", (long)__IB_RESULT_allocated_count);
+    message_log (LOG_PANIC, "RESULT global allocated count %ld < 0!", (long)__IB_RESULT_allocated_count);
 #endif
 }
 

@@ -91,7 +91,7 @@ void INFOTAG::ParseFields(PRECORD NewRecord) {
 	RecEnd = NewRecord->GetRecordEnd();
 	if (RecEnd == 0) {
 		if(fseek(fp, 0, 2) == -1) {
-			 logf (LOG_ERRNO, "INFOTAG::ParseRecords(): Seek failed - '%s'",
+			 message_log (LOG_ERRNO, "INFOTAG::ParseRecords(): Seek failed - '%s'",
 				(const char *)fn);
 			Db->ffclose(fp);
 			return;	
@@ -105,8 +105,8 @@ void INFOTAG::ParseFields(PRECORD NewRecord) {
 			if (RecEnd || RecStart)  
 				Message << "[" << (INT)RecStart << "-" << (INT)RecEnd << "]"; 
 			Message << "...";
-			logf (LOG_WARN, Message);
-			logf (LOG_NOTICE, "INFOTAG skipping record");
+			message_log (LOG_WARN, Message);
+			message_log (LOG_NOTICE, "INFOTAG skipping record");
 			return;
 		}
 		//RecEnd -= 1;
@@ -114,7 +114,7 @@ void INFOTAG::ParseFields(PRECORD NewRecord) {
 
 	// Make two copies of the record in memory
 	if(fseek(fp, RecStart, 0) == -1) {
-		logf (LOG_ERRNO, "INFOTAG::ParseRecords(): Seek failed - '%s'",
+		message_log (LOG_ERRNO, "INFOTAG::ParseRecords(): Seek failed - '%s'",
 			(const char *)fn);
 		Db->ffclose(fp);
 		return;	
@@ -127,7 +127,7 @@ void INFOTAG::ParseFields(PRECORD NewRecord) {
 		STRING Message;
 		Message << "INFOTAG::ParseRecords(): Failed to allocate " <<
 			(INT)(RecLength + 1) << " bytes - " << fn;
-		logf (LOG_ERRNO, Message);
+		message_log (LOG_ERRNO, Message);
 		return;
 	}
 	OrigRecBuffer = new CHR[RecLength + 1];
@@ -137,13 +137,13 @@ void INFOTAG::ParseFields(PRECORD NewRecord) {
 		STRING Message; 
 		Message << "INFOTAG::ParseRecords(): Failed to allocate " <<
 			(INT)(RecLength + 1) << " bytes - " << fn;
-                logf (LOG_ERRNO, Message); 
+                message_log (LOG_ERRNO, Message); 
 		return;
 	}
 
 	ActualLength = (GPTYPE)fread(RecBuffer, 1, RecLength, fp);
 	if(ActualLength == 0) {
-		logf (LOG_ERRNO, "INFOTAG::ParseRecords(): Failed to fread");
+		message_log (LOG_ERRNO, "INFOTAG::ParseRecords(): Failed to fread");
 		delete [] RecBuffer;
 		delete [] OrigRecBuffer;
 		Db->ffclose(fp);
@@ -151,7 +151,7 @@ void INFOTAG::ParseFields(PRECORD NewRecord) {
 	}
 	Db->ffclose(fp);
 	if(ActualLength != RecLength) {
-		logf (LOG_ERROR, "INFOTAG::ParseRecords(): fread less bytes");
+		message_log (LOG_ERROR, "INFOTAG::ParseRecords(): fread less bytes");
 		delete [] RecBuffer;
 		delete [] OrigRecBuffer;
 		return;
@@ -174,14 +174,14 @@ void INFOTAG::ParseFields(PRECORD NewRecord) {
 
 	pdft = new DFT();
 	if(!pdft) {
-		logf (LOG_ERRNO, "INFOTAG::ParseRecords(): Failed to allocate DFT");
+		message_log (LOG_ERRNO, "INFOTAG::ParseRecords(): Failed to allocate DFT");
 		delete [] RecBuffer;
 		delete [] OrigRecBuffer;
 		return;
 	}
 	tags = parse_tags(RecBuffer, RecLength);
 	if(tags == NULL) {
-		logf (LOG_ERROR, "Unable to parse XML file %s", (const char *)fn);
+		message_log (LOG_ERROR, "Unable to parse XML file %s", (const char *)fn);
 		delete pdft;
 		delete [] RecBuffer;
 		delete [] OrigRecBuffer;
@@ -263,7 +263,7 @@ static char **parse_tags(char *b, int len)
 	max_num_tags = TAG_GROW_SIZE;
 	t = new PCHR[max_num_tags];
 	if(!t) {
-		logf (LOG_ERRNO, "INFOTAG::parse_tags(): couldn't allocate tag");
+		message_log (LOG_ERRNO, "INFOTAG::parse_tags(): couldn't allocate tag");
 		return NULL;
 	}
 

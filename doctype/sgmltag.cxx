@@ -127,7 +127,7 @@ void SGMLTAG::ParseFields(PRECORD NewRecord) {
 	RecEnd = NewRecord->GetRecordEnd();
 	if (RecEnd == 0) {
 		if(fseek(fp, 0, 2) == -1) {
-			 logf (LOG_ERRNO, "SGMLTAG::ParseRecords(): Seek failed - '%s'",
+			 message_log (LOG_ERRNO, "SGMLTAG::ParseRecords(): Seek failed - '%s'",
 				(const char *)fn);
 			Db->ffclose(fp);
 			return;	
@@ -141,8 +141,8 @@ void SGMLTAG::ParseFields(PRECORD NewRecord) {
 			if (RecEnd || RecStart)  
 				Message << "[" << (INT)RecStart << "-" << (INT)RecEnd << "]"; 
 			Message << "...";
-			logf (LOG_WARN, Message);
-			logf (LOG_NOTICE, "SGMLTAG skipping record");
+			message_log (LOG_WARN, Message);
+			message_log (LOG_NOTICE, "SGMLTAG skipping record");
 			return;
 		}
 		//RecEnd -= 1;
@@ -150,7 +150,7 @@ void SGMLTAG::ParseFields(PRECORD NewRecord) {
 
 	// Make two copies of the record in memory
 	if(fseek(fp, RecStart, 0) == -1) {
-		logf (LOG_ERRNO, "SGMLTAG::ParseRecords(): Seek failed - '%s'",
+		message_log (LOG_ERRNO, "SGMLTAG::ParseRecords(): Seek failed - '%s'",
 			(const char *)fn);
 		Db->ffclose(fp);
 		return;	
@@ -164,13 +164,13 @@ void SGMLTAG::ParseFields(PRECORD NewRecord) {
 	}
 	ActualLength = (GPTYPE)fread(RecBuffer, 1, RecLength, fp);
 	if(ActualLength == 0) {
-		logf (LOG_ERRNO, "SGMLTAG::ParseRecords(): Failed to fread");
+		message_log (LOG_ERRNO, "SGMLTAG::ParseRecords(): Failed to fread");
 		Db->ffclose(fp);
 		return;
 	}
 	Db->ffclose(fp);
 	if(ActualLength != RecLength) {
-		logf (LOG_ERROR, "SGMLTAG::ParseRecords(): fread less bytes");
+		message_log (LOG_ERROR, "SGMLTAG::ParseRecords(): fread less bytes");
 		return;
 	}
 
@@ -187,12 +187,12 @@ void SGMLTAG::ParseFields(PRECORD NewRecord) {
 
 	pdft = new DFT();
 	if(!pdft) {
-		logf (LOG_ERRNO, "SGMLTAG::ParseRecords(): Failed to allocate DFT");
+		message_log (LOG_ERRNO, "SGMLTAG::ParseRecords(): Failed to allocate DFT");
 		return;
 	}
 	tags = parse_tags(RecBuffer, RecLength);
 	if(tags == NULL) {
-		logf (LOG_ERROR, "Unable to parse SGML file %s", (const char *)fn);
+		message_log (LOG_ERROR, "Unable to parse SGML file %s", (const char *)fn);
 		delete pdft;
 		return;
 	}
@@ -213,7 +213,7 @@ void SGMLTAG::ParseFields(PRECORD NewRecord) {
 			df.SetFieldName(FieldName);
 			pdft->AddEntry(df);
 		} else if (p == NULL)
-		  logf (LOG_WARN, "No End-tag for <%s>", *tags_ptr);
+		  message_log (LOG_WARN, "No End-tag for <%s>", *tags_ptr);
 		tags_ptr++;
 	}
 
@@ -273,7 +273,7 @@ char **SGMLTAG::parse_tags(char *b, off_t len)
 	// Start with TAG_GROW_SIZE of them.
 	t = (PCHR *)tagsBuffer.Want (256, sizeof(PCHR));
 	if(!t) {
-		logf (LOG_ERRNO, "SGMLTAG::parse_tags(): couldn't allocate tag");
+		message_log (LOG_ERRNO, "SGMLTAG::parse_tags(): couldn't allocate tag");
 		return t;
 	}
 
@@ -285,7 +285,7 @@ char **SGMLTAG::parse_tags(char *b, off_t len)
 					break;
 				b[i] = '\0';
 				if ((t = (PCHR *)tagsBuffer.Expand(++tc, sizeof(PCHR))) == NULL) {
-					logf (LOG_ERRNO, "SGMLTAG::parse_tags(): couldn't allocate expanded tag");
+					message_log (LOG_ERRNO, "SGMLTAG::parse_tags(): couldn't allocate expanded tag");
 					return t;
 				}
 				State = OK;

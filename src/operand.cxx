@@ -1,13 +1,13 @@
-#pragma ident  "@(#)operand.cxx  1.4 10/13/99 12:55:23 BSN"
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
+#pragma ident  "@(#)operand.cxx"
 
 /************************************************************************
 ************************************************************************/
 
 /*@@@
 File:		operand.cxx
-Version:	1.00
 Description:	Class OPERAND - Query Operand
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #include "operand.hxx"

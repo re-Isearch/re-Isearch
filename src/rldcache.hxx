@@ -1,11 +1,6 @@
-// $Id: rldcache.hxx,v 1.1 2007/05/15 15:47:20 edz Exp $
-/*@@@
-File:		rldcache.hxx
-Version:	$Revision: 1.1 $
-Description:	Cache & cache entry class
-Author:		Kevin Gamiel (CNIDR)
-Notes:          Converted to C++ class by A. Warnock (warnock@clark.net)
-@@@*/
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
+/* Cache & cache entry class */
 
 #ifndef _RLDCACHE_HXX
 #define _RLDCACHE_HXX

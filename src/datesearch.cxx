@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /* $Id: datesearch.cxx */
 
 /*@@@
@@ -82,7 +86,7 @@ PIRSET INDEX::DoDateSearch(const STRING& QueryTerm, const STRING& FieldName,
   PIRSET pirset=(PIRSET)NULL;
   FIELDTYPE FieldType = Parent->GetFieldType(FieldName);
 
-  logf (LOG_DEBUG, "Date Search in '%s' with: %s (Rel=%d,Struct=%d)",
+  message_log (LOG_DEBUG, "Date Search in '%s' with: %s (Rel=%d,Struct=%d)",
 	FieldName.c_str(), QueryTerm.c_str(), (int)Relation, (int)Structure);
 
   if (FieldType.IsDate() || FieldType.IsDateRange()) {
@@ -105,7 +109,7 @@ PIRSET INDEX::DoDateSearch(const STRING& QueryTerm, const STRING& FieldName,
     }
   } else {
      Parent->SetErrorCode(113); // "Unsupported attribute type"
-     logf (LOG_DEBUG, "\"%s\": %s", QueryTerm.c_str(), Parent->ErrorMessage() );
+     message_log (LOG_DEBUG, "\"%s\": %s", QueryTerm.c_str(), Parent->ErrorMessage() );
    }
 
   
@@ -203,7 +207,7 @@ PIRSET INDEX::DateRangeSearch(const STRING& QueryTerm, const STRING& FieldName,
 
   default:
     Parent->SetErrorCode(117); // "Unsupported Relation attribute";
-    logf (LOG_DEBUG, "DateRangeSearch does not have a handler for relation=%d", Relation);
+    message_log (LOG_DEBUG, "DateRangeSearch does not have a handler for relation=%d", Relation);
     break;
   }
 
@@ -311,7 +315,7 @@ PIRSET INDEX::SingleDateSearch(const STRING& QueryTerm, const STRING& FieldName,
 
   default:
     Parent->SetErrorCode(117); // "Unsupported Relation attribute";
-    logf (LOG_DEBUG, "DateRangeSearch does not have a handler for relation=%d", Relation);
+    message_log (LOG_DEBUG, "DateRangeSearch does not have a handler for relation=%d", Relation);
 
     break;
   }
@@ -638,7 +642,7 @@ PIRSET INDEX::SingleDateSearchAfter(const SRCH_DATE& QueryDate,
   YYYYMMDD->Dump();
 #endif
   if (YYYYMMDD == NULL)
-    logf (LOG_PANIC, "NULL IRSET in date search!!!");
+    message_log (LOG_PANIC, "NULL IRSET in date search!!!");
 
   if (YYYYMM)
     {

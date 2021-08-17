@@ -8,7 +8,7 @@
 XML::XML (PIDBOBJ DbParent, const STRING& Name) :
 	SGMLNORM (DbParent, Name)
 {
-  logf (LOG_DEBUG, "XML: Init");
+  message_log (LOG_DEBUG, "XML: Init");
 }
 
 XML::~XML ()
@@ -61,7 +61,7 @@ void XML::ParseRecords(const RECORD& FileRecord)
 	MapSequential);
   if (!mapping.Ok())
     {
-      logf (LOG_ERRNO, "%s::ParseRecords: Could not map '%s' into memory", Doctype.c_str(), fn.c_str());
+      message_log (LOG_ERRNO, "%s::ParseRecords: Could not map '%s' into memory", Doctype.c_str(), fn.c_str());
       SGMLNORM::ParseRecords(FileRecord);
       return;
     }
@@ -71,9 +71,9 @@ void XML::ParseRecords(const RECORD& FileRecord)
   // Min. XML is: <x>xx</x>
   if (ActualLength < 10) {
     if (ActualLength == 0)
-      logf (LOG_WARN, "Record '%s' is empty.", fn.c_str());
+      message_log (LOG_WARN, "Record '%s' is empty.", fn.c_str());
     else
-      logf (LOG_WARN, "Record '%s' is too short [%lu byte(s)], skipping", fn.c_str(), ActualLength);
+      message_log (LOG_WARN, "Record '%s' is too short [%lu byte(s)], skipping", fn.c_str(), ActualLength);
     return;
   }
 
@@ -99,7 +99,7 @@ void XML::ParseRecords(const RECORD& FileRecord)
        case 17: case 18: case 19: case 20: case 21: case 22:
        case 23: case 24: case 25: case 26: case 27: case 28:
        case 29: case 30: case 31: case 127:
-          logf (LOG_WARN, "%s Shunchar Control 0x%x encountered '%s'(%ld)!",
+          message_log (LOG_WARN, "%s Shunchar Control 0x%x encountered '%s'(%ld)!",
           Doctype.c_str(),Ch , fn.c_str(), fStart);
 	  // fall into..
        case '>':
@@ -110,10 +110,10 @@ void XML::ParseRecords(const RECORD& FileRecord)
   if (badXML > 1 || ((ActualLength-tagStart) < 5 || (tagStart - Start > 100))) {
     const char msg[] = " is not clean XML, skipping!";
     if (GlobalRecordStart > 0)
-      logf(LOG_ERROR, "%s: Record '%s'(%u-%u)%s", Doctype.c_str(),
+      message_log(LOG_ERROR, "%s: Record '%s'(%u-%u)%s", Doctype.c_str(),
 	fn.c_str(), (unsigned)GlobalRecordStart, (unsigned)FileRecord.GetRecordEnd(), msg);
     else
-      logf(LOG_ERROR, "%s: Document '%s'%s", Doctype.c_str(), fn.c_str(), msg);
+      message_log(LOG_ERROR, "%s: Document '%s'%s", Doctype.c_str(), fn.c_str(), msg);
     return;
   } 
 #endif
@@ -177,7 +177,7 @@ void XML::ParseRecords(const RECORD& FileRecord)
 // cerr << "XXXXXXXXXXXXX First Tag: <" << tag << "> ..... </" << tag << ">" << endl; 
   eTag << "</" << tag; // Need to look for this!
 
-  logf (LOG_DEBUG, "%s:ParseRecords Looking for %s", Doctype.c_str(), eTag.c_str());
+  message_log (LOG_DEBUG, "%s:ParseRecords Looking for %s", Doctype.c_str(), eTag.c_str());
 
   for (; i < ActualLength; i++)
     {
@@ -243,7 +243,7 @@ cerr << Record.GetRecordStart() << " -- " << Record.GetRecordEnd() << endl;
   }
 #endif
 
- if (recordCount > 1) logf (LOG_INFO, "%s: Added %d records.", Doctype.c_str(), recordCount);
+ if (recordCount > 1) message_log (LOG_INFO, "%s: Added %d records.", Doctype.c_str(), recordCount);
 }
 
 /*
@@ -310,7 +310,7 @@ const PCHR XML::find_end_tag (const char *const *t, const char *tag, size_t *off
 #if RETRO
   if (tt == NULL && caseTag != NULL)
     {
-      logf (LOG_NOTICE, "%s: Case independent match for <%s> used (violates XML 1.0 Spec).", Doctype.c_str(), tag);
+      message_log (LOG_NOTICE, "%s: Case independent match for <%s> used (violates XML 1.0 Spec).", Doctype.c_str(), tag);
       tt = caseTag;
     }
 #endif

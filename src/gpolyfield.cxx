@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 // $Id: gpolyfield.cxx,v 1.1 2007/05/15 15:47:23 edz Exp $
 /*@@@
 File:		gpolyfield.cxx
@@ -8,7 +12,7 @@ Author:		Archie Warnock (warnock@awcubed.com), A/WWW Enterprises
 @@@*/
 
 #include <math.h> /* for fabs */
-#undef logf
+#undef message_log
 
 #include "gpolyfield.hxx"
 #include "magic.hxx"
@@ -31,7 +35,7 @@ void  GPOLYFLD::SetVertexCount(size_t x)
       try {
          new_Vertices = new DOUBLE[x];
       } catch (...) {
-	logf (LOG_PANIC|LOG_ERRNO, "Could not allocate Spatial Polygon object %d", x);
+	message_log (LOG_PANIC|LOG_ERRNO, "Could not allocate Spatial Polygon object %d", x);
 	return;
       }
       size_t  i;
@@ -166,7 +170,7 @@ int GPOLYFLD::Read(FILE *fp)
     {
       if (obj == -1 && feof(fp))
 	return -1;
-      logf (LOG_WARN, "GPOLYFLD::Read. Not a GPOLY Field (%d!=%d @%ld)?",
+      message_log (LOG_WARN, "GPOLYFLD::Read. Not a GPOLY Field (%d!=%d @%ld)?",
 	(int)obj, (int)objGPOLYFLD, (long)(ftell(fp)-1));
       PushBackObjID (obj, fp);
       GlobalStart = 0;

@@ -1,10 +1,8 @@
-// $Id: bboxfield.hxx,v 1.1 2007/05/15 15:47:20 edz Exp $
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 /*@@@
 File:		bboxfield.hxx
-Version:	1.0
-$Revision: 1.1 $
 Description:	Class BBOXFIELD - Spatial bounding box data object
-Author:	 	Edward C. Zimmermann	
 @@@*/
 
 #include <stdio.h>

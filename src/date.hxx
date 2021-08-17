@@ -1,8 +1,8 @@
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 /*@@@
 File:		dates.hxx
-Version:	1.43
 Description:	Class DATE - BSN Date data structures class
-Author:		Edward C. Zimmermann (edz@nonmonotonic.com)
 @@@*/
 
 #ifndef DATE_HXX

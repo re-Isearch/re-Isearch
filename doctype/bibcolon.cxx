@@ -78,14 +78,14 @@ void BIBCOLON::ParseRecords (const RECORD& FileRecord)
   int fd = open(fn, O_RDONLY);
   if (fd == -1)
     {
-      logf (LOG_ERRNO, "Could not access %s", fn.c_str());
+      message_log (LOG_ERRNO, "Could not access %s", fn.c_str());
       return;                   // File not accessed
     }
 #else
   PFILE fp = Db->ffopen (fn, "rb");
   if (!fp)
     {
-      logf (LOG_ERRNO, "%s::ParseRecords: Could not access '%s'", Doctype.c_str(), fn.c_str());
+      message_log (LOG_ERRNO, "%s::ParseRecords: Could not access '%s'", Doctype.c_str(), fn.c_str());
       return;			// File not accessed
     }
 #endif
@@ -104,7 +104,7 @@ void BIBCOLON::ParseRecords (const RECORD& FileRecord)
 
   if (End - Start <= 0)
     {
-      logf (LOG_WARN, "zero-length record - '" + fn);
+      message_log (LOG_WARN, "zero-length record - '" + fn);
       close (fd);
       return;
     }
@@ -115,7 +115,7 @@ void BIBCOLON::ParseRecords (const RECORD& FileRecord)
 
   if (MemoryMap.Ok())
     {
-      logf (LOG_WARN, "Could not map '%s' (%ld-%ld)",
+      message_log (LOG_WARN, "Could not map '%s' (%ld-%ld)",
 	(const char *)fn, (long)Start, (long)End);
       return;
     }
@@ -127,7 +127,7 @@ void BIBCOLON::ParseRecords (const RECORD& FileRecord)
  
   if (End - Start <= 0)
     {
-      logf (LOG_WARN, "zero-length record - '" + fn);
+      message_log (LOG_WARN, "zero-length record - '" + fn);
       Db->ffclose (fp);
       return;
     }
@@ -135,7 +135,7 @@ void BIBCOLON::ParseRecords (const RECORD& FileRecord)
   if (Start > 0)
     if (fseek (fp, Start, 0) == -1)
       {
-	logf (LOG_ERRNO, "%s::ParseRecords(): Seek failed - %s", Doctype.c_str(), fn.c_str());
+	message_log (LOG_ERRNO, "%s::ParseRecords(): Seek failed - %s", Doctype.c_str(), fn.c_str());
 	Db->ffclose (fp);
 	return;
       }
@@ -144,7 +144,7 @@ void BIBCOLON::ParseRecords (const RECORD& FileRecord)
   GPTYPE ActualLength = (GPTYPE) fread (RecBuffer, 1, RecLength, fp);
   if (ActualLength == 0)
     {
-      logf (LOG_ERRNO, "%s::ParseRecords(): Failed to fread %s", Doctype.c_str(), fn.c_str());
+      message_log (LOG_ERRNO, "%s::ParseRecords(): Failed to fread %s", Doctype.c_str(), fn.c_str());
       delete[]RecBuffer;
       Db->ffclose (fp);
       return;
@@ -152,7 +152,7 @@ void BIBCOLON::ParseRecords (const RECORD& FileRecord)
   Db->ffclose (fp);
   if (ActualLength != RecLength)
     {
-      logf (LOG_ERRNO, "%s::ParseRecords(): Failed to fread %d bytes, got %d",
+      message_log (LOG_ERRNO, "%s::ParseRecords(): Failed to fread %d bytes, got %d",
 	Doctype.c_str(), RecLength, ActualLength);
       delete[]RecBuffer;
       return;
@@ -212,9 +212,9 @@ void BIBCOLON::ParseFields (RECORD *NewRecord)
   if (tags == NULL || tags[0] == NULL)
     {
       if (tags)
-	logf (LOG_WARN, "No `%s' fields/tags in %s", Doctype.c_str(), fn.c_str());
+	message_log (LOG_WARN, "No `%s' fields/tags in %s", Doctype.c_str(), fn.c_str());
       else
-	logf (LOG_ERROR, "Unable to parse `%s' record in %s", Doctype.c_str(), fn.c_str());
+	message_log (LOG_ERROR, "Unable to parse `%s' record in %s", Doctype.c_str(), fn.c_str());
       NewRecord->SetBadRecord();
       return;
     }
@@ -264,7 +264,7 @@ void BIBCOLON::ParseFields (RECORD *NewRecord)
 	    {
 	      if (FieldName != "Template")
 		{
-		  logf (LOG_ERROR, "Record in \"%s\" does not begin with a Template type!", fn.c_str());
+		  message_log (LOG_ERROR, "Record in \"%s\" does not begin with a Template type!", fn.c_str());
 		  return;
 		}
 	      else
@@ -274,11 +274,11 @@ void BIBCOLON::ParseFields (RECORD *NewRecord)
 	    {
 	      if (FieldName != "Handle")
 		{
-		  logf (LOG_ERROR, "Record in \"" + fn + "\" does not have a Handle as its 2nd field");
+		  message_log (LOG_ERROR, "Record in \"" + fn + "\" does not have a Handle as its 2nd field");
 		  return;
 		}
 	      if (Db->KeyLookup (pstr))
-		logf (LOG_ERROR, "Record in \"" + fn + "\" uses a non-unique Handle '%s'", pstr);
+		message_log (LOG_ERROR, "Record in \"" + fn + "\" uses a non-unique Handle '%s'", pstr);
 	      else
 		NewRecord->SetKey (pstr);
 	    }

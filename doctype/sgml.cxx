@@ -65,13 +65,13 @@ SGML::SGML (PIDBOBJ DbParent, const STRING& Name): SGMLNORM (DbParent, Name)
   if (!FileExists(Catalog = ResolveConfigPath(Getoption("Catalog", DefaultSgmlCatalog))))
     {
       if (Catalog != DefaultSgmlCatalog)
-	logf (LOG_WARN, "SGML Catalog '%s' not found", Catalog.c_str());
+	message_log (LOG_WARN, "SGML Catalog '%s' not found", Catalog.c_str());
       Catalog.Clear();
     }
   if (!FileExists(DSSSL_Spec = ResolveConfigPath(Getoption("DSSSL", DefaultDSSSL_Spec))))
     {
       if (DSSSL_Spec != DefaultDSSSL_Spec);
-	logf (LOG_WARN, "DSSSL Specification '%s' not found", Catalog.c_str());
+	message_log (LOG_WARN, "DSSSL Specification '%s' not found", Catalog.c_str());
       DSSSL_Spec.Clear();
     }
 
@@ -114,14 +114,14 @@ void SGML::ParseRecords(const RECORD& FileRecord)
   Db->ComposeDbFn (&s, DbExtCat);
   if (MkDir(s, 0, GDT_TRUE) == -1)
     {
-      logf (LOG_ERRNO, "Can't create filter directory '%s'", (const char *)s );
+      message_log (LOG_ERRNO, "Can't create filter directory '%s'", (const char *)s );
       return;
     }
 
   FileRecord.GetFullFileName (&Fn);
   if (_IB_lstat(Fn, &stbuf) == -1)
     {
-      logf(LOG_ERRNO, "%s: Can't stat '%s'.", Doctype.c_str(), Fn.c_str());
+      message_log(LOG_ERRNO, "%s: Can't stat '%s'.", Doctype.c_str(), Fn.c_str());
       return;
     }
 #ifndef _WIN32
@@ -129,7 +129,7 @@ void SGML::ParseRecords(const RECORD& FileRecord)
     {
       if (stat(Fn, &stbuf) == -1)
         {
-          logf(LOG_ERROR, "%s: '%s' is a dangling symbollic link", Doctype.c_str(), Fn.c_str());
+          message_log(LOG_ERROR, "%s: '%s' is a dangling symbollic link", Doctype.c_str(), Fn.c_str());
           return;
         }
     }
@@ -145,7 +145,7 @@ void SGML::ParseRecords(const RECORD& FileRecord)
   PFILE oFp = fopen(outfile, "w");
   if (oFp == NULL)
     {
-      logf (LOG_ERRNO, "Can open output for SGML normalization: '%s'",
+      message_log (LOG_ERRNO, "Can open output for SGML normalization: '%s'",
 	(const char *)outfile);
       return;
     }
@@ -163,14 +163,14 @@ void SGML::ParseRecords(const RECORD& FileRecord)
   argv[argc++] = (char *)Fn.c_str();
   argv[argc++] = NULL;
 
-  logf(LOG_DEBUG, "Running %s", argv[0]);
+  message_log(LOG_DEBUG, "Running %s", argv[0]);
   /*
     need to set SP_ENCODING=iso-8859-x
   */
   PFILE Fp = _IB_popen(argv, "r");
   if (Fp == NULL)
     {
-      logf(LOG_ERRNO, "Can't open pipe to %s (SGML Normalizer).", argv[0]);
+      message_log(LOG_ERRNO, "Can't open pipe to %s (SGML Normalizer).", argv[0]);
       SGMLNorm_command.Clear();
       return;
     }
@@ -187,11 +187,11 @@ void SGML::ParseRecords(const RECORD& FileRecord)
     }
   _IB_pclose (Fp);
   fclose(oFp);
-  logf(LOG_DEBUG, "Wrote %ld bytes to %s", end, (const char *)outfile);
+  message_log(LOG_DEBUG, "Wrote %ld bytes to %s", end, (const char *)outfile);
 
   if (end < 3)
     {
-      logf (LOG_ERRNO, "Normalization failed!");
+      message_log (LOG_ERRNO, "Normalization failed!");
       return;
     }
 
@@ -215,7 +215,7 @@ void SGML::ParseRecords(const RECORD& FileRecord)
 	  Tmp.Cat ("this.dsl");
 	  if (!FileExists (Tmp))
 	    {
-	      logf (LOG_ERROR, "-o DSSSL=??? Not set to DSSSL Specification.");
+	      message_log (LOG_ERROR, "-o DSSSL=??? Not set to DSSSL Specification.");
 	      return;
 	    }
 	}
@@ -247,10 +247,10 @@ void SGML::ParseRecords(const RECORD& FileRecord)
       argv[argc++] = Fn.c_str();
       argv[argc] = NULL;
 
-      logf(LOG_DEBUG, "Running %s", argv[0]);
+      message_log(LOG_DEBUG, "Running %s", argv[0]);
 
       if (_IB_system(argv) < 0)
- 	logf (LOG_ERRNO, "Could not run '%s'", argv[0]);
+ 	message_log (LOG_ERRNO, "Could not run '%s'", argv[0]);
 
       if (strcmp(Conversions[i], "html") == 0)
 	{

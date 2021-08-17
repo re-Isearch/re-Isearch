@@ -1,8 +1,8 @@
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 /*-@@@
 File:		Isearch.cxx
-Version:	1.01
 Description:	Command-line search utility
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 #include <stdio.h>
 #include <ctype.h>
@@ -161,7 +161,7 @@ static void HelpUsage(const char *progname)
 	"  -p (X)           // Present element set (X) with results." << endl <<
 	"  -P (X)           // Present Ancestor (X) content for hits." << endl <<
 	"                   // where X may be as (X)/(Y) where (X) is an ancestor" << endl <<
-        "                   // and (Y) is a descendent of that ancestor." << endl << 
+        "                   // and (Y) is a descendant of that ancestor." << endl << 
 	"  -c               // Sort results Chronologically." << endl <<
 	"  -cr              // Sort result from oldest to newest." << endl <<
 	"  -s               // Sort results by Score (Relevant Ranked)." << endl <<
@@ -173,12 +173,13 @@ static void HelpUsage(const char *progname)
 	"  -k               // Sort results by Key." << endl <<
 	"  -n               // Don't sort (By indexing order)." << endl <<
 	"  -cosine_norm     // Cosine Normalization (default)." << endl << 
-	"  -metric_norm     // (Cosine) Metric Normalization." << endl << 
+	"  -euclidean_norn  // Euclidean Normalization." << endl << 
+//	"  -metric_norm     // (Cosine) Metric Normalization." << endl << 
  	"  -max_norm        // Max. normalization. " << endl <<
         "  -log_norm        // Log Normalization." << endl << 
         "  -bytes_norm      // Bytes Normalization." << endl << 
-	"  -no_norm         // Don't caculate scores or normalize." << endl <<
-	"  -sort B[entley]|S[edgewick] // Which variation of QuickSort to use" << endl <<
+	"  -no_norm         // Don't calculate scores or normalize." << endl <<
+	"  -sort B[entley]|S[edgewick]|D[ualPivot] // Which variation of QuickSort to use" << endl <<
 	"  -show            // Show first hit neighborhood." << endl <<
 	"  -summary         // Show summary/description." << endl <<
 	"  -XML             // Present Results in XML-like structure." << endl <<
@@ -192,7 +193,8 @@ static void HelpUsage(const char *progname)
 	"  -infix           // Interpret as an InFix-Notation query." << endl <<
 	"                   //   Additional Unary Ops:  ! for NOT, field/  for WITHIN:field" << endl <<
 	"  -words           // Interpret as words." << endl <<
-	"  -smart field     // Smart search." << endl << 
+	"  -and             // Interpret as intersection of words." << endl <<
+	"  -smart field     // Fielded Smart search." << endl << 
  	"  -regular         // Regular Query (fields, weights etc. but no operators)." << endl <<
 	"  -syn             // Do synonym expansion." << endl <<
 	"  -priority (NN.NN)// Over-ride priority factor with NN.NN" << endl <<
@@ -239,10 +241,10 @@ static void HelpUsage(const char *progname)
 	"  -bench           // Show rusage" << endl <<
 	"  -pager (EXE)     // Use program EXE to page results (e.g. more)." << endl <<
         "  -more            // Same as -pager /bin/more" << endl <<
-	"  (X) (Y) (...)    // Search for words (X), (Y), etc." << endl <<
-	"                   // If -rpn was specified then the sentence is expected to be in RPN" << endl <<
-        "                   // (Reverse Polish Notation). If -infix then the conventional in-fix" << endl <<
-        "                   // notation is expected. Default is ORd terms." << endl <<  
+	"  (...)            // Terms (X), (Y), .. or a query sentence." << endl <<
+	"                   // If -rpn was specified then the sentence is expected to be in RPN." << endl <<
+        "                   // If -infix then the conventional in-fix notation is expected." << endl << 
+        "                   // If -words or -regular then OR'd.  Default is Smart search." << endl <<  
         endl <<
 	"                   // Fielded Search: [[fieldname][relation]]searchterm[*][:n]" << endl <<
 	"                   // Relations are <,>,>=,<=,<> whose semantics of depends upon the" << endl <<
@@ -403,6 +405,7 @@ int _Isearch_main (int argc, char **argv)
   INT SmartQuery = 1;
   STRING SmartField;
   INT WordsQuery = 0;
+  INT AndWordsQuery = 0;
   INT PlainQuery = 0;
   INT ExpandSynonyms = 0;
   INT PresentHtml = 0;
@@ -470,7 +473,7 @@ int _Isearch_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No option specified after -o.");
+		  message_log (LOG_FATAL, "Usage: No option specified after -o.");
 		  return 0;
 		}
 	      STRING S;
@@ -482,7 +485,7 @@ int _Isearch_main (int argc, char **argv)
 	   {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No field/path specified after -scan.");
+                  message_log (LOG_FATAL, "Usage: No field/path specified after -scan.");
                   return 0;
                 }
 	      ScanSearchField = argv[x];
@@ -493,7 +496,7 @@ int _Isearch_main (int argc, char **argv)
 	   {
               if (++x >= argc || (base_score = atoi(argv[x])) == 0)
                 {
-                  logf (LOG_FATAL, "Usage: No number specified after -scale.");
+                  message_log (LOG_FATAL, "Usage: No number specified after -scale.");
                   return 0;
                 }
 	      LastUsed = x;
@@ -502,7 +505,7 @@ int _Isearch_main (int argc, char **argv)
 	   {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No Record_ID specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No Record_ID specified after %s.", Flag.c_str());
                   return 0;
                 }
               RecordID = argv[x];
@@ -512,7 +515,7 @@ int _Isearch_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No database name specified after -d.");
+		  message_log (LOG_FATAL, "Usage: No database name specified after -d.");
 		  return 0;
 		}
 	      DBName = argv[x];
@@ -548,7 +551,7 @@ int _Isearch_main (int argc, char **argv)
               Sort = Unsorted;
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No factor specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No factor specified after %s.", Flag.c_str());
                   return 0;
                 }
               MagFactor = atof(argv[x]);
@@ -559,7 +562,7 @@ int _Isearch_main (int argc, char **argv)
               Sort = Unsorted;
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No factor specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No factor specified after %s.", Flag.c_str());
                   return 0;
                 }
               PriorityFactor = atof(argv[x]);
@@ -595,9 +598,9 @@ int _Isearch_main (int argc, char **argv)
 	      Method = CosineNormalization;
 	      LastUsed = x;
 	    }
-	  else if (Flag.Equals("-metric_norm"))
+	  else if (Flag.Equals("-euclidean_norm") || Flag.Equals("-metric_norm"))
 	    {
-	      Method = CosineMetricNormalization;
+	      Method = EuclideanNormalization;
 	      LastUsed = x;
 	    }
           else if (Flag.Equals("-max_norm"))
@@ -626,7 +629,7 @@ int _Isearch_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No element set specified after -p.");
+		  message_log (LOG_FATAL, "Usage: No element set specified after -p.");
 		  return 0;
 		}
 	      ElementSet = argv[x];
@@ -636,7 +639,7 @@ int _Isearch_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No element set specified after -P.");
+		  message_log (LOG_FATAL, "Usage: No element set specified after -P.");
 		  return 0;
 		}
 	      AncestorElementSet = argv[x];
@@ -646,7 +649,7 @@ int _Isearch_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No number specified after -max.");
+                  message_log (LOG_FATAL, "Usage: No number specified after -max.");
                   return 0;
                 }
               MaxHits = atoi(argv[x]);
@@ -667,7 +670,7 @@ int _Isearch_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No number specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No number specified after %s.", Flag.c_str());
                   return 0;
                 }
               DropHits = (INT)atof(argv[x]);
@@ -677,7 +680,7 @@ int _Isearch_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No number specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No number specified after %s.", Flag.c_str());
                   return 0;
                 }
               DropAbsolute = atof(argv[x]);
@@ -687,7 +690,7 @@ int _Isearch_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No number specified after %s", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No number specified after %s", Flag.c_str());
                   return 0;
                 }
               DropScaled = atoi(argv[x]);
@@ -698,7 +701,7 @@ int _Isearch_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No number specified after -clip.");
+                  message_log (LOG_FATAL, "Usage: No number specified after -clip.");
                   return 0;
                 }
               Clip = (size_t)atol(argv[x]);
@@ -708,7 +711,7 @@ int _Isearch_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No number specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No number specified after %s.", Flag.c_str());
                   return 0;
                 }
               common_words = atol(argv[x]);
@@ -718,7 +721,7 @@ int _Isearch_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No prefix specified after -prefix.");
+		  message_log (LOG_FATAL, "Usage: No prefix specified after -prefix.");
 		  return 0;
 		}
 	      Before = TermPrefix = argv[x];
@@ -728,7 +731,7 @@ int _Isearch_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No suffix specified after -suffix.");
+		  message_log (LOG_FATAL, "Usage: No suffix specified after -suffix.");
 		  return 0;
 		}
 	      After = TermSuffix = argv[x];
@@ -738,12 +741,12 @@ int _Isearch_main (int argc, char **argv)
 	    {
              if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No value specified after -range.");
+                  message_log (LOG_FATAL, "Usage: No value specified after -range.");
                   return 0;
                 }
 	      if (sscanf(argv[x], "%d-%d", &first, &last) == 0)
 		{
-		  logf (LOG_FATAL, "Usage: Bad range specified.");
+		  message_log (LOG_FATAL, "Usage: Bad range specified.");
 		  return 0;
 		}
               LastUsed = x;
@@ -766,7 +769,7 @@ int _Isearch_main (int argc, char **argv)
 	  else if (Flag.Equals ("-t") || Flag.Equals("-terse"))
 	   {
 	     if (FilenameOnly)
-	       logf (LOG_WARN, "%s: headline (\"B\") over-ride for filename", Flag.c_str());
+	       message_log (LOG_WARN, "%s: headline (\"B\") over-ride for filename", Flag.c_str());
 	     Headline = "B";
 	     ShowHeadline = 1;
 	     FilenameOnly = 0;
@@ -776,7 +779,7 @@ int _Isearch_main (int argc, char **argv)
 	  else if (Flag.Equals("-filename"))
 	   {
 	      if (ShowHeadline)
-		logf (LOG_WARN, "%s: filename over-ride for headline", Flag.c_str());
+		message_log (LOG_WARN, "%s: filename over-ride for headline", Flag.c_str());
 	      FilenameOnly = 1;
 	      ShowHeadline = 0;
 	      ElementSet = NulString;
@@ -795,7 +798,7 @@ int _Isearch_main (int argc, char **argv)
            {
 	     if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No value specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No value specified after %s.", Flag.c_str());
                   return 0;
                 }
 	      Headline = argv[x];
@@ -811,7 +814,7 @@ int _Isearch_main (int argc, char **argv)
             {
              if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No value specified after -daterange.");
+                  message_log (LOG_FATAL, "Usage: No value specified after -daterange.");
                   return 0;
                 }
 	      DateRange = argv[x];
@@ -821,7 +824,7 @@ int _Isearch_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No value specified after -startdoc.");
+		  message_log (LOG_FATAL, "Usage: No value specified after -startdoc.");
 		  return 0;
 		}
 	      startDoc = atoi(argv[x]);
@@ -831,7 +834,7 @@ int _Isearch_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No value specified after -enddoc.");
+		  message_log (LOG_FATAL, "Usage: No value specified after -enddoc.");
 		  return 0;
 		}
 	      endDoc = atoi(argv[x]);
@@ -841,7 +844,7 @@ int _Isearch_main (int argc, char **argv)
 	    {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No value specified after -table.");
+                  message_log (LOG_FATAL, "Usage: No value specified after -table.");
                   return 0; 
                 }
               ResTable = argv[x];
@@ -851,7 +854,7 @@ int _Isearch_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No value specified after -D.");
+                  message_log (LOG_FATAL, "Usage: No value specified after -D.");
                   return 0;
                 }
               LoadTable = argv[x];
@@ -927,6 +930,12 @@ int _Isearch_main (int argc, char **argv)
 	      WordsQuery = 1;
 	      LastUsed = x;
 	    }
+
+	  else if (Flag.Equals ("-and"))
+            {
+              AndWordsQuery = 1;
+              LastUsed = x;
+            }
 	  else if (Flag.Equals ("-regular"))
 	    {
 	      PlainQuery = 1;
@@ -938,7 +947,7 @@ int _Isearch_main (int argc, char **argv)
               SmartQuery = 1;
               if (++x >= argc)
                 { 
-                  logf (LOG_FATAL, "Usage: No field specified after -smart.");
+                  message_log (LOG_FATAL, "Usage: No field specified after -smart.");
                   return 2;
                 }
 	      SmartField = argv[x];
@@ -948,7 +957,7 @@ int _Isearch_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No level specified after -level.");
+                  message_log (LOG_FATAL, "Usage: No level specified after -level.");
                   return 2;
                 }
               log_init((int)(strtol (argv[x], NULL, 10) & 0xFF));
@@ -959,7 +968,7 @@ int _Isearch_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No algorithm name specified after -%d.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No algorithm name specified after -%d.", Flag.c_str());
                   return 2;
                 }
               switch (*(argv[x]))
@@ -975,18 +984,18 @@ int _Isearch_main (int argc, char **argv)
            {
             if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No directory specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No directory specified after %s.", Flag.c_str());
                   return 2;
                 }
              const char *path = argv[x];
              if (! DirectoryExists(path))
                {
-                  logf (LOG_ERROR, "Usage: directory specified in %s \"%s\" does not exist or is not accessible.",
+                  message_log (LOG_ERROR, "Usage: directory specified in %s \"%s\" does not exist or is not accessible.",
                         Flag.c_str(), path);
                }
             else
               if (chdir (path) == -1)
-		logf (LOG_ERRNO|LOG_WARN, "Could not change directory to '%s'", path);
+		message_log (LOG_ERRNO|LOG_WARN, "Could not change directory to '%s'", path);
              LastUsed = x;
 	   }
 	  else if (Flag.Equals ("-more"))
@@ -998,7 +1007,7 @@ int _Isearch_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No program specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No program specified after %s.", Flag.c_str());
                   return 2;
                 }
               Pager = argv[x];
@@ -1054,7 +1063,12 @@ int _Isearch_main (int argc, char **argv)
 
   if ((RpnQuery) && (InfixQuery))
     {
-      logf (LOG_FATAL, "Usage: The -rpn and -infix options can not be used together.");
+      message_log (LOG_FATAL, "Usage: The -rpn and -infix options can not be used together.");
+      exit (1);
+    }
+   if ((AndWordsQuery || WordsQuery) && (RpnQuery || InfixQuery))
+    {
+      message_log (LOG_FATAL, "Usage: -and/-words and -rpn/-infix options can not be used together.");
       exit (1);
     }
 
@@ -1188,7 +1202,7 @@ int _Isearch_main (int argc, char **argv)
 	  return 0;
 	}
       else
-	logf (LOG_WARN, "Could not locate record id '%s'", RecordID.c_str());
+	message_log (LOG_WARN, "Could not locate record id '%s'", RecordID.c_str());
       return -1;
     }
   else if (!Terse && !ShowXML && !TabFormat && VerboseFlag)
@@ -1257,7 +1271,9 @@ again:
     }
   else if (QueryString.GetLength())
     {
-      if (WordsQuery)
+      if (AndWordsQuery)
+        squery.SetWords (QueryString, 1, OperatorAnd);
+      else if (WordsQuery)
 	squery.SetWords (QueryString);
       else
 	squery.SetTerm (QueryString);
@@ -1277,7 +1293,7 @@ again:
 
 	  STRING S;
 	  termCount = squery.GetRpnTerm (&S);
-	  logf (LOG_DEBUG, "Expand Query = %s", S.c_str());
+	  message_log (LOG_DEBUG, "Expand Query = %s", S.c_str());
 	}
       if (Clip == 0 && Reduce && termCount == 1) 
 	{
@@ -1288,17 +1304,17 @@ again:
 	{
 	  List = pdb->ScanSearch(squery, ScanSearchField);
 	} 
-      else if (SmartQuery)
+      else if (SmartQuery && !(AndWordsQuery || WordsQuery))
         {
   	  prset = pdb->VSearchSmart(originalQueryString, SmartField, Sort, MaxHits, &match, Method, &squery);
 	  termCount = squery.GetRpnTerm (&QueryString);
-	  logf (LOG_DEBUG, "Query: %s", QueryString.c_str());
+	  message_log (LOG_DEBUG, "Query: %s", QueryString.c_str());
         }
        else
 	  prset = pdb->VSearch (squery, Sort, MaxHits, &match, Method);
       matches = match;
       if (prset == NULL && !ScanSearch)
-        logf (LOG_ERROR, "Search ERROR: %s", (const char *)( pdb->ErrorMessage()) );
+        message_log (LOG_ERROR, "Search ERROR: %s", (const char *)( pdb->ErrorMessage()) );
   }
 
   clock_t s_end = clock();

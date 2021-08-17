@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 //
 // Dictionary.cc
 //
@@ -293,7 +297,7 @@ Object *Dictionary::Find(const char *name) const
 {
   if (name == NULL || *name == '\0')
     {
-      logf(LOG_PANIC, "Dictionary::Find(Nil)");
+      message_log(LOG_PANIC, "Dictionary::Find(Nil)");
       return NULL;
     }
     const unsigned int  hash = hashCode(name);
@@ -301,7 +305,7 @@ Object *Dictionary::Find(const char *name) const
 
    if (table == NULL)
     {
-      logf (LOG_PANIC, "Nil Table in Dictionary (len=%d)", tableLength);
+      message_log (LOG_PANIC, "Nil Table in Dictionary (len=%d)", tableLength);
       return NULL;
     }
 

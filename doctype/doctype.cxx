@@ -71,7 +71,7 @@ STRING DOCTYPE::Getoption(const STRLIST *Strlist, const STRING& Entry, const STR
 	string = Default;
     }
   if (!string.IsEmpty())
-    logf (LOG_DEBUG, "%s set to %s", Entry.c_str(), string.c_str());
+    message_log (LOG_DEBUG, "%s set to %s", Entry.c_str(), string.c_str());
   return string;
 }
 
@@ -120,12 +120,12 @@ DOCTYPE::DOCTYPE (IDBOBJ * DbParent, const STRING& Name)
 	{
 	  if (Db) Db->ProfileWriteString(Doctype, Config, iniName);
 	}
-      else logf (LOG_DEBUG, "%s: %s (optional) not found.", Doctype.c_str(), iniName.c_str());
+      else message_log (LOG_DEBUG, "%s: %s (optional) not found.", Doctype.c_str(), iniName.c_str());
     }
   else
     {
       iniName = __ExpandPath(iniName);
-      logf (LOG_DEBUG, "Profile specified [%s] .INI as %s", Doctype.c_str(), iniName.c_str());
+      message_log (LOG_DEBUG, "Profile specified [%s] .INI as %s", Doctype.c_str(), iniName.c_str());
     }
   // Process the doctype.ini (read into tagRegistry)
   if (!iniName.IsEmpty())
@@ -135,14 +135,14 @@ DOCTYPE::DOCTYPE (IDBOBJ * DbParent, const STRING& Name)
 	{
 	  tagRegistry = new REGISTRY (Name);
 	  tagRegistry->Read (Fp);
-	  logf (LOG_DEBUG, "%s configuration loaded from %s", Name.c_str(), iniName.c_str());
+	  message_log (LOG_DEBUG, "%s configuration loaded from %s", Name.c_str(), iniName.c_str());
 	  fclose (Fp);
 	}
       else
 	tagRegistry = NULL;
     }
   if (tagRegistry == NULL)
-    logf (LOG_DEBUG, "No tagRegistry available for doctype '%s'", Doctype.c_str());
+    message_log (LOG_DEBUG, "No tagRegistry available for doctype '%s'", Doctype.c_str());
 
   // Set the basic general options
   DateField         = Getoption(DoctypeOptions, "DateField");
@@ -160,7 +160,7 @@ DOCTYPE::DOCTYPE (IDBOBJ * DbParent, const STRING& Name)
     {
       Charset = Db->GetLocale().Charset();
     }
-  logf (LOG_DEBUG, "Doctype base class Init");
+  message_log (LOG_DEBUG, "Doctype base class Init");
 }
 
 void DOCTYPE::Help(STRING *StringPtr) const
@@ -228,6 +228,8 @@ Index options (defined in <doctype>.ini):\n\
   TTLField=<Time to live in minutes:  Now+TTL = DateExpires>\n\
   LanguageField=<Field name that contains the language code>\n\
   KeyField=<Field name that contains the record key>\n\
+  CategoryField=Field name that contains the category (integer).\n\
+  PriorityField=Field name that contains the priority (integer).\n\
   MaxWordLength=<Number, words longer than this won't get indexed>\n\
     The above options may also be specified as -o options as well as\n\
     in the \"Db.ini\" configuration file under the [<DOCTYPE>] section---\n\
@@ -326,7 +328,7 @@ GDT_BOOLEAN DOCTYPE::SetFieldType(const STRING& FieldName, const FIELDTYPE Field
     {
       if (!Db->GetFieldType(FieldName).Ok())
 	{
-	  Db->AddFieldType(PriorityField, FieldType);
+	  Db->AddFieldType(FieldName, FieldType); // Was PriorityField,
 	  return GDT_TRUE;
 	}
     }
@@ -336,13 +338,15 @@ GDT_BOOLEAN DOCTYPE::SetFieldType(const STRING& FieldName, const FIELDTYPE Field
 
 void DOCTYPE::LoadFieldTable()
 {
-  logf (LOG_DEBUG, "DOCTYPE/%s::LoadFieldTable()", Doctype.c_str());
+  message_log (LOG_DEBUG, "DOCTYPE/%s::LoadFieldTable()", Doctype.c_str());
   if (Db)
     {
       SetFieldType(DateField,         FIELDTYPE::date);
       SetFieldType(DateCreatedField,  FIELDTYPE::date );
       SetFieldType(DateModifiedField, FIELDTYPE::date);
       SetFieldType(PriorityField,     FIELDTYPE::numerical);
+      SetFieldType(CategoryField,     FIELDTYPE::numerical); // added 2021
+
     }
 }
 
@@ -351,7 +355,7 @@ void DOCTYPE::AddFieldDefs ()
 {
   STRING FieldTypeFilename = Getoption("FIELDTYPE", NulString);
 
-  logf (LOG_DEBUG, "DOCTYPE/%s::AddFieldDefs()", Doctype.c_str());
+  message_log (LOG_DEBUG, "DOCTYPE/%s::AddFieldDefs()", Doctype.c_str());
 
   if (Db == NULL) return;
 
@@ -382,13 +386,13 @@ void DOCTYPE::AddFieldDefs ()
     }
   if (!ResolveConfigPath(&FieldTypeFilename))
     {
-      logf (LOG_DEBUG, "No field type definition file '%s' defined",
+      message_log (LOG_DEBUG, "No field type definition file '%s' defined",
 		FieldTypeFilename.c_str());
       return;
     }
   else if (!FileExists(FieldTypeFilename))
     {
-      logf (LOG_WARN, "%s: Field def file '%s' does not exist. Assuming all %s fields are text.",
+      message_log (LOG_WARN, "%s: Field def file '%s' does not exist. Assuming all %s fields are text.",
 	Doctype.c_str(),
 	FieldTypeFilename.c_str(), Doctype.c_str());
       return;
@@ -396,7 +400,7 @@ void DOCTYPE::AddFieldDefs ()
   FILE *fp = fopen(FieldTypeFilename, "r");
   if (fp == NULL)
     {
-      logf(LOG_ERRNO, "Could not open the field def file '%s'", FieldTypeFilename.c_str());
+      message_log(LOG_ERRNO, "Could not open the field def file '%s'", FieldTypeFilename.c_str());
       return;
     }
   STRING sBuf;
@@ -409,7 +413,7 @@ void DOCTYPE::AddFieldDefs ()
 	  if (strncasecmp(tcp, "text", 4) != 0 && strncasecmp(tcp, "any", 3) != 0)
 	    {
 	      Db->AddFieldType( sBuf.Strip(STRING::both) );
-	      logf (LOG_DEBUG, "Adding definition: \"%s\"", sBuf.c_str());
+	      message_log (LOG_DEBUG, "Adding definition: \"%s\"", sBuf.c_str());
 	    }
 	}
     }
@@ -463,7 +467,7 @@ INT DOCTYPE::ReadFile(const STRING& Filename, CHR *Buffer, off_t Offset, size_t 
     {
       result = ReadFile(fp, Buffer, Offset, Length);
       if (fp == NULL)
-	logf (LOG_PANIC, "Clobered Stream pointer!"); 
+	message_log (LOG_PANIC, "Clobered Stream pointer!"); 
       ffclose(fp);
     }
   return (INT)result;
@@ -488,7 +492,7 @@ INT DOCTYPE::GetRecordData(const STRING& Filename, STRING *StringPtr, off_t Offs
     {
       result = GetRecordData(fp, StringPtr, Offset, Length);
       if (fp == NULL)
-        logf (LOG_PANIC, "Clobered Stream pointer!");
+        message_log (LOG_PANIC, "Clobered Stream pointer!");
       ffclose(fp);
     }
   return (INT)result;
@@ -503,7 +507,7 @@ INT DOCTYPE::GetRecordData(const STRING& Filename, CHR *Buffer, off_t Offset, si
     {
       result = GetRecordData(fp, Buffer, Offset, Length);
       if (fp == NULL)
-        logf (LOG_PANIC, "Clobered Stream pointer!");
+        message_log (LOG_PANIC, "Clobered Stream pointer!");
       ffclose(fp);
     }
   return (INT)result;
@@ -537,17 +541,17 @@ GPTYPE DOCTYPE::ParseWords(UCHR* DataBuffer, GPTYPE DataLength,
   if (DataBuffer == NULL)
     {
       if (DataLength)
-	logf (LOG_ERROR, "ParseWords: ***** NULL Data buffer ***** !");
+	message_log (LOG_ERROR, "ParseWords: ***** NULL Data buffer ***** !");
       return 0;
     }
   if (GpBuffer == NULL || GpLength == 0)
     {
-      logf (LOG_ERROR, "**** Program ERROR: ParseWords Buffer%s? (Len=%d)", GpBuffer ? "" : " NULL", (int)GpLength);
+      message_log (LOG_ERROR, "**** Program ERROR: ParseWords Buffer%s? (Len=%d)", GpBuffer ? "" : " NULL", (int)GpLength);
       return 0; // ERROR
     }
 
 #ifdef _WIN32
-  logf (LOG_DEBUG, "ParseWords: Len: Data=%lld Buff=%lld / off=%lld",
+  message_log (LOG_DEBUG, "ParseWords: Len: Data=%lld Buff=%lld / off=%lld",
 	(long long)DataLength, (long long)GpLength, (long long)DataOffset);
 #endif
 
@@ -579,7 +583,7 @@ GPTYPE DOCTYPE::ParseWords(UCHR* DataBuffer, GPTYPE DataLength,
 	  if (GpListSize >= GpLength)
 	    {
 	      // Should NOT HAPPEN!!
-	      logf (LOG_PANIC, "%s ParseWords: Memory overrun (%lu >= %lu)[Position=%lu of %lu][%d-bit]!",
+	      message_log (LOG_PANIC, "%s ParseWords: Memory overrun (%lu >= %lu)[Position=%lu of %lu][%d-bit]!",
 			Doctype.c_str(), (long)GpListSize, (long)GpLength,
 			(long)Position, (long)DataLength,
 			8*sizeof(GPTYPE));
@@ -587,15 +591,15 @@ GPTYPE DOCTYPE::ParseWords(UCHR* DataBuffer, GPTYPE DataLength,
 	    }
 	  else if (GpListSize > DataLength)
 	    {
-	      logf (LOG_DEBUG, "INTERNAL ERROR STATE: Words Indexed=%lu / Position=%lu / DataLength=%lu",
+	      message_log (LOG_DEBUG, "INTERNAL ERROR STATE: Words Indexed=%lu / Position=%lu / DataLength=%lu",
 		(long)GpListSize, (long)Position, (long)DataLength );
-	      logf (LOG_PANIC, "Detected an ABSURD _ib_IsTermChr() callback function!");
+	      message_log (LOG_PANIC, "Detected an ABSURD _ib_IsTermChr() callback function!");
 	      abort(); // Stop process
 	    }
 	  GpBuffer[GpListSize++] = DataOffset + Position;
 
 	  if (GpListSize <= 0)
-	    logf (LOG_PANIC, "%s ParseWords: Address space overrun (>%lu)[%d-bit]!",
+	    message_log (LOG_PANIC, "%s ParseWords: Address space overrun (>%lu)[%d-bit]!",
 		Doctype.c_str(), (long)GpLength, 8*sizeof(GPTYPE));
 	}
 
@@ -606,7 +610,7 @@ GPTYPE DOCTYPE::ParseWords(UCHR* DataBuffer, GPTYPE DataLength,
       if (!itr)
 	{
 	  // Need to make sure that an illogical call-back was not defined
-	  logf (LOG_PANIC,  "Detected an ABSURD _ib_IsTermChr() callback function!");
+	  message_log (LOG_PANIC,  "Detected an ABSURD _ib_IsTermChr() callback function!");
 	  if (GpListSize == 1) GpListSize = 0;
 	  break;
 	}
@@ -660,7 +664,7 @@ SRCH_DATE  DOCTYPE::ParseDate(const STRING& Buffer) const
     return SRCH_DATE();
   SRCH_DATE date (Buffer); // Let SRCH_DATE do the magic
   if (!date.Ok())
-    logf (LOG_WARN, "%s::ParseDate: '%s' was not a parseable or well-defined date.",
+    message_log (LOG_WARN, "%s::ParseDate: '%s' was not a parseable or well-defined date.",
 		Doctype.c_str(), Buffer.c_str());
   return date;
 }
@@ -674,13 +678,13 @@ DATERANGE  DOCTYPE::ParseDateRange(const STRING& Buffer) const
       SRCH_DATE date(Buffer);
       if (date.Ok())
 	{
-	  logf (LOG_DEBUG, "%s: Input '%s' not a daterange, assumming trivial range",
+	  message_log (LOG_DEBUG, "%s: Input '%s' not a daterange, assumming trivial range",
 		Doctype.c_str(), Buffer.c_str());
 	  range.SetStart(date);
 	  range.SetEnd(date);
 	}
       else
-	logf (LOG_WARN, "%s::ParseDateRange: Could not parse input '%s'", Doctype.c_str(),
+	message_log (LOG_WARN, "%s::ParseDateRange: Could not parse input '%s'", Doctype.c_str(),
 		Buffer.c_str());
     }
   return range;
@@ -787,22 +791,22 @@ void DOCTYPE::ParseFields (RECORD *) { }
 
 void DOCTYPE::BeforeIndexing ()
 {
-  logf (LOG_DEBUG, "%s::BeforeIndexing called", Doctype.c_str());
+  message_log (LOG_DEBUG, "%s::BeforeIndexing called", Doctype.c_str());
 }
 
 void DOCTYPE::AfterIndexing ()
 {
-  logf (LOG_DEBUG, "%s::AfterIndexing called", Doctype.c_str());
+  message_log (LOG_DEBUG, "%s::AfterIndexing called", Doctype.c_str());
 }
 
 void DOCTYPE::BeforeSearching (QUERY *)
 {
-  logf (LOG_DEBUG, "%s::BeforeSearching called", Doctype.c_str());
+  message_log (LOG_DEBUG, "%s::BeforeSearching called", Doctype.c_str());
 }
 
 IRSET *DOCTYPE::AfterSearching(IRSET* ResultSetPtr)
 {
-  logf (LOG_DEBUG, "%s::AfterSearching called", Doctype.c_str());
+  message_log (LOG_DEBUG, "%s::AfterSearching called", Doctype.c_str());
   return ResultSetPtr;
 }
 
@@ -810,7 +814,7 @@ IRSET *DOCTYPE::AfterSearching(IRSET* ResultSetPtr)
 
 void DOCTYPE::BeforeRset (const STRING& RecordSyntax)
 {
-  logf (LOG_DEBUG, "%s::BeforeRset(%s) called", Doctype.c_str(), RecordSyntax.c_str());
+  message_log (LOG_DEBUG, "%s::BeforeRset(%s) called", Doctype.c_str(), RecordSyntax.c_str());
 
   static const char HeadlineTag[]  = "Headline";
   static const char SummaryTag[]   = "Summary";
@@ -824,7 +828,7 @@ void DOCTYPE::BeforeRset (const STRING& RecordSyntax)
   // If Headline/xxxxx=
   if (Db)
     {
-      logf (LOG_DEBUG, checking_msg,
+      message_log (LOG_DEBUG, checking_msg,
 	db_ini, DbInfoSection.c_str(), Element1.c_str(), Element2.c_str());
       Db->ProfileGetString (DbInfoSection, Element1, NulString, &HeadlineFmt);
       Db->ProfileGetString (DbInfoSection, Element2, NulString, &SummaryFmt);
@@ -836,24 +840,24 @@ void DOCTYPE::BeforeRset (const STRING& RecordSyntax)
     }
   if (HeadlineFmt.IsEmpty())
     {
-      logf (LOG_DEBUG, "Checking option %s", Element1.c_str());
+      message_log (LOG_DEBUG, "Checking option %s", Element1.c_str());
       HeadlineFmt = Getoption(Element1, NulString);
     }
   if (SummaryFmt.IsEmpty())
     {
-      logf (LOG_DEBUG, "Checking option %s", Element2.c_str());
+      message_log (LOG_DEBUG, "Checking option %s", Element2.c_str());
       SummaryFmt = Getoption(Element2, NulString);
     }
   if (tagRegistry)
     {
-      logf (LOG_DEBUG, checking_msg, doctype_ini, GeneralSection.c_str(),
+      message_log (LOG_DEBUG, checking_msg, doctype_ini, GeneralSection.c_str(),
 	Element1.c_str(), Element2.c_str());
       tagRegistry->ProfileGetString(GeneralSection, Element1, HeadlineFmt, &HeadlineFmt);
       tagRegistry->ProfileGetString(GeneralSection, Element2, SummaryFmt, &SummaryFmt);
     }
   if (Db)
     {
-      logf (LOG_DEBUG, checking_msg, db_ini, Doctype.c_str(),
+      message_log (LOG_DEBUG, checking_msg, db_ini, Doctype.c_str(),
 	Element1.c_str(), Element2.c_str());
       Db->ProfileGetString (Doctype, Element1, HeadlineFmt, &HeadlineFmt);
       Db->ProfileGetString (Doctype, Element2, SummaryFmt, &SummaryFmt);
@@ -868,38 +872,38 @@ void DOCTYPE::BeforeRset (const STRING& RecordSyntax)
 
       if (Db)
 	{
-	  logf (LOG_DEBUG, checking_msg, db_ini, DbInfoSection.c_str(),
+	  message_log (LOG_DEBUG, checking_msg, db_ini, DbInfoSection.c_str(),
 	    Element1.c_str(), Element2.c_str());
 	  Db->ProfileGetString (DbInfoSection, Element1, HeadlineFmt, &HeadlineFmt);
 	  Db->ProfileGetString (DbInfoSection, Element2, SummaryFmt, &SummaryFmt);
 	}
       if (tagRegistry)
 	{
-	  logf (LOG_DEBUG, checking_msg, doctype_ini, GeneralSection.c_str(),
+	  message_log (LOG_DEBUG, checking_msg, doctype_ini, GeneralSection.c_str(),
 	    Element1.c_str(), Element2.c_str());
 	  tagRegistry->ProfileGetString(GeneralSection, Element1, HeadlineFmt, &HeadlineFmt);
 	  tagRegistry->ProfileGetString(GeneralSection, Element2, SummaryFmt, &SummaryFmt);
 	}
       if (Db)
 	{
-	  logf (LOG_DEBUG, checking_msg, db_ini, Doctype.c_str(),
+	  message_log (LOG_DEBUG, checking_msg, db_ini, Doctype.c_str(),
 	    Element1.c_str(), Element2.c_str());
 	  Db->ProfileGetString (Doctype, Element1, HeadlineFmt, &HeadlineFmt);
 	  Db->ProfileGetString (Doctype, Element2, SummaryFmt, &SummaryFmt);
 	}
     }
 
-  logf (LOG_DEBUG, "%s Format = %s",
+  message_log (LOG_DEBUG, "%s Format = %s",
     HeadlineTag,
     HeadlineFmt.IsEmpty() ? "<none defined, using default>" : HeadlineFmt.c_str());
-  logf (LOG_DEBUG, "%s Format  = %s",
+  message_log (LOG_DEBUG, "%s Format  = %s",
     SummaryTag,
     SummaryFmt.IsEmpty() ?  "<none defined, using default>" : SummaryFmt.c_str());
 }
 
 void DOCTYPE::AfterRset (const STRING&)
 {
-  logf (LOG_DEBUG, "%s::AfterRset called", Doctype.c_str());
+  message_log (LOG_DEBUG, "%s::AfterRset called", Doctype.c_str());
   // HeadlineFmt.Clear();
   // SummaryFmt.Clear();
 }
@@ -912,7 +916,7 @@ INT DOCTYPE::UnifiedNames (const STRING& Tag, PSTRLIST Value,
 
   if (Value == NULL)
     {
-      logf (LOG_PANIC, "UnifiedNames got a NULL Ptr?");
+      message_log (LOG_PANIC, "UnifiedNames got a NULL Ptr?");
       return 0;
     }
 
@@ -1028,7 +1032,7 @@ GDT_BOOLEAN DOCTYPE::Headline(const STRING& HeadlineFormat,
 	      } while (i <= hlen && Ch != endCh && !(endCh == 0 && !isspace(Ch)));
 	      if (ESet.IsEmpty())
 		{
-		  logf (LOG_ERROR, "Empty %%() declaration in: %s", S.c_str(), HeadlineFormat.c_str());
+		  message_log (LOG_ERROR, "Empty %%() declaration in: %s", S.c_str(), HeadlineFormat.c_str());
 		}
 	      else
 		{
@@ -1038,7 +1042,7 @@ GDT_BOOLEAN DOCTYPE::Headline(const STRING& HeadlineFormat,
 		      if ((ESet == BRIEF_MAGIC) || (ESet == SOURCE_MAGIC) || (ESet == FULLTEXT_MAGIC))
 			{
 			  S.form("%%(%s)", ESet.c_str());
-			  logf (LOG_ERROR, "Declaration %%(%s) is not allowed in headline format", S.c_str());
+			  message_log (LOG_ERROR, "Declaration %%(%s) is not allowed in headline format", S.c_str());
 			}
 		      else if (RecordSyntax.GetLength())
 			Present (ResultRecord, ESet, RecordSyntax, &S);
@@ -1126,13 +1130,13 @@ GDT_BOOLEAN DOCTYPE::URL(const RESULT& ResultRecord, STRING *StringBuffer,
 
   if (GetResourcePath(ResultRecord, &Path) == GDT_FALSE)
     {
-      logf (LOG_ERROR, "URL: No Resource Path defined");
+      message_log (LOG_ERROR, "URL: No Resource Path defined");
       return GDT_FALSE;
     }
 
   if (Db == NULL || ((Db->GetHTTP_root(&DocumentRoot, &isMirror) == GDT_FALSE) && OnlyRemote))
     {
-      //logf (LOG_DEBUG, "URL: No Document Root (base) defined");
+      //message_log (LOG_DEBUG, "URL: No Document Root (base) defined");
       return GDT_FALSE;
     }
   const STRINGINDEX root_len = DocumentRoot.GetLength();
@@ -1143,7 +1147,7 @@ GDT_BOOLEAN DOCTYPE::URL(const RESULT& ResultRecord, STRING *StringBuffer,
       if (isMirror || Db->GetHTTP_server(&HTTP_Server))
 	{
 	  // Is the document in the WWW tree?
-	  logf (LOG_DEBUG, "Looking for %s in %s", DocumentRoot.c_str(), Path.c_str());
+	  message_log (LOG_DEBUG, "Looking for %s in %s", DocumentRoot.c_str(), Path.c_str());
 
 	  if (Path.SubString(1, root_len) ==  DocumentRoot)
 	    {
@@ -1197,15 +1201,15 @@ GDT_BOOLEAN DOCTYPE::URL(const RESULT& ResultRecord, STRING *StringBuffer,
 		      return GDT_TRUE;
 		    }
 		  if (x > 1)
-		    logf (LOG_ERROR, "Unknown URL method in mirror tree: %s", Path.EraseAfter(x-1).c_str());
+		    message_log (LOG_ERROR, "Unknown URL method in mirror tree: %s", Path.EraseAfter(x-1).c_str());
 		  else
-		    logf (LOG_ERROR, "Bad Mirror layout: %s", Path.c_str());
+		    message_log (LOG_ERROR, "Bad Mirror layout: %s", Path.c_str());
 		  return GDT_FALSE; // Bad Mirror
 		}
 	      if (!isMirror)
 		{
 		  *StringBuffer << HTTP_Server << Path;
-		  // logf (LOG_DEBUG, "Returning URL: %s", StringBuffer->c_str());
+		  // message_log (LOG_DEBUG, "Returning URL: %s", StringBuffer->c_str());
 		  return GDT_TRUE;
 		}
 	    }
@@ -2274,7 +2278,7 @@ DocPresent(const RESULT& ResultRecord, const STRING& ElementSet,
 
   if (Filter.GetLength() && Filter.Search('*') == 0)
     {
-      logf (LOG_DEBUG, "External presentation filter: '%s'", Filter.c_str());
+      message_log (LOG_DEBUG, "External presentation filter: '%s'", Filter.c_str());
       // We have a Method
       FILE *fp = _IB_popen(Filter, "w");
       if (fp)
@@ -2309,11 +2313,11 @@ DocPresent(const RESULT& ResultRecord, const STRING& ElementSet,
 	  if (bytes)
 	    StringBufferPtr->ReadFile (fp); // Read pipe out
 	  else
-	    logf (LOG_WARN, "Record was empty!");
+	    message_log (LOG_WARN, "Record was empty!");
 	  _IB_pclose(fp);
 	  return;
 	}
-      logf (LOG_ERROR, "Could not open pipe to %s [%s] presentation filter '%s'!",
+      message_log (LOG_ERROR, "Could not open pipe to %s [%s] presentation filter '%s'!",
 		(const char *)Section, (const char *)ElementSet, (const char *)Filter);
     }
   if (ElementSet == METADATA_MAGIC)
@@ -2557,7 +2561,7 @@ void DOCTYPE::HandleSpecialFields(RECORD* NewRecord, const STRING& FieldName, co
     {
       SRCH_DATE Datum (ParseDate(Buffer));
       if (!Datum.Ok())
-	logf (LOG_WARN, "%s:%s Unsupported/Unrecognized date format: '%s'",
+	message_log (LOG_WARN, "%s:%s Unsupported/Unrecognized date format: '%s'",
 		Doctype.c_str(), FieldName.c_str(), Buffer);
       else if (FieldName ^= DateField)        NewRecord->SetDate( Datum );
       else if (FieldName ^= DateCreatedField) NewRecord->SetDateCreated( Datum );
@@ -2594,7 +2598,7 @@ void DOCTYPE::HandleSpecialFields(RECORD* NewRecord, const STRING& FieldName, co
       if (ttl > 0)
       NewRecord->SetDateExpires (SRCH_DATE((const char *)NULL).PlusNminutes(ttl));
     }
-  else logf (LOG_DEBUG, "Unknown handler for special field '%s'", FieldName.c_str());
+  else message_log (LOG_DEBUG, "Unknown handler for special field '%s'", FieldName.c_str());
 }
 
 

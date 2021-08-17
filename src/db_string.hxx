@@ -1,3 +1,5 @@
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 #include <gdbm.h>
 #include "common.hxx"
 #include "irset.hxx"
@@ -96,7 +98,7 @@ class DB_STRING {
     key.dptr = (char *)Value.c_str();
     key.dsize = Value.GetLength();
     if ((ret = gdbm_store(*dbp,key,data,GDBM_REPLACE)) != 0)
-      logf (LOG_ERROR, "DB_STRING: store failed: %s", gdbm_strerror(ret));
+      message_log (LOG_ERROR, "DB_STRING: store failed: %s", gdbm_strerror(ret));
     else
       gdbm_sync(*dbp);
     return ret;

@@ -1,10 +1,9 @@
-#pragma ident  "@(#)dfdt.cxx  1.29 05/08/01 21:37:02 BSN"
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
+#pragma ident  "@(#)dfdt.cxx"
 /*-@@@
 File:		dfdt.cxx
-Version:	1.01
 Description:	Class DFDT - Data Field Definitions Table
-Author:		Nassib Nassar, nrn@cnidr.org
-Modifications:	Edward C. Zimmermann, edz@nonmonotonic.com
 @@@*/
 
 #include <stdio.h>
@@ -241,7 +240,7 @@ static GDT_BOOLEAN  _checkFieldName(const STRING& Fieldname)
     }
   if (Fieldname == FULLTEXT_MAGIC)
     {
-      logf (LOG_ERROR, ReservedViolationError, Fieldname.c_str());
+      message_log (LOG_ERROR, ReservedViolationError, Fieldname.c_str());
     }
   else if (Fieldname.GetLength() == 1)
     {
@@ -249,15 +248,15 @@ static GDT_BOOLEAN  _checkFieldName(const STRING& Fieldname)
       switch (Fieldname[0]) {
 	case 'A': case 'a': case 'P': case 'D': case '.': case '@': break;
 	case 'S': case 'L': case 'M': case 'H':
-	  logf (LOG_ERROR, ReservedViolationWarning, Fieldname.c_str(), "can");
+	  message_log (LOG_ERROR, ReservedViolationWarning, Fieldname.c_str(), "can");
 	  break;
 	default:
-	  logf (LOG_WARN, ReservedViolationWarning, Fieldname.c_str(), "may");
+	  message_log (LOG_WARN, ReservedViolationWarning, Fieldname.c_str(), "may");
       }
     }
   else if (Fieldname.Search(  __AncestorDescendantSeperator ))
     {
-      logf (LOG_ERROR, ReservedViolationFatal, Fieldname.c_str(),  __AncestorDescendantSeperator );
+      message_log (LOG_ERROR, ReservedViolationFatal, Fieldname.c_str(),  __AncestorDescendantSeperator );
       return GDT_FALSE;
     }
   return GDT_TRUE;
@@ -547,7 +546,7 @@ GDT_BOOLEAN DFDT::Resize (const size_t Entries)
       try {
 	Table = new DFD[Entries];
       } catch (...) {
-	logf (LOG_ERRNO, "DFDT:Resize from %u to %u elements failed!",
+	message_log (LOG_ERRNO, "DFDT:Resize from %u to %u elements failed!",
 		(unsigned)MaxEntries, (unsigned)Entries);
 	Table = OldTable;
 	return GDT_FALSE;
@@ -606,7 +605,7 @@ GDT_BOOLEAN DFDT::KillAll(IDBOBJ* DbParent)
 		}
 	      else if (EraseFileContents(s) != 0) // Zap contents
 		{
-		  logf (LOG_FATAL|LOG_ERRNO, "Can't remove/erase '%s' (%s index) contents for re-index!",
+		  message_log (LOG_FATAL|LOG_ERRNO, "Can't remove/erase '%s' (%s index) contents for re-index!",
 			s.c_str(), Table[i].GetFieldName().c_str());
 		  result = GDT_FALSE;
 		}
@@ -630,7 +629,7 @@ GDT_BOOLEAN DFDT::KillAll(IDBOBJ* DbParent)
 			}
 		      else if (EraseFileContents(sx) != 0) // Zap contents
 			{
-			  logf (LOG_FATAL|LOG_ERRNO, "Can't remove/erase '%s' (%s %s index) contents for re-index!",
+			  message_log (LOG_FATAL|LOG_ERRNO, "Can't remove/erase '%s' (%s %s index) contents for re-index!",
 				sx.c_str(), Table[i].GetFieldName().c_str(), ft.c_str());
 			  result = GDT_FALSE;
 			}

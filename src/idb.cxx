@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)idb.cxx"
 
 /*
@@ -256,7 +260,7 @@ void IDB::SetWorkingDirectory(const STRING& Dir)
       IDBOBJ::SetWorkingDirectory(Dir);
       if (MainRegistry)
 	{
-	  logf (LOG_DEBUG, "Working Dir = '%s'", WorkingDirEntry.c_str());
+	  message_log (LOG_DEBUG, "Working Dir = '%s'", WorkingDirEntry.c_str());
 	  MainRegistry->ProfileWriteString(DbInfoSection,  WorkingDirEntry,
 		RemoveTrailingSlash(WorkingDirectory));
 	  DbInfoChanged = GDT_TRUE;
@@ -350,11 +354,11 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
 {
   if (MainIndex || MainMdt || MainMdt || MainRegistry || DocTypeReg || MetaDefaults)
     {
-      logf (LOG_ERROR, "IDB \"%s\" not closed. Close before open \"%s\".", DbFileStem.c_str(), NewFileName.c_str());
+      message_log (LOG_ERROR, "IDB \"%s\" not closed. Close before open \"%s\".", DbFileStem.c_str(), NewFileName.c_str());
       return GDT_FALSE;
     }
   SetGlobalCharset();
-  logf (LOG_DEBUG, "Initial charset #%d", (int)((BYTE)GetGlobalCharset()));
+  message_log (LOG_DEBUG, "Initial charset #%d", (int)((BYTE)GetGlobalCharset()));
 
   // Set the Path component..
   if (NewPathName.IsEmpty())
@@ -377,12 +381,12 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
 
   DbFileStem     = DbPathName + DbFileName;
 
-  logf (LOG_DEBUG, "IDB::Open '%s'", DbFileStem.c_str());
+  message_log (LOG_DEBUG, "IDB::Open '%s'", DbFileStem.c_str());
 
 
   if (!DirectoryExists(DbPathName))
     {
-      logf (LOG_WARN, "Can't read/write to DB '%s': Directory '%s' does not exist!",
+      message_log (LOG_WARN, "Can't read/write to DB '%s': Directory '%s' does not exist!",
 		DbFileName.c_str(), DbPathName.c_str()); 
       SetErrorCode(109); // "Database unavailable";
     }
@@ -398,7 +402,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
 #if _NO_LOCKS
 #else
   if (LockWait(DbFileStem, L_WRITE||L_CHECK))
-    logf (LOG_NOTICE, "Indexing process running!!!!!!!!!");
+    message_log (LOG_NOTICE, "Indexing process running!!!!!!!!!");
 #endif
 
   // Load DbInfo file
@@ -411,7 +415,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
   }
   if (MainRegistry == NULL)
     {
-      logf (LOG_PANIC, "Can't allocate REGISTRY");
+      message_log (LOG_PANIC, "Can't allocate REGISTRY");
       return GDT_FALSE; // Can't continue;
     }
 
@@ -420,25 +424,25 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
 
   if (FileExists(ini_file))
     {
-      logf(LOG_DEBUG, "Loading %s (%s)", ini_file.c_str(), "Defaults");
+      message_log(LOG_DEBUG, "Loading %s (%s)", ini_file.c_str(), "Defaults");
       have_db_ini = MainRegistry->ProfileLoadFromFile(ini_file);
     }
   else
-    logf (LOG_DEBUG, "%s (%s) does not exist", ini_file.c_str(), "Defaults");
+    message_log (LOG_DEBUG, "%s (%s) does not exist", ini_file.c_str(), "Defaults");
 
   if (FileExists( ini_file = ComposeDbFn (DbExtDbInfo)  ))
     {
-      logf (LOG_DEBUG, "Loading %s (%s)", ini_file.c_str(), "Inits");
+      message_log (LOG_DEBUG, "Loading %s (%s)", ini_file.c_str(), "Inits");
       have_db_ini += MainRegistry->ProfileAddFromFile (ini_file);
     }
   else if (SearchOnly)
     {
       if (DbFileName != __IB_DefaultDbName)
-	logf (LOG_INFO, "%s (%s) does not exist. New Index?", ini_file.c_str(), "Inits");
+	message_log (LOG_INFO, "%s (%s) does not exist. New Index?", ini_file.c_str(), "Inits");
     }
   else if (!WritableDir(DbPathName))
     {
-      logf (LOG_WARN, "Don't have permission to write to '%s'.", DbFileStem.c_str()); 
+      message_log (LOG_WARN, "Don't have permission to write to '%s'.", DbFileStem.c_str()); 
     }
  
 
@@ -450,7 +454,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
       const char Option[] = "Option[%d]"; 
       const char nOption[] = "[%d]"; 
 
-      logf(LOG_DEBUG, "Got %d profile strings", have_db_ini);
+      message_log(LOG_DEBUG, "Got %d profile strings", have_db_ini);
 
       for (i=0;;)
         {
@@ -460,7 +464,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
           DocTypeOptions.AddEntry (Value);
         }
      if (--i > 0)
-        logf (LOG_INFO, "Loaded %d Options set using the Obsolete [%s] %s format.",
+        message_log (LOG_INFO, "Loaded %d Options set using the Obsolete [%s] %s format.",
                 i, DbOptionsSection.c_str(), nOption);
 
       for (i=0;;)
@@ -482,10 +486,10 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
         }
    }
   else if ( SearchOnly == GDT_TRUE && (DbFileName != __IB_DefaultDbName))
-   logf (LOG_INFO, "Empty initialization files (Default and DB specific)??");
+   message_log (LOG_INFO, "Empty initialization files (Default and DB specific)??");
 
   if (!SetLocale ((const char *)NULL))
-    logf(LOG_ERROR, "Could set set default locale, check environment!");
+    message_log(LOG_ERROR, "Could set set default locale, check environment!");
 
   // Get Indexing Bits
   {
@@ -527,7 +531,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
   MainRegistry->ProfileGetString(DbInfoSection, WorkingDirEntry, DbPathName, &WorkingDirectory);
   useRelativePaths = MainRegistry->ProfileGetBoolean(DbInfoSection, useRelativePathsEntry);
 
-  logf (LOG_DEBUG, "Base Directory (Working)='%s' Use Relative Paths? %s", WorkingDirectory.c_str(),
+  message_log (LOG_DEBUG, "Base Directory (Working)='%s' Use Relative Paths? %s", WorkingDirectory.c_str(),
 	useRelativePaths ? "Yes" : "No");
 
   // Get Comments
@@ -621,20 +625,20 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
 	  if (!IsAbsoluteFilePath(HTDocumentRoot))
 	    HTDocumentRoot = Cwd;
 	  else if (PathCompare(HTDocumentRoot.c_str(), Cwd.c_str()) != 0)
-	    logf (LOG_INFO, "Warning: HTDocumentRoot '%s'!='%s'.", HTDocumentRoot.c_str(), Cwd.c_str());
+	    message_log (LOG_INFO, "Warning: HTDocumentRoot '%s'!='%s'.", HTDocumentRoot.c_str(), Cwd.c_str());
 	}
       else
-	logf (LOG_ERROR, "Can't cwd to selected %sRoot \"%s\"",
+	message_log (LOG_ERROR, "Can't cwd to selected %sRoot \"%s\"",
 		isMirror ? "Mirror" : "Page", HTDocumentRoot.c_str());
 #endif
       AddTrailingSlash(&HTDocumentRoot);
     }
-  logf (LOG_DEBUG, "Root of htdocs tree='%s'", HTDocumentRoot.c_str());
+  message_log (LOG_DEBUG, "Root of htdocs tree='%s'", HTDocumentRoot.c_str());
 
   INT CacheSize = 4;
   if (DocTypeOptions.GetValue (CacheSizeEntry, &CacheSize) == 0)
     MainRegistry->ProfileGetString(DbInfoSection, CacheSizeEntry, CacheSize, &CacheSize);
-  logf (LOG_DEBUG, "[%s] %s=%d", DbInfoSection.c_str(), CacheSizeEntry.c_str(), CacheSize);
+  message_log (LOG_DEBUG, "[%s] %s=%d", DbInfoSection.c_str(), CacheSizeEntry.c_str(), CacheSize);
 
   if (CacheSize > 0)
     {
@@ -644,7 +648,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
 	  // Do I need a default?
 	  STRING tmp;
 	  MainRegistry->ProfileGetString(DbInfoSection, CachePersistEntry, NulString, &tmp);
-	  logf (LOG_DEBUG, "[%s] %s=%s", DbInfoSection.c_str(), CachePersistEntry.c_str(), tmp.c_str());
+	  message_log (LOG_DEBUG, "[%s] %s=%s", DbInfoSection.c_str(), CachePersistEntry.c_str(), tmp.c_str());
 	  if (!tmp.IsEmpty())
 	    {
 	      if (tmp.GetBool())
@@ -652,7 +656,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
 	    }
 	}
       if (!PersistantIrsetCache.IsEmpty())
-	logf (LOG_DEBUG, "Using %s as persistant irset cache (size %d)", PersistantIrsetCache.c_str(), CacheSize);
+	message_log (LOG_DEBUG, "Using %s as persistant irset cache (size %d)", PersistantIrsetCache.c_str(), CacheSize);
     }
 
   // Get the CacheDir
@@ -674,15 +678,15 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
   if (MainIndex != NULL)
     {
       if (MainIndex->CheckIntegrity() == GDT_FALSE)
-	logf (LOG_PANIC, "Index '%s' is corrupt. Search may be impaired.", DbFileStem.c_str()) ;
+	message_log (LOG_PANIC, "Index '%s' is corrupt. Search may be impaired.", DbFileStem.c_str()) ;
 
       INT Clip = 0;
       MainRegistry->ProfileGetString(DbInfoSection, SearchCutoffEntry, 0, &Clip);
-      logf (LOG_DEBUG, "[%s] %s=%d", DbInfoSection.c_str(), SearchCutoffEntry.c_str(), Clip);
+      message_log (LOG_DEBUG, "[%s] %s=%d", DbInfoSection.c_str(), SearchCutoffEntry.c_str(), Clip);
       if (Clip) SetDbSearchCutoff(Clip);
 
       MainRegistry->ProfileGetString(DbInfoSection, SearchTooManyEntry, 0, &Clip);
-      logf (LOG_DEBUG, "[%s] %s=%d", DbInfoSection.c_str(), SearchTooManyEntry.c_str(), Clip);
+      message_log (LOG_DEBUG, "[%s] %s=%d", DbInfoSection.c_str(), SearchTooManyEntry.c_str(), Clip);
       if (Clip)
 	{
 	  MainIndex->SetMaxRecordsAdvice(Clip);
@@ -695,7 +699,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
     }
   else
     {
-      logf (LOG_PANIC, "Failed to create INDEX instance!");
+      message_log (LOG_PANIC, "Failed to create INDEX instance!");
       return GDT_FALSE;
     }
 
@@ -711,7 +715,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
   }
   if (MainMdt == NULL)
     {
-      logf (LOG_PANIC, "Failed to create MainMdt!");
+      message_log (LOG_PANIC, "Failed to create MainMdt!");
       return GDT_FALSE;
     }
 
@@ -723,7 +727,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
   }
   if (MainDfdt == NULL)
     {
-      logf (LOG_PANIC, "Failed to create MainDfdt!");
+      message_log (LOG_PANIC, "Failed to create MainDfdt!");
       return GDT_FALSE;
     }
 
@@ -771,7 +775,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
      // Delete Expired
      size_t  deleted = DeleteExpired();
      if (deleted)
-       logf (LOG_INFO, "autoDeleteExpired: deleted %d records.", deleted);
+       message_log (LOG_INFO, "autoDeleteExpired: deleted %d records.", deleted);
   }
 
   return GDT_TRUE;
@@ -830,14 +834,14 @@ GDT_BOOLEAN IDB::KillCache(GDT_BOOLEAN Complete) const
           list.AddEntry ( Hpattern );
 	  list.AddEntry ( Fpattern ); 
 
-	  logf (LOG_INFO, "Persistant Cache: Removing '%s' files and '%s' dirs under %s",
+	  message_log (LOG_INFO, "Persistant Cache: Removing '%s' files and '%s' dirs under %s",
 		Hpattern.c_str(), Fpattern.c_str(), CacheDir.c_str());
 	  ::do_directory(CacheDir, UnlinkFileOrDir, &list, NULL, NULL, NULL, GDT_TRUE, Complete);
 	  if (Complete)
 	    {
 	      ::remove(CacheReadMeFile);
 	      if (RmDir(CacheDir.c_str()) == -1)
-		logf (LOG_ERRNO|LOG_NOTICE, "Could not remove directory '%s'.", CacheDir.c_str());
+		message_log (LOG_ERRNO|LOG_NOTICE, "Could not remove directory '%s'.", CacheDir.c_str());
 	    }
 		
 	}
@@ -851,7 +855,7 @@ GDT_BOOLEAN IDB::FillHeadlineCache(const STRING& RecordSyntax)
     {
       const size_t Total = GetTotalRecords ();
       if (Total)
-	logf (LOG_INFO, "Filling the %s headline cache (%u slots) in %s",
+	message_log (LOG_INFO, "Filling the %s headline cache (%u slots) in %s",
 		RecordSyntax.c_str(), (unsigned)Total, CacheDir.c_str());
       for (size_t i=1; i<= Total; i++)
 	{
@@ -864,7 +868,7 @@ GDT_BOOLEAN IDB::FillHeadlineCache(const STRING& RecordSyntax)
 	      Result.SetVirtualIndex( Volume.GetVolume() );
 	      Result.SetMdtIndex(i);
 	      Headline(Result, RecordSyntax, &S);
-	      logf (LOG_DEBUG, "Filling %u with %s", (unsigned)i, S.c_str());
+	      message_log (LOG_DEBUG, "Filling %u with %s", (unsigned)i, S.c_str());
 	    }
 	}
       return Total != 0;
@@ -877,7 +881,7 @@ GDT_BOOLEAN IDB::SetCacheDir(const STRING& Dir)
   GDT_BOOLEAN Ok = GDT_FALSE;
   STRING      newCacheDir;
 
-  logf (LOG_DEBUG, "SetCacheDir('%s')", Dir.c_str());
+  message_log (LOG_DEBUG, "SetCacheDir('%s')", Dir.c_str());
 
   if (!Dir.IsEmpty() && !(Dir ^= "<NULL>"))
     {
@@ -889,15 +893,15 @@ GDT_BOOLEAN IDB::SetCacheDir(const STRING& Dir)
 	    {
 	      newCacheDir = AddTrailingSlash(AddTrailingSlash(Dir) + DbFileName);
 	      if (0 == stat(newCacheDir.c_str(), &st_buf) && !S_ISDIR(st_buf.st_mode))
-		logf (LOG_ERROR, "'%s' is a file. Can't use for present cache!", newCacheDir.c_str());
+		message_log (LOG_ERROR, "'%s' is a file. Can't use for present cache!", newCacheDir.c_str());
 	      else
 		Ok = GDT_TRUE;
 	    }
 	  else
-	    logf(LOG_WARN, "'%s' specified for base of present cache is not a directory", Dir.c_str());
+	    message_log(LOG_WARN, "'%s' specified for base of present cache is not a directory", Dir.c_str());
 	}
       else
-	logf(LOG_WARN, "Present cache base directory '%s' does not exist. Ignoring", Dir.c_str());
+	message_log(LOG_WARN, "Present cache base directory '%s' does not exist. Ignoring", Dir.c_str());
     }
 
   if (Ok)
@@ -908,10 +912,10 @@ GDT_BOOLEAN IDB::SetCacheDir(const STRING& Dir)
 	  DbInfoChanged = GDT_TRUE;
 	  if (!CacheDir.IsEmpty())
 	    {
-	      logf (LOG_DEBUG, "Moving %s to %s", CacheDir.c_str(), newCacheDir.c_str());
+	      message_log (LOG_DEBUG, "Moving %s to %s", CacheDir.c_str(), newCacheDir.c_str());
 	      if (RenameFile(CacheDir, newCacheDir) == -1)
 		{
-		  logf (LOG_ERRNO, "Could not move cache dir from %s to %s",
+		  message_log (LOG_ERRNO, "Could not move cache dir from %s to %s",
 			CacheDir.c_str(), newCacheDir.c_str());
 		  KillCache(GDT_TRUE);
 		}
@@ -923,7 +927,7 @@ GDT_BOOLEAN IDB::SetCacheDir(const STRING& Dir)
 	{
 	  if (MkDir(CacheDir, 0001777) == -1)
 	    {
-	      logf (LOG_ERRNO, "Could not create '%s' (Cache Dir)", CacheDir.c_str());
+	      message_log (LOG_ERRNO, "Could not create '%s' (Cache Dir)", CacheDir.c_str());
 	    }
 	  else
 	    {
@@ -938,10 +942,10 @@ GDT_BOOLEAN IDB::SetCacheDir(const STRING& Dir)
 " is set) be re-created/updated as needed so you may remove any or all of" << endl <<
 " them. Some files use so-called file-system holes so do not copy!" << endl;
 	      else
-		logf (LOG_ERRNO, "Could not create '%s'", Readme.c_str());
+		message_log (LOG_ERRNO, "Could not create '%s'", Readme.c_str());
 	    }
 	}
-      logf(LOG_DEBUG, "Using %s for present cache", CacheDir.c_str());
+      message_log(LOG_DEBUG, "Using %s for present cache", CacheDir.c_str());
     }
   else
     CacheDir = NulString;
@@ -987,7 +991,7 @@ GDT_BOOLEAN IDB::SetLocale (const LOCALE& Locale)
 {
   if (GlobalLocale != Locale)
     {
-      logf (LOG_DEBUG, "Setting DB Locale %s --> %s",
+      message_log (LOG_DEBUG, "Setting DB Locale %s --> %s",
 	GlobalLocale.LocaleName().c_str(), Locale.LocaleName().c_str());
       GlobalLocale = Locale;
       SetGlobalCharset(GlobalLocale.GetCharsetId());
@@ -1147,10 +1151,10 @@ static inline off_t OnDiskFcSearch(const FC& Fc, FILE *Fp)
   do {
     op = p;
     if ( -1 == fseek(Fp, p*sizeof(FC), SEEK_SET)) {
-      logf (LOG_ERRNO, message, "Seek", p);
+      message_log (LOG_ERRNO, message, "Seek", p);
       cmp = 1; // Seek Error
     } else if (fc.Read (Fp) == GDT_FALSE) {
-      logf (LOG_ERRNO, message, "Read", p);
+      message_log (LOG_ERRNO, message, "Read", p);
       cmp = 0;  // Read Error (pretend match)
     } else
       cmp = Fc.Compare(fc);
@@ -1182,10 +1186,10 @@ static inline off_t OnDiskFcZoneSearch(const FC& HitFc, FILE *Fp)
 //cerr << "p = " << endl;
     op = p;
     if ( -1 == fseek(Fp, p*sizeof(FC), SEEK_SET)) {
-      logf (LOG_ERRNO, message, "Seek", p);
+      message_log (LOG_ERRNO, message, "Seek", p);
       return 0;
     } else if (fc.Read (Fp) == GDT_FALSE) {
-      logf (LOG_ERRNO, message, "Read", p);
+      message_log (LOG_ERRNO, message, "Read", p);
       return 0;
     } 
 //cerr << "fc = " << fc << endl;
@@ -1215,7 +1219,7 @@ GDT_BOOLEAN IDB::GetRecordDfdt (const STRING& Key, DFDT *DfdtBuffer)
   MDTREC Mdtrec;
   if (!MainMdt->GetMdtRecord (Key, &Mdtrec))
     {
-      logf (LOG_DEBUG, "GetRecordDfdt: Record %s not in MDT!", Key.c_str());
+      message_log (LOG_DEBUG, "GetRecordDfdt: Record %s not in MDT!", Key.c_str());
       return GDT_FALSE;
     }
 
@@ -1231,7 +1235,7 @@ GDT_BOOLEAN IDB::GetRecordDfdt (const STRING& Key, DFDT *DfdtBuffer)
   size_t count = 0;
   struct DTAB *Table = new struct DTAB[TotalEntries];
 
-  logf (LOG_DEBUG, "Creating DFDT table of elements");
+  message_log (LOG_DEBUG, "Creating DFDT table of elements");
   for (size_t x = 1; x <= TotalEntries; x++)
     {
       MainDfdt->GetEntry (x, &dfd);
@@ -1279,7 +1283,7 @@ GDT_BOOLEAN IDB::GetRecordDfdt (const STRING& Key, DFDT *DfdtBuffer)
 
   delete[]Table;
 
-  if (DebugMode) logf (LOG_DEBUG, "Document contains %u fields", (unsigned)count);
+  if (DebugMode) message_log (LOG_DEBUG, "Document contains %u fields", (unsigned)count);
   return GDT_TRUE;
 }
 
@@ -1293,10 +1297,10 @@ static inline off_t OnDiskFcSubZoneSearch(const FC& HitFc, FILE *Fp)
   do {
     op = p;
     if ( -1 == fseek(Fp, p*sizeof(FC), SEEK_SET)) {
-      logf (LOG_ERRNO, message, "Seek", p);
+      message_log (LOG_ERRNO, message, "Seek", p);
       return 0;
     } else if (fc.Read (Fp) == GDT_FALSE) {
-      logf (LOG_ERRNO, message, "Read", p);
+      message_log (LOG_ERRNO, message, "Read", p);
       return 0;
     } 
     if ( HitFc.Contains(fc) )
@@ -2044,7 +2048,7 @@ NODETREE IDB::GetNodeTree (const FC& HitFc)
   NODETREE     Tree;
   const STRING Dot ("."); // Special field
 
-  logf (LOG_DEBUG, "Looking for Nodetree (%ld,%ld)", 
+  message_log (LOG_DEBUG, "Looking for Nodetree (%ld,%ld)", 
 	HitFc.GetFieldStart(), HitFc.GetFieldEnd());
 
   for (size_t x = 1; x <= TotalEntries; x++)
@@ -2106,7 +2110,7 @@ NODETREE IDB::GetNodeTree (const FC& HitFc)
 	}
       if (found)
 	{
-	  logf (LOG_DEBUG, "Add Node %s", PeerFieldName.c_str());
+	  message_log (LOG_DEBUG, "Add Node %s", PeerFieldName.c_str());
 	  Tree.AddEntry( TREENODE(PeerFC, PeerFieldName) );
 	  found = GDT_FALSE;
 	  count++;
@@ -2301,19 +2305,19 @@ PDOCTYPE IDB::GetDocTypePtr (const DOCTYPE_ID& DocType) const
       if ((DocType == GlobalDoctype) || (GlobalDoctype == Autodetect))
 	{
 	  if (DocType.IsDefined())
-	    logf(LOG_ERROR|LOG_INFO, "Doctype \"%s\" is not registered.", DocType.c_str());
+	    message_log(LOG_ERROR|LOG_INFO, "Doctype \"%s\" is not registered.", DocType.c_str());
 	  else
-	    logf(LOG_ERROR|LOG_INFO, "No default Doctype is available.");
+	    message_log(LOG_ERROR|LOG_INFO, "No default Doctype is available.");
 	}
       else 
 	{
 	  if (GlobalDoctype.IsDefined())
-	    logf(LOG_NOTICE, "\"%s\" is not registered, using the global default document type %s.",
+	    message_log(LOG_NOTICE, "\"%s\" is not registered, using the global default document type %s.",
 		DocType.c_str(), GlobalDoctype.c_str());
 	   else if (DocType.IsDefined())
-	    logf(LOG_NOTICE, "\"%s\" is not registered, using the default document type.", DocType.c_str());
+	    message_log(LOG_NOTICE, "\"%s\" is not registered, using the default document type.", DocType.c_str());
 	   else
-	    logf (LOG_NOTICE, "No doctype specified, using the default.");
+	    message_log (LOG_NOTICE, "No doctype specified, using the default.");
 	  return GetDocTypePtr(GlobalDoctype);
 	}
     }
@@ -2336,41 +2340,41 @@ void IDB::IndexingStatus (const t_IndexingStatus StatusMessage, const STRING& Fi
     switch (StatusMessage)
       {
         case IndexingStatusReading:
-          logf (LOG_INFO, "Reading files...");
+          message_log (LOG_INFO, "Reading files...");
           break; 
         case IndexingStatusParsingFiles:
-          logf (LOG_INFO, "Parsing files ...");
+          message_log (LOG_INFO, "Parsing files ...");
           break;
 	case IndexingStatusParsingRecords:
-	  logf (LOG_INFO, "Parsing Records ...");
+	  message_log (LOG_INFO, "Parsing Records ...");
 	  break;   
 	case IndexingStatusParsingRecord:
-	  logf (LOG_DEBUG, "Parsing %s ..", Filename.c_str());
+	  message_log (LOG_DEBUG, "Parsing %s ..", Filename.c_str());
 	  break;
         case IndexingStatusIndexingDocument:
-          logf (LOG_INFO, "Indexing %s ...", Filename.c_str()); 
+          message_log (LOG_INFO, "Indexing %s ...", Filename.c_str()); 
           break;
         case IndexingStatusIndexing:
-          logf (LOG_INFO, "Adding %u words to index ...", (unsigned)arg);
+          message_log (LOG_INFO, "Adding %u words to index ...", (unsigned)arg);
           break;
 	case IndexingStatusRecordAdded:
-	  logf (LOG_DEBUG, "Index Record Nr.%ld created ('%s')", arg, Filename.c_str());
+	  message_log (LOG_DEBUG, "Index Record Nr.%ld created ('%s')", arg, Filename.c_str());
 	  break;
         case IndexingStatusFlushing:
-          logf (LOG_INFO, "Flushing index ...");
+          message_log (LOG_INFO, "Flushing index ...");
           break;
         case IndexingStatusMerging:
-          logf (LOG_INFO, "Merging indexes (%u indices)...", (unsigned)arg);
+          message_log (LOG_INFO, "Merging indexes (%u indices)...", (unsigned)arg);
           break;
 	case IndexingStatusInit:
-	  logf (LOG_DEBUG, "Opening '%s'", Filename.c_str());
+	  message_log (LOG_DEBUG, "Opening '%s'", Filename.c_str());
 	  break;
 	case IndexingStatusClose:
-	  logf (LOG_DEBUG, "'%s' closed", Filename.c_str());
+	  message_log (LOG_DEBUG, "'%s' closed", Filename.c_str());
 	  break;
 #if 0
 	default:
-	  logf (LOG_INFO, "Status#%d: %s : %d", (int)StatusMessage , Filename.c_str(), (int)arg);
+	  message_log (LOG_INFO, "Status#%d: %s : %d", (int)StatusMessage , Filename.c_str(), (int)arg);
 	  break;
 #endif
       }
@@ -2429,7 +2433,7 @@ void IDB::SetIndexingMemory (const size_t MemorySize, GDT_BOOLEAN Force)
 {
   const rlim_t totalMemory        = _IB_GetTotalMemory();
   const rlim_t freeMemory         = _IB_GetFreeMemory();
-  logf (LOG_DEBUG, "OS Reports Memory: Total = %lu, Free = %lu (%u bytes/Page)",
+  message_log (LOG_DEBUG, "OS Reports Memory: Total = %lu, Free = %lu (%u bytes/Page)",
 	(unsigned long)(totalMemory/PAGESIZE), (unsigned long)(freeMemory/PAGESIZE), (unsigned)PAGESIZE);
   if (Force && MemorySize > 0)
     {
@@ -2440,18 +2444,18 @@ void IDB::SetIndexingMemory (const size_t MemorySize, GDT_BOOLEAN Force)
       IndexingMemory += (IndexingMemory & PAGEOFFSET);
 
       if (IndexingMemory < MemorySize)
-	logf (LOG_ERROR, "Memory size overflow (%lu < %lu)", (unsigned long)IndexingMemory, (unsigned long)MemorySize);
+	message_log (LOG_ERROR, "Memory size overflow (%lu < %lu)", (unsigned long)IndexingMemory, (unsigned long)MemorySize);
       if ((totalMemory > 0) && ((GPTYPE)IndexingMemory >= (GPTYPE)totalMemory))
-	logf (LOG_WARN, "More indexing memory, %lu pages, was specified than is available system-wide (%lu)",
+	message_log (LOG_WARN, "More indexing memory, %lu pages, was specified than is available system-wide (%lu)",
                 (unsigned long)(IndexingMemory/PAGESIZE), (unsigned long)(totalMemory/PAGESIZE));
       else if ((totalMemory > 0) && ((GPTYPE)IndexingMemory > (GPTYPE)(totalMemory/2)))
-	logf (LOG_WARN, "Dangerously high amount of indexing memory, %lu pages, was specified (%.1f%%)", 
+	message_log (LOG_WARN, "Dangerously high amount of indexing memory, %lu pages, was specified (%.1f%%)", 
 	 	(unsigned long)(IndexingMemory/PAGESIZE), 100.0 * ((double)IndexingMemory/(double)totalMemory));
       else if ((freeMemory > 0) && (GPTYPE)((3*IndexingMemory) > (GPTYPE)freeMemory))
-	logf (LOG_WARN, "Indexing process with %lu pages may swap (%lu/%lu)",
+	message_log (LOG_WARN, "Indexing process with %lu pages may swap (%lu/%lu)",
 		(unsigned long)(IndexingMemory/PAGESIZE), (unsigned long)(freeMemory/PAGESIZE), (unsigned long)(totalMemory/PAGESIZE));
       else
-	logf (LOG_DEBUG, "Indexing memory set to %lu kb (%lu pages).",
+	message_log (LOG_DEBUG, "Indexing memory set to %lu kb (%lu pages).",
 		(unsigned long)(IndexingMemory/1024), (unsigned long)(IndexingMemory/PAGESIZE));
       return;
     }
@@ -2467,12 +2471,12 @@ void IDB::SetIndexingMemory (const size_t MemorySize, GDT_BOOLEAN Force)
 	{
 #define MB (1000L*1000L)
 	  IndexingMemory = DefaultMemSize;
-	  logf (LOG_DEBUG, msg, "Default", IndexingMemory / MB);
+	  message_log (LOG_DEBUG, msg, "Default", IndexingMemory / MB);
 	}
       else if ((IndexingMemory = physical/2) < MinimumMemSize)
 	{
 	  IndexingMemory = MinimumMemSize;
-	  logf (LOG_DEBUG, msg, "Minimum", IndexingMemory /MB);
+	  message_log (LOG_DEBUG, msg, "Minimum", IndexingMemory /MB);
 	}
       else if ((UINT8)IndexingMemory > ((UINT8)DefaultMemSize)*4)
 	{
@@ -2492,19 +2496,19 @@ void IDB::SetIndexingMemory (const size_t MemorySize, GDT_BOOLEAN Force)
 		}
 	      else
 		IndexingMemory = DefaultMemSize*2;
-	      logf (LOG_DEBUG, msg, factor, IndexingMemory /MB);
+	      message_log (LOG_DEBUG, msg, factor, IndexingMemory /MB);
 	    }
 	}
     }
   else if ((INT4)MemorySize < 0)
     {
       if (freeMemory)
-	logf (LOG_DEBUG, "Free Memory = %ld kb, Total Memory = %ld kb",
+	message_log (LOG_DEBUG, "Free Memory = %ld kb, Total Memory = %ld kb",
 		freeMemory/1024, totalMemory/1024);
       IndexingMemory = physical + installed/16 + MemorySize*PAGESIZE;
       if (IndexingMemory < MinimumMemSize)
 	IndexingMemory = MinimumMemSize; 
-      logf (LOG_INFO, "Indexing memory auto-selected to %ld Kb (%ld pages).",
+      message_log (LOG_INFO, "Indexing memory auto-selected to %ld Kb (%ld pages).",
 	IndexingMemory/1024, IndexingMemory/PAGESIZE);
       return;
     }
@@ -2519,7 +2523,7 @@ void IDB::SetIndexingMemory (const size_t MemorySize, GDT_BOOLEAN Force)
     {
       if ((((UINT8)IndexingMemory)*2L) > (((UINT8)physical)*3L))
 	{
-	  logf (LOG_WARN, "RAM Resources are low (only %ld kb free).", physical/1024);
+	  message_log (LOG_WARN, "RAM Resources are low (only %ld kb free).", physical/1024);
 	}
       else
 	{
@@ -2527,11 +2531,11 @@ void IDB::SetIndexingMemory (const size_t MemorySize, GDT_BOOLEAN Force)
 	  IndexingMemory = ((((physical/PAGESIZE)*7)/4) - 10)*PAGESIZE;
 	  if (IndexingMemory < MinimumMemSize)
 	    IndexingMemory = MinimumMemSize;
-	  logf (LOG_WARN, "System has not enough free RAM (%lu kbytes) for %lu MB., adjusting to %ld kbytes.",
+	  message_log (LOG_WARN, "System has not enough free RAM (%lu kbytes) for %lu MB., adjusting to %ld kbytes.",
 		freeMemory/1024, wanted, IndexingMemory/1024);
 	}
     }
-  logf (LOG_DEBUG, "Indexing memory set to %ld kb (%ld pages).",
+  message_log (LOG_DEBUG, "Indexing memory set to %ld kb (%ld pages).",
 	IndexingMemory/1024, IndexingMemory/PAGESIZE);
 }
 
@@ -2561,7 +2565,7 @@ PRSET IDB::VSearch(const QUERY& Query)
   IRSET *irset = Search (Query);
   if (irset == NULL)
     {
-      logf (LOG_DEBUG, "Search --> Undefined result set");
+      message_log (LOG_DEBUG, "Search --> Undefined result set");
       return NULL; // Undefined result set
     }
 
@@ -2587,7 +2591,7 @@ PRSET IDB::VSearchSmart(QUERY *Query, const STRING& DefaultField)
   IRSET *irset = Query ? SearchSmart (Query, DefaultField) : NULL;
   if (irset == NULL)
     {
-      logf (LOG_DEBUG, "SearchSmart --> Undefined result set");
+      message_log (LOG_DEBUG, "SearchSmart --> Undefined result set");
       return NULL; // Undefined result set
     }
   const size_t y     = irset->GetTotalEntries ();
@@ -2613,7 +2617,7 @@ PIRSET IDB::Search (const QUERY& nQuery)
   // Check lock
   if (LockWait(DbFileStem, L_READ) == L_READ)
     {
-      logf(LOG_NOTICE|LOG_ERROR, "Database \"%s\" is locked.", DbFileName.c_str());
+      message_log(LOG_NOTICE|LOG_ERROR, "Database \"%s\" is locked.", DbFileName.c_str());
       return (new IRSET(this));
     }
 #endif
@@ -2779,7 +2783,7 @@ GDT_BOOLEAN IDB::GetFieldData (const RESULT &ResultRecord, const FC& Fc,
 
   if ((fpd = ffopen(path, "rb")) == NULL)
     {
-      logf (LOG_DEBUG, "IDB::GetFieldData: Could not open '%s'.", path.c_str());
+      message_log (LOG_DEBUG, "IDB::GetFieldData: Could not open '%s'.", path.c_str());
       return GDT_FALSE;
     }
 
@@ -2902,7 +2906,7 @@ GDT_BOOLEAN IDB::GetFieldData (const RESULT &ResultRecord, const STRING& ESet,
 			if (FcStart < GpStart) break;
 		      }
 		     else
-		      logf (LOG_DEBUG, "Seek to %ld'th FC failed", Pos);
+		      message_log (LOG_DEBUG, "Seek to %ld'th FC failed", Pos);
 		  }
 //cerr << "DONE" << endl;
 		int count = 0; // Keep track of the element count for the range
@@ -2937,7 +2941,7 @@ GDT_BOOLEAN IDB::GetFieldData (const RESULT &ResultRecord, const STRING& ESet,
 		  FcStart = Fc2.GetFieldStart();
 		  if (FcStart == 0)
 		    {
-		      logf (LOG_ERROR, "FcStart == 0? (line %u)", __LINE__);
+		      message_log (LOG_ERROR, "FcStart == 0? (line %u)", __LINE__);
 		      break;
 		    }
 		} while (!feof(fp));
@@ -2949,11 +2953,11 @@ GDT_BOOLEAN IDB::GetFieldData (const RESULT &ResultRecord, const STRING& ESet,
 	  return GDT_TRUE;
 	}
       else
-	logf (LOG_ERRNO, "Could not open %s (%s)", DfFileName.c_str(), FieldName.c_str());
+	message_log (LOG_ERRNO, "Could not open %s (%s)", DfFileName.c_str(), FieldName.c_str());
     }
   else
     {
-      logf (LOG_DEBUG, "Field %s not available", FieldName.c_str());
+      message_log (LOG_DEBUG, "Field %s not available", FieldName.c_str());
     }
   return GDT_FALSE;
 }
@@ -3133,7 +3137,7 @@ GDT_BOOLEAN IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, DOUBLE
 	  if (Buffer) *Buffer = List.GetNumericValue(0); 
 	  return GDT_TRUE;
 	}
-       logf (LOG_PANIC, "Could not find %s data for '%s' %s",
+       message_log (LOG_PANIC, "Could not find %s data for '%s' %s",
 		"numerical", FieldName.c_str(), (const char *)((STRING)FieldFC));
     }
   return GDT_FALSE; 
@@ -3182,7 +3186,7 @@ GDT_BOOLEAN IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, SRCH_D
 	  return GDT_TRUE;
 	}
 //cerr << "PANIC: Could not find " << FieldName << "DATA for" << FieldFC <<  endl;
-       logf (LOG_PANIC, "Could not find %s data for '%s' %s",
+       message_log (LOG_PANIC, "Could not find %s data for '%s' %s",
 		"date", FieldName.c_str(), (const char *)((STRING)FieldFC));
     }
   return GDT_FALSE;
@@ -3294,13 +3298,13 @@ GDT_BOOLEAN IDB::CacheHeadline(GPTYPE MdtIndex, const STRING& Headline,
 	  if (lseek(fd, (off_t)MdtIndex*sizeof(offset), SEEK_SET) != -1)
 	    ::write(fd, &offset, sizeof(offset));
 	  else
-	    logf (LOG_ERRNO, "Could not store Headline cache address");
+	    message_log (LOG_ERRNO, "Could not store Headline cache address");
 	  close(fd);
 	  return GDT_TRUE;
 	}
-      logf (LOG_ERRNO, "Could not write to headline cache %s", RecordSyntax.c_str());
+      message_log (LOG_ERRNO, "Could not write to headline cache %s", RecordSyntax.c_str());
     }
-  else logf (LOG_ERRNO, "Could not write to headline cache %s", RecordSyntax.c_str());
+  else message_log (LOG_ERRNO, "Could not write to headline cache %s", RecordSyntax.c_str());
   return GDT_FALSE;
 #else
   STRING s;
@@ -3324,7 +3328,7 @@ GDT_BOOLEAN IDB::CacheHeadline(GPTYPE MdtIndex, const STRING& Headline,
       close(fd);
     }
   else
-    logf (LOG_ERRNO, "Could not write to headline cache  '%s'", cacheName.c_str());
+    message_log (LOG_ERRNO, "Could not write to headline cache  '%s'", cacheName.c_str());
   return res != -1;
 #endif
 }
@@ -3739,10 +3743,10 @@ GDT_BOOLEAN IDB::AddRecord (const RECORD& NewRecord)
 //cerr << "AddRecord " << FileName << endl;
 
   if (fileLength == 0)
-    logf (LOG_INFO, "Skipping '%s' (empty or non-accesible)", FileName.c_str());
+    message_log (LOG_INFO, "Skipping '%s' (empty or non-accesible)", FileName.c_str());
   else if (End > fileLength || Start > fileLength || (End >0 && Start > End))
     {
-      logf (LOG_NOTICE, "Skipping '%s'[%u-%lu], specified record out of bounds.",
+      message_log (LOG_NOTICE, "Skipping '%s'[%u-%lu], specified record out of bounds.",
 	FileName.c_str(), Start, End == 0 ? fileLength : End);
     }
   else if (!IsSystemFile (FileName)) // Only add non-system files
@@ -3758,17 +3762,17 @@ GDT_BOOLEAN IDB::AddRecord (const RECORD& NewRecord)
 
 	  unlockfd(fileno (fp));
 	  if (ferror(fp)) {
-	    logf (LOG_ERRNO, "I/O Error appending to Indexing Queue \"%s\"!", IndexingQueueFn.c_str());
+	    message_log (LOG_ERRNO, "I/O Error appending to Indexing Queue \"%s\"!", IndexingQueueFn.c_str());
 	  } else {
 	    Queue1Add++;
 	    Result = GDT_TRUE;
 	  }
 	  IDB::ffclose (fp);
 	} else
-	  logf (LOG_ERRNO, "Could not append to \"%s\", skipping!", IndexingQueueFn.c_str()); 
+	  message_log (LOG_ERRNO, "Could not append to \"%s\", skipping!", IndexingQueueFn.c_str()); 
     }
   else
-    logf (LOG_INFO, "Skipping '%s' (System file)", FileName.c_str());
+    message_log (LOG_INFO, "Skipping '%s' (System file)", FileName.c_str());
   return Result;
 }
 
@@ -3804,7 +3808,7 @@ void IDB::DocTypeAddRecord (const RECORD& NewRecord)
   if (!NewRecord.Exists())
     {
       if (!NewRecord.IsBadRecord())
-        logf (LOG_INFO, "Record '%s' does not exist", NewRecord.GetFullFileName ().c_str());
+        message_log (LOG_INFO, "Record '%s' does not exist", NewRecord.GetFullFileName ().c_str());
       return;
     }
 
@@ -3813,13 +3817,13 @@ void IDB::DocTypeAddRecord (const RECORD& NewRecord)
 
   if (End > 0 && ((INT)(End-Start) >= MaximumRecordSize))
     {
-      logf (LOG_NOTICE, "Record '%s'[%u-%u] is larger than MaxRecordSize (%u). Skipping!",
+      message_log (LOG_NOTICE, "Record '%s'[%u-%u] is larger than MaxRecordSize (%u). Skipping!",
 	  NewRecord.GetFullFileName ().c_str(), (unsigned)Start, (unsigned)End, MaximumRecordSize);
       return;
     }
   else if (End > 0 && End <= Start)
     {
-      logf (LOG_NOTICE, "Record '%s' End(%u)<=Start(%u). Skipping!",
+      message_log (LOG_NOTICE, "Record '%s' End(%u)<=Start(%u). Skipping!",
 	(unsigned)End, (unsigned)Start);
       return;
     }
@@ -3845,12 +3849,12 @@ void IDB::DocTypeAddRecord (const RECORD& NewRecord)
 	    {
 	      if ((fileSize-Start) > MaximumRecordSize)
 		{
-		  logf (LOG_NOTICE, "Record '%s' is larger than MaxRecordSize (%uk). Skipping!",
+		  message_log (LOG_NOTICE, "Record '%s' is larger than MaxRecordSize (%uk). Skipping!",
 		 	fn.c_str(), (unsigned)(MaximumRecordSize/1024));
 		  fileSize = 0;
 		}
 	    }
-	  else logf (LOG_NOTICE, "Record '%s' is empty!", fn.c_str());
+	  else message_log (LOG_NOTICE, "Record '%s' is empty!", fn.c_str());
 	  if ((End = (UINT4)fileSize) != 0 && ((off_t)End - (off_t)Start) > 2)
 	    {
 	      record.SetRecordEnd(End-1);
@@ -3870,7 +3874,7 @@ void IDB::DocTypeAddRecord (const RECORD& NewRecord)
       unlockfd(fileno (fp));
 
       if (ferror(fp))
-	logf (LOG_ERRNO, "I/O Error appending to Indexing Queue \"%s\"!", IndexingQueueFn.c_str());
+	message_log (LOG_ERRNO, "I/O Error appending to Indexing Queue \"%s\"!", IndexingQueueFn.c_str());
       else if (Ok) // Make sure we added something
 	Queue2Add++;
 
@@ -3886,13 +3890,13 @@ void IDB::DocTypeAddRecord (const RECORD& NewRecord)
 	    {
 	      // Adjust Memory...
 	      IndexingMemory = (IndexingSize/PAGESIZE + 1)*PAGESIZE;
-	      logf (LOG_INFO, "Increasing Indexing memory buffer setting to %ld pages (%u)",
+	      message_log (LOG_INFO, "Increasing Indexing memory buffer setting to %ld pages (%u)",
 		(long)(IndexingMemory/PAGESIZE), (unsigned)PAGESIZE);
 	    }
 	}
     }
   else
-    logf (LOG_ERRNO, "Could not append to \"%s\", skipping!", IndexingQueueFn.c_str());
+    message_log (LOG_ERRNO, "Could not append to \"%s\", skipping!", IndexingQueueFn.c_str());
 
 //cerr << "DocTypeAdd done" << endl;
 }
@@ -3906,7 +3910,7 @@ GDT_BOOLEAN IDB::Index (GDT_BOOLEAN newIndex)
   STRING IqFnBak =  ComposeDbFn(_DbExt( ExtLAST ));
   if (FileExists(IqFnBak))
     {   
-      logf (LOG_INFO, "Old '%s' left from stale process?", IqFnBak.c_str());
+      message_log (LOG_INFO, "Old '%s' left from stale process?", IqFnBak.c_str());
       if (UnlinkFile(IqFnBak) == -1)
 	{
 	  const STRING bak (IqFnBak + ".DELETE_ME");
@@ -3915,7 +3919,7 @@ GDT_BOOLEAN IDB::Index (GDT_BOOLEAN newIndex)
 	      AddtoGarbageFileList(bak);
 	    }
 	  else
-	    logf (LOG_ERROR|LOG_ERRNO, "Could not remove '%s'.", IqFnBak.c_str());
+	    message_log (LOG_ERROR|LOG_ERRNO, "Could not remove '%s'.", IqFnBak.c_str());
 	}
     }
 
@@ -3924,26 +3928,26 @@ GDT_BOOLEAN IDB::Index (GDT_BOOLEAN newIndex)
       int bitChange = (compatible == GDT_FALSE);
 
       if (MainMdt == NULL)
-	logf (LOG_ERROR, "Index with Nil MainMdt?");
+	message_log (LOG_ERROR, "Index with Nil MainMdt?");
       else if (MainMdt->GetTotalEntries ())
 	{
 	  // Need to save queue1 if it exists
 	  STRING IqFn = ComposeDbFn (DbExtIndexQueue1);
 	  if (FileExists(IqFn)) // Move
 	    if (RenameFile(IqFn, IqFnBak) == -1)
-	      logf (LOG_ERROR|LOG_ERRNO, "Could not rename '%s' to '%s'", IqFn.c_str(), IqFnBak.c_str()); 
+	      message_log (LOG_ERROR|LOG_ERRNO, "Could not rename '%s' to '%s'", IqFn.c_str(), IqFnBak.c_str()); 
 	  if (KillAll() == GDT_FALSE)
 	    return GDT_FALSE;
 	  if (FileExists(IqFnBak) && !FileExists(IqFn))
 	    if (RenameFile(IqFnBak, IqFn) == -1)
-	      logf (LOG_ERROR|LOG_ERRNO, "Could not re-install '%s' to '%s'", IqFnBak.c_str(), IqFn.c_str());
+	      message_log (LOG_ERROR|LOG_ERRNO, "Could not re-install '%s' to '%s'", IqFnBak.c_str(), IqFn.c_str());
 	}
       else if (bitChange)
 	{
 	  compatible = GDT_TRUE;
 	}
       if (bitChange)
-	logf (LOG_INFO, "Indexing with %u-bits", (unsigned)( 8*sizeof(GPTYPE)));
+	message_log (LOG_INFO, "Indexing with %u-bits", (unsigned)( 8*sizeof(GPTYPE)));
     }
   if (!IsDbCompatible ())
     {
@@ -3963,7 +3967,7 @@ GDT_BOOLEAN IDB::Index1()
   // Set lock
   if ((Lock(DbFileStem, L_WRITE) & L_WRITE) != L_WRITE)
     {
-      logf (LOG_NOTICE|LOG_ERROR, "Can't set lock for \"%s\".", (const char *)DbFileName);
+      message_log (LOG_NOTICE|LOG_ERROR, "Can't set lock for \"%s\".", (const char *)DbFileName);
       return GDT_FALSE;
     }
 #endif
@@ -3975,7 +3979,7 @@ GDT_BOOLEAN IDB::Index1()
   if (!setGlobalDoctype)
     BeforeIndexing ();
 
-  logf(LOG_DEBUG, "Pass(1) Queue passed min. %lu elements", Queue1Add);
+  message_log(LOG_DEBUG, "Pass(1) Queue passed min. %lu elements", Queue1Add);
 
   STRING IqFn = ComposeDbFn (DbExtIndexQueue1);
   PFILE fp = IDB::ffopen (IqFn, "rb");
@@ -3984,7 +3988,7 @@ GDT_BOOLEAN IDB::Index1()
   if (fp) {
     RECORD Record;
 
-    if (DebugMode) logf (LOG_DEBUG, "Reading Pass(1) Indexing Queue '%s'", IqFn.c_str());
+    if (DebugMode) message_log (LOG_DEBUG, "Reading Pass(1) Indexing Queue '%s'", IqFn.c_str());
     for (;;) {
       BYTE c;
       Read (&c, fp);
@@ -4003,7 +4007,7 @@ GDT_BOOLEAN IDB::Index1()
 	  } while (++errs < 5 && !feof(fp));
 	  if (errs)
 	    {
-	      logf (LOG_PANIC, "Indexer input record queue corrupted?");
+	      message_log (LOG_PANIC, "Indexer input record queue corrupted?");
 	      break;
 	    }
 	  if (setGlobalDoctype)
@@ -4032,13 +4036,13 @@ GDT_BOOLEAN IDB::Index1()
        }
   } else {
     if (SegmentNumber == 0)
-	logf (LOG_NOTICE, "No documents, nothing to do!");
+	message_log (LOG_NOTICE, "No documents, nothing to do!");
   }
 /// End Queue1
 #if _NO_LOCKS
 #else
   if (UnLock(DbFileStem, L_WRITE) != L_WRITE)
-    logf (LOG_NOTICE|LOG_ERROR, "Can't reset lock for \"%s\".", (const char *)DbFileName);
+    message_log (LOG_NOTICE|LOG_ERROR, "Can't reset lock for \"%s\".", (const char *)DbFileName);
 #endif
   return GDT_TRUE;
 }
@@ -4060,7 +4064,7 @@ GDT_BOOLEAN IDB::Index2()
   MainMdt->Resize (MainMdt->GetTotalEntries () + TotalRecordsQueued);
   STRING IqFn = ComposeDbFn (DbExtIndexQueue2);
 
-  if (DebugMode) logf(LOG_INFO, "Pass(2) Queue contains %lu records. Total Records Queued = %lu",
+  if (DebugMode) message_log(LOG_INFO, "Pass(2) Queue contains %lu records. Total Records Queued = %lu",
 	Queue2Add, TotalRecordsQueued);
 
   GDT_BOOLEAN result;
@@ -4078,33 +4082,33 @@ GDT_BOOLEAN IDB::Index2()
 	{
 	  if (Exists(PersistantIrsetCache))
 	    {
-	      logf (LOG_DEBUG, "Zapping persistant cache \"%s\"", PersistantIrsetCache.c_str());
+	      message_log (LOG_DEBUG, "Zapping persistant cache \"%s\"", PersistantIrsetCache.c_str());
 	      if (UnlinkFile(PersistantIrsetCache) == -1)
-		logf (LOG_ERRNO, "Could not remove '%s' (Persistant IRSET Cache)", PersistantIrsetCache.c_str());
+		message_log (LOG_ERRNO, "Could not remove '%s' (Persistant IRSET Cache)", PersistantIrsetCache.c_str());
 	    }
 	}
-      if (DebugMode) logf (LOG_INFO, "Reading Pass(2) Indexing Queue '%s'", IqFn.c_str());
+      if (DebugMode) message_log (LOG_INFO, "Reading Pass(2) Indexing Queue '%s'", IqFn.c_str());
       // Process the Queue...
       if (MainIndex == NULL)
 	{
-	  logf (LOG_PANIC, "MainIndex got lost in core space!?");
+	  message_log (LOG_PANIC, "MainIndex got lost in core space!?");
 	  result = GDT_FALSE;
 	}
       else
 	result = MainIndex->AddRecordList (fp);
-      if (DebugMode) logf (LOG_INFO, "Finished with Pass(2) Indexing Queue");
+      if (DebugMode) message_log (LOG_INFO, "Finished with Pass(2) Indexing Queue");
 #if 1
       fclose(fp);
 #else
       ffdispose (fp); // Hard close
 #endif
-      if (DebugMode) logf (LOG_INFO, "Removing Queue '%s'", IqFn.c_str());
+      if (DebugMode) message_log (LOG_INFO, "Removing Queue '%s'", IqFn.c_str());
       if (UnlinkFile (IqFn) == -1)
-	logf (LOG_ERRNO, "Could not remove queue file '%s'. Please remove by hand.", IqFn.c_str());
+	message_log (LOG_ERRNO, "Could not remove queue file '%s'. Please remove by hand.", IqFn.c_str());
     }
   else
     {
-      logf (LOG_NOTICE, "No records, nothing to do!");
+      message_log (LOG_NOTICE, "No records, nothing to do!");
       result = GDT_FALSE;
     }
   TotalRecordsQueued = 0;
@@ -4117,7 +4121,7 @@ GDT_BOOLEAN IDB::Index2()
   int lock = readlocked? L_READ| L_WRITE : L_WRITE; 
   if (UnLock(DbFileStem, lock) != lock)
     {
-      logf (LOG_NOTICE|LOG_ERROR, "Can't reset locks for \"%s\".", (const char *)DbFileName);
+      message_log (LOG_NOTICE|LOG_ERROR, "Can't reset locks for \"%s\".", (const char *)DbFileName);
     }
 #endif
 
@@ -4130,7 +4134,7 @@ GDT_BOOLEAN IDB::Index2()
 
 void IDB::ParseRecords(RECORD& FileRecord)
 {
-  if (DebugMode) logf (LOG_DEBUG, "IDB::ParseRecords");
+  if (DebugMode) message_log (LOG_DEBUG, "IDB::ParseRecords");
 
   GDT_BOOLEAN needDate         = !FileRecord.GetDate().Ok();
   GDT_BOOLEAN needDateCreated  = !FileRecord.GetDateCreated().Ok();
@@ -4142,7 +4146,7 @@ void IDB::ParseRecords(RECORD& FileRecord)
       const STRING    fn ( FileRecord.GetFullFileName() );
 
       if (DebugMode)
-	logf (LOG_DEBUG, "Seeting date metadata for '%s' Record", fn.c_str());
+	message_log (LOG_DEBUG, "Seeting date metadata for '%s' Record", fn.c_str());
 
       if (needDate || needDateModified)
 	{
@@ -4163,18 +4167,18 @@ void IDB::ParseRecords(RECORD& FileRecord)
   DOCTYPE_ID  doctype (FileRecord.GetDocumentType());
 
   DOCTYPE *DocTypePtr = GetDocTypePtr ( doctype );
-  if (DebugMode) logf (LOG_DEBUG, "Back from got pointer");
+  if (DebugMode) message_log (LOG_DEBUG, "Back from got pointer");
   if (DocTypePtr)
     {
       if (DebugMode)
-	logf (LOG_DEBUG, "IDB::ParseRecords passing to '%s'", ((STRING)doctype).c_str());
+	message_log (LOG_DEBUG, "IDB::ParseRecords passing to '%s'", ((STRING)doctype).c_str());
       MainIndex->SetDocTypePtr(DocTypePtr);  // added edz
       DocTypePtr->AddFieldDefs ();
       DocTypePtr->ParseRecords (FileRecord);
     }
   else
     {
-      logf (LOG_DEBUG, "IDB::ParseRecords: No Doctype Pointer");
+      message_log (LOG_DEBUG, "IDB::ParseRecords: No Doctype Pointer");
       DocTypeAddRecord (FileRecord);
     }
 }
@@ -4193,7 +4197,7 @@ void IDB::ParseFields (RECORD *Record)
 	    __afterParseFieldsCallBack(Record);
 #endif
 	}
-      else logf (LOG_PANIC, "Can't get Document Class pointer for %s",
+      else message_log (LOG_PANIC, "Can't get Document Class pointer for %s",
 		Record->GetDocumentType().ClassName(GDT_TRUE).c_str());
     }
 }
@@ -4319,7 +4323,7 @@ GDT_BOOLEAN IDB::KillAll ()
   if (LockWait(DbFileStem, L_WRITE|L_READ))
     {
       SetErrorCode(29);
-//    logf(LOG_NOTICE|LOG_INFO, "Database is locked by another process");
+//    message_log(LOG_NOTICE|LOG_INFO, "Database is locked by another process");
       return GDT_FALSE; // Sorry, locked...
     }
 #endif
@@ -4330,8 +4334,8 @@ GDT_BOOLEAN IDB::KillAll ()
 
   // Announce if we have some old queue garbage.
   { const char msg[] = "%s Queue#%d was not empty.";
-  if (FileExists( ComposeDbFn (DbExtIndexQueue1))) logf (LOG_WARN, msg, DbFileName.c_str(), 1);
-  if (FileExists( ComposeDbFn (DbExtIndexQueue2))) logf (LOG_WARN, msg, DbFileName.c_str(), 2);
+  if (FileExists( ComposeDbFn (DbExtIndexQueue1))) message_log (LOG_WARN, msg, DbFileName.c_str(), 1);
+  if (FileExists( ComposeDbFn (DbExtIndexQueue2))) message_log (LOG_WARN, msg, DbFileName.c_str(), 2);
   }
 
   // Zap the Persistant Cache if we have one
@@ -4407,33 +4411,33 @@ GDT_BOOLEAN IDB::KillAll ()
 					  tp = path;
 					  tp << dp2->d_name;
 					  if (UnlinkFile (tp) != 0 && *(dp2->d_name) != '.')
-					    logf (LOG_ERRNO, "Can't remove '%s' (Filtered data)", tp.c_str());
+					    message_log (LOG_ERRNO, "Can't remove '%s' (Filtered data)", tp.c_str());
 					}
 				      closedir(dir2);
 				      if (RmDir (dp->d_name) != 0)
-					logf (LOG_ERRNO, "Can't remove dir '%s'", dp->d_name);
+					message_log (LOG_ERRNO, "Can't remove dir '%s'", dp->d_name);
 				    }
-				  else logf (LOG_ERRNO, "Can't open '%s' (Filtered data)", dp->d_name);
+				  else message_log (LOG_ERRNO, "Can't open '%s' (Filtered data)", dp->d_name);
 				}
 			      else
-				logf (LOG_ERRNO, "Can't remove '%s'", dp->d_name);
+				message_log (LOG_ERRNO, "Can't remove '%s'", dp->d_name);
 			    }
 			}
 		      closedir( dir );
 		    }
-		  else logf (LOG_ERRNO, "Could not open directory '%s' (Filter data)[2]", s.c_str());
+		  else message_log (LOG_ERRNO, "Could not open directory '%s' (Filter data)[2]", s.c_str());
 		  if (cwd == NULL)
-		    logf (LOG_ERRNO, "Could not get/restore current working directory!");
+		    message_log (LOG_ERRNO, "Could not get/restore current working directory!");
 		}
-	      else logf (LOG_ERRNO, "Can't access directory '%s' (Filtered data)", s.c_str());
+	      else message_log (LOG_ERRNO, "Can't access directory '%s' (Filtered data)", s.c_str());
 	      if (cwd && chdir(cwd) != 0)
-		logf (LOG_ERRNO, "Can't chdir('%s')", cwd);
+		message_log (LOG_ERRNO, "Can't chdir('%s')", cwd);
 	      if (RmDir (s) != 0)
-		logf (LOG_ERRNO, "Can't rmdir '%s' (Filtered data)", s.c_str());
+		message_log (LOG_ERRNO, "Can't rmdir '%s' (Filtered data)", s.c_str());
 	    }
 	  else
 	    {
-	      logf(LOG_ERRNO, "Could not remove '%s'", s.c_str());
+	      message_log(LOG_ERRNO, "Could not remove '%s'", s.c_str());
 	    }
 	}
     }
@@ -4447,7 +4451,7 @@ GDT_BOOLEAN IDB::KillAll ()
 	if (UnlinkFile (s) == -1)
 	  {
 	    if (Exists(s))
-	      logf(LOG_ERRNO, "Could not remove '%s' (Resource Info)", s.c_str());
+	      message_log(LOG_ERRNO, "Could not remove '%s' (Resource Info)", s.c_str());
 	    else
 	      break;
 	  }
@@ -4801,7 +4805,7 @@ size_t IDB::DeleteExpired(const SRCH_DATE Now)
 
 void IDB::FlushMainRegistry()
 {
-  logf (LOG_DEBUG, "FlushMainRegistry");
+  message_log (LOG_DEBUG, "FlushMainRegistry");
 
 //cerr << "MainRegistry = " << (long)MainRegistry << endl;
   if (IsDbCompatible () && MainRegistry)
@@ -4853,7 +4857,7 @@ GDT_BOOLEAN IDB::Close()
 
 //cerr << "Close " << DbFileStem << endl;
  
-  logf (LOG_DEBUG, "IDB::Close %s", DbFileStem.c_str());
+  message_log (LOG_DEBUG, "IDB::Close %s", DbFileStem.c_str());
   if (SortIndexFp)
     {
       ffclose(SortIndexFp);
@@ -4898,7 +4902,7 @@ GDT_BOOLEAN IDB::Close()
 			  if ((pos = mirror.SearchReverse("/http/")) > 0)
 			    {
 			      mirror.EraseAfter(pos);
-			      logf (LOG_DEBUG, "Testing for spider root='%s'", mirror.c_str());
+			      message_log (LOG_DEBUG, "Testing for spider root='%s'", mirror.c_str());
 			      break;
 			    }
 			}
@@ -4913,7 +4917,7 @@ GDT_BOOLEAN IDB::Close()
 		    }
 		  if (i == total)
 		    {
-		      logf (LOG_INFO, "Looking like an index of a spider crawl: Root='%s'",
+		      message_log (LOG_INFO, "Looking like an index of a spider crawl: Root='%s'",
 			mirror.c_str());
 		      SetMirrorBaseDirectory(mirror);
 		    }
@@ -4975,9 +4979,9 @@ GDT_BOOLEAN IDB::Close()
 #ifdef DEBUG_MEMORY
   if (DebugMode)
     {
-      logf (LOG_DEBUG, "RESULTs (globally) still allocated: %ld", __IB_RESULT_allocated_count);
-      logf (LOG_DEBUG, "IRESULTs (globally) still allocated: %ld", __IB_IRESULT_allocated_count);
-      logf (LOG_DEBUG, "FCTs (globally) still allocated: %ld // %ld FCLIST itmes", __IB_FCT_allocated_count,   __IB_FCLIST_allocated_count);
+      message_log (LOG_DEBUG, "RESULTs (globally) still allocated: %ld", __IB_RESULT_allocated_count);
+      message_log (LOG_DEBUG, "IRESULTs (globally) still allocated: %ld", __IB_IRESULT_allocated_count);
+      message_log (LOG_DEBUG, "FCTs (globally) still allocated: %ld // %ld FCLIST itmes", __IB_FCT_allocated_count,   __IB_FCLIST_allocated_count);
     }
 #endif
 
@@ -5231,10 +5235,10 @@ FCT IDB::GetFieldFCT (const MDTREC& mdtrec, const STRING& FieldName)
 	  ffclose (fp);
 	}
       else
-	logf (LOG_ERRNO, "Could not open %s (%s)", DfFileName.c_str(), FieldName.c_str());
+	message_log (LOG_ERRNO, "Could not open %s (%s)", DfFileName.c_str(), FieldName.c_str());
     }
   else
-    logf (LOG_DEBUG, "Field %s not available", FieldName.c_str());
+    message_log (LOG_DEBUG, "Field %s not available", FieldName.c_str());
   return fct;
 }
 
@@ -5250,7 +5254,7 @@ GDT_BOOLEAN IDB::BeforeSortIndex(int Which)
 
       if (SortIndexFp)
 	{
-	  logf (LOG_DEBUG, "Offloading external sort #%d", ActiveSortIndex);
+	  message_log (LOG_DEBUG, "Offloading external sort #%d", ActiveSortIndex);
 	  ffclose(SortIndexFp); // Close Old
 	  SortIndexFp = NULL;
 	}
@@ -5261,23 +5265,23 @@ GDT_BOOLEAN IDB::BeforeSortIndex(int Which)
 	  filename.form("%s.__%d", DbFileStem.c_str(), Which);
 	  if (!FileExists(filename))
 	    {
-	      logf (LOG_DEBUG, "Default '%s' for external sort #%d not found", filename.c_str(), Which);
+	      message_log (LOG_DEBUG, "Default '%s' for external sort #%d not found", filename.c_str(), Which);
 	      filename.Clear();
 	    }
 	}
        if (filename.IsEmpty())
-	 logf (LOG_WARN, "No External Sort is available for #%d", Which);
+	 message_log (LOG_WARN, "No External Sort is available for #%d", Which);
       else if (!FileExists(filename))
-	logf (LOG_ERROR, "External Sort for #%d = '%s' does not exist!", Which, filename.c_str());
+	message_log (LOG_ERROR, "External Sort for #%d = '%s' does not exist!", Which, filename.c_str());
       else if ((GetFileSize(filename)/sizeof(SORT_INDEX_ID)) < GetTotalRecords())
-	logf (LOG_ERROR, "External Sort for #%d (='%s') too short.", Which, filename.c_str());
+	message_log (LOG_ERROR, "External Sort for #%d (='%s') too short.", Which, filename.c_str());
       else if ((SortIndexFp = ffopen(filename, "rb")) == NULL)
-	logf (LOG_ERRNO, "Could not open external sort '%s'", filename.c_str());
+	message_log (LOG_ERRNO, "Could not open external sort '%s'", filename.c_str());
       else
-	logf (LOG_DEBUG, "External sort %d loaded (%p)", filename.c_str(), Which, SortIndexFp);
+	message_log (LOG_DEBUG, "External sort %d loaded (%p)", filename.c_str(), Which, SortIndexFp);
       ActiveSortIndex = Which;
     }
-  else logf (LOG_DEBUG, "Reuse open SortIndex handle: %d (%p)", ActiveSortIndex, SortIndexFp);
+  else message_log (LOG_DEBUG, "Reuse open SortIndex handle: %d (%p)", ActiveSortIndex, SortIndexFp);
   return (SortIndexFp != NULL);
 }
 
@@ -5317,7 +5321,7 @@ SORT_INDEX_ID IDB::GetSortIndex(int Which, INDEX_ID index_id)
   if (ActiveSortIndex == -1 && Which != ActiveSortIndex)
     BeforeSortIndex(Which);
   if (Which != ActiveSortIndex)
-    logf (LOG_PANIC, "Resource deadlock on SortIndex process. Want #%d but #%d is running.", Which, ActiveSortIndex);
+    message_log (LOG_PANIC, "Resource deadlock on SortIndex process. Want #%d but #%d is running.", Which, ActiveSortIndex);
   else sort.Set(SortIndexFp, index_id);
   return sort; 
 }
@@ -5332,7 +5336,7 @@ STRING IDB::XMLHitTable(const RESULT& Result)
 
   if ( MainMdt == NULL || MainMdt->GetEntry (Result.GetMdtIndex(), &mdtrec) == GDT_FALSE)
     {
-      logf (LOG_ERROR, "IDB::XMLHitTable Can't resolve record!");
+      message_log (LOG_ERROR, "IDB::XMLHitTable Can't resolve record!");
       return NulString;
     } 
   int offset = mdtrec.GetGlobalFileStart() + mdtrec.GetLocalRecordStart();

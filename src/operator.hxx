@@ -1,11 +1,9 @@
-/************************************************************************
-************************************************************************/
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 
 /*@@@
 File:		operator.hxx
-Version:	1.00
 Description:	Class OPERATOR - Query Operator
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #ifndef OPERATOR_HXX
@@ -31,6 +29,11 @@ public:
   void SetOperatorString(const STRING& Arg);
   STRING GetOperatorString() const;
   ~OPERATOR();
+
+ // friend ostream& operator <<(ostream& os, const OPERATOR& op) {
+ //   return os << op.GetOperatorType(); 
+ // }
+
 private:
   t_Operator OperatorType;
   FLOAT      OperatorMetric;

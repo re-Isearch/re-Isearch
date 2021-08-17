@@ -91,7 +91,7 @@ void MEDLINE::ParseRecords (const RECORD& FileRecord)
   PFILE Fp = Db->ffopen (Fn, "rb");
   if (!Fp)
     {
-      logf (LOG_ERRNO, "Could not access %s",
+      message_log (LOG_ERRNO, "Could not access %s",
 	(const char *)Fn );
       return;			// File not accessed
 
@@ -110,7 +110,7 @@ void MEDLINE::ParseRecords (const RECORD& FileRecord)
   MMAP mapping (Fn, Start, End, MapSequential);
   if (!mapping.Ok())
     {
-       logf(LOG_FATAL|LOG_ERRNO, "Couldn't map '%s' into memory",
+       message_log(LOG_FATAL|LOG_ERRNO, "Couldn't map '%s' into memory",
 		(const char *)Fn);
        return;
     }
@@ -120,7 +120,7 @@ void MEDLINE::ParseRecords (const RECORD& FileRecord)
 
   if (End > 0 && End - Start <= 0)
     {
-      logf (LOG_WARN, "zero-length record - '%s' [%ld-%ld]",
+      message_log (LOG_WARN, "zero-length record - '%s' [%ld-%ld]",
 	(const char *)Fn, (long)Start, (long)End);
       Db->ffclose (Fp);
       return;
@@ -451,7 +451,7 @@ void MEDLINE::ParseFields (PRECORD NewRecord)
       return;
     }
   if (-1 == fseek (fp, RecStart, SEEK_SET))
-    logf(LOG_ERRNO, "Couldn't seek on \"%s\"", (const char *)fn);
+    message_log(LOG_ERRNO, "Couldn't seek on \"%s\"", (const char *)fn);
   off_t RecLength = RecEnd - RecStart + 1;
   PCHR RecBuffer = (PCHR)recBuffer.Want (RecLength + 1);
   off_t ActualLength = fread (RecBuffer, 1, RecLength, fp);
@@ -463,12 +463,12 @@ void MEDLINE::ParseFields (PRECORD NewRecord)
     {
       if (tags)
 	{
-	  logf (LOG_WARN, "Warning: No `%s' fields/tags in \"%s\" record.",
+	  message_log (LOG_WARN, "Warning: No `%s' fields/tags in \"%s\" record.",
 		(const char *)Doctype, (const char *)fn);
 	}
        else
 	{
-	  logf (LOG_ERROR, "Unable to parse `%s' record in \"%s\".",
+	  message_log (LOG_ERROR, "Unable to parse `%s' record in \"%s\".",
 		(const char *)Doctype, (const char *)fn);
 	}
 
@@ -651,7 +651,7 @@ if (strcmp(*tags_ptr, "SO" ) == 0) {
       else
 	error++;
       if (error)
-	logf(LOG_WARN, "SO in '%s' not a Medline Source field",
+	message_log(LOG_WARN, "SO in '%s' not a Medline Source field",
 		(const char *)fn);
       else
 	{

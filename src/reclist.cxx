@@ -1,13 +1,10 @@
-#pragma ident  "@(#)reclist.cxx  1.7 10/09/99 13:15:41 BSN"
-
-/************************************************************************
-************************************************************************/
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
+#pragma ident  "@(#)reclist.cxx"
 
 /*-@@@
 File:		reclist.cxx
-Version:	1.00
 Description:	Class RECLIST - Database Record List
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #include <stdio.h>

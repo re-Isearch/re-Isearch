@@ -1,18 +1,15 @@
-#pragma ident  "@(#)Iindex.cxx  1.200 08/29/03 11:47:47 BSN"
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 
-/************************************************************************
-************************************************************************/
 #include "platform.h"
 
 #define EVALULATION 0
 static long timeout = -1; // Expires Fri Jan 19 09:00:00 2001
 
 /*-@@@
-File:		Iindex.cxx
-Version:	1.01
+File:		iindex_main.cxx
+Version:	4.0
 Description:	Command-line indexer
-Author:		Nassib Nassar, nrn@cnidr.org
-Modifications:	Edwarc C. Zimmermann, edz@nonmonotonic.com
 @@@-*/
 
 /*-
@@ -121,31 +118,31 @@ protected:
     switch (StatusMessage)
       {
 	case IndexingStatusReading:
-	  logf (LOG_INFO, "Reading files...");
+	  message_log (LOG_INFO, "Reading files...");
 	  break;
         case IndexingStatusParsingFiles:
-	  logf (LOG_INFO, "Parsing files ...");
+	  message_log (LOG_INFO, "Parsing files ...");
 	  break;
 	case IndexingStatusParsingRecords:
-	  logf (LOG_INFO, "Parsing records ...");
+	  message_log (LOG_INFO, "Parsing records ...");
 	  break; 
 	case IndexingStatusParsingRecord:
-	  logf (LOG_DEBUG, "Parsing %s ..", FileName.c_str());
+	  message_log (LOG_DEBUG, "Parsing %s ..", FileName.c_str());
           break;
 	case IndexingStatusIndexingDocument:
-	  logf (LOG_INFO, "Indexing %s ...", FileName.c_str());
+	  message_log (LOG_INFO, "Indexing %s ...", FileName.c_str());
 	  break;
 	case IndexingStatusIndexing:
-	  logf (LOG_INFO, "Adding %d words to index ...", arg);
+	  message_log (LOG_INFO, "Adding %d words to index ...", arg);
 	  break;
         case IndexingStatusRecordAdded:
-          logf (LOG_DEBUG, "Index Record Nr.%d created ('%s')", arg, FileName.c_str());
+          message_log (LOG_DEBUG, "Index Record Nr.%d created ('%s')", arg, FileName.c_str());
           break;
 	case IndexingStatusFlushing:
-	  logf (LOG_INFO, "Writing index ...");
+	  message_log (LOG_INFO, "Writing index ...");
 	  break;
 	case IndexingStatusMerging:
-	  logf (LOG_INFO, "Merging indexes (%d indices)...", arg);
+	  message_log (LOG_INFO, "Merging indexes (%d indices)...", arg);
 	  break;
       }
   };
@@ -169,11 +166,11 @@ static int addFile(const STRING& Fn)
   off_t From = Start, To = End;
 
   if (pdb->IsSystemFile(Fn)) {
-    logf (LOG_INFO, "Skipping file '%s' (System file)", Fn.c_str());
+    message_log (LOG_INFO, "Skipping file '%s' (System file)", Fn.c_str());
     return -1;
   }
 
-  logf (LOG_DEBUG, "Adding '%s' to indexer queue", Fn.c_str());
+  message_log (LOG_DEBUG, "Adding '%s' to indexer queue", Fn.c_str());
 
   RECORD Record (Fn);
 
@@ -186,7 +183,7 @@ static int addFile(const STRING& Fn)
           const off_t FileSize = GetFileSize(Fn);
           if (FileSize <= 5)
             {
-              logf (LOG_NOTICE, "Skipping %s (contains %s%ld byte%s)", Fn.c_str(),
+              message_log (LOG_NOTICE, "Skipping %s (contains %s%ld byte%s)", Fn.c_str(),
 		FileSize > 0 ? "only " : "",
 		FileSize,
 		FileSize != 1 ? "s" : "");
@@ -202,7 +199,7 @@ static int addFile(const STRING& Fn)
     }
   else
     {
-	       logf (LOG_INFO, "Parsing for sep '%s'", Separator.c_str());
+	       message_log (LOG_INFO, "Parsing for sep '%s'", Separator.c_str());
 		unsigned matches = 0;
 		MMAP MemoryMap(Fn, MapSequential);
 
@@ -212,10 +209,10 @@ static int addFile(const STRING& Fn)
  		off_t FileSize = MemoryMap.Size();
 		if (From >= FileSize) {
 #ifdef _WIN32
-		  logf (LOG_ERROR|LOG_FATAL, "Starting position %lu exceeds file size %lu. Can't continue!",
+		  message_log (LOG_ERROR|LOG_FATAL, "Starting position %lu exceeds file size %lu. Can't continue!",
 			(unsigned long)From, (unsigned long)FileSize);
 #else
-		  logf (LOG_ERROR|LOG_FATAL, "Starting position %lld exceeds file size %lld. Can't continue!",
+		  message_log (LOG_ERROR|LOG_FATAL, "Starting position %lld exceeds file size %lld. Can't continue!",
 			(long long)From, (long long)FileSize);
 #endif
 		  return -1;
@@ -224,10 +221,10 @@ static int addFile(const STRING& Fn)
 		if (To <= 0)      {To   += FileSize;}
 		if (To <= From) {
 #ifdef _WIN32
-		  logf (LOG_ERROR|LOG_FATAL, "Starting position %lu is after ending position %lu.",
+		  message_log (LOG_ERROR|LOG_FATAL, "Starting position %lu is after ending position %lu.",
 			(unsigned long)From, (unsigned long)To) ;
 #else
-		  logf (LOG_ERROR|LOG_FATAL, "Starting position %lld is after ending position %lld.",
+		  message_log (LOG_ERROR|LOG_FATAL, "Starting position %lld is after ending position %lld.",
 			(long long)From, (long long)To);
 #endif
 		  return -1;
@@ -294,7 +291,7 @@ static int addFile(const STRING& Fn)
   			pdb->AddRecord(Record);
   		}
 		if (matches == 0)
-			logf (LOG_WARN, "\
+			message_log (LOG_WARN, "\
 Seperator pattern %s not found in file %s. Passing whole file (%ld kb) to [%s].",
 	Separator.c_str(), Fn.c_str(), FileSize/1024, DocumentType.c_str());
     }
@@ -304,7 +301,7 @@ Seperator pattern %s not found in file %s. Passing whole file (%ld kb) to [%s]."
 static void sig_size(int sig)
 {
   signal (sig, SIG_IGN);
-  logf(LOG_PANIC, "File size capacity exceeded (see getrlimit(2)), Index process aborted.");
+  message_log(LOG_PANIC, "File size capacity exceeded (see getrlimit(2)), Index process aborted.");
   if (pdb) delete pdb;
   exit (sig);
 };
@@ -312,7 +309,7 @@ static void sig_size(int sig)
 static void sig_cpu(int sig)
 {
   signal (sig, SIG_IGN);
-  logf(LOG_PANIC, "CPU time limit exceeded (see getrlimit(2)), Index process aborted.");
+  message_log(LOG_PANIC, "CPU time limit exceeded (see getrlimit(2)), Index process aborted.");
   if (pdb) delete pdb;
   exit (sig);
 };
@@ -321,7 +318,7 @@ static void sig_cpu(int sig)
 static void sig_sys(int sig)
 {
   signal (sig, SIG_IGN);
-  logf(LOG_PANIC, "Caught a bad system call! Index process aborted.");
+  message_log(LOG_PANIC, "Caught a bad system call! Index process aborted.");
   if (pdb) delete pdb;
   exit (sig);
 }
@@ -329,9 +326,9 @@ static void sig_sys(int sig)
 static void seg_fault (int sig)
 {
   void (*func)(int) = signal (sig, SIG_IGN);
-  logf(LOG_PANIC, "Caught a signal (%d).", sig);
+  message_log(LOG_PANIC, "Caught a signal (%d).", sig);
   signal (sig, func);
-  logf(LOG_NOTICE, "Shutting down....");
+  message_log(LOG_NOTICE, "Shutting down....");
   signal (sig, SIG_DFL);
   if (pdb) delete pdb;
   pdb = NULL;
@@ -343,7 +340,7 @@ static void sig_int (int sig)
   signal (sig, SIG_IGN);
   const char *name = (sig == SIGTERM ? "Terminate" : "Interrupt");
 
-  logf(LOG_FATAL, "Index process aborted by %s signal (#%d).", name, sig);
+  message_log(LOG_FATAL, "Index process aborted by %s signal (#%d).", name, sig);
   if (pdb) delete pdb;
   exit (-1);
 }
@@ -454,7 +451,7 @@ int _Iindex_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No option specified after -o.");
+		  message_log (LOG_FATAL, "Usage: No option specified after -o.");
 		  return 2;
 		}
 	      STRING S;
@@ -466,7 +463,7 @@ int _Iindex_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No database name specified after -d.");
+		  message_log (LOG_FATAL, "Usage: No database name specified after -d.");
 		  return 2;
 		}
 	      DBName = argv[x];
@@ -476,12 +473,12 @@ int _Iindex_main (int argc, char **argv)
 	    {
              if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No User-id/Name specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No User-id/Name specified after %s.", Flag.c_str());
                   return 2;
                 }
 	      if (!SetUserName( argv[x]) )
 		{
-		  logf (LOG_WARN|LOG_ERRNO, "Could not set user-id '%s'.", argv[x]);
+		  message_log (LOG_WARN|LOG_ERRNO, "Could not set user-id '%s'.", argv[x]);
 		}
               LastUsed = x;
 	    }
@@ -489,12 +486,12 @@ int _Iindex_main (int argc, char **argv)
             {
              if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No User-id/Name specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No User-id/Name specified after %s.", Flag.c_str());
                   return 2;
                 }
 	     if (!SetUserGroup( argv[x]) )
                 {
-                  logf (LOG_WARN|LOG_ERRNO, "Could not set group-id '%s'.", argv[x]);
+                  message_log (LOG_WARN|LOG_ERRNO, "Could not set group-id '%s'.", argv[x]);
                 }
               LastUsed = x;
             }
@@ -502,7 +499,7 @@ int _Iindex_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No database title specified after -T.");
+		  message_log (LOG_FATAL, "Usage: No database title specified after -T.");
 		  return 2;
 		}
 	      Title = argv[x];
@@ -512,7 +509,7 @@ int _Iindex_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No comment specified after -C.");
+                  message_log (LOG_FATAL, "Usage: No comment specified after -C.");
                   return 2;
                 }
               Comment = argv[x];
@@ -522,7 +519,7 @@ int _Iindex_main (int argc, char **argv)
 	    {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No copyright specified after -R.");
+                  message_log (LOG_FATAL, "Usage: No copyright specified after -R.");
                   return 2;
                 }
               Copyright = argv[x];
@@ -532,7 +529,7 @@ int _Iindex_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No file name specified after -f.");
+		  message_log (LOG_FATAL, "Usage: No file name specified after -f.");
 		  return 2;
 		}
 	      FileList = argv[x];
@@ -542,7 +539,7 @@ int _Iindex_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No document type name specified after %s.", Flag.c_str());
+		  message_log (LOG_FATAL, "Usage: No document type name specified after %s.", Flag.c_str());
 		  return 2;
 		}
 	      DocumentType = argv[x];
@@ -571,7 +568,7 @@ int _Iindex_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No stoplist name specified after -l.");
+		  message_log (LOG_FATAL, "Usage: No stoplist name specified after -l.");
 		  return 2;
 		}
 	      Stoplist = argv[x];
@@ -611,7 +608,7 @@ int _Iindex_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No separator string specified after -%s.", Flag.c_str());
+		  message_log (LOG_FATAL, "Usage: No separator string specified after -%s.", Flag.c_str());
 		  return 2;
 		}
 	      Separator = argv[x];
@@ -624,7 +621,7 @@ int _Iindex_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No position specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No position specified after %s.", Flag.c_str());
                   return 2;
                 }
 	      Start = strtol (argv[x], NULL, 10);
@@ -634,7 +631,7 @@ int _Iindex_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No position specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No position specified after %s.", Flag.c_str());
                   return 2;
                 }
               End = strtol (argv[x], NULL, 10);
@@ -654,7 +651,7 @@ int _Iindex_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No record usage specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No record usage specified after %s.", Flag.c_str());
                   return 2;
                 }
               _IB_MDT_SEED = strtol (argv[x], NULL, 10);
@@ -664,13 +661,13 @@ int _Iindex_main (int argc, char **argv)
 	   {
 	    if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No directory specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No directory specified after %s.", Flag.c_str());
                   return 2;
                 }
 	     const char *path = argv[x];
 	     if (! DirectoryExists(path))
 	       {
-		  logf (LOG_ERROR, "Usage: directory specified in %s \"%s\" does not exist or is not accessible.",
+		  message_log (LOG_ERROR, "Usage: directory specified in %s \"%s\" does not exist or is not accessible.",
 			Flag.c_str(), path);
 	       }
 	    else
@@ -681,7 +678,7 @@ int _Iindex_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No number advisory specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No number advisory specified after %s.", Flag.c_str());
                   return 2;
                 }
               SisLimit = (size_t)strtol (argv[x], NULL, 10);
@@ -691,11 +688,11 @@ int _Iindex_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No file specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No file specified after %s.", Flag.c_str());
                   return 2;
                 }
 	      SynonymFileName = argv[x];
-	      logf (LOG_DEBUG, "Thes = %s", SynonymFileName.c_str());
+	      message_log (LOG_DEBUG, "Thes = %s", SynonymFileName.c_str());
 	      Synonyms = 1;
 	      LastUsed = x;
 	    }
@@ -703,7 +700,7 @@ int _Iindex_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No number specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No number specified after %s.", Flag.c_str());
                   return 0;
                 }
               common_words = atol(argv[x]);
@@ -713,7 +710,7 @@ int _Iindex_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No memory usage specified after %s.", Flag.c_str());
+		  message_log (LOG_FATAL, "Usage: No memory usage specified after %s.", Flag.c_str());
 		  return 2;
 		}
 	      MemoryUsage = strtol (argv[x], NULL, 10);
@@ -726,12 +723,12 @@ int _Iindex_main (int argc, char **argv)
 	      INT LanguageCode = 0;
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No language specified after -lang.");
+		  message_log (LOG_FATAL, "Usage: No language specified after -lang.");
 		  return 2;
 		}
 	      if (strlen(argv[x]) < 2)
 		{
-		  logf (LOG_FATAL, "Illegal language code %s.", argv[x]);
+		  message_log (LOG_FATAL, "Illegal language code %s.", argv[x]);
 		  return 2;
 		}
 	      if (strncasecmp(argv[x], "help", 4) == 0 || strncasecmp(argv[x], "lang", 4) == 0)
@@ -742,10 +739,10 @@ int _Iindex_main (int argc, char **argv)
 	      Lang = argv[x];
 	      if ((LanguageCode = Lang2Id (Lang)) == 0)
 		{
-		  logf (LOG_WARN, "Document language code '%s' undefined", Lang);
+		  message_log (LOG_WARN, "Document language code '%s' undefined", Lang);
 		  LanguageCode = Lang2Id ("und"); // Set undefined
 		}
-	      logf(LOG_DEBUG, "Assuming document language '%s' (%d)", Id2Language(LanguageCode), LanguageCode);
+	      message_log(LOG_DEBUG, "Assuming document language '%s' (%d)", Id2Language(LanguageCode), LanguageCode);
 	      NewLocale.SetLanguage(LanguageCode);
 	      LanguageSet = GDT_TRUE;
 	      LastUsed = x;
@@ -755,20 +752,20 @@ int _Iindex_main (int argc, char **argv)
 	      BYTE CharsetCode = 0xFF;
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No charset specified after -charset.");
+                  message_log (LOG_FATAL, "Usage: No charset specified after -charset.");
                   return 2;
                 }
               if ((CharsetCode = Charset2Id (argv[x])) == 0xFF)
                 {
                   CharsetCode = Charset2Id (NULL);
-                  logf (LOG_WARN, "Unknown charset '%s', using '%s'",
+                  message_log (LOG_WARN, "Unknown charset '%s', using '%s'",
                         argv[x], Id2Charset (CharsetCode) );
                 }
 	      if (CharsetCode == 0xFF)
 		CharsetCode = Charset2Id("Latin-1");
 	      if (CharsetCode != 0xFF)
 		{
-		  logf (LOG_DEBUG, "Using %s (%d) character set.", Id2Charset(CharsetCode), CharsetCode);
+		  message_log (LOG_DEBUG, "Using %s (%d) character set.", Id2Charset(CharsetCode), CharsetCode);
 		  NewLocale.SetCharset(CharsetCode);
 		  CharsetSet = GDT_TRUE;
 		}
@@ -778,7 +775,7 @@ int _Iindex_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No locale specified after -locale.");
+		  message_log (LOG_FATAL, "Usage: No locale specified after -locale.");
 		  return 2;
 		}
 	      if (strncasecmp(argv[x], "help", 4) == 0)
@@ -794,7 +791,7 @@ int _Iindex_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No algorithm name specified after -%d.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No algorithm name specified after -%d.", Flag.c_str());
                   return 2;
                 }
 	      switch (*(argv[x]))
@@ -809,7 +806,7 @@ int _Iindex_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No level specified after -level.");
+		  message_log (LOG_FATAL, "Usage: No level specified after -level.");
 		  return 2;
 		}
 	      log_init((int)(strtol (argv[x], NULL, 10) & 0xFF));
@@ -821,7 +818,7 @@ int _Iindex_main (int argc, char **argv)
 		log_init(LOG_PANIC|LOG_FATAL|LOG_ERROR|LOG_ERRNO);
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No log file specified after %s.", Flag.c_str());
+		  message_log (LOG_FATAL, "Usage: No log file specified after %s.", Flag.c_str());
 		  return 2;
 		}
 	      if ((argv[x])[0] == '-' && (argv[x])[0] == '\0')
@@ -834,11 +831,11 @@ int _Iindex_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: No facility specified after %s.", Flag.c_str());
+		  message_log (LOG_FATAL, "Usage: No facility specified after %s.", Flag.c_str());
 		  return 2;
 		}
 	      if (set_syslog(argv[x]) == GDT_FALSE)
-		logf (LOG_ERROR, "Unknown syslog facility '%s' specified (-%s).", argv[x], Flag.c_str());
+		message_log (LOG_ERROR, "Unknown syslog facility '%s' specified (-%s).", argv[x], Flag.c_str());
 	      LastUsed = x; 
 	    }
 	  else if (Flag.Equals ("-fast"))
@@ -911,7 +908,7 @@ int _Iindex_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No pattern specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No pattern specified after %s.", Flag.c_str());
                   return 2;
                 }
 	      includeStrlist.AddEntry ( argv[x] );
@@ -921,7 +918,7 @@ int _Iindex_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No pattern specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No pattern specified after %s.", Flag.c_str());
                   return 2;
                 }
               excludeStrlist.AddEntry (argv[x]);
@@ -931,7 +928,7 @@ int _Iindex_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No pattern specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No pattern specified after %s.", Flag.c_str());
                   return 2;
                 }
               inclDirlist.AddEntry (argv[x]);
@@ -941,7 +938,7 @@ int _Iindex_main (int argc, char **argv)
             {
               if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No pattern specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No pattern specified after %s.", Flag.c_str());
                   return 2;
                 }
               excludeDirlist.AddEntry (argv[x]);
@@ -951,7 +948,7 @@ int _Iindex_main (int argc, char **argv)
 	    {
 	      if (++x >= argc)
 		{
-                  logf (LOG_FATAL, "Usage: No pattern specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No pattern specified after %s.", Flag.c_str());
 		  return 2;
 		}
 	      Recursive = GDT_TRUE;
@@ -975,12 +972,12 @@ int _Iindex_main (int argc, char **argv)
 	      useRelativePaths = GDT_TRUE;
 	      if (++x >= argc)
 		{
-		  logf (LOG_FATAL, "Usage: no path specified after %s.", Flag.c_str());
+		  message_log (LOG_FATAL, "Usage: no path specified after %s.", Flag.c_str());
 		  return 2;
 		}
 	      basePath = argv[x];
 	      if (!DirectoryExists(basePath))
-		logf (LOG_WARN, "Specified base path directory '%s' does not exist on this machine.", basePath.c_str());
+		message_log (LOG_WARN, "Specified base path directory '%s' does not exist on this machine.", basePath.c_str());
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals ("-quiet"))
@@ -1004,7 +1001,7 @@ int _Iindex_main (int argc, char **argv)
 	    {
              if (++x >= argc)
                 {
-                  logf (LOG_FATAL, "Usage: No number specified after %s.", Flag.c_str());
+                  message_log (LOG_FATAL, "Usage: No number specified after %s.", Flag.c_str());
                   return 0;
                 }
               MaximumRecordSize = (INT)atol(argv[x]);
@@ -1155,7 +1152,7 @@ print_class_list:
 		    s=ResolveBinPath( DEFAULT_BROWSER );
 
 		  browser = (char *)s.c_str();
-		  logf (LOG_INFO, "Environment variable WWW_BROWSER not set. \
+		  message_log (LOG_INFO, "Environment variable WWW_BROWSER not set. \
 Using '%s' as default.", browser);
 		}
 	      char *gargv[3];
@@ -1163,7 +1160,7 @@ Using '%s' as default.", browser);
 	      gargv[1] = (char *)index_html.c_str();
 	      gargv[2] = NULL;
 	      if (_IB_system (gargv, 1) < 0)
-		logf (LOG_ERRNO, "Could not run '%s'", browser);
+		message_log (LOG_ERRNO, "Could not run '%s'", browser);
 	      LastUsed = x;
 	    }
 #endif
@@ -1192,7 +1189,7 @@ Using '%s' as default.", browser);
 	    }
 	  else if (Flag.Equals ("-erase"))
 	    {
-	      logf (LOG_FATAL, "Usage: -erase no longer supported, use Iutil.");
+	      message_log (LOG_FATAL, "Usage: -erase no longer supported, use Iutil.");
 	      return 2;
 	    }
 	}
@@ -1227,22 +1224,22 @@ Using '%s' as default.", browser);
 
   if (FileList.IsEmpty() && (NumFiles == 0))
     {
-      logf (LOG_FATAL, "Usage: No files specified for indexing!");
+      message_log (LOG_FATAL, "Usage: No files specified for indexing!");
       return 0;
     }
 
   if ((!FileList.IsEmpty()) && (NumFiles != 0))
     {
-      logf (LOG_FATAL, "Usage: Unable to handle -f and file names at the same time.");
+      message_log (LOG_FATAL, "Usage: Unable to handle -f and file names at the same time.");
       return 2;
     }
 
-  logf (LOG_NOTICE, "%s (Iindex) %s (%s)", prognam.c_str(), __IB_Version,  __DATE__ );
+  message_log (LOG_NOTICE, "%s (Iindex) %s (%s)", prognam.c_str(), __IB_Version,  __DATE__ );
 
   if (DBName.IsEmpty())
     {
       DBName = __IB_DefaultDbName;
-      logf (LOG_WARN, "No database name specified: Using '%s'.", DBName.c_str());
+      message_log (LOG_WARN, "No database name specified: Using '%s'.", DBName.c_str());
 //    cout << "ERROR: No database name specified!" << endl;
 //    return 0;
     }
@@ -1250,21 +1247,21 @@ Using '%s' as default.", browser);
   if (DocumentType.IsEmpty())
     {
       DocumentType = "AUTODETECT";
-      logf(LOG_INFO, "No doctype specified, using Auto-detection (%s).", DocumentType.c_str());
+      message_log(LOG_INFO, "No doctype specified, using Auto-detection (%s).", DocumentType.c_str());
     }
   else
     {
       STRINGINDEX pos = DocumentType.Search('=');
       if (pos)
 	{
-	  logf (LOG_WARN, "Document class was specified using the obsolete '%s' convention (pos=%d).", DocumentType.c_str(), pos);
+	  message_log (LOG_WARN, "Document class was specified using the obsolete '%s' convention (pos=%d).", DocumentType.c_str(), pos);
 	  DocumentType.SetChr(pos, ':');
-	  logf (LOG_NOTICE, "Using %s as -dt class", DocumentType.c_str());
+	  message_log (LOG_NOTICE, "Using %s as -dt class", DocumentType.c_str());
 	}
     }
   if (!WritableDir(DBName))
     {
-      logf (LOG_FATAL, "Don't have read/write permissions to write to '%s'.",
+      message_log (LOG_FATAL, "Don't have read/write permissions to write to '%s'.",
 	PATHNAME(DBName). GetPath().c_str());
       return -1;
     }
@@ -1278,9 +1275,9 @@ Using '%s' as default.", browser);
   while (Lock (DBName, L_APPEND) != L_APPEND)
     {
       if (errno == EACCES)
-	logf (LOG_FATAL, "Don't have read/write permissions for database '%s'", DBName.c_str());
+	message_log (LOG_FATAL, "Don't have read/write permissions for database '%s'", DBName.c_str());
 #ifdef _WIN32
-      else logf (LOG_FATAL, "Datebase '%s' is currently locked", DBName.c_str());
+      else message_log (LOG_FATAL, "Datebase '%s' is currently locked", DBName.c_str());
       return -2;
 #else
       sleep(60); // Wait untill ready...
@@ -1294,13 +1291,13 @@ Using '%s' as default.", browser);
 
   if (pdb == NULL)
     {
-      logf(LOG_PANIC, "%s open failed", DBName.c_str());
+      message_log(LOG_PANIC, "%s open failed", DBName.c_str());
       exit(-1);
     }
   else if (!pdb->ValidateDocType(DocumentType))
     {
       DTREG dtreg (0);
-      logf (LOG_ERROR, "Document type %s is not available (v%.2f).",
+      message_log (LOG_ERROR, "Document type %s is not available (v%.2f).",
 	DocumentType.c_str(), dtreg.Version()/1000.0);
       delete pdb;
       return 3;
@@ -1312,8 +1309,8 @@ Using '%s' as default.", browser);
     {
       if (!pdb->KillAll ())
 	{
-	  logf (LOG_ANY, "The specified database is locked. Try again later...");
-	  logf (LOG_INFO, "The database is being rebuilt by another re-indexing process.");
+	  message_log (LOG_ANY, "The specified database is locked. Try again later...");
+	  message_log (LOG_INFO, "The database is being rebuilt by another re-indexing process.");
 	  delete pdb;
 	  return 4;
 	}
@@ -1322,8 +1319,8 @@ Using '%s' as default.", browser);
     {
       if (!pdb->IsDbCompatible ())
 	{
-	  logf (LOG_ANY, "The specified database is not compatible with this version of %s.", prognam.c_str());
-	  logf (LOG_INFO , "You cannot append to a database created with a different version.");
+	  message_log (LOG_ANY, "The specified database is not compatible with this version of %s.", prognam.c_str());
+	  message_log (LOG_INFO , "You cannot append to a database created with a different version.");
 	  delete pdb;
 	  return 5;
 	}
@@ -1345,11 +1342,11 @@ Using '%s' as default.", browser);
     }
 
   if ((INT)NewLocale != 0 && !pdb->SetLocale(NewLocale))
-    logf (LOG_ERROR, "Could not set Locale '%s'", Locale.LocaleName().c_str()); 
+    message_log (LOG_ERROR, "Could not set Locale '%s'", Locale.LocaleName().c_str()); 
   Locale = pdb->GetLocale();
 
-  logf(LOG_INFO, "Indexing using character set '%s'", Locale.GetCharsetName());
-  logf(LOG_INFO, "Assuming default document language '%s'", Locale.GetLanguageName());
+  message_log(LOG_INFO, "Indexing using character set '%s'", Locale.GetCharsetName());
+  message_log(LOG_INFO, "Assuming default document language '%s'", Locale.GetLanguageName());
   if (!Title.IsEmpty())
     pdb->SetTitle(Title);
   if (!Copyright.IsEmpty())
@@ -1374,16 +1371,16 @@ Using '%s' as default.", browser);
   if (Synonyms) {
     THESAURUS MyThesaurus;
 
-    logf (LOG_INFO, "Building THESAURUS from %s", SynonymFileName.c_str());
+    message_log (LOG_INFO, "Building THESAURUS from %s", SynonymFileName.c_str());
     MyThesaurus.Compile(SynonymFileName, DBName, GDT_TRUE);
   }
 
   if (homeDirectory && chdir(homeDirectory) == -1)
-    logf (LOG_ERRNO, "Could not chdir to \"%s\".", homeDirectory);
+    message_log (LOG_ERRNO, "Could not chdir to \"%s\".", homeDirectory);
 
   if (FileList.IsEmpty())
     {
-      logf (LOG_INFO, "Building document list ...");
+      message_log (LOG_INFO, "Building document list ...");
 
       if (includeStrlist.IsEmpty() && autoRecursive)
 	{
@@ -1415,13 +1412,13 @@ Using '%s' as default.", browser);
     }
   else
     {
-      logf (LOG_INFO, "Reading document list ...");
+      message_log (LOG_INFO, "Reading document list ...");
       // Stdin or file
       PFILE fp = (FileList == "-" ? stdin : fopen (FileList, "r"));
       char s[BUFSIZ];
       if (!fp)
 	{
-	  logf (LOG_ERRNO, "Can't find file list (-f).");
+	  message_log (LOG_ERRNO, "Can't find file list (-f).");
 	  delete pdb;
 	  return -1;
 	}
@@ -1433,7 +1430,7 @@ Using '%s' as default.", browser);
 	     char *ptr = &s[1];
 	     while (isspace(*ptr)) ptr++;
 	     if (*ptr)
-		logf (LOG_INFO, "%s", ptr);
+		message_log (LOG_INFO, "%s", ptr);
 	     continue;
 	   }
 	  for (char *ptr = &s[strlen(s) -1]; isspace(*ptr) && ptr >= s; ptr--)
@@ -1443,7 +1440,7 @@ Using '%s' as default.", browser);
         }
       if (fp != stdin) fclose (fp);
     }
-  logf (LOG_INFO, "%s database %s",  AppendDb ? "Adding to" : "Building", DBName.c_str());
+  message_log (LOG_INFO, "%s database %s",  AppendDb ? "Adding to" : "Building", DBName.c_str());
 
   if (MemoryUsage != 0)
     {
@@ -1460,7 +1457,7 @@ Using '%s' as default.", browser);
 
   if (!pdb->Index ())
     {
-      logf (LOG_NOTICE, "Indexing error encountered: %s", pdb->ErrorMessage());
+      message_log (LOG_NOTICE, "Indexing error encountered: %s", pdb->ErrorMessage());
     }
   clock_t final_time      = clock();
   time_t  final_seconds   = time(NULL);
@@ -1477,7 +1474,7 @@ Using '%s' as default.", browser);
 
   delete pdb;
   pdb = NULL;
-  logf (LOG_INFO, "Database files saved to disk.");
+  message_log (LOG_INFO, "Database files saved to disk.");
 
 #ifndef _WIN32
   UnLock (DBName, L_APPEND);
@@ -1485,7 +1482,7 @@ Using '%s' as default.", browser);
 
   if ( (double)(final_seconds - start_seconds) > 2147)
     {
-      logf (LOG_NOTICE, "Added %ld words (%ld unique) in %ld records in %u min. [indexed %.2f words/s, %.2f records/s (Real)]",
+      message_log (LOG_NOTICE, "Added %ld words (%ld unique) in %ld records in %u min. [indexed %.2f words/s, %.2f records/s (Real)]",
         (long)(final_total_words - start_total_words),
         (long)(final_unique_words - start_unique_words),
 	(long)(final_records - start_records),
@@ -1506,7 +1503,7 @@ Using '%s' as default.", browser);
 				+ 0.5);
       const long recs_min    = (long)((final_records - start_records)*fdiv + 0.5);
 
-      logf (LOG_NOTICE, "Added %ld words (%ld unique) in %ld records in %d sec. [indexed %ld%swords/min, %ld records/min (CPU), %dMB Memory]",
+      message_log (LOG_NOTICE, "Added %ld words (%ld unique) in %ld records in %d sec. [indexed %ld%swords/min, %ld records/min (CPU), %dMB Memory]",
 	final_total_words - start_total_words,
 	final_unique_words - start_unique_words,
 	final_records - start_records,
@@ -1517,7 +1514,7 @@ Using '%s' as default.", browser);
 	indexingMemoryMB);
     }
   else
-    logf (LOG_NOTICE, "Added %ld words (%ld unique) in %ld records [< %d seconds (Real), %dMB Memory]",
+    message_log (LOG_NOTICE, "Added %ld words (%ld unique) in %ld records [< %d seconds (Real), %dMB Memory]",
         final_total_words - start_total_words,
         final_unique_words - start_unique_words,
 	final_records - start_records,

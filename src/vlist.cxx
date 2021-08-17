@@ -1,13 +1,10 @@
-#pragma ident  "@(#)vlist.cxx  1.20 06/27/00 20:32:03 BSN"
-
-/************************************************************************
-************************************************************************/
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
+#pragma ident  "@(#)vlist.cxx"
 
 /*-@@@
 File:		vlist.cxx
-Version:	1.00
 Description:	Class VLIST - Doubly Linked Circular List Base Class
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #include "vlist.hxx"

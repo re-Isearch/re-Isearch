@@ -60,13 +60,13 @@ public:
 	  }
 	if (!d) // Unknown/Unsupported extensions
 	  {
-	    logf (LOG_WARN, "%s: File '%s' uses a unsupported M$ Office (OLE) type.",
+	    message_log (LOG_WARN, "%s: File '%s' uses a unsupported M$ Office (OLE) type.",
 		Doctype.c_str(), NewRecord.GetFullFileName().c_str() );
 	    return;
 	  }
 
 	NewRecord.SetDocumentType(d);
-	logf (LOG_INFO, "%s: Identified '%s' as %s", Doctype.c_str(), fn.c_str(), d);
+	message_log (LOG_INFO, "%s: Identified '%s' as %s", Doctype.c_str(), fn.c_str(), d);
 
 	Db->ParseRecords (NewRecord);
    };

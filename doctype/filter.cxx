@@ -45,24 +45,24 @@ FILTERDOC::FILTERDOC (PIDBOBJ DbParent, const STRING& Name) :
       Filter = ResolveBinPath(s);
       if (!IsAbsoluteFilePath(Filter))
 	{
-	  logf (LOG_WARN, "%s: Specified filter '%s' not found. Check Installation.",
+	  message_log (LOG_WARN, "%s: Specified filter '%s' not found. Check Installation.",
 		Doctype.c_str(), Filter.c_str()); 
 	}
       else if (!ExeExists(Filter))
 	{
-	  logf (LOG_ERROR, "%s: Filter '%s' %s!", Doctype.c_str(), Filter.c_str(),
+	  message_log (LOG_ERROR, "%s: Filter '%s' %s!", Doctype.c_str(), Filter.c_str(),
 	    FileExists(Filter) ?  "is not executable" : "does not exist");
 	  Filter.Clear();
 	}
       else
-	logf (LOG_DEBUG, "%s: External filter set to '%s'", Doctype.c_str(), Filter.c_str());
+	message_log (LOG_DEBUG, "%s: External filter set to '%s'", Doctype.c_str(), Filter.c_str());
     }
   else
     Filter = s;
   Classname= Getoption("CLASS", GetDefaultClass());
   if (Doctype ^= Classname)
     {
-      logf (LOG_PANIC, "%s: You should NEVER set class as recursive: CLASS=%s",
+      message_log (LOG_PANIC, "%s: You should NEVER set class as recursive: CLASS=%s",
 	Doctype.c_str(), Classname.c_str());
       Classname.Clear();
     }
@@ -113,17 +113,17 @@ void FILTERDOC::ParseRecords(const RECORD& FileRecord)
   if (!Inode.Ok())
     {
       if (Inode.isDangling())
-        logf(LOG_ERROR, "%s: '%s' is a dangling symbollic link", Doctype.c_str(), Fn.c_str());
+        message_log(LOG_ERROR, "%s: '%s' is a dangling symbollic link", Doctype.c_str(), Fn.c_str());
       else
-        logf(LOG_ERRNO, "%s: Can't stat '%s'.", Doctype.c_str(), Fn.c_str());
+        message_log(LOG_ERRNO, "%s: Can't stat '%s'.", Doctype.c_str(), Fn.c_str());
       return;
     }
   if (Inode.st_size == 0)
     {
-      logf(LOG_ERROR, "'%s' has ZERO (0) length? Skipping.", Fn.c_str());
+      message_log(LOG_ERROR, "'%s' has ZERO (0) length? Skipping.", Fn.c_str());
       return;
     }
-  logf (LOG_DEBUG, "%s: Input = '%s'", Doctype.c_str(), Fn.c_str());
+  message_log (LOG_DEBUG, "%s: Input = '%s'", Doctype.c_str(), Fn.c_str());
 
   off_t start = FileRecord.GetRecordStart();
   off_t end   = FileRecord.GetRecordEnd();
@@ -133,23 +133,23 @@ void FILTERDOC::ParseRecords(const RECORD& FileRecord)
     key.form("%s.%ld", s.c_str(), ++version); 
   // Now we have a good key
 
-  logf (LOG_DEBUG, "Key set to '%s'", key.c_str());
+  message_log (LOG_DEBUG, "Key set to '%s'", key.c_str());
 
   Db->ComposeDbFn (&s, DbExtCat);
   if (MkDir(s, 0, GDT_TRUE) == -1)
     {
-      logf (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
+      message_log (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
       return;
     }
   outfile.form ("%s/%s", s.c_str(), key.c_str());
   // So we pipe Fn bytes Start to End into outfile
 
-  logf (LOG_DEBUG, "Output to '%s'", outfile.c_str());
+  message_log (LOG_DEBUG, "Output to '%s'", outfile.c_str());
 
   MMAP mapping (Fn, start, end, MapSequential);
   if (!mapping.Ok())
     {
-       logf(LOG_FATAL|LOG_ERRNO, "Couldn't map '%s' into memory", Fn.c_str());
+       message_log(LOG_FATAL|LOG_ERRNO, "Couldn't map '%s' into memory", Fn.c_str());
        return;
     }
   const UCHR *Buffer  = (const UCHR *)mapping.Ptr();
@@ -161,7 +161,7 @@ void FILTERDOC::ParseRecords(const RECORD& FileRecord)
   FILE *fp = fopen(tempfile, "wb");
   if (fp == NULL)
     {
-      logf (LOG_ERRNO, "Could not create temporarily file stream '%s'", tempfile);
+      message_log (LOG_ERRNO, "Could not create temporarily file stream '%s'", tempfile);
       return;
     }
 
@@ -171,12 +171,12 @@ void FILTERDOC::ParseRecords(const RECORD& FileRecord)
   mapping.Unmap(); // Clear map
   fclose(fp);
   if (length < MemSize)
-     logf (LOG_WARN|LOG_ERRNO, "Temp file '%s' short write by %d bytes", tempfile,
+     message_log (LOG_WARN|LOG_ERRNO, "Temp file '%s' short write by %d bytes", tempfile,
 	(int)(MemSize-length));
 
   if ((fp = fopen(outfile, "w")) == NULL)
    {
-     logf (LOG_ERRNO, "%s: Could not create '%s'", outfile.c_str());
+     message_log (LOG_ERRNO, "%s: Could not create '%s'", outfile.c_str());
      UnlinkFile(tempfile);
      return;
    }
@@ -187,14 +187,14 @@ void FILTERDOC::ParseRecords(const RECORD& FileRecord)
   FILE *pp = _IB_popen(pipe, "r");
   if (pp == NULL)
     {
-      logf (LOG_ERRNO, "%s: Could not open pipe '%s'", Doctype.c_str(), pipe.c_str());
+      message_log (LOG_ERRNO, "%s: Could not open pipe '%s'", Doctype.c_str(), pipe.c_str());
       fclose(fp);
       UnlinkFile(tempfile);
       UnlinkFile(outfile);
 
       if (!IsAbsoluteFilePath (Filter))
 	{
-	  logf (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.",
+	  message_log (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.",
 		Doctype.c_str(), Filter.c_str());
 	  Filter.Clear();
 	}
@@ -226,7 +226,7 @@ void FILTERDOC::ParseRecords(const RECORD& FileRecord)
     NewRecord.SetDateModified ( mod_filter );
   NewRecord.SetDate ( mod_input ); 
 
-  logf (LOG_INFO, "%s: %s in '%s'(%ld)", Doctype.c_str(), Classname.c_str(),
+  message_log (LOG_INFO, "%s: %s in '%s'(%ld)", Doctype.c_str(), Classname.c_str(),
 	outfile.c_str(), len);
   Db->DocTypeAddRecord(NewRecord);
 }

@@ -73,17 +73,17 @@ STRING  XPANDOC::SetFilter(const STRING& arg)
       filter =  ResolveBinPath(arg);
       if (!IsAbsoluteFilePath(filter))
         {
-	  logf (LOG_WARN, "%s: %s '%s' must be in $PATH.", Doctype.c_str(),
+	  message_log (LOG_WARN, "%s: %s '%s' must be in $PATH.", Doctype.c_str(),
 		ini_filter_tag, filter.c_str());
         }
       else if (!ExeExists(filter))
         {
-          logf (LOG_ERROR, "%s: %s '%s' %s!", Doctype.c_str(), ini_filter_tag, filter.c_str(),
+          message_log (LOG_ERROR, "%s: %s '%s' %s!", Doctype.c_str(), ini_filter_tag, filter.c_str(),
             Exists(Filter) ?  "is not executable" : "does not exist");
           filter.Clear();
         }
       else
-        logf (LOG_DEBUG, "%s: External filter set to '%s'", Doctype.c_str(), filter.c_str());
+        message_log (LOG_DEBUG, "%s: External filter set to '%s'", Doctype.c_str(), filter.c_str());
     }
   Filter = filter;
   return filter;
@@ -104,11 +104,11 @@ void XPANDOC::BeforeIndexing()
     }
 #endif
 
-  if (Filter.IsEmpty()) logf (LOG_ERROR, "%s: No %s set. Nothing to do?", Doctype.c_str(), ini_filter_tag);
+  if (Filter.IsEmpty()) message_log (LOG_ERROR, "%s: No %s set. Nothing to do?", Doctype.c_str(), ini_filter_tag);
   else if (Filter.Equals (  NulFilter ))
     Filter.Clear();
   else
-    logf (LOG_INFO, "%s: Using '%s' to filter to XML.", Doctype.c_str(), Filter.c_str());
+    message_log (LOG_INFO, "%s: Using '%s' to filter to XML.", Doctype.c_str(), Filter.c_str());
 }
 
 
@@ -140,7 +140,7 @@ GDT_BOOLEAN XPANDOC::GenRecord(const RECORD& FileRecord)
   const char *doctype = Doctype.c_str();
   if (Filter.IsEmpty())
     {
-      logf (LOG_WARN, "%s: Filter is NIL", doctype);
+      message_log (LOG_WARN, "%s: Filter is NIL", doctype);
       return GDT_TRUE; // Do nothing
     }
 
@@ -154,21 +154,21 @@ GDT_BOOLEAN XPANDOC::GenRecord(const RECORD& FileRecord)
 #endif
 
 
-  logf (LOG_DEBUG, "%s: Input = '%s'", doctype, Fn.c_str());
+  message_log (LOG_DEBUG, "%s: Input = '%s'", doctype, Fn.c_str());
 
   INODE Inode (Fn);
 
   if (!Inode.Ok())
     {
       if (Inode.isDangling())
-	logf(LOG_ERROR, "%s: '%s' is a dangling symbollic link", doctype, Fn.c_str());
+	message_log(LOG_ERROR, "%s: '%s' is a dangling symbollic link", doctype, Fn.c_str());
       else
-	logf(LOG_ERRNO, "%s: Can't stat '%s'.", doctype , Fn.c_str());
+	message_log(LOG_ERRNO, "%s: Can't stat '%s'.", doctype , Fn.c_str());
       return GDT_FALSE;
     }
   if (Inode.st_size == 0)
     {
-      logf(LOG_ERROR, "'%s' has ZERO (0) length? Skipping.", Fn.c_str());
+      message_log(LOG_ERROR, "'%s' has ZERO (0) length? Skipping.", Fn.c_str());
       return GDT_FALSE;
     }
 
@@ -185,12 +185,12 @@ GDT_BOOLEAN XPANDOC::GenRecord(const RECORD& FileRecord)
     key.form("%s.%ld", s.c_str(), version); 
   // Now we have a good key
 
-  logf (LOG_DEBUG, "%s: Key set to '%s'", doctype, key.c_str());
+  message_log (LOG_DEBUG, "%s: Key set to '%s'", doctype, key.c_str());
 
   Db->ComposeDbFn (&s, DbExtCat);
   if (MkDir(s, 0, GDT_TRUE) == -1) // Force creation
     {
-      logf (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
+      message_log (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
       return GDT_FALSE;
     }
 //  outfile.form ("%s/%s", s.c_str(), key.c_str());
@@ -207,12 +207,12 @@ GDT_BOOLEAN XPANDOC::GenRecord(const RECORD& FileRecord)
   outfile.Cat (key);
 
   // So we pipe Fn bytes Start to End into outfile
-  logf (LOG_DEBUG, "Output to '%s'", outfile.c_str());
+  message_log (LOG_DEBUG, "Output to '%s'", outfile.c_str());
 
   FILE *fp;
   if ((fp = fopen(outfile, "w")) == NULL)
    {
-     logf (LOG_ERRNO, "%s: Could not create '%s'",  doctype, outfile.c_str());
+     message_log (LOG_ERRNO, "%s: Could not create '%s'",  doctype, outfile.c_str());
      return GDT_FALSE;
    }
   off_t len = 0;
@@ -231,13 +231,13 @@ GDT_BOOLEAN XPANDOC::GenRecord(const RECORD& FileRecord)
   FILE *pp = _IB_popen(pipe, "r");
   if (pp == NULL)
     {
-      logf (LOG_ERRNO, "%s: Could not open pipe '%s'", doctype, pipe.c_str());
+      message_log (LOG_ERRNO, "%s: Could not open pipe '%s'", doctype, pipe.c_str());
       fclose(fp);
       UnlinkFile(outfile);
 
       if (!IsAbsoluteFilePath (Filter))
 	{
-	  logf (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.", doctype, Filter.c_str());
+	  message_log (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.", doctype, Filter.c_str());
 	  Filter.Clear();
 	}
       return GDT_FALSE;
@@ -274,12 +274,12 @@ GDT_BOOLEAN XPANDOC::GenRecord(const RECORD& FileRecord)
  		mime_typ, 
 #endif
 		&urifile) == GDT_FALSE)
-        logf (LOG_ERRNO, "%s: Could not create '%s'", doctype, urifile.c_str());
+        message_log (LOG_ERRNO, "%s: Could not create '%s'", doctype, urifile.c_str());
 
       Db->DocTypeAddRecord(NewRecord);
       return GDT_TRUE;
     }
-  logf (LOG_ERROR, "%s: pipe '%s' returned ONLY %d bytes!", doctype, pipe.c_str(), len);
+  message_log (LOG_ERROR, "%s: pipe '%s' returned ONLY %d bytes!", doctype, pipe.c_str(), len);
   // Remove junk
   UnlinkFile(outfile);
   return GDT_FALSE;
@@ -290,7 +290,7 @@ void XPANDOC::ParseRecords(const RECORD& FileRecord)
 {
   if (Filter.Equals( NulFilter ))
     {
-      logf (LOG_WARN, "%s:BeforeIndexing() not called", Doctype.c_str());
+      message_log (LOG_WARN, "%s:BeforeIndexing() not called", Doctype.c_str());
       BeforeIndexing();
     }
 

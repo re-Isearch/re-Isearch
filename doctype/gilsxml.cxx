@@ -32,7 +32,7 @@ STRING XMLBASE::Getoption(const STRING& Option, const STRING& defaultVal)
   if (string.GetLength())
     {
       string.unEscape ();
-      logf (LOG_INFO, "%s: -o %s=%s overrides %s", Doctype.c_str(), Option, string.c_str(), value.c_str());
+      message_log (LOG_INFO, "%s: -o %s=%s overrides %s", Doctype.c_str(), Option, string.c_str(), value.c_str());
       value = string;
     }
   return value;
@@ -45,7 +45,7 @@ GILSXML::GILSXML (PIDBOBJ DbParent, const STRING& Name) : XMLBASE (DbParent, Nam
   STRING string, value;
   const char toption[] = "DataTypeKeyword";
 
-  logf (LOG_DEBUG, "GILSXML Init");
+  message_log (LOG_DEBUG, "GILSXML Init");
 
   SGMLNORM::SetStoreComplexAttributes (Getoption("Complex", "False").GetBool());
 
@@ -66,7 +66,7 @@ GILSXML::GILSXML (PIDBOBJ DbParent, const STRING& Name) : XMLBASE (DbParent, Nam
   if (string.GetLength())
     {
       string.unEscape ();
-      logf (LOG_INFO, "%s: -o %s=%s overrides %s", Doctype.c_str(),
+      message_log (LOG_INFO, "%s: -o %s=%s overrides %s", Doctype.c_str(),
         toption, string.c_str(), value.c_str());
       value = string;
     }
@@ -74,7 +74,7 @@ GILSXML::GILSXML (PIDBOBJ DbParent, const STRING& Name) : XMLBASE (DbParent, Nam
     value.Empty();
   typeKeyword = value;
   if (typeKeyword.GetLength() && (typeKeyword != DefaultTypeKeyword))
-    logf (LOG_INFO, "%s: Handling embeded data type definitions (%s)", typeKeyword.c_str());
+    message_log (LOG_INFO, "%s: Handling embeded data type definitions (%s)", typeKeyword.c_str());
 
   typeKeyword.Cat('=');
 }
@@ -146,16 +146,16 @@ void NEWSML::LoadFieldTable()
 
 void NEWSML::ParseRecords(const RECORD& FileRecord)
 {
-//  logf (LOG_DEBUG, "%s: ParseRecords Start", Doctype.c_str());
+//  message_log (LOG_DEBUG, "%s: ParseRecords Start", Doctype.c_str());
   GILSXML::ParseRecords(FileRecord);
-//  logf (LOG_DEBUG, "%s: ParseRecords Done", Doctype.c_str());
+//  message_log (LOG_DEBUG, "%s: ParseRecords Done", Doctype.c_str());
 } 
 
 void NEWSML::ParseFields(PRECORD pRecord)
 {
-//  logf (LOG_DEBUG, "%s: ParseFields Start", Doctype.c_str());
+//  message_log (LOG_DEBUG, "%s: ParseFields Start", Doctype.c_str());
   GILSXML::ParseFields(pRecord);
-//  logf (LOG_DEBUG, "%s: ParseFields Done", Doctype.c_str());
+//  message_log (LOG_DEBUG, "%s: ParseFields Done", Doctype.c_str());
 }
 
 
@@ -203,14 +203,14 @@ XMLBASE::XMLBASE (PIDBOBJ DbParent, const STRING& Name) :
   if (string.GetLength())
     {
       string.unEscape ();
-      logf (LOG_INFO, "%s: -o %s=%s overrides %s", Doctype.c_str(),
+      message_log (LOG_INFO, "%s: -o %s=%s overrides %s", Doctype.c_str(),
 	option, string.c_str(), value.c_str()); 
       value = string;
     }
 
   if (value.Equals(__AncestorDescendantSeperator))
     {
-      logf (LOG_ERROR, "%s: Reserved '%s' specified for %s. Using %c instead.",
+      message_log (LOG_ERROR, "%s: Reserved '%s' specified for %s. Using %c instead.",
                 Doctype.c_str(), value.c_str(), option, levelCh);
       value = levelCh;
     }
@@ -224,24 +224,24 @@ XMLBASE::XMLBASE (PIDBOBJ DbParent, const STRING& Name) :
   if (Ch != '\0' && !iscntrl(Ch))
     {
       if (Ch == '/' || Ch == '=' || Ch == '>' || Ch == '<')
-        logf (LOG_WARN, "%s: Potentially problematic character '%c' specified for %s.", Doctype.c_str(), Ch, option);
+        message_log (LOG_WARN, "%s: Potentially problematic character '%c' specified for %s.", Doctype.c_str(), Ch, option);
       else if (isalnum(Ch))
-	logf (LOG_WARN, "%s: Malicious  character '%c' specified for %s. Why?", Doctype.c_str(), Ch, option);
+	message_log (LOG_WARN, "%s: Malicious  character '%c' specified for %s. Why?", Doctype.c_str(), Ch, option);
       else if (Ch == ':')
-	logf (LOG_WARN, "%s: '%c' as %s can create conflicts with its use in namespaces.", Doctype.c_str(), Ch, option);
+	message_log (LOG_WARN, "%s: '%c' as %s can create conflicts with its use in namespaces.", Doctype.c_str(), Ch, option);
       else if (Ch != '\\' && Ch != '|')
-	logf (LOG_INFO, "%s: Using '%c' for %s is not recommended (best is '\\' or '|')", Doctype.c_str(), Ch, option);
+	message_log (LOG_INFO, "%s: Using '%c' for %s is not recommended (best is '\\' or '|')", Doctype.c_str(), Ch, option);
       if (levelCh != Ch)
 	{
-          logf (LOG_DEBUG, "%s: Setting %s from %c to %c.", Doctype.c_str(), option, levelCh, Ch);
+          message_log (LOG_DEBUG, "%s: Setting %s from %c to %c.", Doctype.c_str(), option, levelCh, Ch);
           levelCh = Ch;
 	}
     }
   else
-    logf (LOG_ERROR, "%s: Nul or control character specified for %s, ignored.",
+    message_log (LOG_ERROR, "%s: Nul or control character specified for %s, ignored.",
 	Doctype.c_str(), option);
 
-  logf (LOG_DEBUG, "XMLBASE class inited");
+  message_log (LOG_DEBUG, "XMLBASE class inited");
 }
 
 
@@ -634,7 +634,7 @@ while (pos < Length && Length != 0) {
     }
 
 
-  logf (LOG_INFO, "%s: %ld lines/%ld sentences/%ld paragraphs/%ld pages.",
+  message_log (LOG_INFO, "%s: %ld lines/%ld sentences/%ld paragraphs/%ld pages.",
 	Doctype.c_str(), lineCount, satzCount, paraCount, pageCount);
 
   return pdft;
@@ -654,7 +654,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
   const STRING fn = NewRecord->GetFullFileName ();
   if (!(fp = fopen (fn, "rb")))
     {
-      logf (LOG_ERRNO, "Couldn't access '%s'", fn.c_str());
+      message_log (LOG_ERRNO, "Couldn't access '%s'", fn.c_str());
       return;			// ERROR
     }
 
@@ -669,7 +669,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 
   if (RecEnd <= RecStart)
     {
-      logf (LOG_ERROR, "'%s' (%s) Record Start = Record End (Zero length), skipping..", fn.c_str(), Doctype.c_str());
+      message_log (LOG_ERROR, "'%s' (%s) Record Start = Record End (Zero length), skipping..", fn.c_str(), Doctype.c_str());
       ffclose(fp);
       NewRecord->SetBadRecord();
       return; // ERR
@@ -698,7 +698,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
   PCHR *tags = parse_tags (RecBuffer, ActualLength);
   if (tags == NULL)
     {
-      logf (LOG_WARN, "Unable to parse `%s' tags in file %s", Doctype.c_str(), fn.c_str());
+      message_log (LOG_WARN, "Unable to parse `%s' tags in file %s", Doctype.c_str(), fn.c_str());
       return;
     }
   PDFT pdft = new DFT ();
@@ -743,7 +743,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
           }
 //cerr << "Left nestlevel " << NestLevel+1 << ". Tagpath='" << TagPath << "'.\n";
 	} else {
-	  logf (LOG_WARN, "Extraneous end tag '%s' in file \"%s\".",  *tags_ptr, fn.c_str());
+	  message_log (LOG_WARN, "Extraneous end tag '%s' in file \"%s\".",  *tags_ptr, fn.c_str());
         }
 	continue;
       }
@@ -834,7 +834,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 		  if (FieldName.GetLength () == 0)
 		    {
 		      // Give some information
-		      logf (LOG_WARN, "\
+		      message_log (LOG_WARN, "\
 %s: Warning: \"%s\" offset %ld: Bad use of empty tag feature, skipping field.\n",
 			Doctype.c_Str(), fn.c_str(), (long)(*tags_ptr - RecBuffer)); 
 		      continue;
@@ -856,7 +856,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 	      if (!FieldName.IsPrint())
 		{
 		  FieldName.ToPrint();
-		  logf (LOG_WARN, "Non-ascii characters found in '%s'", FieldName.c_str());
+		  message_log (LOG_WARN, "Non-ascii characters found in '%s'", FieldName.c_str());
 		}
 
 //--> Add Entry
@@ -914,7 +914,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
                 {
 		  char *entry_id =  _get_value(&RecBuffer[val_start], val_len);
                   if ((FieldName ^= KeyField) && !Key.IsEmpty())
-		    logf(LOG_WARN, "Duplicate Keys defined: overwriting %s with %s", Key.c_str(), entry_id);
+		    message_log(LOG_WARN, "Duplicate Keys defined: overwriting %s with %s", Key.c_str(), entry_id);
 		  HandleSpecialFields(NewRecord, FieldName, entry_id);
                 }
 	    }
@@ -994,7 +994,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
     {
       if (Db->KeyLookup (Key))
         {
-          logf (LOG_WARN, "Record in \"%s\" used a non-unique %s '%s'",
+          message_log (LOG_WARN, "Record in \"%s\" used a non-unique %s '%s'",
                 fn.c_str(), KeyField.c_str(), Key.c_str());
           Db->MdtSetUniqueKey(NewRecord, Key);
         }
@@ -1216,6 +1216,29 @@ XMLREC::~XMLREC() { }
 
 
 
+void XMLREC::DocPresent (const RESULT& ResultRecord, const STRING& ElementSet,
+        const STRING& RecordSyntax, PSTRING StringBuffer) const
+{
+  if (ElementSet == FULLTEXT_MAGIC) {
+    // MIME 
+    STRING tmp;
+    if (RecordSyntax == HtmlRecordSyntax) {
+	SGMLNORM::SourceMIMEContent(ResultRecord, &tmp);
+	*StringBuffer << "Content-type: " << tmp << "\n\n";
+    }
+    XMLBASE::DocPresent(ResultRecord, ElementSet, RawRecordSyntax, &tmp);
+
+    StringBuffer->Cat(XMLPreface);
+    StringBuffer->Cat(tmp);
+    StringBuffer->Cat(XMLTail);
+  } else
+    XMLBASE::DocPresent(ResultRecord, ElementSet, RecordSyntax, StringBuffer);
+}
+
+
+
+#if 1
+
 void XMLREC::ParseRecords(const RECORD& FileRecord)
 {
   // No seperator then let the parent parse...
@@ -1231,13 +1254,10 @@ void XMLREC::ParseRecords(const RECORD& FileRecord)
   const off_t GlobalRecordStart = FileRecord.GetRecordStart();
   const off_t GlobalRecordEnd   = FileRecord.GetRecordEnd();
 
-  MMAP mapping (fn,
-        GlobalRecordStart,
-        GlobalRecordEnd ? GlobalRecordEnd+1 : 0,
-        MapSequential);
+  MMAP mapping (fn, GlobalRecordStart, GlobalRecordEnd ? GlobalRecordEnd+1 : 0, MapSequential);
   if (!mapping.Ok())
     {
-      logf (LOG_ERRNO, "%s::ParseRecords: Could not map '%s' into memory", Doctype.c_str(), fn.c_str());
+      message_log (LOG_ERRNO, "%s::ParseRecords: Could not map '%s' into memory", Doctype.c_str(), fn.c_str());
       SGMLNORM::ParseRecords(FileRecord);
       return;
     }
@@ -1283,7 +1303,6 @@ void XMLREC::ParseRecords(const RECORD& FileRecord)
 		  i--;
 		}
 
-
 	        Record.SetRecordEnd ( GlobalRecordStart + i ) ;
 	        Db->DocTypeAddRecord (Record);
 
@@ -1308,15 +1327,18 @@ cerr << "LOOKING AT: "<< endl << tmp << endl <<  "##### " << endl;
 		Db->DocTypeAddRecord (Record);
 		count++;
 		State == Scan;
-		logf(LOG_WARN, "<%s> before </%s>, assume </><%s>:  (%ld)", t, t, t,  GlobalRecordStart + start); 
+		message_log(LOG_WARN, "<%s> before </%s>, assume </><%s>:  (%ld)", t, t, t,  GlobalRecordStart + start); 
 		break;
 	     case Scan:
-#if 1
+#if 0
 	     	// edz: 2021 Kludge test
-		if (count == 0 && Start > 2) {
-		  Record.SetRecordStart( GlobalRecordStart );
-		  Record.SetRecordEnd( GlobalRecordStart + start - 1 );
-		  Db->DocTypeAddRecord (Record);
+		if (count == 0 && start > 2) {
+		  RECORD NewRecord (Record);
+		  NewRecord.SetDocumentType ( "0" );
+		  NewRecord.SetRecordStart( GlobalRecordStart );
+		  NewRecord.SetRecordEnd( GlobalRecordStart + start - 1 );
+		  Db->DocTypeAddRecord (NewRecord);
+		  cerr << "Adding " << GlobalRecordStart << " -- " << (GlobalRecordStart + start - 1)  << endl;
 		}
 #endif
 
@@ -1345,35 +1367,100 @@ cerr << "LOOKING AT: "<< endl << tmp << endl <<  "##### " << endl;
      }
   } // loop 
   if (State == Start)
-    logf (LOG_WARN, "Missing </%s>. Bytes %ld-%ld skipped in \"%s\".",
+    message_log (LOG_WARN, "Missing </%s>. Bytes %ld-%ld skipped in \"%s\".",
 	RecordSeperator.c_str(), Record.GetRecordStart(), GlobalRecordEnd,
 	fn.c_str());
   if (count == 0) {
-    logf(LOG_WARN, "No <%s> elements found. Fall-back to parent doctype.",
+    message_log(LOG_WARN, "No <%s> elements found. Fall-back to parent doctype.",
 	RecordSeperator.c_str());
     XMLBASE::ParseRecords(FileRecord);
   }
-  logf (LOG_INFO, "Added %ld sub-records", count);
+  message_log (LOG_INFO, "Added %ld sub-records", count);
 }
 
 
+#else
 
-void XMLREC::DocPresent (const RESULT& ResultRecord, const STRING& ElementSet,
-        const STRING& RecordSyntax, PSTRING StringBuffer) const
+void XMLREC::ParseRecords(const RECORD& FileRecord)
 {
-  if (ElementSet == FULLTEXT_MAGIC) {
-    // MIME 
-    STRING tmp;
-    if (RecordSyntax == HtmlRecordSyntax) {
-	SGMLNORM::SourceMIMEContent(ResultRecord, &tmp);
-	*StringBuffer << "Content-type: " << tmp << "\n\n";
-    }
-    XMLBASE::DocPresent(ResultRecord, ElementSet, RawRecordSyntax, &tmp);
+  // No seperator then let the parent parse...
+  if (RecordSeperator.IsEmpty()) {
+    XMLBASE::ParseRecords(FileRecord);
+    return;
+  }
 
-    StringBuffer->Cat(XMLPreface);
-    StringBuffer->Cat(tmp);
-    StringBuffer->Cat(XMLTail);
-  } else
-    XMLBASE::DocPresent(ResultRecord, ElementSet, RecordSyntax, StringBuffer);
+  size_t count = 0;
+  STRING fn (FileRecord.GetFullFileName ());
+  RECORD Record (FileRecord); // Easy way
+
+  const off_t GlobalRecordStart = FileRecord.GetRecordStart();
+  const off_t GlobalRecordEnd   = FileRecord.GetRecordEnd();
+
+  MMAP mapping (fn, GlobalRecordStart, GlobalRecordEnd ? GlobalRecordEnd+1 : 0, MapSequential);
+  if (!mapping.Ok())
+    {
+      message_log (LOG_ERRNO, "%s::ParseRecords: Could not map '%s' into memory", Doctype.c_str(), fn.c_str());
+      SGMLNORM::ParseRecords(FileRecord);
+      return;
+    }
+  const size_t len   = RecordSeperator.GetLength();
+  PCHR RecBuffer     = (PCHR)mapping.Ptr();
+  off_t ActualLength = mapping.Size();
+  off_t length       = ActualLength - len; 
+
+  // Search for <RecordSeperator
+  off_t start = 0;
+  off_t end   = ActualLength;
+  const char *sep = RecordSeperator.c_str();
+
+  for (off_t i = 0; i < length; i++) {
+     if (RecBuffer[i] == '<') {
+	off_t mark = i;
+	// Skip potential space
+	do i++; while ( isspace(RecBuffer[i])) ;
+	CHR ch = RecBuffer[i+len];
+
+	if ((ch == '>' || ch == '/' || isspace(ch)) && memcmp( &RecBuffer[i] , sep, len) == 0)
+	{
+          // Found first instance of tag
+	  start = mark;
+	  break;
+	}
+     }
+  }
+  if (start != 0) {
+    // We found a start.. now search for the end
+    for (off_t i= length; i > start; i--)
+    {
+      if (RecBuffer[i] == '<') {
+	// skip potential space
+	off_t j = i + 1;
+	if (RecBuffer[j] == '/') j++;
+	while ( isspace(RecBuffer[j])) j++;
+	if (RecBuffer[j] == '/') j++;
+	CHR ch =  RecBuffer[j+len];
+
+	if ((ch == '>' || ch == '/' || isspace(ch)) && memcmp( &RecBuffer[j] , sep, len) == 0) {
+	  // match.. So need to seek to > to finish off
+	  for (;j < ActualLength; j++) {
+	    if ( RecBuffer[j] == '>') { // Done
+	       end = j;
+	       i = start;
+	       break;
+	    }
+	  }
+
+        }
+      }
+    }
+  } 
+  Record.SetRecordStart(start);
+  Record.SetRecordEnd(end);
+  XMLBASE::ParseRecords(Record);
 }
+
+#endif
+
+
+
 

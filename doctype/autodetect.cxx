@@ -562,7 +562,7 @@ void AUTODETECT::BeforeIndexing()
   if (!::FileExists(file_magic))
     file_magic.clear();
   else
-    logf (LOG_DEBUG, "libmagic db set to '%s'", file_magic.c_str());  
+    message_log (LOG_DEBUG, "libmagic db set to '%s'", file_magic.c_str());  
 #else
   file_cmd = ResolveBinPath(Getoption("File", "file") );
 
@@ -571,7 +571,7 @@ void AUTODETECT::BeforeIndexing()
       if (!::ExeExists( file_cmd = "/bin/file" ))
 	file_cmd = "file";
     }
-  logf (LOG_DEBUG, "file(1) command set to '%s'", file_cmd.c_str());
+  message_log (LOG_DEBUG, "file(1) command set to '%s'", file_cmd.c_str());
 
   file_magic = ResolveConfigPath(Getoption("Magic", "magic") );
   if (!::FileExists(file_magic))
@@ -579,7 +579,7 @@ void AUTODETECT::BeforeIndexing()
       file_magic.clear();
     }
   else
-    logf (LOG_DEBUG, "file(1) magic set to '%s'", file_magic.c_str());
+    message_log (LOG_DEBUG, "file(1) magic set to '%s'", file_magic.c_str());
 #endif
 }
 
@@ -614,7 +614,7 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
       if (c.GetLength() >= 4 &&
 		strncmp(c.c_str(), commaInfo.c_str()+1, commaInfo.GetLength()-1) == 0)
 	{
-	  logf (LOG_INFO, "Skipping %s (%s[*] File)", s.c_str(), commaInfo.c_str()) ;
+	  message_log (LOG_INFO, "Skipping %s (%s[*] File)", s.c_str(), commaInfo.c_str()) ;
 	  return;
  	}
     }
@@ -622,7 +622,7 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
   // s now contains the filename
   if (_IB_lstat(s, &stbuf) == -1)
     {
-      logf(LOG_ERRNO, "Can't access '%s'", s.c_str() );
+      message_log(LOG_ERRNO, "Can't access '%s'", s.c_str() );
       return;
     }
   const int inode = stbuf.st_ino;
@@ -631,14 +631,14 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
     {
       if (stat(s, &stbuf) == -1)
 	{
-	  logf(LOG_ERROR, "'%s' is a dangling symbollic link", s.c_str());
+	  message_log(LOG_ERROR, "'%s' is a dangling symbollic link", s.c_str());
 	  return;
 	}
     }
 #endif
   if (stbuf.st_size == 0)
     {
-      logf(LOG_ERROR, "'%s' has ZERO (%ld) length? Skipping.", s.c_str(), stbuf.st_size);
+      message_log(LOG_ERROR, "'%s' has ZERO (%ld) length? Skipping.", s.c_str(), stbuf.st_size);
       return;
     }
   PFILE fp;
@@ -655,7 +655,7 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
   // Binary type?
   if (FileExists (s + commaInfoXml))
     {
-      logf (LOG_INFO, "Pair '%s'/*%s detected.", s.c_str(), commaInfoXml.c_str()); 
+      message_log (LOG_INFO, "Pair '%s'/*%s detected.", s.c_str(), commaInfoXml.c_str()); 
       doctype = "XBINARY";
     }
   else if (FileExists (s + commaInfoTxt))
@@ -684,7 +684,7 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
     {
       char buf[BUFSIZ+2];
 
-      //logf (LOG_DEBUG, "Checking contents...");
+      //message_log (LOG_DEBUG, "Checking contents...");
 
 /*
       if (ext == "inx")
@@ -697,10 +697,10 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
       if (fseek(fp, FileRecord.GetRecordStart(), SEEK_SET) == -1)
 	{
 #ifdef _WIN32
-          logf (LOG_PANIC|LOG_ERRNO, "Could not seek on %s!(%I64d)!",
+          message_log (LOG_PANIC|LOG_ERRNO, "Could not seek on %s!(%I64d)!",
                 (const char *)s, (long long)FileRecord.GetRecordStart());
 #else
-	  logf (LOG_PANIC|LOG_ERRNO, "Could not seek on %s!(%lld)!",
+	  message_log (LOG_PANIC|LOG_ERRNO, "Could not seek on %s!(%lld)!",
 		(const char *)s, (long long)FileRecord.GetRecordStart());
 #endif
 	}
@@ -721,7 +721,7 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
 	  if (i == 0)
 	    {
 	      // Empty Record
-	      // logf (LOG_DEBUG, "Empty text. skip");
+	      // message_log (LOG_DEBUG, "Empty text. skip");
 	      fclose(fp);
 	      return; // Skip
 	    }
@@ -733,7 +733,7 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
 
 	      if ((buf_len > Magic[i].offset) && memcmp(&buf[Magic[i].offset], Magic[i].str, Magic[i].len) == 0)
 		{
-		  logf(LOG_DEBUG, "Signature \"%.*s\" matches %s", Magic[i].len, &buf[Magic[i].offset],  Magic[i].doctyp);
+		  message_log(LOG_DEBUG, "Signature \"%.*s\" matches %s", Magic[i].len, &buf[Magic[i].offset],  Magic[i].doctyp);
 
                   doctype = Magic[i].doctyp;
 		  if (Magic[i].sub_doc)
@@ -1152,7 +1152,7 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
 		    }
 		   else if (strncmp(tcp, "<atom:", 6) == 0)
 		    {
-		      logf (LOG_WARN, "Odd Atom namespaced document: '%s'?", (const char *)s);
+		      message_log (LOG_WARN, "Odd Atom namespaced document: '%s'?", (const char *)s);
 		      doctype = AtomClass;
 		      break;
 		    }
@@ -1240,24 +1240,24 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
 		}
               if (doctype.SearchAny("OpenDocument"))
 		{
-		  logf (LOG_DEBUG, "Recognized %s as ODF", s.c_str());
+		  message_log (LOG_DEBUG, "Recognized %s as ODF", s.c_str());
 		  // OpenDocument Text
 		  if (doctype.SearchAny("text") && PluginExists("ODT")) doctype = "ODT:";
                   else if (PluginExists("ODF")) doctype = "ODF:"; // Let it handle the rest
 	          // else we can't so handle probably as a resource
-		  else logf (LOG_DEBUG, "No Open Document Format handler plugin installed.");
+		  else message_log (LOG_DEBUG, "No Open Document Format handler plugin installed.");
 		}
               else if (doctype.SearchAny("Microsoft Word"))
 		{
 		  //  Microsoft Word 2007+ (Microsoft Office files)
 		  if (PluginExists("MSOFFICE")) doctype = "MSOFFICE:";
-		  else logf (LOG_INFO, "No Microsoft Word 2007+ format handler plugin installed.");
+		  else message_log (LOG_INFO, "No Microsoft Word 2007+ format handler plugin installed.");
 		}
               else if (doctype.SearchAny("OOXML"))
 		{
 		  //  Microsoft OOXML (Microsoft Office files)
 		  if (PluginExists("OOXML")) doctype = "OOXML:";
-		  else logf (LOG_INFO, "No Microsoft OOXML format handler plugin installed.");
+		  else message_log (LOG_INFO, "No Microsoft OOXML format handler plugin installed.");
 		}
 	      if (doctype.SearchAny("tiff"))
 		doctype = "TIFF";
@@ -1265,17 +1265,17 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
 		doctype.SearchAny("ascii") || doctype.SearchAny("english") ))
 		{
 		  doctype = "PLAINTEXT";
-		  logf(LOG_INFO, "Identified %s as %s, using %s",
+		  message_log(LOG_INFO, "Identified %s as %s, using %s",
                         (const char *)s, typ, (const char *)doctype );
 		}
 	    }
 
 	}
 #else
-logf (LOG_DEBUG, "BEFORE INDEXING");
+message_log (LOG_DEBUG, "BEFORE INDEXING");
       if (file_cmd.IsEmpty())
         BeforeIndexing();
-logf (LOG_DEBUG, "AFTER INDEXING");
+message_log (LOG_DEBUG, "AFTER INDEXING");
 
 #ifndef _WIN32
 
@@ -1296,7 +1296,7 @@ logf (LOG_DEBUG, "AFTER INDEXING");
       if (fpipe)
 	{
 	  STRING lineBuf;
-	  logf (LOG_DEBUG, "External Command: %s", argv[0]);
+	  message_log (LOG_DEBUG, "External Command: %s", argv[0]);
 	  if (lineBuf.FGet(fpipe, BUFSIZ))
 	    {
 	      const char *typ = lineBuf.c_str() + ((lineBuf.GetLength() > s.GetLength()) ? s.GetLength() + 1 : 0);
@@ -1313,7 +1313,7 @@ logf (LOG_DEBUG, "AFTER INDEXING");
 		       doctype.SearchAny("ascii text") || doctype.SearchAny("ISO-8859 text")) 
 		    {
 		      doctype = "PLAINTEXT";
-		      logf(LOG_INFO, "%s identified '%s', using %s",
+		      message_log(LOG_INFO, "%s identified '%s', using %s",
                         argv[0], (const char *)lineBuf, (const char *)doctype );
 		    }
 		  else if (doctype.Compare("data", 4) == 0)
@@ -1330,7 +1330,7 @@ logf (LOG_DEBUG, "AFTER INDEXING");
 	  _IB_pclose(fpipe);
 	}
       else {
-	logf (LOG_ERRNO, "Could not open pipe to file command: '%s'", argv[0]);
+	message_log (LOG_ERRNO, "Could not open pipe to file command: '%s'", argv[0]);
       }
 #endif
 #endif
@@ -1341,7 +1341,7 @@ logf (LOG_DEBUG, "AFTER INDEXING");
 #ifdef XML_HXX
       if (doctype ==  XMLClass)
 	{
-	  //logf (LOG_DEBUG, "Looking at XML to see what kind");
+	  //message_log (LOG_DEBUG, "Looking at XML to see what kind");
 	  // Need to see what kind of XML
 	  MMAP   mmap(s, MapSequential);
 	  size_t checkL;
@@ -1405,7 +1405,7 @@ logf (LOG_DEBUG, "AFTER INDEXING");
 	      if (pos < checkL - 16)
 		{
 		  // Have something is it <rss ...> or <rss> ?
-		  //logf(LOG_DEBUG, "Line = '%s'", ptr);
+		  //message_log(LOG_DEBUG, "Line = '%s'", ptr);
 		  if (strncasecmp(ptr, "rss", 3) == 0 && (isspace(ptr[3]) || ptr[3] == '>'))
 		    doctype = RSSClass;
 		  else if (strncasecmp(ptr, "rdf:RDF", 7) == 0)
@@ -1462,11 +1462,11 @@ logf (LOG_DEBUG, "AFTER INDEXING");
 	    {
 	      if (S ^= "NULL")
 		{
-		  logf(LOG_INFO, "Identified %s as %s, Skipping ([Use] Request).",
+		  message_log(LOG_INFO, "Identified %s as %s, Skipping ([Use] Request).",
 			s.c_str(), doctype.c_str());
 		  return;
 		}
-		logf (LOG_INFO, "Using '%s' instead of '%s' [tagRegistry]", S.c_str(), doctype.c_str());
+		message_log (LOG_INFO, "Using '%s' instead of '%s' [tagRegistry]", S.c_str(), doctype.c_str());
 	       doctype = S;
 	    }
 	}
@@ -1482,7 +1482,7 @@ logf (LOG_DEBUG, "AFTER INDEXING");
 
          if (!ParseInfo)
 	   {
-	     logf (LOG_INFO, "Skipping '%s' (%s) [ParseInfo=Off]", s.c_str(), doctype.c_str() );
+	     message_log (LOG_INFO, "Skipping '%s' (%s) [ParseInfo=Off]", s.c_str(), doctype.c_str() );
 	     return;
 	   }
 
@@ -1494,7 +1494,7 @@ logf (LOG_DEBUG, "AFTER INDEXING");
 
 	  if (Db->KeyLookup (key))
 	    {
-	      logf (LOG_INFO, "Skipping '%s', Record already in Resource database?", (const char *)s );
+	      message_log (LOG_INFO, "Skipping '%s', Record already in Resource database?", (const char *)s );
 	      return;
 	    }
 	  else if (kludge == GDT_FALSE)
@@ -1590,27 +1590,27 @@ D \010O \010N \010' \010T  \010E \010D \010I \010T\
 	      NewRecord.SetLanguage ("en");
 	      fclose (Fp);
 	      Db->DocTypeAddRecord(NewRecord);
-	      logf(LOG_NOTICE, "Identified %s as %s, parsing info only (%s).", s.c_str(),
+	      message_log(LOG_NOTICE, "Identified %s as %s, parsing info only (%s).", s.c_str(),
 		doctype.c_str(), NewRecord.GetDocumentType().ClassName(GDT_TRUE).c_str());
 	      // doctype = "0";
 	      return; // 9 June 2003 edz, BUGFIX
 	    }
 	  else
 	    {
-	      logf(LOG_NOTICE, "Identified %s as %s, format not supported", s.c_str(), doctype.c_str());
+	      message_log(LOG_NOTICE, "Identified %s as %s, format not supported", s.c_str(), doctype.c_str());
 	      doctype = NulDoctype;
 	    }
 	}
       else
 	{
-	  logf(LOG_INFO, "Identified %s as %s", s.c_str(), doctype.c_str() );
+	  message_log(LOG_INFO, "Identified %s as %s", s.c_str(), doctype.c_str() );
 	  kludge = GDT_FALSE;
 	}
 
     }
   else
     {
-      logf(LOG_NOTICE, "%s not identified or doctype not supported.", s.c_str());
+      message_log(LOG_NOTICE, "%s not identified or doctype not supported.", s.c_str());
       doctype = NulDoctype;
     }
 
@@ -1621,17 +1621,17 @@ done:
     { 
       if (Db && Db->ValidateDocType(Id))
 	{
-	  logf (LOG_DEBUG, "Handling as %s", doctype.c_str());
+	  message_log (LOG_DEBUG, "Handling as %s", doctype.c_str());
 	  Record.SetDocumentType (Id);
 	  Db->ParseRecords (Record);
 	}
       else
-	logf (LOG_INFO, "%s: DOCTYPE '%s' is not available. Check installation.", doctype.c_str()); 
+	message_log (LOG_INFO, "%s: DOCTYPE '%s' is not available. Check installation.", doctype.c_str()); 
     }
   else if (doctype != NulDoctype) {
-    logf (LOG_ERROR, "Can't handle %s files", doctype.c_str());
+    message_log (LOG_ERROR, "Can't handle %s files", doctype.c_str());
   } else
-   logf (LOG_DEBUG, "Null doctype");
+   message_log (LOG_DEBUG, "Null doctype");
 }
 
 
@@ -1640,7 +1640,7 @@ void AUTODETECT::ParseFields(RECORD *RecordPtr)
   if (RecordPtr)
     {
       // Should never ParseFields here!!
-      logf (LOG_ERROR, "%s::ParseFields: thowing out record %s[%ld-%ld]",
+      message_log (LOG_ERROR, "%s::ParseFields: thowing out record %s[%ld-%ld]",
 	Doctype.c_str(),
 	RecordPtr->GetFullFileName().c_str(),
 	(long)RecordPtr->GetRecordStart(), (long)RecordPtr->GetRecordEnd() );

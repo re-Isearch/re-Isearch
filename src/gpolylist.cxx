@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 // $Id: gpolylist.cxx,v 1.2 2007/06/19 06:24:03 edz Exp $
 
 /*@@@
@@ -75,7 +79,7 @@ void GPOLYLIST::WriteTable()
   FILE  *fp;
   
   if (FileName.IsEmpty())
-    logf (LOG_ERROR, "GPOLYLIST::WriteTable: FileName not set");
+    message_log (LOG_ERROR, "GPOLYLIST::WriteTable: FileName not set");
   else if ((fp = fopen(FileName,"wb")) != NULL)
     {
       Sort();  // Make sure its sorted
@@ -85,7 +89,7 @@ void GPOLYLIST::WriteTable()
       fclose(fp);
     }
   else
-    logf (LOG_ERRNO, "GPOLYLIST: Could not write table to '%s'", FileName.c_str());
+    message_log (LOG_ERRNO, "GPOLYLIST: Could not write table to '%s'", FileName.c_str());
 }
 
 
@@ -98,7 +102,7 @@ INT4 GPOLYLIST::LoadRawTable()
 {
   size_t n = 0;
   if (FileName.IsEmpty()) {
-    logf(LOG_ERROR, "GPOLYLIST::LoadRawTable: FileName not set");
+    message_log(LOG_ERROR, "GPOLYLIST::LoadRawTable: FileName not set");
   } else {
     FILE *fp = fopen(FileName,"rb");
     if (fp)

@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)gstack.cxx  1.2 11/04/98 09:53:24 BSN"
 /************************************************************************
 ************************************************************************/

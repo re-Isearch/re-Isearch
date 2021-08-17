@@ -166,16 +166,16 @@ Note: default special extension is \"etag\" field for key.\n";
 
 void RSS2::ParseRecords(const RECORD& FileRecord)
 {
-//  logf (LOG_DEBUG, "%s: ParseRecords Start", Doctype.c_str());
+//  message_log (LOG_DEBUG, "%s: ParseRecords Start", Doctype.c_str());
   XMLBASE::ParseRecords(FileRecord);
-//  logf (LOG_DEBUG, "%s: ParseRecords Done", Doctype.c_str());
+//  message_log (LOG_DEBUG, "%s: ParseRecords Done", Doctype.c_str());
 }
 
 void RSS2::ParseFields(PRECORD pRecord)
 {
-//  logf (LOG_DEBUG, "%s: ParseFields Start", Doctype.c_str());
+//  message_log (LOG_DEBUG, "%s: ParseFields Start", Doctype.c_str());
   XMLBASE::ParseFields(pRecord);
-//  logf (LOG_DEBUG, "%s: ParseFields Done", Doctype.c_str());
+//  message_log (LOG_DEBUG, "%s: ParseFields Done", Doctype.c_str());
 }
 
 GDT_BOOLEAN RSS2::StoreTagComplexAttributes(const char *tag_ptr) const

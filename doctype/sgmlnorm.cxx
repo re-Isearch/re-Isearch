@@ -66,7 +66,7 @@ SGMLNORM::SGMLNORM (PIDBOBJ DbParent, const STRING& Name) :
   StoreComplexAttributes = Getoption("Complex", "True").GetBool();
   IgnoreTagWords         = Getoption("IgnoreTagWords", "True").GetBool();
 
-  logf (LOG_DEBUG, "SGMLNORM class inited");
+  message_log (LOG_DEBUG, "SGMLNORM class inited");
 
 }
 
@@ -128,7 +128,7 @@ void SGMLNORM::ParseRecords (const RECORD& FileRecord)
   MMAP mapping (Fn, Start, End, MapSequential);
   if (!mapping.Ok())
     {
-       logf(LOG_FATAL|LOG_ERRNO, "Couldn't map '%s'", Fn.c_str());
+       message_log(LOG_FATAL|LOG_ERRNO, "Couldn't map '%s'", Fn.c_str());
        return;
     }
   const UCHR *Buffer  = (const UCHR *)mapping.Ptr();
@@ -205,7 +205,7 @@ INT SGMLNORM::GetTerm(const STRING& Filename, CHR *Buffer, off_t Offset, size_t 
 
   if (tmp == NULL)
     {
-      logf (LOG_PANIC|LOG_ERRNO, "%s GetTerm buffer exhausted, wanted %d bytes", Doctype.c_str(), want);
+      message_log (LOG_PANIC|LOG_ERRNO, "%s GetTerm buffer exhausted, wanted %d bytes", Doctype.c_str(), want);
       Buffer[0] = '\0';
       return 0;
     }
@@ -253,7 +253,7 @@ INT SGMLNORM::GetTerm(const STRING& Filename, CHR *Buffer, off_t Offset, size_t 
     Buffer[0] = '\0';
 
   if (count > Length)
-    logf (LOG_PANIC, "%s::GetTerm: read too much", Doctype.c_str());
+    message_log (LOG_PANIC, "%s::GetTerm: read too much", Doctype.c_str());
 
 //cerr << "Got " << Buffer << endl;
 //cerr << "Length = " << Length << endl;
@@ -304,7 +304,7 @@ GPTYPE SGMLNORM::ParseWords(UCHR* DataBuffer, GPTYPE DataLength,
           }
         if (zap) DataBuffer[Position] = zapChar; // Zap these...
       }
-    if (zap || quote) logf(LOG_WARN, "%s Record ended in a tag?", Doctype.c_str());
+    if (zap || quote) message_log(LOG_WARN, "%s Record ended in a tag?", Doctype.c_str());
   }
 
   // Convert "&amp;xxx &lt;yyyy" to
@@ -358,7 +358,7 @@ void SGMLNORM::ExtractDTD(const STRING& Decl, PSTRING Dtd) const
 	  STRING S = *Dtd;
 	  tagRegistry->ProfileGetString("Catalog", S, S, Dtd);
 	}
-      logf (LOG_DEBUG, "DTD defined as %s", Dtd->c_str());
+      message_log (LOG_DEBUG, "DTD defined as %s", Dtd->c_str());
     }
 }
 
@@ -373,7 +373,7 @@ void SGMLNORM::ParseFields (PRECORD NewRecord)
 
   if (fp == NULL)
     {
-      logf (LOG_ERRNO, "Couldn't access '%s'", fn.c_str());
+      message_log (LOG_ERRNO, "Couldn't access '%s'", fn.c_str());
       NewRecord->SetBadRecord();
       return;			// ERROR
     }
@@ -386,10 +386,10 @@ void SGMLNORM::ParseFields (PRECORD NewRecord)
 
   if (RecEnd <= RecStart)
     {
-      logf (LOG_WARN, "zero-length %s record - '%s' [%u - %u]",
+      message_log (LOG_WARN, "zero-length %s record - '%s' [%u - %u]",
 	Doctype.c_str(), fn.c_str(),
 	(unsigned)RecStart, (unsigned)RecEnd );
-      logf (LOG_NOTICE, "%s skipping record", Doctype.c_str());
+      message_log (LOG_NOTICE, "%s skipping record", Doctype.c_str());
       ffclose(fp);
       NewRecord->SetBadRecord();
       return; // ERR
@@ -397,7 +397,7 @@ void SGMLNORM::ParseFields (PRECORD NewRecord)
 
   if (RecStart && -1 == fseek (fp, RecStart, SEEK_SET))
     {
-      logf (LOG_ERRNO, "%s::ParseRecords(): Seek to %ld failed - '%s'",
+      message_log (LOG_ERRNO, "%s::ParseRecords(): Seek to %ld failed - '%s'",
 	Doctype.c_str(), (long)RecStart, fn.c_str());
       ffclose(fp);
       NewRecord->SetBadRecord();
@@ -414,7 +414,7 @@ void SGMLNORM::ParseFields (PRECORD NewRecord)
   PCHR *tags = parse_tags (RecBuffer, ActualLength);
   if (tags == NULL)
     {
-      logf (LOG_WARN,
+      message_log (LOG_WARN,
 #ifdef _WIN32
 	"Unable to parse `%s' tags in file %s[%I64d-%I64d]. No tags?" 
 #else
@@ -479,7 +479,7 @@ void SGMLNORM::ParseFields (PRECORD NewRecord)
 #if RSS_HACK
 	  if (strncmp(*tags_ptr, rss_magic, sizeof(rss_magic)-1) == 0)
 	    {
-	      logf (LOG_WARN, "%s: Identified %s instead as RSS!", Doctype.c_str(), fn.c_str() );
+	      message_log (LOG_WARN, "%s: Identified %s instead as RSS!", Doctype.c_str(), fn.c_str() );
 	      NewRecord->SetDocumentType(rss_doctype);
 	      Db->ParseFields (NewRecord);
 	      return;
@@ -542,7 +542,7 @@ void SGMLNORM::ParseFields (PRECORD NewRecord)
 		  if (FieldName.IsEmpty())
 		    {
 		      // Give some information
-		      logf (LOG_INFO, "%s Warning: \"%s\"(%u): Bad use of empty tag feature, skipping field.",
+		      message_log (LOG_INFO, "%s Warning: \"%s\"(%u): Bad use of empty tag feature, skipping field.",
 			Doctype.c_str(), fn.c_str(), (unsigned)(*tags_ptr - RecBuffer) );
 		      continue;
 		    }
@@ -564,7 +564,7 @@ void SGMLNORM::ParseFields (PRECORD NewRecord)
 	      df.SetFct ( FC(val_start, val_start + val_len - 1) );
 	      df.SetFieldName (FieldName);
 	      pdft->AddEntry (df);
-//	      logf (LOG_DEBUG, "%s processing %s", Doctype.c_str(), FieldName.c_str());
+//	      message_log (LOG_DEBUG, "%s processing %s", Doctype.c_str(), FieldName.c_str());
 	      // Our index-time Headline field
 	      if (FieldName ^= Headline)
 		{
@@ -602,7 +602,7 @@ void SGMLNORM::ParseFields (PRECORD NewRecord)
 	      if (Db->GetMainDfdt()->GetFileNumber(tags_ptr[0]) > 0)
 		{
 		  // Looks like a markup error!
-		  logf (LOG_WARN, "%s: \"%s\"(%u): \
+		  message_log (LOG_WARN, "%s: \"%s\"(%u): \
 Missing end tag for <%s>, SHORTREF? skipping field.",
 			Doctype.c_str(), fn.c_str(),
 			(unsigned)(*tags_ptr - RecBuffer), tags_ptr[0] );
@@ -610,7 +610,7 @@ Missing end tag for <%s>, SHORTREF? skipping field.",
 	      else
 		{
 		  // Assume that its an EMPTY element.
-		  logf (LOG_INFO, "%s: \"%s\"(%u): \
+		  message_log (LOG_INFO, "%s: \"%s\"(%u): \
 No end tag for <%s> found, EMPTY or SHORTREF? skipping field.",
 			Doctype.c_str(), fn.c_str(),
 			(unsigned)(*tags_ptr - RecBuffer), tags_ptr[0] );
@@ -628,7 +628,7 @@ No end tag for <%s> found, EMPTY or SHORTREF? skipping field.",
       if (ActualLength > 128)
 	{
 	  Key = OneWayHash(RecBuffer, ActualLength);
-	  logf (LOG_DEBUG, "OneWay Hash of Record content = %s", Key.c_str());
+	  message_log (LOG_DEBUG, "OneWay Hash of Record content = %s", Key.c_str());
 	  RESULT Result;
 	  if (Db->KeyLookup (Key, &Result))
 	    {
@@ -636,7 +636,7 @@ No end tag for <%s> found, EMPTY or SHORTREF? skipping field.",
 	      if (fn == Result.GetFullFileName() && RecStart == Result.GetRecordStart()) 
 		{
 		   // Already in database
-		   logf (LOG_WARN, "'%s'[%ld-%ld] already in index.", fn.c_str(),
+		   message_log (LOG_WARN, "'%s'[%ld-%ld] already in index.", fn.c_str(),
 			RecStart, RecEnd);
 		   NewRecord->SetBadRecord(GDT_TRUE);
 		}
@@ -649,7 +649,7 @@ No end tag for <%s> found, EMPTY or SHORTREF? skipping field.",
     {
       if (Db->KeyLookup (Key))
 	{
-	  logf (LOG_WARN, "Record in \"%s\" used a non-unique %s '%s'",
+	  message_log (LOG_WARN, "Record in \"%s\" used a non-unique %s '%s'",
 		fn.c_str(), KeyField.c_str(), Key.c_str());
 	  Db->MdtSetUniqueKey(NewRecord, Key);
 	}
@@ -713,14 +713,14 @@ void SGMLNORM::Present (const RESULT& ResultRecord, const STRING& ElementSet,
       // Search for title
       enum {Look, Start, Guess, Found} State = Look;
 
-      logf (LOG_DEBUG, "Looking for Headline");
+      message_log (LOG_DEBUG, "Looking for Headline");
       for (size_t i = 1; State != Found && i <= Total; i++) {
 	Dfdt.GetEntry (i, &Dfd);
 	Dfd.GetFieldName (&FieldName);
 	if ((FieldName ^= "TITLE") || (FieldName ^= "HEADLINE"))
 	  {
 	    HeadlineElement = FieldName;
-	    logf (LOG_DEBUG, "Found %s", FieldName.c_str());
+	    message_log (LOG_DEBUG, "Found %s", FieldName.c_str());
 	    State = Found; // Got it 
 	  }
 	else if (State != Guess && FieldName.GetChr(1) != '!')
@@ -728,7 +728,7 @@ void SGMLNORM::Present (const RESULT& ResultRecord, const STRING& ElementSet,
 	    if (State == Start && FieldName.Search(ATTRIB_SEP) == 0)
 	      {
 		HeadlineElement = FieldName; // Second-level tag
-		logf (LOG_DEBUG, "Using %s (Second Level)", FieldName.c_str());
+		message_log (LOG_DEBUG, "Using %s (Second Level)", FieldName.c_str());
 		State = Guess; // If nothing else use this
 	      }
 	    else
@@ -744,13 +744,13 @@ void SGMLNORM::Present (const RESULT& ResultRecord, const STRING& ElementSet,
 	  // Can have multiple headline fields? Yuck!
 	  // -- so go directly to the source
 	  STRLIST Data;
-	  logf (LOG_DEBUG, "GetFieldData for %s", HeadlineElement.c_str());
+	  message_log (LOG_DEBUG, "GetFieldData for %s", HeadlineElement.c_str());
 	  Db->GetFieldData (ResultRecord, HeadlineElement, &Data);
 	  if (!Data.IsEmpty())
 	    {
 	      STRING Entry;
 	      size_t Count =  Data.GetTotalEntries();
-	      logf (LOG_DEBUG, "Got %d elements", Count);
+	      message_log (LOG_DEBUG, "Got %d elements", Count);
 	      // Go hunting for content
 	      for (size_t i=1; i <= Count; i++)
 		{
@@ -766,12 +766,12 @@ void SGMLNORM::Present (const RESULT& ResultRecord, const STRING& ElementSet,
 		StringBuffer->Cat(Entry);
 	    }
 	  else
-	    logf (LOG_DEBUG, "Got nothing");
+	    message_log (LOG_DEBUG, "Got nothing");
 	}
       else
 	{
 	  // Ask your parents for advice!
-	  logf (LOG_DEBUG, "Passing to DOCTYPE::Present for %s", ElementSet.c_str());
+	  message_log (LOG_DEBUG, "Passing to DOCTYPE::Present for %s", ElementSet.c_str());
 	  DOCTYPE::Present (ResultRecord, ElementSet, RecordSyntax, StringBuffer);
 	}
     }
@@ -968,11 +968,11 @@ static GDT_BOOLEAN grabSchema(PSTRING SchemeBuffer, PSTRING TypBuffer,
 	      if (tp)
 		{
 		  *tp = '\0';
-		  logf(LOG_INFO, "Unknown keyword '%s' in attribute: '(%s'", tcp, tp+1);
+		  message_log(LOG_INFO, "Unknown keyword '%s' in attribute: '(%s'", tcp, tp+1);
 		  *tp = '='; // Fix back
 		}
 	      else
-		logf(LOG_INFO, "Non-supported attribute scheme: '(%s'", tcp);
+		message_log(LOG_INFO, "Non-supported attribute scheme: '(%s'", tcp);
 	    }
 	  break;
 	}
@@ -1010,7 +1010,7 @@ void SGMLNORM::store_attributes (PDFT pdft, PCHR base_ptr, PCHR tag_ptr,
 		StoreTagComplexAttributes(tag_ptr);
 
 
-  cerr << "DEBUG:    " << tag_ptr << endl;
+//  cerr << "DEBUG:    " << tag_ptr << endl;
 
   //
   // hook here to allow for people, resp. doctypes, to define
@@ -1192,7 +1192,7 @@ void SGMLNORM::store_attributes (PDFT pdft, PCHR base_ptr, PCHR tag_ptr,
 		  if (*tcp != 'r' && *tcp != 'R' && *tcp!='\'' &&
 			*tcp != '"')
 		    {
-		      logf(LOG_WARN, "\
+		      message_log(LOG_WARN, "\
 Sorry can only handle %s='%s' and not %s, ignoring",
 			attribute, "RTL", val);
 		    }
@@ -1202,7 +1202,7 @@ Sorry can only handle %s='%s' and not %s, ignoring",
 		  sawSchema = GDT_TRUE;
 		  // Experimental Cougar DTD from W3O
 		  if (Schema.GetLength())
-		    logf(LOG_WARN, "W30 Cougar/4.x DTD detected, \
+		    message_log(LOG_WARN, "W30 Cougar/4.x DTD detected, \
 Scheme overridding (Scheme=..) content");
 		  sVal(&Schema, val);
 		}
@@ -1308,7 +1308,7 @@ Scheme overridding (Scheme=..) content");
 	  sawSchema = GDT_TRUE;
 	  // Experimental Cougar DTD from W3O
 	  if (Schema.GetLength())
-	    logf(LOG_WARN, "W30 Cougar DTD/4.x detected, Scheme overridding (Scheme=..) content");
+	    message_log(LOG_WARN, "W30 Cougar DTD/4.x detected, Scheme overridding (Scheme=..) content");
 	  sVal(&Schema, val);
 	}
       else if (StrCaseCmp(attribute, "name") == 0 ||
@@ -1365,11 +1365,11 @@ Scheme overridding (Scheme=..) content");
 	      const char *ptr    = base_ptr+ContentFC.GetFieldStart();
 	      if (Datum->Ok())
 		{
-		  logf (LOG_DEBUG, "Date field (%s) override with: '%s'", fieldName.c_str(), ptr);
+		  message_log (LOG_DEBUG, "Date field (%s) override with: '%s'", fieldName.c_str(), ptr);
 		}
 	      *Datum = ptr;
 	      if (!Datum->Ok())
-		logf (LOG_WARN, "Unsupported/Unrecognized date format: '%s'", ptr);
+		message_log (LOG_WARN, "Unsupported/Unrecognized date format: '%s'", ptr);
 	    }
 	  if (storeIt)
 	    {
@@ -1419,11 +1419,11 @@ Scheme overridding (Scheme=..) content");
 	if (newDate.Ok())
 	  {
 	    if (Datum->Ok())
-	      logf (LOG_DEBUG, "Date field (%s) override with: '%s'", FieldName.c_str(), newDate.RFCdate().c_str());
+	      message_log (LOG_DEBUG, "Date field (%s) override with: '%s'", FieldName.c_str(), newDate.RFCdate().c_str());
 	    *Datum = newDate;
 	   }
 	else if (*ptr)
-	  logf (LOG_WARN, "Unsupported/Unrecognized  date format '%s' in field %s", ptr, FieldName.c_str());
+	  message_log (LOG_WARN, "Unsupported/Unrecognized  date format '%s' in field %s", ptr, FieldName.c_str());
      }
 #endif
 }
@@ -1486,7 +1486,7 @@ PCHR *SGMLNORM::parse_tags (register PCHR b, const off_t len)
 	case 17: case 18: case 19: case 20: case 21: case 22:
 	case 23: case 24: case 25: case 26: case 27: case 28:
 	case 29: case 30: case 31: case 127:
-	  logf (LOG_DEBUG, "%s Shunchar Control 0x%x encountered (pos=%ld)!",
+	  message_log (LOG_DEBUG, "%s Shunchar Control 0x%x encountered (pos=%ld)!",
 	  Doctype.c_str(), b[i], i);
 	  b[i] = ' ';
 	  break;
@@ -1497,7 +1497,7 @@ PCHR *SGMLNORM::parse_tags (register PCHR b, const off_t len)
 	      if (b[i-1] == '-')
 		{
 		  if (State == IN_DECL && bracket > 1)
-		    logf (LOG_INFO, "Ignoring comment in declaration");
+		    message_log (LOG_INFO, "Ignoring comment in declaration");
 		  else
 		    InComment = !InComment;
 		}
@@ -1610,7 +1610,7 @@ PCHR *SGMLNORM::parse_tags (register PCHR b, const off_t len)
 		}
 	      else if (b[i+1] == '-' && isspace(b[i+2]) )
 		{
-		  logf (LOG_INFO,
+		  message_log (LOG_INFO,
 			"SGML/XML ERROR: Bogus control. Comment <!- error at %lu?",
 			(long)i);
 		  while (++i < len && b[i] != '>')
@@ -1660,23 +1660,23 @@ PCHR *SGMLNORM::parse_tags (register PCHR b, const off_t len)
       if (InComment)
 	{
 	  if (t[tc])
-	    logf (LOG_INFO, "SGML/XML ERROR: Dangling comment (started = %u)", (unsigned)(t[tc] - b));
+	    message_log (LOG_INFO, "SGML/XML ERROR: Dangling comment (started = %u)", (unsigned)(t[tc] - b));
 	}
       else
 	{
 	  switch (State)
 	    {
 	      case NEED_END:
-		logf(LOG_INFO, "SGML/XML ERROR: Need > (%s)", t[tc]);
+		message_log(LOG_INFO, "SGML/XML ERROR: Need > (%s)", t[tc]);
 		break;
 	      case QUOTE:
-		logf(LOG_INFO, "SGML/XML ERROR: Runaway Quotation in complex attribute");
+		message_log(LOG_INFO, "SGML/XML ERROR: Runaway Quotation in complex attribute");
 		break;
 	      case IN_DECL:
-		logf(LOG_INFO, "SGML/XML ERROR: Still in Declaration");
+		message_log(LOG_INFO, "SGML/XML ERROR: Still in Declaration");
 		break;
 	      default:
-		logf(LOG_INFO, "SGML/XML ERROR: Bad State");
+		message_log(LOG_INFO, "SGML/XML ERROR: Bad State");
 		break;
 	    }
 	}
@@ -1835,7 +1835,7 @@ const char *SGMLNORM::_cleanBuffer(char *DataBuffer, size_t DataLength) const
         }
      if (zap) DataBuffer[Position] = zapChar; // Zap these...
     }
-  if (zap || quote) logf(LOG_WARN, "%s field ended in a tag?", Doctype.c_str());
+  if (zap || quote) message_log(LOG_WARN, "%s field ended in a tag?", Doctype.c_str());
   // Convert "&amp;xxx &lt;yyyy" to
   //         "&xxxx    <yyyy   "
   Entities.normalize(DataBuffer, DataLength);

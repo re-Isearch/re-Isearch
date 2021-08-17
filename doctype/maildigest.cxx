@@ -69,7 +69,7 @@ void MAILDIGEST::ParseRecords (const RECORD& FileRecord)
   PFILE Fp = Db->ffopen (Fn, "rb");
   if (!Fp)
     {
-      logf (LOG_ERRNO, "%s: Couldn't access '%s'", Doctype.c_str(), Fn.c_str());
+      message_log (LOG_ERRNO, "%s: Couldn't access '%s'", Doctype.c_str(), Fn.c_str());
       return;			// File not accessed
     }
 
@@ -78,7 +78,7 @@ void MAILDIGEST::ParseRecords (const RECORD& FileRecord)
       if (-1 == fseek (Fp, RecordStart, SEEK_SET))
 	{
 	  Db->ffclose(Fp);
-	  logf (LOG_ERRNO, Doctype + ": Bad record boundary");
+	  message_log (LOG_ERRNO, Doctype + ": Bad record boundary");
 	  return; // Bad start
 	}
       SavePosition = Position = RecordStart;
@@ -216,9 +216,9 @@ void MAILDIGEST::ParseRecords (const RECORD& FileRecord)
       Record.SetRecordStart (Start);
       Record.SetRecordEnd (End);
       if (End > 0)
-	logf (LOG_INFO, "Setting \"%s\" record %ld-%ld to %s.", Fn.c_str(), Start, End, newDoctype.c_str());
+	message_log (LOG_INFO, "Setting \"%s\" record %ld-%ld to %s.", Fn.c_str(), Start, End, newDoctype.c_str());
       else
-	logf (LOG_INFO, "Setting \"%s\" to %s", Fn.c_str(), newDoctype.c_str());
+	message_log (LOG_INFO, "Setting \"%s\" to %s", Fn.c_str(), newDoctype.c_str());
       Record.SetDocumentType (newDoctype);
       Db->DocTypeAddRecord(Record);
     }

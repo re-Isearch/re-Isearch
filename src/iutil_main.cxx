@@ -1,10 +1,8 @@
-/*@@@
-File:    Iutil.cxx
-Version: 1.01
-Description:   Command-line utilities for Isearch databases
-Author:     Nassib Nassar, nrn@cnidr.org
-@@@*/
-static const char RCS_Id[] = "$Id: Iutil.cxx,v 1.2 2007/05/21 07:13:49 edz Exp $";
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
+/*
+Description:   Command-line utility for Isearch databases
+*/
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -173,13 +171,13 @@ int _Iutil_main(int argc, char **argv)
 	  if (x + 1 == argc) return 0;
       } else if (Flag.Equals("-m")) {
 	if (++x >= argc) {
-	  logf (LOG_FATAL, "Option error: No option specified after %s", Flag.c_str());
+	  message_log (LOG_FATAL, "Option error: No option specified after %s", Flag.c_str());
 	  return 0;
 	}
 	LastUsed = x;
       } else if (Flag.Equals("-o")) {
 	if (++x >= argc) {
-	  logf (LOG_FATAL, "Option error: No option specified after %s", Flag.c_str());
+	  message_log (LOG_FATAL, "Option error: No option specified after %s", Flag.c_str());
 	  return 0;
 	}
 	STRING          S;
@@ -188,7 +186,7 @@ int _Iutil_main(int argc, char **argv)
 	LastUsed = x;
       } else if (Flag.Equals("-S")) {
 	if (++x >= argc) {
-	  logf (LOG_FATAL, "Option error: No field specified after %s", Flag.c_str());
+	  message_log (LOG_FATAL, "Option error: No field specified after %s", Flag.c_str());
 	  return 0;
 	}
 	ScanField = argv[x];
@@ -196,28 +194,28 @@ int _Iutil_main(int argc, char **argv)
 	LastUsed = x;
       } else if (Flag.Equals("-d")) {
 	if (++x >= argc) {
-	  logf (LOG_FATAL, "Option error: No database name specified after %s", Flag.c_str());
+	  message_log (LOG_FATAL, "Option error: No database name specified after %s", Flag.c_str());
 	  return 0;
 	}
 	DBName = argv[x];
 	LastUsed = x;
       } else if (Flag.Equals("-id")) {
         if (++x >= argc) {
-          logf (LOG_FATAL, "Option error: No key specified after %s", Flag.c_str());
+          message_log (LOG_FATAL, "Option error: No key specified after %s", Flag.c_str());
           return 0;
         }
         RecordID = argv[x];
         LastUsed = x;
       } else if (Flag.Equals("-pcache")) {
         if (++x >= argc) {
-	  logf (LOG_FATAL, "Option error: No directory specified after %s", Flag.c_str());
+	  message_log (LOG_FATAL, "Option error: No directory specified after %s", Flag.c_str());
           return 0;
         }
         CacheDir = argv[x];
         LastUsed = x;
       } else if (Flag.Equals("-fill")) {
         if (++x >= argc) {
-          logf (LOG_FATAL, "Option error: No OID specified after %s", Flag.c_str());
+          message_log (LOG_FATAL, "Option error: No OID specified after %s", Flag.c_str());
           return 0;
         }
 	FillCacheSyntax = argv[x];
@@ -228,49 +226,49 @@ int _Iutil_main(int argc, char **argv)
 	LastUsed = x;
       } else if (Flag.Equals("-title")) {
         if (++x >= argc) {
-	  logf (LOG_FATAL, "Option error: No title string specified after %s", Flag.c_str());
+	  message_log (LOG_FATAL, "Option error: No title string specified after %s", Flag.c_str());
           return 0;
         }
         Title = argv[x];
         LastUsed = x;
      } else if (Flag.Equals("-copyright")) {
         if (++x >= argc) {
-	  logf (LOG_FATAL, "Option error: No copyright string specified after %s", Flag.c_str());
+	  message_log (LOG_FATAL, "Option error: No copyright string specified after %s", Flag.c_str());
           return 0;
         }
         Copyright = argv[x];
         LastUsed = x;
      } else if (Flag.Equals("-comments")) {
         if (++x >= argc) {
-	  logf (LOG_FATAL, "Option error: No comments string specified after %s", Flag.c_str());
+	  message_log (LOG_FATAL, "Option error: No comments string specified after %s", Flag.c_str());
           return 0;
         }
         Comments = argv[x];
         LastUsed = x;
      } else if (Flag.Equals("-server")) {
         if (++x >= argc) {
-          logf (LOG_FATAL, "Option error: No hostname specified after %s", Flag.c_str());
+          message_log (LOG_FATAL, "Option error: No hostname specified after %s", Flag.c_str());
           return 0;
         }
         Server = argv[x];
         LastUsed = x;
      } else if (Flag.Equals("-clip")) {
         if (++x >= argc) {
-          logf (LOG_FATAL, "Option error: No number specified after %s", Flag.c_str());
+          message_log (LOG_FATAL, "Option error: No number specified after %s", Flag.c_str());
           return 0;
         }
         Clip = atoi(argv[x]);
         LastUsed = x;
      } else if (Flag.Equals("-priority")) {
         if (++x >= argc) {
-          logf (LOG_FATAL, "Option error: No number specified after %s", Flag.c_str());
+          message_log (LOG_FATAL, "Option error: No number specified after %s", Flag.c_str());
           return 0;
         }
         PriorityFactor = atof(argv[x]);
         LastUsed = x;
       } else if (Flag.Equals("-web")) {
         if (++x >= argc) {
-          logf (LOG_FATAL, "Option error: No arg specified after %s", Flag.c_str());
+          message_log (LOG_FATAL, "Option error: No arg specified after %s", Flag.c_str());
           return 0;
         }
         URL = argv[x];
@@ -278,7 +276,7 @@ int _Iutil_main(int argc, char **argv)
         STRINGINDEX pos = URL.Search("=");
         if (pos == 0)
           {
-            logf (LOG_FATAL, "Option error: Usage for %s is URL=Base", Flag.c_str());
+            message_log (LOG_FATAL, "Option error: Usage for %s is URL=Base", Flag.c_str());
             return -1;
           }
         URL.EraseAfter(pos-1);
@@ -289,14 +287,14 @@ int _Iutil_main(int argc, char **argv)
 	LastUsed = x;
      } else if (Flag.Equals("-mirror")) {
         if (++x >= argc) {
-          logf (LOG_FATAL, "Option error: No directory specified after %s", Flag.c_str());
+          message_log (LOG_FATAL, "Option error: No directory specified after %s", Flag.c_str());
           return 0;
         }
         Mirror = argv[x];
         LastUsed = x;
       } else if (Flag.Equals("-gt")) {
 	if (++x >= argc) {
-	  logf (LOG_FATAL, "Option error: No document type specified after %s (use -gt0 for no type)", Flag.c_str());
+	  message_log (LOG_FATAL, "Option error: No document type specified after %s (use -gt0 for no type)", Flag.c_str());
 	  return 0;
 	}
 	if (*(argv[x]) == '*') {
@@ -308,7 +306,7 @@ int _Iutil_main(int argc, char **argv)
 	LastUsed = x;
       } else if (Flag.Equals("-gl")) {
 	if (++x >= argc) {
-	  logf (LOG_FATAL, "Option error: No Stopwords id specified after %s (use -gl0 for default)", Flag.c_str());
+	  message_log (LOG_FATAL, "Option error: No Stopwords id specified after %s (use -gl0 for default)", Flag.c_str());
 	  return 0;
 	}
 	StoplistFilename = argv[x];
@@ -328,7 +326,7 @@ int _Iutil_main(int argc, char **argv)
         LastUsed = x;
       } else if (Flag.Equals("-syn") || (Flag.Equals("-thes"))) {
 	if (++x >= argc) {
-	  logf (LOG_FATAL, "Option error: No synonym file name specified after %s", Flag.c_str());
+	  message_log (LOG_FATAL, "Option error: No synonym file name specified after %s", Flag.c_str());
           return -1;
         }
         SynonymFileName = argv[x];
@@ -336,7 +334,7 @@ int _Iutil_main(int argc, char **argv)
         LastUsed = x;
       } else if (Flag.Equals("-import")) {
 	if (++x >= argc) {
-	  logf (LOG_FATAL, "Option error: No db name specified after %s", Flag.c_str());
+	  message_log (LOG_FATAL, "Option error: No db name specified after %s", Flag.c_str());
 	  return -1;
 	}
 	ImportDb = argv[x];
@@ -364,7 +362,7 @@ int _Iutil_main(int argc, char **argv)
 	LastUsed = x;
       } else if (Flag.Equals("-dirmv")) {
         if (++x >= argc) {
-	  logf (LOG_FATAL, "Option error: No directories specified after %s", Flag.c_str());
+	  message_log (LOG_FATAL, "Option error: No directories specified after %s", Flag.c_str());
           return -1;
         }
         OldDirBase = argv[x];
@@ -372,7 +370,7 @@ int _Iutil_main(int argc, char **argv)
         STRINGINDEX pos = OldDirBase.Search("=");
         if (pos == 0)
           {
-	    logf (LOG_FATAL, "Option error: Usage for %s is OldDir=NewDir", Flag.c_str()); 
+	    message_log (LOG_FATAL, "Option error: Usage for %s is OldDir=NewDir", Flag.c_str()); 
             return -1;
           }
         OldDirBase.EraseAfter(pos-1);
@@ -383,7 +381,7 @@ int _Iutil_main(int argc, char **argv)
         LastUsed = x;
      } else if (Flag.Equals("-mvdir")) {
 	if (++x >= argc) {
-	  logf (LOG_FATAL, "Option error: No directories specified after %s", Flag.c_str()); 
+	  message_log (LOG_FATAL, "Option error: No directories specified after %s", Flag.c_str()); 
           return -1;
         }
 	OldDir = argv[x];
@@ -391,7 +389,7 @@ int _Iutil_main(int argc, char **argv)
   	STRINGINDEX pos = OldDir.Search("=");
 	if (pos == 0)
 	  {
-	    logf (LOG_FATAL, "Option error: Usage for %s is OldDir=NewDir", Flag.c_str()); 
+	    message_log (LOG_FATAL, "Option error: Usage for %s is OldDir=NewDir", Flag.c_str()); 
 	    return -1;
 	  }
 	OldDir.EraseAfter(pos-1);
@@ -460,7 +458,7 @@ int _Iutil_main(int argc, char **argv)
 	LastUsed = x;
       } else if (Flag.Equals ("-level")) {
         if (++x >= argc) {
-	  logf (LOG_FATAL, "Usage: No level specified after -level.");
+	  message_log (LOG_FATAL, "Usage: No level specified after -level.");
 	  return 2;
 	}
 	log_init((int)(strtol (argv[x], NULL, 10) & 0xFF));
@@ -470,10 +468,10 @@ int _Iutil_main(int argc, char **argv)
     }
     x++;
   }
-  logf (LOG_INFO, "Iutil %s (%s)", __IB_Version, __HostPlatform);
+  message_log (LOG_INFO, "Iutil %s (%s)", __IB_Version, __HostPlatform);
   if (DBName.IsEmpty()) {
     DBName = __IB_DefaultDbName;
-    logf (LOG_WARN, "No database name specified! Using default \"%s\"", DBName.c_str() );
+    message_log (LOG_WARN, "No database name specified! Using default \"%s\"", DBName.c_str() );
   }
   x = LastUsed + 1;
 
@@ -496,15 +494,15 @@ int _Iutil_main(int argc, char **argv)
 
   if ((vdb = new VIDB(DBName, DocTypeOptions)) == NULL)
     {
-      logf (LOG_PANIC, "Could not create VIDB!");
+      message_log (LOG_PANIC, "Could not create VIDB!");
       return -1;
     }
   if (vdb->GetTotalDatabases() > 1)
     {
       int n = vdb->GetTotalDatabases();
-      logf (LOG_ERROR, "Usage ERROR: Virtual Collection contains %d indexes.", n);
+      message_log (LOG_ERROR, "Usage ERROR: Virtual Collection contains %d indexes.", n);
       delete vdb;
-      if (n > 1) logf (LOG_PANIC, "Sorry, this program is designed ONLY FOR SINGLE REAL INDEXES!");
+      if (n > 1) message_log (LOG_PANIC, "Sorry, this program is designed ONLY FOR SINGLE REAL INDEXES!");
       return -1;
     }
 
@@ -523,7 +521,7 @@ int _Iutil_main(int argc, char **argv)
 	  delete import_pdb;
 	}
        else
-	logf (LOG_ERROR, "Could not open '%s' for import!", ImportDb.c_str());
+	message_log (LOG_ERROR, "Could not open '%s' for import!", ImportDb.c_str());
     }
 
   if (DebugFlag) {
@@ -536,7 +534,7 @@ int _Iutil_main(int argc, char **argv)
   if (!FillCacheSyntax.IsEmpty())
     {
       STRLIST list (FillCacheSyntax, ',');
-      logf (LOG_INFO, "Filling HeadlineCache for: %s", FillCacheSyntax.c_str());
+      message_log (LOG_INFO, "Filling HeadlineCache for: %s", FillCacheSyntax.c_str());
       for (const STRLIST *p = list.Next(); p != &list; p = p->Next())
 	{
 	  STRING Syntax = p->Value();
@@ -657,31 +655,31 @@ int _Iutil_main(int argc, char **argv)
 
 	}
       else
-	logf (LOG_ERROR, "No such record defined by '%s'", RecordID.c_str());
+	message_log (LOG_ERROR, "No such record defined by '%s'", RecordID.c_str());
     }
   }
   if (SetGlobalDoctype) {
     pdb->SetGlobalDoctype(GlobalDoctype);
     if (GlobalDoctype.DocumentType().IsEmpty()) {
-      logf(LOG_INFO, "Global document type cleared.");
+      message_log(LOG_INFO, "Global document type cleared.");
     } else {
-      logf(LOG_INFO, "Global document type set to %s.", GlobalDoctype.c_str());
+      message_log(LOG_INFO, "Global document type set to %s.", GlobalDoctype.c_str());
     }
   }
   if (SetStoplist) {
     pdb->SetGlobalStoplist(StoplistFilename);
     if (StoplistFilename == "") {
-      logf(LOG_INFO, "Global Stopwords list cleared.");
+      message_log(LOG_INFO, "Global Stopwords list cleared.");
     } else {
-      logf(LOG_INFO, "Global Stopwords list set to %s.", (const char *) StoplistFilename);
+      message_log(LOG_INFO, "Global Stopwords list set to %s.", (const char *) StoplistFilename);
     }
   }
   if (Synonyms) {
     THESAURUS MyThesaurus;
     if (MyThesaurus.Compile(SynonymFileName, DBName, GDT_TRUE))
-      logf (LOG_INFO, "Thesaurus '%s' compiled.", SynonymFileName.c_str());
+      message_log (LOG_INFO, "Thesaurus '%s' compiled.", SynonymFileName.c_str());
     else
-      logf (LOG_ERROR, "Compile of thesaurus '%s' failed.", SynonymFileName.c_str());
+      message_log (LOG_ERROR, "Compile of thesaurus '%s' failed.", SynonymFileName.c_str());
   }
   if (EraseAll) {
     cout << "Erasing database files ..." << endl;
@@ -697,7 +695,7 @@ int _Iutil_main(int argc, char **argv)
     int             count = 0;
     size_t          len = OldDirBase.GetLength();
 
-    logf (LOG_INFO, "Moving %s -> %s", OldDirBase.c_str(), NewDirBase.c_str());
+    message_log (LOG_INFO, "Moving %s -> %s", OldDirBase.c_str(), NewDirBase.c_str());
     for (INT x = 1; x <= y; x++) {
         pdb->GetDocumentInfo(x, &Record);
         OldPath = Record.GetPath();
@@ -709,7 +707,7 @@ int _Iutil_main(int argc, char **argv)
             count++;
           }
     }
-   logf (LOG_INFO, "Done. Changed %d paths (%u).", count, y);
+   message_log (LOG_INFO, "Done. Changed %d paths (%u).", count, y);
   }
   if (mvDirs) {
     INT             y = pdb->GetTotalRecords();
@@ -718,7 +716,7 @@ int _Iutil_main(int argc, char **argv)
     int             count = 0;
 
 
-    logf (LOG_INFO, "Moving %s -> %s", OldDir.c_str(), NewDir.c_str());
+    message_log (LOG_INFO, "Moving %s -> %s", OldDir.c_str(), NewDir.c_str());
     for (INT x = 1; x <= y; x++) {
         pdb->GetDocumentInfo(x, &Record);
         Record.GetPath(&OldPath);
@@ -729,10 +727,10 @@ int _Iutil_main(int argc, char **argv)
 	    count++;
 	  }
     }
-   logf (LOG_INFO, "Done. Changed %d paths (%u).", count, y);
+   message_log (LOG_INFO, "Done. Changed %d paths (%u).", count, y);
   }
   if (PathChange) {
-    logf(LOG_INFO, "Scanning database for file paths ...");
+    message_log(LOG_INFO, "Scanning database for file paths ...");
     INT             y = pdb->GetTotalRecords();
     if (y) {
       cerr << "Enter new path or <Return> to leave unchanged:" << endl;
@@ -785,17 +783,17 @@ int _Iutil_main(int argc, char **argv)
 
     if (!IsRootDirectory(RootDir)) {
       pdb->setUseRelativePaths(GDT_TRUE);
-      logf (LOG_INFO, "Relativizing around '%s' (%d records)", RootDir.c_str(), y);
+      message_log (LOG_INFO, "Relativizing around '%s' (%d records)", RootDir.c_str(), y);
       for (INT x = 1; x <= y; x++) {
         pdb->GetDocumentInfo(x, &Record);
         pdb->SetDocumentInfo(x, Record);
       }
-      logf (LOG_INFO, "Done.");
+      message_log (LOG_INFO, "Done.");
     }
   }
 
   if (DeleteByKey) {
-    logf(LOG_INFO, "Marking documents as deleted ...");
+    message_log(LOG_INFO, "Marking documents as deleted ...");
     INT             x, z;
     INT             y = 0;
     STRING          S;
@@ -804,10 +802,10 @@ int _Iutil_main(int argc, char **argv)
       WordList.GetEntry(x, &S);
       y += pdb->DeleteByKey(S);
     }
-    logf(LOG_INFO, "%d document(s) marked as deleted.", y);
+    message_log(LOG_INFO, "%d document(s) marked as deleted.", y);
   }
   if (UndeleteByKey) {
-    logf(LOG_INFO, "Removing deletion mark from documents ...");
+    message_log(LOG_INFO, "Removing deletion mark from documents ...");
     INT             x, z;
     INT             y = 0;
     STRING          S;
@@ -816,12 +814,12 @@ int _Iutil_main(int argc, char **argv)
       WordList.GetEntry(x, &S);
       y += pdb->UndeleteByKey(S);
     }
-    logf(LOG_INFO, "Deletion mark removed for %d document(s).", y);
+    message_log(LOG_INFO, "Deletion mark removed for %d document(s).", y);
   }
   if (Cleanup) {
-    logf(LOG_INFO, "Cleaning up database (removing deleted documents) ...");
+    message_log(LOG_INFO, "Cleaning up database (removing deleted documents) ...");
     INT             x = pdb->CleanupDb();
-    logf(LOG_INFO, "%d document(s) were removed.", x);
+    message_log(LOG_INFO, "%d document(s) were removed.", x);
   }
 
   if (ViewFields) {
@@ -902,7 +900,7 @@ int _Iutil_main(int argc, char **argv)
 	    MainIndexPtr->Dump (Skip);
 	}
     }
-  logf (LOG_INFO, "Done.");
+  message_log (LOG_INFO, "Done.");
   delete          vdb; // TO FIX A TEMP BUG...!!!!!!
   return 0;
 }

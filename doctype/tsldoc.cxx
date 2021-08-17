@@ -110,7 +110,7 @@ void TSLDOC::AddFieldDefs ()
       for (const STRLIST *p = List.Next(); p != &List; p = p->Next())
 	{
 	  Columns++;
-	  logf (LOG_DEBUG, "%s Column #%d is \"%s\"", Doctype.c_str(), Columns, p->Value().c_str());
+	  message_log (LOG_DEBUG, "%s Column #%d is \"%s\"", Doctype.c_str(), Columns, p->Value().c_str());
 	  FieldNames.Add(p->Value());
 
 	  dfd.SetFieldType( Db->GetFieldType(p->Value()) ); // Get the type added 30 Sep 2003
@@ -131,7 +131,7 @@ void TSLDOC::ParseRecords(const RECORD& FileRecord)
   FileMap.CreateMap(FileName, MapSequential);
   if (!FileMap.Ok())
     {
-      logf (LOG_ERRNO, "%s could not access '%s'", Doctype.c_str(), FileName.c_str());
+      message_log (LOG_ERRNO, "%s could not access '%s'", Doctype.c_str(), FileName.c_str());
       return;			// File not accessed
     }
   off_t RecStart = FileRecord.GetRecordStart();
@@ -142,19 +142,19 @@ void TSLDOC::ParseRecords(const RECORD& FileRecord)
 
   if (RecEnd - RecStart <= 0)
     {
-      logf (LOG_WARN, "zero-length record '%s'[%ld-%ld] -- skipping",
+      message_log (LOG_WARN, "zero-length record '%s'[%ld-%ld] -- skipping",
 	FileName.c_str(), (long)RecStart, (long)RecEnd);
       return;
     }
   else if (RecStart > FileEnd)
     {
-      logf (LOG_ERROR, "%s::ParseRecords(): Seek '%s' to %ld failed",
+      message_log (LOG_ERROR, "%s::ParseRecords(): Seek '%s' to %ld failed",
 	Doctype.c_str(), FileName.c_str(), RecStart);
       return;
     }
   else if (RecEnd > FileEnd)
     {
-      logf (LOG_WARN, "%s::ParseRecord(): End after EOF (%d>%d) in '%s'?",
+      message_log (LOG_WARN, "%s::ParseRecord(): End after EOF (%d>%d) in '%s'?",
 	Doctype.c_str(), RecEnd, FileEnd, FileName.c_str());
       RecEnd = FileEnd;
     }
@@ -197,7 +197,7 @@ void TSLDOC::ParseRecords(const RECORD& FileRecord)
   PFILE fp = Db->ffopen (Fn, "rb");
   if (!fp)
     {
-      logf (LOG_ERRNO, "Could not access '%s'", Fn.c_str());
+      message_log (LOG_ERRNO, "Could not access '%s'", Fn.c_str());
       return;			// File not accessed
     }
 
@@ -209,14 +209,14 @@ void TSLDOC::ParseRecords(const RECORD& FileRecord)
 
   if (RecEnd - RecStart <= 0)
     {
-      logf (LOG_WARN, "zero-length record '%s'[%ld-%ld] -- skipping",
+      message_log (LOG_WARN, "zero-length record '%s'[%ld-%ld] -- skipping",
 	Fn.c_str(), (long)RecStart, (long)RecEnd);
       Db->ffclose (fp);
       return;
     }
   if (fseek (fp, RecStart, 0) == -1)
     {
-      logf (LOG_ERRNO, "%s::ParseRecords(): Seek '%s' to %ld failed",
+      message_log (LOG_ERRNO, "%s::ParseRecords(): Seek '%s' to %ld failed",
 	Doctype.c_str(), Fn.c_str(), RecStart);
       Db->ffclose (fp);
       return;
@@ -294,7 +294,7 @@ void TSLDOC::ParseFields (PRECORD NewRecord)
       FileMap.CreateMap(fn, MapSequential);
       if (!FileMap.Ok())
 	{
-	  logf (LOG_ERROR, "%s:ParseFields Could not address file '%s'", Doctype.c_str(), fn.c_str());
+	  message_log (LOG_ERROR, "%s:ParseFields Could not address file '%s'", Doctype.c_str(), fn.c_str());
 	  return;
 	}
       Lineno = 0;
@@ -338,7 +338,7 @@ void TSLDOC::ParseFields (PRECORD NewRecord)
 	      // We don't want to handle 1 column tables
 	      if (Columns <= 1)
 		{
-		  logf (LOG_WARN, "%s: Skipping line #%llu (%d columns)?",
+		  message_log (LOG_WARN, "%s: Skipping line #%llu (%d columns)?",
 			Doctype.c_str(), (long long)Lineno, Columns);
 		  FieldNames.Empty();
 		  NewRecord->SetBadRecord();
@@ -348,7 +348,7 @@ void TSLDOC::ParseFields (PRECORD NewRecord)
 		  for (size_t i=0; i < Columns; i++)
 		    {
 		      STRING t (FieldNames[i]);
-		      logf (LOG_DEBUG, "%s Column #%d is \"%s\"", Doctype.c_str(), i, t.c_str());
+		      message_log (LOG_DEBUG, "%s Column #%d is \"%s\"", Doctype.c_str(), i, t.c_str());
 		      dfd.SetFieldType( Db->GetFieldType(t) ); // Get the type added 30 Sep 2003
 		      dfd.SetFieldName (t);
 		      Db->DfdtAddEntry (dfd);
@@ -372,7 +372,7 @@ void TSLDOC::ParseFields (PRECORD NewRecord)
     if (*tcp == '\0' || *tcp == IFS[0])
       {
 	i++;
-	logf (LOG_WARN, "%s line: %lu, column %d (%s), is empty.",
+	message_log (LOG_WARN, "%s line: %lu, column %d (%s), is empty.",
 		fn.c_str(), (unsigned long)Lineno,
 		i, 
 		i >= FieldNames.Count() ? "" : FieldNames[i-1].c_str());
@@ -383,10 +383,10 @@ void TSLDOC::ParseFields (PRECORD NewRecord)
 	if (RecStart != 0)
 	  {
 	    if (Lineno > 0)
-	      logf (LOG_WARN, "File '%s', line %llu (%ld-%ld), has irregular number of columns (%d), adjusting.",
+	      message_log (LOG_WARN, "File '%s', line %llu (%ld-%ld), has irregular number of columns (%d), adjusting.",
 		fn.c_str(), (long long)Lineno, RecStart, RecEnd, i+1);
 	    else
-	      logf (LOG_WARN, "File '%s' (%ld-%ld) has irregular number of columns (%d), adjusting.",
+	      message_log (LOG_WARN, "File '%s' (%ld-%ld) has irregular number of columns (%d), adjusting.",
                 fn.c_str(), RecStart, RecEnd, i+1);
 	  }
 	else
@@ -402,10 +402,10 @@ void TSLDOC::ParseFields (PRECORD NewRecord)
 	if (i > Columns && RecStart != 0)
 	  {
 	    if (Lineno > 0)
-	     logf (LOG_WARN, "File '%s', line %llu (%ld-%ld), has more than %ld columns (%d).",
+	     message_log (LOG_WARN, "File '%s', line %llu (%ld-%ld), has more than %ld columns (%d).",
 		fn.c_str(), (long long)Lineno, RecStart, RecEnd, Columns, i);
 	    else
-	      logf (LOG_WARN, "File '%s' (%ld-%ld) has more than %d columns (%d).",
+	      message_log (LOG_WARN, "File '%s' (%ld-%ld) has more than %d columns (%d).",
 		fn.c_str(), RecStart, RecEnd, Columns, i);
 	  }
         fieldName = FieldNames[i++];
@@ -457,7 +457,7 @@ void TSLDOC::ParseFields (PRECORD NewRecord)
   PCHR RecBuffer = (PCHR)Buffer.Want(RecLength + 1);
   off_t ActualLength = pfread (fp, RecBuffer, RecLength, RecStart);
   if (ActualLength != RecLength)
-    logf (LOG_WARN, "Short record. Expected %ld bytes, got %ld.", RecLength, ActualLength);
+    message_log (LOG_WARN, "Short record. Expected %ld bytes, got %ld.", RecLength, ActualLength);
   Db->ffclose (fp);
   RecBuffer[ActualLength] = '\0';
   char *tcp = strtok(RecBuffer, IFS);

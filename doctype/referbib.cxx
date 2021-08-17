@@ -95,7 +95,7 @@ void REFERBIB::ParseRecords (const RECORD& FileRecord)
   PFILE Fp = ffopen (Fn, "rb");
   if (!Fp)
     {
-      logf(LOG_ERRNO, "Could not access \"%s\"", Fn.c_str());
+      message_log(LOG_ERRNO, "Could not access \"%s\"", Fn.c_str());
       return;			// File not accessed
     }
   RECORD Record (FileRecord);	// Easy way
@@ -271,7 +271,7 @@ void REFERBIB::ParseFields (RECORD *NewRecord)
        return;
     }
   if (-1 == fseek (fp, RecStart, SEEK_SET))
-    logf(LOG_ERRNO, "Couldn't seek \"%s\"", fn.c_str());
+    message_log(LOG_ERRNO, "Couldn't seek \"%s\"", fn.c_str());
   off_t RecLength = RecEnd - RecStart + 1;
   CHR *RecBuffer = (CHR *)Buffer.Want( RecLength + 1 );
   off_t ActualLength = fread (RecBuffer, 1, RecLength, fp);
@@ -282,9 +282,9 @@ void REFERBIB::ParseFields (RECORD *NewRecord)
   if (tags == NULL || tags[0] == NULL)
     {
       if (tags)
-	logf(LOG_WARN, "No `" + Doctype + "' fields/tags in \"" + fn + "\" record.");
+	message_log(LOG_WARN, "No `" + Doctype + "' fields/tags in \"" + fn + "\" record.");
        else
-	logf(LOG_ERROR, "Unable to parse `" + Doctype + "' record in \"" + fn + "\".");
+	message_log(LOG_ERROR, "Unable to parse `" + Doctype + "' record in \"" + fn + "\".");
       NewRecord->SetBadRecord();
       return;
     }

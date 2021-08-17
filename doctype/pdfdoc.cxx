@@ -146,12 +146,12 @@ void PDFDOC::parsePDFinfo(const STRING& FileName, LOCATOR *Locator)
     {"ModDate",       7, ModDate}
   };
 */
-  logf (LOG_DEBUG, "Parse PDF info");
+  message_log (LOG_DEBUG, "Parse PDF info");
 
   MMAP MemoryMap (FileName);
   if (!MemoryMap.Ok())
     {
-      logf (LOG_ERRNO, "Can't map '%s'", FileName.c_str());
+      message_log (LOG_ERRNO, "Can't map '%s'", FileName.c_str());
       return;
     }
   const UCHR     *Buffer = MemoryMap.Ptr();
@@ -185,10 +185,10 @@ void PDFDOC::parsePDFinfo(const STRING& FileName, LOCATOR *Locator)
 }
   if (directory_len == 0)
     {
-      logf (LOG_INFO, "Could not find a PDF Info Directory in '%s'!", FileName.c_str());
+      message_log (LOG_INFO, "Could not find a PDF Info Directory in '%s'!", FileName.c_str());
       return;
     }
-  logf (LOG_DEBUG, "Looking for %s in file..", directory);
+  message_log (LOG_DEBUG, "Looking for %s in file..", directory);
   // Now we can look/process
   enum { SCANING, LOCATING, EXTRACTING, FIELD, CONTENT } State = SCANING;
   char token[BUFSIZ];
@@ -217,15 +217,15 @@ void PDFDOC::parsePDFinfo(const STRING& FileName, LOCATOR *Locator)
 		      {
 			if ((Name ^= "Creator") && strstr(token, "Scan Plug-in"))
 			  {
-			    logf(LOG_WARN, "'%s' created with '%s'. \
+			    message_log(LOG_WARN, "'%s' created with '%s'. \
 PDF file probably contains only image data.", FileName.c_str(), token);
 			  }
 			Locator->Set(Name, token);
 		      }
-		    logf (LOG_DEBUG, "Set %s with %s", Name.c_str(), token);
+		    message_log (LOG_DEBUG, "Set %s with %s", Name.c_str(), token);
 		  }
 		else
-		  logf (LOG_DEBUG, "Still in Field but found end of Content");
+		  message_log (LOG_DEBUG, "Still in Field but found end of Content");
 		token_len = 0;
 	      }
 	    State = EXTRACTING;
@@ -249,7 +249,7 @@ PDF file probably contains only image data.", FileName.c_str(), token);
 	       	token[token_len++] = Buffer[i];
 		if (token_len >= BUFSIZ)
 		  {
-		    logf (LOG_PANIC, "Buffer overflow in PDF info");
+		    message_log (LOG_PANIC, "Buffer overflow in PDF info");
 		    token_len = 0;
 		  }
 	      }
@@ -280,7 +280,7 @@ PDF file probably contains only image data.", FileName.c_str(), token);
 	      }
 	    else
 	      {
-		logf (LOG_DEBUG, "PDF Info dictionary is confusing. Probably new style.");
+		message_log (LOG_DEBUG, "PDF Info dictionary is confusing. Probably new style.");
 		State = SCANING; // This should NOT HAPPEN!
 	      }
 	  }
@@ -297,7 +297,7 @@ PDF file probably contains only image data.", FileName.c_str(), token);
       }
   }
 }
-  logf (LOG_DEBUG, "Old style Metadata extracted.. Now look for new.." );
+  message_log (LOG_DEBUG, "Old style Metadata extracted.. Now look for new.." );
 
   if (pdfinfo_Command.IsEmpty())
     pdfinfo_Command = ResolveBinPath("pdfinfo");
@@ -309,10 +309,10 @@ PDF file probably contains only image data.", FileName.c_str(), token);
   argv[2] = NULL;
 
   fflush(NULL); // Flush all streams
-  logf(LOG_DEBUG, "Pipe to '%s'", argv[0]);
+  message_log(LOG_DEBUG, "Pipe to '%s'", argv[0]);
   FILE *Fp = _IB_popen(argv, "r");
   if (Fp == NULL) {
-    logf(LOG_ERRNO, "Can't open pipe to PDFinfo filter '%s'.", argv[0]);
+    message_log(LOG_ERRNO, "Can't open pipe to PDFinfo filter '%s'.", argv[0]);
     return;
   } else {
     char buf[4048];
@@ -340,7 +340,7 @@ PDF file probably contains only image data.", FileName.c_str(), token);
 	}
     }
     _IB_pclose(Fp);
-    logf (LOG_DEBUG, "Metadata info extracted..");
+    message_log (LOG_DEBUG, "Metadata info extracted..");
   }
 }
 
@@ -451,7 +451,7 @@ void PDFDOC::ParseRecords(const RECORD& FileRecord)
   FileRecord.GetFullFileName (&Fn);
   if (_IB_lstat(Fn, &stbuf) == -1)
     {
-      logf(LOG_ERRNO, "Can't stat '%s'.", Fn.c_str());
+      message_log(LOG_ERRNO, "Can't stat '%s'.", Fn.c_str());
       return;
     }
 
@@ -461,7 +461,7 @@ void PDFDOC::ParseRecords(const RECORD& FileRecord)
 #define mask (S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)
   if (MkDirs(s , mask) == -1)
     {
-      logf (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
+      message_log (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
       return;
     }
 
@@ -481,17 +481,17 @@ void PDFDOC::ParseRecords(const RECORD& FileRecord)
   argv[3] = NULL;
 
   fflush(NULL); // Flush all streams
-  logf(LOG_DEBUG, "Pipe to \"%s\"",  argv[0]);
+  message_log(LOG_DEBUG, "Pipe to \"%s\"",  argv[0]);
   FILE *Fp = _IB_popen(argv, "r");
   if (Fp == NULL)
     {
-      logf(LOG_ERRNO, "%s can't open pipe to PDF filter '%s'.",
+      message_log(LOG_ERRNO, "%s can't open pipe to PDF filter '%s'.",
 	Doctype.c_str(), argv[0]);
       return;
     }
   else
-     logf(LOG_DEBUG, "Running '%s'", argv[0]);
-  logf (LOG_INFO, "Processing PDF in '%s'", Fn.c_str());
+     message_log(LOG_DEBUG, "Running '%s'", argv[0]);
+  message_log (LOG_INFO, "Processing PDF in '%s'", Fn.c_str());
 
   unsigned page_count = 0;
   RECORD Record (FileRecord);
@@ -507,7 +507,7 @@ void PDFDOC::ParseRecords(const RECORD& FileRecord)
 	{
 	  if (start == -1 && end == -1)
 	    {
-	      logf(LOG_WARN, "PDF Input is %s.", filename);
+	      message_log(LOG_WARN, "PDF Input is %s.", filename);
 	    }
 	  else
 	    {
@@ -522,7 +522,7 @@ void PDFDOC::ParseRecords(const RECORD& FileRecord)
 	}
       else
 	{
-	  logf(LOG_ERROR, "Problems parsing PDF filter output from %s", filename);
+	  message_log(LOG_ERROR, "Problems parsing PDF filter output from %s", filename);
 	  if (c == 0)
 	    break;
         }
@@ -531,7 +531,7 @@ void PDFDOC::ParseRecords(const RECORD& FileRecord)
 
   if (page_count == 0)
     {
-      logf(LOG_ERROR, "Input did not contain any (parseable) PDF pages!");
+      message_log(LOG_ERROR, "Input did not contain any (parseable) PDF pages!");
       unlink (catfile);
       return;
     }
@@ -539,11 +539,11 @@ void PDFDOC::ParseRecords(const RECORD& FileRecord)
     {
       struct stat stbuf2;
       if (stat(catfile, &stbuf2) == -1)
-	logf(LOG_ERROR, "Can't access PDF filter output!");
+	message_log(LOG_ERROR, "Can't access PDF filter output!");
       else if (stbuf2.st_size <= (page_count*3 + 1))
-	logf(LOG_WARN, "PDF filter could not extract text from '%s'. Graphics?", Fn.c_str());
+	message_log(LOG_WARN, "PDF filter could not extract text from '%s'. Graphics?", Fn.c_str());
       else
-	logf(LOG_INFO, "Processed %d PDF pages", page_count);
+	message_log(LOG_INFO, "Processed %d PDF pages", page_count);
     }
 
   // Add whole PDF to PDFINFO for info processing
@@ -555,7 +555,7 @@ void PDFDOC::ParseRecords(const RECORD& FileRecord)
     RemovePath(&basename);
     RemoveFileName(&path);
 
-    logf (LOG_DEBUG, "Create Locator for %s", (const char *)path);
+    message_log (LOG_DEBUG, "Create Locator for %s", (const char *)path);
 
     LOCATOR        Locator(path);
 
@@ -576,7 +576,7 @@ void PDFDOC::ParseRecords(const RECORD& FileRecord)
 	PFILE fp = fopen(capfile, "rb");
 	if (fp)
 	  {
-	    logf (LOG_DEBUG, "Parsing .cap file '%s'", capfile.c_str());
+	    message_log (LOG_DEBUG, "Parsing .cap file '%s'", capfile.c_str());
 	    // we're going to read the capfile, look for a name= line, and emit
 	    // the part after "Name=".
 	    STRING linebuff;
@@ -608,7 +608,7 @@ void PDFDOC::ParseRecords(const RECORD& FileRecord)
 	  }
       }
     else
-      logf (LOG_DEBUG, "Building locator");
+      message_log (LOG_DEBUG, "Building locator");
     if (Locator.IsEmpty("Title"))
       Locator.Set("Title", basename);
     Locator.Set("Handle", key);
@@ -629,7 +629,7 @@ void PDFDOC::ParseRecords(const RECORD& FileRecord)
     }
     Record.SetRecordStart(ftell(Fp));
 
-    logf(LOG_DEBUG, "Dumping Metadata to '%s'", outfile.c_str());
+    message_log(LOG_DEBUG, "Dumping Metadata to '%s'", outfile.c_str());
     STRLIST x;
     x.AddEntry("locator"); 
     Locator.Text(x).Print(Fp);
@@ -644,10 +644,10 @@ void PDFDOC::ParseRecords(const RECORD& FileRecord)
       Record.SetDate(SRCH_DATE(& stbuf.st_mtime));
     Record.SetKey(key);
     Record.SetFullFileName(outfile);
-    logf (LOG_DEBUG, "Passing to indexer");
+    message_log (LOG_DEBUG, "Passing to indexer");
     Db->DocTypeAddRecord(Record);
   } else {
-    logf(LOG_ERRNO, "Can't create PDF Info record '%s'.", outfile.c_str());
+    message_log(LOG_ERRNO, "Can't create PDF Info record '%s'.", outfile.c_str());
   }
 }
 
@@ -690,7 +690,7 @@ void PDFDOC::ParseFields (PRECORD NewRecord)
 	  delete pdft;
 	}
       else
-	logf (LOG_INFO, "No content!");
+	message_log (LOG_INFO, "No content!");
     }
 }
 
@@ -738,7 +738,7 @@ void PDFDOC::DocPresent (const RESULT& ResultRecord,
 	  argv[2] = (char *)S.c_str();
 	  argv[3] = NULL;
 
-	  logf (LOG_DEBUG, "Use I/O pipe '%s'", argv[0]);
+	  message_log (LOG_DEBUG, "Use I/O pipe '%s'", argv[0]);
 	  FILE *Fp = _IB_popen(argv, "r");
 	  if (Fp != NULL) {
 	    int ch;
@@ -746,7 +746,7 @@ void PDFDOC::DocPresent (const RESULT& ResultRecord,
 	      StringBuffer->Cat((char)ch);
 	    _IB_pclose(Fp);
 	  } else
-	    logf (LOG_ERRNO, "Could not open Pipe '%s'", argv[0] );
+	    message_log (LOG_ERRNO, "Could not open Pipe '%s'", argv[0] );
 	}
     }
   else if (ElementSet.Equals("JPEG"))
@@ -768,14 +768,14 @@ void PDFDOC::DocPresent (const RESULT& ResultRecord,
 	  argv[2] = (char *)S.c_str();
 	  argv[3] = NULL;
 
-	  logf (LOG_DEBUG, "Use I/O pipe '%s'", argv[0]);
+	  message_log (LOG_DEBUG, "Use I/O pipe '%s'", argv[0]);
 	  FILE *Fp = _IB_popen(argv, "r");
 	  if (Fp != NULL) {
 	    for (int ch; (ch = getc(Fp)) != EOF;)
 	    StringBuffer->Cat((char)ch);
 	    _IB_pclose(Fp);
 	  } else
-	    logf (LOG_ERRNO, "Could not open Pipe '%s'", argv[0] );
+	    message_log (LOG_ERRNO, "Could not open Pipe '%s'", argv[0] );
 	}
     }
   else if (ElementSet.Equals(SOURCE_MAGIC))

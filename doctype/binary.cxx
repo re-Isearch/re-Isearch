@@ -60,12 +60,12 @@ XBINARY::XBINARY (PIDBOBJ DbParent, const STRING& Name):
 
 void XBINARY::SetBaseClass(const STRING& Class)
 {
-  logf (LOG_DEBUG, "%s: SetBaseClass(%s)", Doctype.c_str(), Class.c_str());
+  message_log (LOG_DEBUG, "%s: SetBaseClass(%s)", Doctype.c_str(), Class.c_str());
   if (Class.IsEmpty())
     SetBaseClass("XML");
   else
     InfoDoctype.Set(Doctype + ":" + Class);
-  logf (LOG_DEBUG, "%s: InfoDoctype=\"%s\"", Doctype.c_str(), InfoDoctype.ClassName().c_str());
+  message_log (LOG_DEBUG, "%s: InfoDoctype=\"%s\"", Doctype.c_str(), InfoDoctype.ClassName().c_str());
 }
 
 
@@ -256,12 +256,12 @@ void BINARY::ParseRecords(const RECORD& FileRecord)
       STRING Fn2 (Filename.Before('.') + "." +  Ext );
       if (Fn2 == Filename)
 	{
-	  logf (LOG_ERROR, "%s: Could not access '%s'", Doctype.c_str(), Fn.c_str());
+	  message_log (LOG_ERROR, "%s: Could not access '%s'", Doctype.c_str(), Fn.c_str());
           return;
 	}
       else if (!FileExists(Fn2))
 	{
-	  logf (LOG_ERROR, "%s: Could not access neither of '%s' or '%s'", Doctype.c_str(),
+	  message_log (LOG_ERROR, "%s: Could not access neither of '%s' or '%s'", Doctype.c_str(),
 		Fn.c_str(), Fn2.c_str());
 	  return;
 	}
@@ -272,7 +272,7 @@ void BINARY::ParseRecords(const RECORD& FileRecord)
   RECORD Record (FileRecord);
   Record.SetFullFileName(Fn);
 
-  logf (LOG_INFO, "Using '%s' for '%s' (%s) content.", Fn.c_str(), Filename.c_str(),
+  message_log (LOG_INFO, "Using '%s' for '%s' (%s) content.", Fn.c_str(), Filename.c_str(),
 	Doctype.c_str());
 
   Record.SetRecordStart(0);

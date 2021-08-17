@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /* $Id: nlist.cxx,v 1.3 2007/07/04 06:21:59 edz Exp edz $ */
 
 /*@@@
@@ -150,7 +154,7 @@ GDT_BOOLEAN NUMERICLIST::Resize(size_t Entries)
   try {
     temp =new NUMERICFLD[Entries];
   } catch(...) {
-    logf (LOG_PANIC|LOG_ERRNO, "Could not allocate numerical list (%ld)",
+    message_log (LOG_PANIC|LOG_ERRNO, "Could not allocate numerical list (%ld)",
 	(long)Entries);
     return GDT_FALSE;
   }
@@ -222,11 +226,11 @@ SearchState NUMERICLIST::Matcher(NUMBER Key, NUMBER A, NUMBER B, NUMBER C,
     else
       return(TOO_LOW);
   default:
-    logf (LOG_DEBUG, "No semantics for relation=%d", Relation);
+    message_log (LOG_DEBUG, "No semantics for relation=%d", Relation);
     break;
   }
 
-  logf (LOG_PANIC, "Hideous Matching Error");
+  message_log (LOG_PANIC, "Hideous Matching Error");
   return(NO_MATCH);
 }
 
@@ -269,11 +273,11 @@ SearchState NUMERICLIST::Matcher(GPTYPE Key, GPTYPE A, GPTYPE B, GPTYPE C,
       return(TOO_LOW);
 
    default:
-     logf (LOG_DEBUG, "No semantics for relation=%d", Relation);
+     message_log (LOG_DEBUG, "No semantics for relation=%d", Relation);
      break;
   }
 
-  logf (LOG_PANIC, "Hideous Matching Error");
+  message_log (LOG_PANIC, "Hideous Matching Error");
   return(NO_MATCH);
 }
 
@@ -351,7 +355,7 @@ SearchState NUMERICLIST::MemFind(NUMBER Key, ZRelation_t Relation, INT4 *Index) 
     break;
 
   default:
-    logf (LOG_DEBUG, "No semantics for relation=%d", Relation);
+    message_log (LOG_DEBUG, "No semantics for relation=%d", Relation);
     break;
 
   }
@@ -442,7 +446,7 @@ SearchState NUMERICLIST::MemFindGp(GPTYPE Key, ZRelation_t Relation, INT4 *Index
     break;
 
    default:
-     logf (LOG_DEBUG, "No semantics for relation=%d", Relation);
+     message_log (LOG_DEBUG, "No semantics for relation=%d", Relation);
      break;
   }
 
@@ -521,7 +525,7 @@ SearchState NUMERICLIST::MemFindIndexes(NUMBER Key, ZRelation_t Relation, INT4 *
     break;
 
   default:
-   logf (LOG_DEBUG, "No semantics for relation=%d", Relation);
+   message_log (LOG_DEBUG, "No semantics for relation=%d", Relation);
    break;
   }
 
@@ -555,7 +559,7 @@ SearchState NUMERICLIST::DiskFind(STRING Fn, NUMBER Key, ZRelation_t Relation, I
 
   if (Fp == NULL) {
 
-    logf (LOG_ERRNO, "Can't open numeric list index '%s'", Fn.c_str());
+    message_log (LOG_ERRNO, "Can't open numeric list index '%s'", Fn.c_str());
     *Index = -1;
     return NO_MATCH;
 
@@ -567,7 +571,7 @@ SearchState NUMERICLIST::DiskFind(STRING Fn, NUMBER Key, ZRelation_t Relation, I
     if (getObjID(Fp) != objNLIST)
       {
 	fclose(Fp);
-        logf (LOG_PANIC, "%s not a numerical index??", Fn.c_str());
+        message_log (LOG_PANIC, "%s not a numerical index??", Fn.c_str());
         *Index = -1;
         return NO_MATCH;
       }
@@ -590,17 +594,17 @@ SearchState NUMERICLIST::DiskFind(STRING Fn, NUMBER Key, ZRelation_t Relation, I
 
       if ((X > 0) && (X < High)) {
 	if (-1 == fseek(Fp, SIZEOF_HEADER + (X-1) * ElementSize, SEEK_SET))
-	  logf (LOG_ERRNO, "Seek failure on %s [X-1//X=%ld]", Fn.c_str());
+	  message_log (LOG_ERRNO, "Seek failure on %s [X-1//X=%ld]", Fn.c_str());
 	Type=INSIDE;
 
       } else if (X <= 0) {
 	if (-1 == fseek(Fp, SIZEOF_HEADER + X * ElementSize, SEEK_SET))
-	  logf (LOG_ERRNO, "Seek failure on %s [X=%ld]", Fn.c_str(), (long)X);
+	  message_log (LOG_ERRNO, "Seek failure on %s [X=%ld]", Fn.c_str(), (long)X);
 	Type=AT_START;
 
       } else if (X >= High) {
 	if (-1 == fseek(Fp, SIZEOF_HEADER + (X-1) * ElementSize, SEEK_SET))
-	  logf (LOG_ERRNO, "Seek failure on %s [X-1//X=%ld]", Fn.c_str(), (long)X);
+	  message_log (LOG_ERRNO, "Seek failure on %s [X-1//X=%ld]", Fn.c_str(), (long)X);
 	Type=AT_END;
       }
 	
@@ -730,7 +734,7 @@ SearchState NUMERICLIST::DiskFind(STRING Fn, GPTYPE Key, ZRelation_t Relation, I
 #endif
 
   if (!Fp) {
-    logf (LOG_ERRNO, "Index open faolure '%s'", Fn.c_str());
+    message_log (LOG_ERRNO, "Index open faolure '%s'", Fn.c_str());
     *Index = -1;
     return NO_MATCH;
 
@@ -744,7 +748,7 @@ SearchState NUMERICLIST::DiskFind(STRING Fn, GPTYPE Key, ZRelation_t Relation, I
     if (getObjID(Fp) != objNLIST)
       {
 	fclose(Fp);
-        logf (LOG_PANIC, "%s not a numerical index??", FileName.c_str());
+        message_log (LOG_PANIC, "%s not a numerical index??", FileName.c_str());
 	*Index = -1;
         return NO_MATCH;
       }
@@ -878,7 +882,7 @@ void NUMERICLIST::Dump(INT4 start, INT4 end, ostream& os) const
 size_t NUMERICLIST::LoadTable(NumBlock Offset)
 {
   if (FileName.IsEmpty()) {
-    logf (LOG_PANIC, "Numeric List FileName not set");
+    message_log (LOG_PANIC, "Numeric List FileName not set");
     return 0;
   }
   if (table_type == Offset)
@@ -909,7 +913,7 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End)
   size_t  nRecs=0;
   
  if (FileName.IsEmpty() ) {
-    logf (LOG_PANIC, "Numeric List FileName not set");
+    message_log (LOG_PANIC, "Numeric List FileName not set");
     return 0;
   }
 
@@ -924,18 +928,18 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End)
   if (Elements == 0)
     {
       if (!FileExists(FileName))
-	logf (LOG_ERROR, "NUMERICLIST: '%s' does not exist?", FileName.c_str());
+	message_log (LOG_ERROR, "NUMERICLIST: '%s' does not exist?", FileName.c_str());
       else if (fileSize == 0)
-	logf (LOG_WARN, "NUMERICLIST: '%s' is empty (%lu/%u)!", FileName.c_str(),
+	message_log (LOG_WARN, "NUMERICLIST: '%s' is empty (%lu/%u)!", FileName.c_str(),
 		(unsigned long)fileSize, size);
       else
-	logf (LOG_ERROR, "NUMERICLIST: Short write (%lu/%u)?",
+	message_log (LOG_ERROR, "NUMERICLIST: Short write (%lu/%u)?",
 		(unsigned long)fileSize, size); 
       return nRecs;
     }
   if (Start > Elements)
     {
-      logf (LOG_WARN, "NUMERICLIST: Start %d > element count (%ld). Nothing to load.",
+      message_log (LOG_WARN, "NUMERICLIST: Start %d > element count (%ld). Nothing to load.",
         (int)Start, Elements);
       return nRecs;
     }
@@ -949,7 +953,7 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End)
     if (Start)
       {
 	if (fseek(fp, (off_t)Start*size, SEEK_SET) != 0)
-	  logf (LOG_ERRNO, "Can't seek in '%s'[%ld]", FileName.c_str(), (long) Start*size);
+	  message_log (LOG_ERRNO, "Can't seek in '%s'[%ld]", FileName.c_str(), (long) Start*size);
       }
     Resize(Count + End-Start + 1);
 
@@ -970,7 +974,7 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End)
     fclose(fp);
     //Cleanup();
   } else
-    logf (LOG_ERROR, "Could not open '%s'", FileName.c_str());
+    message_log (LOG_ERROR, "Could not open '%s'", FileName.c_str());
 
   return nRecs;
 }
@@ -991,7 +995,7 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End, NumBlock Offset)
   const size_t size = table[0].Sizeof();
 
   if (FileName.IsEmpty()) {
-    logf (LOG_PANIC, "Numeric List FileName not set");
+    message_log (LOG_PANIC, "Numeric List FileName not set");
     return 0;
   }
   if (GetFileSize(FileName) == 0)
@@ -1003,7 +1007,7 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End, NumBlock Offset)
     if (getObjID(fp) != objNLIST)
       {
 	fclose(fp);
-        logf (LOG_PANIC, "%s not a Numerical list??", FileName.c_str());
+        message_log (LOG_PANIC, "%s not a Numerical list??", FileName.c_str());
 	return 0;
       }
 
@@ -1042,14 +1046,14 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End, NumBlock Offset)
 #endif
       if (MoveTo != SIZEOF_HEADER)
 	if (-1 == fseek(fp, MoveTo, SEEK_SET))
-	  logf (LOG_ERRNO, "Seek failure to %lu on '%s'", (unsigned long)MoveTo, FileName.c_str());
+	  message_log (LOG_ERRNO, "Seek failure to %lu on '%s'", (unsigned long)MoveTo, FileName.c_str());
 
       errno = 0;
       Resize (Count + End - Start + 1);
       for (size_t i=Start; i<=End; i++) {
 	if (feof(fp))
 	  {
-	    logf (LOG_ERRNO, "Premature numeric list read-failure in '%s' (%d of %d)",
+	    message_log (LOG_ERRNO, "Premature numeric list read-failure in '%s' (%d of %d)",
 		FileName.c_str(), i, End);
 	    break;
 	  }
@@ -1066,7 +1070,7 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End, NumBlock Offset)
     }
     fclose(fp);
   } else
-    logf (LOG_ERROR, "Could not open '%s'", FileName.c_str());
+    message_log (LOG_ERROR, "Could not open '%s'", FileName.c_str());
 #if DEBUG
   cerr <<"Read " << nRecs << endl;
 #endif
@@ -1124,7 +1128,7 @@ void NUMERICLIST::WriteTable(INT Offset)
 	  for (_Count_t x=0; x<Count; x++)
 	    Write(table[x], fp);
 	}
-      else logf (LOG_ERRNO, "Seek error in NUMERICLIST");
+      else message_log (LOG_ERRNO, "Seek error in NUMERICLIST");
       fclose(fp);
    }
 }
@@ -1161,7 +1165,7 @@ FILE *NUMERICLIST::OpenForAppend(const STRING& Fn)
 
   if (Fp == NULL)
    {
-      logf (LOG_ERRNO, "NUMERICLIST:: Can't open '%s' for reading/writing", Fn.c_str());
+      message_log (LOG_ERRNO, "NUMERICLIST:: Can't open '%s' for reading/writing", Fn.c_str());
       return NULL;
    }
   if (getObjID(Fp)!= objNLIST)
@@ -1194,11 +1198,11 @@ FILE *NUMERICLIST::OpenForAppend(const STRING& Fn)
       char     scratch[ L_tmpnam+1];
       char    *TempName = tmpnam( scratch ); 
 
-      logf (LOG_WARN, "Could not create '%s', trying tmp '%s'", TmpName.c_str(),
+      message_log (LOG_WARN, "Could not create '%s', trying tmp '%s'", TmpName.c_str(),
 	TempName);
       if ((oFp = fopen(TempName, "wb")) == NULL)
 	{
-	  logf (LOG_ERRNO, "Can't create a temporary numlist '%s'", Fn.c_str());
+	  message_log (LOG_ERRNO, "Can't create a temporary numlist '%s'", Fn.c_str());
 	  fclose(Fp);
 	  return NULL;
 	}
@@ -1215,15 +1219,15 @@ FILE *NUMERICLIST::OpenForAppend(const STRING& Fn)
   fclose(Fp);
   fclose(oFp);
   if (::remove(Fn) == -1)
-    logf (LOG_ERRNO, "Can't remove '%s'", Fn.c_str());
+    message_log (LOG_ERRNO, "Can't remove '%s'", Fn.c_str());
   if (RenameFile(TmpName, Fn) == -1)
-    logf (LOG_ERRNO, "Can't rename '%s' to '%s'", TmpName.c_str(), Fn.c_str());
+    message_log (LOG_ERRNO, "Can't rename '%s' to '%s'", TmpName.c_str(), Fn.c_str());
 
   // Now open for append
   if ((Fp = fopen(Fn, "a+b")) == NULL)
-    logf (LOG_ERRNO, "Could not open '%s' for nlist append", Fn.c_str());
+    message_log (LOG_ERRNO, "Could not open '%s' for nlist append", Fn.c_str());
   else
-    logf (LOG_DEBUG, "Opening '%s' for nlist append", Fn.c_str());
+    message_log (LOG_DEBUG, "Opening '%s' for nlist append", Fn.c_str());
   return Fp;
 }
 

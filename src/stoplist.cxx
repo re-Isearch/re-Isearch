@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)stoplist.cxx  1.24 02/05/01 00:33:28 BSN"
 
 /*
@@ -353,7 +357,7 @@ GDT_BOOLEAN STOPLIST::Load(const STRLIST& wordList, const STRING& language)
 
   if (tp == NULL)
    {
-     logf (LOG_ERRNO , "Memory allocation to load stoplist failed.");
+     message_log (LOG_ERRNO , "Memory allocation to load stoplist failed.");
      return GDT_FALSE;
    }
 
@@ -401,7 +405,7 @@ GDT_BOOLEAN STOPLIST::LoadList(const STRING& language)
   // "C" language? Use default "internal" list
   if (!language.IsEmpty())
     {
-      logf (LOG_DEBUG, "Load stoplist %s", language.c_str());
+      message_log (LOG_DEBUG, "Load stoplist %s", language.c_str());
       currentLanguage = language;
       // <NULL> means NO stoplist
       if (currentLanguage ==  NullStop)
@@ -422,7 +426,7 @@ GDT_BOOLEAN STOPLIST::LoadList(const STRING& language)
 	  sPathFmt (word, fSTOPLIST, currentLanguage, GlobalLocale.LocaleName());
 	  fp = fopen (word, "r");
 	  if (fp == NULL)
-	     logf (LOG_ERRNO, "Can't open '%s'", word);
+	     message_log (LOG_ERRNO, "Can't open '%s'", word);
 	}
       // Absolute Path?
       else if (IsAbsoluteFilePath(currentLanguage))
@@ -437,10 +441,10 @@ GDT_BOOLEAN STOPLIST::LoadList(const STRING& language)
 	      break;
 	  };
       if (fp == NULL) {
-	logf (LOG_WARN, "No external stoplist found for \"%s\"!", currentLanguage.c_str());
+	message_log (LOG_WARN, "No external stoplist found for \"%s\"!", currentLanguage.c_str());
 	if (LoadInternal(currentLanguage))
 	  {
-	    logf (LOG_WARN, "Using internal '%s' stoplist.", currentLanguage.c_str());
+	    message_log (LOG_WARN, "Using internal '%s' stoplist.", currentLanguage.c_str());
 	    return GDT_TRUE;
 	  }
 	return GDT_TRUE;
@@ -507,7 +511,7 @@ GDT_BOOLEAN STOPLIST::LoadList(const STRING& language)
       }
       if (words == NULL) {
 	// We ran out of memory
-	logf (LOG_ERRNO, "Not enough core to load '%s' stoplist.", currentLanguage.c_str());
+	message_log (LOG_ERRNO, "Not enough core to load '%s' stoplist.", currentLanguage.c_str());
 	return GDT_FALSE;
       }
       list = words;

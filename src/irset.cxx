@@ -1,49 +1,13 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)irset.cxx"
-static const char RCS_Id[] = "$Id: irset.cxx,v 1.8 2007/11/18 19:41:28 edz Exp edz $";
-
-
-/************************************************************************
- History:
- $Log: irset.cxx,v $
- Revision 1.8  2007/11/18 19:41:28  edz
- *** empty log message ***
-
- Revision 1.7  2007/11/07 09:29:16  edz
- Added Join and JoinO
-
- Revision 1.6  2007/06/20 08:08:31  edz
- sync
-
- Revision 1.5  2007/06/18 16:05:25  edz
- Wildcard "*"
-
- Revision 1.4  2007/05/20 08:41:15  edz
- *** empty log message ***
-
- Revision 1.3  2007/05/16 12:38:32  edz
- *** empty log message ***
-
- Revision 1.2  2007/05/16 12:27:50  edz
- Caching HitTotal
- ./
-
- Revision 1.1  2007/05/15 15:47:23  edz
- Initial revision
-
-// Revision 1.12  1996/05/02  23:14:24  edz
-// Changed AddEntry call in IRSET::Or to add to the hit-table. The
-// logic is that a record could contain both terms but the record
-// hit-tables would resp. only have the coordinates of each term.. So
-// by adding the hit coordinates we can get a highlighted record that
-// show both terms.
-//
-************************************************************************/
 
 /*-@@@
 File:		irset.cxx
 Version:	2.00
 Description:	Class IRSET - Internal Search Result Set
-Author:		Edward C. Zimmermann from some code originally by Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #include <stdlib.h>
@@ -170,7 +134,7 @@ void atomicIRSET::Set(const atomicIRSET *OtherPtr)
 {
   if (OtherPtr == NULL)
     {
-      logf (LOG_PANIC, "atomicIRSET::Set(\"Null pointer\") passed");
+      message_log (LOG_PANIC, "atomicIRSET::Set(\"Null pointer\") passed");
       if (Parent) Parent->SetErrorCode(1); // Permanent Error
       return; // Passed Nul Pointer!
     }
@@ -203,7 +167,7 @@ void atomicIRSET::Set(const atomicIRSET *OtherPtr)
 	newTable = new IRESULT[OtherTotal];
       } catch (...) {
 	if (errno == 0) errno = ENOMEM;
-        logf (LOG_ERRNO, "IRSET::Set() Could not allocate space for %ld IRESULTs!", (long)OtherTotal);  
+        message_log (LOG_ERRNO, "IRSET::Set() Could not allocate space for %ld IRESULTs!", (long)OtherTotal);  
 	if (Parent) Parent->SetErrorCode(2); // Temp Error
 	return;
       }
@@ -233,8 +197,6 @@ atomicIRSET& atomicIRSET::Concat(const atomicIRSET& OtherIrset)
 
   for (size_t i=0; i < OtherIrset.TotalEntries; i++)
     {
-//cerr << "Adding " << i << "/" <<
-// OtherIrset.Table[i].GetMdt()->c_str() << "  = " << OtherIrset.Table[i].GetMdtIndex() << endl;
       FastAddEntry (OtherIrset.Table[i]);
     }
   return *this;
@@ -273,7 +235,6 @@ OPOBJ& atomicIRSET::operator +=(const OPOBJ& OtherIrset)
 
 OPOBJ *atomicIRSET::Duplicate () const
 {
-//cerr << "IRSET::Duplicate!!" << endl;
   POPOBJ Temp = new atomicIRSET (Parent);
   if (Temp)
     {
@@ -284,7 +245,6 @@ OPOBJ *atomicIRSET::Duplicate () const
 
 atomicIRSET *atomicIRSET::Duplicate()
 {
-//cerr << "IRSET:Duplicate(2)!!" << endl;
   atomicIRSET * Temp= new atomicIRSET(Parent);
   if (Temp)
     {
@@ -342,7 +302,7 @@ void atomicIRSET::MergeEntries(const GDT_BOOLEAN AddHitCounts)
 	}
     }
   CurrentItem++;
-  logf (LOG_DEBUG, "MergeEntries: %ld adds from %ld -> %ld entries", adds, TotalEntries, CurrentItem);
+  message_log (LOG_DEBUG, "MergeEntries: %ld adds from %ld -> %ld entries", adds, TotalEntries, CurrentItem);
 
   TotalEntries = CurrentItem;
 }
@@ -403,12 +363,10 @@ GDT_BOOLEAN atomicIRSET::GetMdtrec(size_t i, MDTREC *Mdtrec) const
   if (i > 0 && i <= TotalEntries)
     {
       const MDT *Mdt = GetMdt(i);
-//cerr << "GetMdtrec(" << i << ")=";
       if (Mdt) {
-//cerr << "Mdt->Name=" <<  Mdt->c_str() << endl;
         INT idx = Table[i-1].GetMdtIndex();
         if (idx) return Mdt->GetEntry(idx, Mdtrec);
-        else logf (LOG_PANIC, "::Getmdtrec MDT position undefined (ZERO)");
+        else message_log (LOG_PANIC, "::Getmdtrec MDT position undefined (ZERO)");
       }
     }
   return GDT_FALSE;
@@ -465,7 +423,7 @@ GDT_BOOLEAN atomicIRSET::Read (PFILE fp)
       STRING path, stem;
       path.Read(fp);
       if (Parent && PathCompare(path.c_str(), (stem = Parent->GetDbFileStem()).c_str()))
-	logf (LOG_WARN, "IRSET parent instance name mis-match '%s' != '%s'",
+	message_log (LOG_WARN, "IRSET parent instance name mis-match '%s' != '%s'",
 		path.c_str(), stem.c_str());
 
       if (Parent && TimeStamp <  Parent->DateLastModified() )
@@ -561,7 +519,7 @@ void atomicIRSET::FastAddEntry(const IRESULT& ResultRecord)
 		}
 	      else
 		{
-		  logf (LOG_DEBUG, "atomicIRSET::FastAddEntry new record out of index order");
+		  message_log (LOG_DEBUG, "atomicIRSET::FastAddEntry new record out of index order");
 		  Sort = Unsorted;
 		}
 	    }
@@ -716,16 +674,16 @@ PRSET atomicIRSET::Fill(size_t Start, size_t End, PRSET set) const
 
   if (ComputedS == preCosineMetricNormalization)
     {
-      logf (LOG_WARN, "CosineMetricNormalization still in pre-Form!");
+      message_log (LOG_WARN, "CosineMetricNormalization still in pre-Form!");
       //ComputeScoresCosineMetricNormalization (1);
     }
 
   if (ComputedS == Unnormalized)
-    logf (LOG_ERROR, "IRSET Scores have not been converted before fill.");
+    message_log (LOG_ERROR, "IRSET Scores have not been converted before fill.");
 
   if (Start > End)
     {
-      logf (LOG_PANIC, "RSET Fill Range End (%d) > Start (%d). Swap values?", End, Start);
+      message_log (LOG_PANIC, "RSET Fill Range End (%d) > Start (%d). Swap values?", End, Start);
       size_t tmp = Start;
       Start = End;
       End   = tmp;
@@ -739,7 +697,7 @@ PRSET atomicIRSET::Fill(size_t Start, size_t End, PRSET set) const
       } catch (...) {
 	set = NULL;
 	if (errno == 0) errno = ENOMEM;
-	logf (LOG_ERRNO, "IRSET: Could not allocate space for RSET(%ld RESULTs)!", space);
+	message_log (LOG_ERRNO, "IRSET: Could not allocate space for RSET(%ld RESULTs)!", space);
       }
     }
   if (set == NULL)
@@ -748,7 +706,7 @@ PRSET atomicIRSET::Fill(size_t Start, size_t End, PRSET set) const
       return set;
     }
 
-  logf (LOG_DEBUG, "Filling RSET %d-%d", Start, End);
+  message_log (LOG_DEBUG, "Filling RSET %d-%d", Start, End);
 
   const DOUBLE pFactor = (MaxScore && (MaxScore != MinScore)) ?
 	(Parent->GetPriorityFactor()*(MaxScore - MinScore))/MaxScore :
@@ -761,7 +719,7 @@ PRSET atomicIRSET::Fill(size_t Start, size_t End, PRSET set) const
    MDTREC mdtrec;
    if (!GetMdtrec(x+1, &mdtrec))
       {
-	logf (LOG_ERROR, "atomicIRSET Can't fill %d", x);
+	message_log (LOG_ERROR, "atomicIRSET Can't fill %d", x);
       }
     else if (mdtrec.GetDeleted() == GDT_FALSE)
       {
@@ -802,7 +760,7 @@ PRSET atomicIRSET::Fill(size_t Start, size_t End, PRSET set) const
 	TotalHits += Table[x].GetHitCount ();
       }
     else
-      logf (LOG_DEBUG, "Deleted record (%d)...", x);
+      message_log (LOG_DEBUG, "Deleted record (%d)...", x);
   }
   set->SetScoreRange (newMaxScore, newMinScore); // Added..
   set->SetHitTotal ( TotalHits );
@@ -853,21 +811,17 @@ void atomicIRSET::Resize (const size_t Entries)
       const size_t NewMaxEntries = Entries;
       IRESULT *NewTable = NULL;
 
-//cerr << "RESIZE: Allocate new.. " << NewMaxEntries << " // " << __IB_IRESULT_allocated_count << endl; 
-
       try {
 	NewTable = new IRESULT[NewMaxEntries];
 	allocs++;
       } catch (...) {
 	if (errno == 0) errno = ENOMEM;
-	logf (LOG_ERRNO, "IRSET::Resize(%ld): Could not allocate space for %ld IRESULTs!",
+	message_log (LOG_ERRNO, "IRSET::Resize(%ld): Could not allocate space for %ld IRESULTs!",
 	   (long)Entries, (long)NewMaxEntries);
 	if (Parent) Parent->SetErrorCode(2); // Temp Error
 	Resize(0); // Resize to nothing!
 	return;
       }
-
-//cerr << "RESIZE: Set " << NewTotal << " entries // " << __IB_IRESULT_allocated_count << endl;
 
       for (size_t i = 0; i < NewTotal; i++)
 	{
@@ -982,7 +936,7 @@ OPOBJ *atomicIRSET::Not ( )
    } catch (...) {
     Table = NULL;
     if (errno == 0) errno = ENOMEM;
-    logf (LOG_ERRNO, "IRSET: Could not allocate space for NOT (%ld IRESULTs)!", (long)MaxEntries);
+    message_log (LOG_ERRNO, "IRSET: Could not allocate space for NOT (%ld IRESULTs)!", (long)MaxEntries);
     if (Parent) Parent->SetErrorCode(2); // Temp Error
     Clear();
     return NULL; // To signify an error
@@ -1149,7 +1103,7 @@ OPOBJ *atomicIRSET::Not (const STRING& FieldName)
    } catch (...) {
     Table = NULL;
     if (errno == 0) errno = ENOMEM;
-    logf (LOG_ERRNO, "IRSET:: Could not allocate space for NOT:%s (%ld IRESULTs)!",
+    message_log (LOG_ERRNO, "IRSET:: Could not allocate space for NOT:%s (%ld IRESULTs)!",
 	FieldName.c_str(), (long)MaxEntries);
     if (Parent) Parent->SetErrorCode(2); // Temp Error
     Clear();
@@ -1388,7 +1342,7 @@ OPOBJ *atomicIRSET::Or (const OPOBJ& OtherIrset)
   // Can't OR on different Dbs 
   if (Parent == NULL || Parent != OtherIrset.GetParent())
     {
-      logf (LOG_DEBUG, "Can't OR between different physical indexes.");
+      message_log (LOG_DEBUG, "Can't OR between different physical indexes.");
       Parent->SetErrorCode(3); // Unsupported search
       return this; 
     }
@@ -1427,7 +1381,7 @@ OPOBJ *atomicIRSET::Or (const OPOBJ& OtherIrset)
     NewTable = new IRESULT[newMaxEntries];
    } catch (...) {
     if (errno == 0) errno = ENOMEM;
-    logf (LOG_ERRNO, "IRSET: Could not allocate space for OR (%ld IRESULTs)!", (long)newMaxEntries);
+    message_log (LOG_ERRNO, "IRSET: Could not allocate space for OR (%ld IRESULTs)!", (long)newMaxEntries);
     if (Parent) Parent->SetErrorCode(2); // Temp Error
     Clear();
     return NULL; // ERROR
@@ -1653,7 +1607,7 @@ OPOBJ *atomicIRSET::Join (const OPOBJ& OtherIrset)
       ((atomicIRSET *)&OtherIrset)->SortByKey();
 #else
       // Insert code;
-      logf (LOG_ERROR, "Operator Join not yet implemented");
+      message_log (LOG_ERROR, "Operator Join not yet implemented");
       return this;
 #endif
     }
@@ -1749,7 +1703,7 @@ OPOBJ *atomicIRSET::And (const OPOBJ& OtherIrset, size_t Limit)
   if (Parent && Parent != OtherIrset.GetParent())
     {
       Parent->SetErrorCode(0); // No error 
-      logf (LOG_DEBUG, "And between different physical indexes. Should use join instead");
+      message_log (LOG_DEBUG, "And between different physical indexes. Should use join instead");
       // Nothing
       MinScore=MAXFLOAT;
       MaxScore=0.0;
@@ -1835,7 +1789,7 @@ OPOBJ *atomicIRSET::And (const OPOBJ& OtherIrset, size_t Limit)
   if (Parent && Parent != OtherIrset.GetParent())
     {
       Parent->SetErrorCode(0); // No error 
-      logf (LOG_DEBUG, "And between different physical indexes. Should use join instead");
+      message_log (LOG_DEBUG, "And between different physical indexes. Should use join instead");
       // Nothing
       MinScore=MAXFLOAT;
       MaxScore=0.0;
@@ -1872,7 +1826,7 @@ OPOBJ *atomicIRSET::And (const OPOBJ& OtherIrset, size_t Limit)
      NewTable = new IRESULT[newMaxEntries];
   } catch (....) {
     if (errno == 0) errno = ENOMEM;
-    logf (LOG_ERRNO, "IRSET: Could not allocate space for AND (%ld IRESULTs)!", (long)newMaxEntries);
+    message_log (LOG_ERRNO, "IRSET: Could not allocate space for AND (%ld IRESULTs)!", (long)newMaxEntries);
     if (Parent) Parent->SetErrorCode(2); // Temp Error
     Clear();
     return NULL; // ERROR
@@ -2022,7 +1976,7 @@ OPOBJ *atomicIRSET::Peer (const OPOBJ& Irset, peer_t compFunc)
   if (Parent && Parent != Irset.GetParent())
     {
       Parent->SetErrorCode(0); // No error
-      logf (LOG_DEBUG, "Peer between different physical indexes is not defined.");
+      message_log (LOG_DEBUG, "Peer between different physical indexes is not defined.");
       // Nothing
       MinScore=MAXFLOAT;
       MaxScore=0.0;
@@ -2245,11 +2199,11 @@ OPOBJ *atomicIRSET::XPeer (const OPOBJ& Irset)
 // Private
 GDT_BOOLEAN atomicIRSET::FieldExists(const STRING& FieldName)
 {
-  if (Parent == NULL) logf (LOG_ERROR, "Orphaned IRSET ????");
+  if (Parent == NULL) message_log (LOG_ERROR, "Orphaned IRSET ????");
   else if (Parent->DfdtGetFileName (FieldName, NULL) == GDT_FALSE)
-    logf (LOG_DEBUG, "Within non-existant field '%s'", FieldName.c_str());
+    message_log (LOG_DEBUG, "Within non-existant field '%s'", FieldName.c_str());
   else if (Parent->GetFieldCache()->SetFieldName(FieldName, GDT_FALSE) == GDT_FALSE)
-    logf (LOG_DEBUG, "Can't load field data for %s", FieldName.c_str());
+    message_log (LOG_DEBUG, "Can't load field data for %s", FieldName.c_str());
   else
     return GDT_TRUE; // Exists
   return GDT_FALSE;
@@ -2380,7 +2334,7 @@ OPOBJ *atomicIRSET::Within(const OPOBJ& Irset, const STRING& FieldName,  peer_t 
   if (Parent && Parent != Irset.GetParent())
     {
       Parent->SetErrorCode(0); // No error
-      logf (LOG_DEBUG, "WITHIN:%s between different physical indexes is not defined.", FieldName.c_str());
+      message_log (LOG_DEBUG, "WITHIN:%s between different physical indexes is not defined.", FieldName.c_str());
       // Nothing
       MinScore=MAXFLOAT;
       MaxScore=0.0;
@@ -3255,7 +3209,7 @@ OPOBJ *atomicIRSET::CharProx (const OPOBJ& OtherIrset, const float Metric, DIR_T
   if (Parent && Parent != OtherIrset.GetParent())
     {
       Parent->SetErrorCode(0); // No error
-      logf (LOG_DEBUG, "Proximity between different physical indexes is not defined.");
+      message_log (LOG_DEBUG, "Proximity between different physical indexes is not defined.");
       // Nothing
       MinScore=MAXFLOAT;
       MaxScore=0.0;
@@ -3631,7 +3585,7 @@ PIRESULT atomicIRSET::StealTable()
     Table = NULL;
     MaxEntries = 0;
     if (errno == 0) errno = ENOMEM;
-    logf (LOG_ERRNO, "IRSET::StealTable() Could not allocate %ld IRESULTs!", MaxEntries);
+    message_log (LOG_ERRNO, "IRSET::StealTable() Could not allocate %ld IRESULTs!", MaxEntries);
     if (Parent) Parent->SetErrorCode(2); // Temp Error
   }
  
@@ -3667,13 +3621,14 @@ OPOBJ *atomicIRSET::ComputeScores (const INT TermWeight, enum NormalizationMetho
       switch (Method)
 	{
 	  default:
-	    logf (LOG_WARN, "Unknown/Undefined NormalizationMethod #%d.", (int)Method);
+	    message_log (LOG_WARN, "Unknown/Undefined NormalizationMethod #%d.", (int)Method);
 	  case Unnormalized:
 	    break;
 	  case NoNormalization:
 	    return ComputeScoresNoNormalization (TermWeight);
 	  case CosineNormalization:
 	    return ComputeScoresCosineNormalization (TermWeight);
+	  case EuclideanNormalization:
 	  case CosineMetricNormalization:
 	    if (ComputedS != preCosineMetricNormalization)
 	      {
@@ -3771,27 +3726,28 @@ OPOBJ *atomicIRSET::ComputeScoresCosineMetricNormalization (const INT TermWeight
   f_qt := number of times the current term occurred in the query
   f_dt := number of times term occurs in current document
 
-  N    := number of documents in the collection 
-          =  Parent->GetTotalRecords ()
-  f_t  := number of documents in collection term occurs in
-          = Parent->GetTotalRecords () / (double)TotalEntries
+  // N := number of documents in the collection
+  N =  Parent->GetTotalRecords ();
 
+  // f_t  := number of documents in collection term occurs in
+  f_t = Parent->GetTotalRecords () / (double)TotalEntries;
 
-  k3 := 7 - 1000 (infinite)
+   k3 = 7 - 1000; //  (infinite)
+   alpha = 0.75 ;
 
- const float w_t  = log((N - f_t + 0.5F) / (f_t + 0.5F)) * log(TermWeight);
- const float w_qt = ((k3 + 1) * f_qt) / (k3 + f_qt);
+   const float w_t  = log((N - f_t + 0.5F) / (f_t + 0.5F)) * log(TermWeight);
+   const float w_qt = ((k3 + 1) * f_qt) / (k3 + f_qt);
 
- accumulator += w_qt * alpha * log(f_dt + 1) * w_t;
+   accumulator += w_qt * alpha * log(f_dt + 1) * w_t;
 
-  for (size_t i = 0; i < TotalEntries; i++)
+   DOUBLE sumScore = 0;
+   for (size_t i = 0; i < TotalEntries; i++)
     {
-       DOUBLE Score = (Table[i].GetHitCount () * f_t)* w_t;
+       sumScore += (Table[i].GetHitCount () * f_t)* w_t;
     }
 
-versus Cosine:
-
-  accumulator += (1 + (float) log(f_qt)) * (1 + (float) log(f_dt));
+   // versus Cosine:
+   // accumulator += (1 + (float) log(f_qt)) * (1 + (float) log(f_dt));
 
 
 */
@@ -3871,7 +3827,7 @@ OPOBJ *atomicIRSET::ComputeScoresMaxNormalization (const INT TermWeight)
       if (MaxScore == 0.0 && TotalEntries)
 	{
 	  // Should never happen when we have at least one hit!
-	  logf (LOG_PANIC, "MaxNormalization: ZERO Max Score?");
+	  message_log (LOG_PANIC, "MaxNormalization: ZERO Max Score?");
 	  MinScore = 0.4*TermWeight;
 	}
       else
@@ -3994,7 +3950,7 @@ void atomicIRSET::SortByHits ()
     {
       if (TotalEntries > 1 && ComputedS > NoNormalization)
         {
-          logf (LOG_DEBUG, "Sorting IRSET by hits.");
+          message_log (LOG_DEBUG, "Sorting IRSET by hits.");
           SORT (Table, TotalEntries, sizeof (IRESULT), IrsetHitsCompare);
         }
       Sort = ByHits;
@@ -4007,7 +3963,7 @@ void atomicIRSET::SortByReverseHits ()
     {
       if (TotalEntries > 1 && ComputedS > NoNormalization)
         {
-          logf (LOG_DEBUG, "Sorting IRSET by hits.");
+          message_log (LOG_DEBUG, "Sorting IRSET by hits.");
           SORT (Table, TotalEntries, sizeof (IRESULT), IrsetHitsCompareReverse);
         }
       Sort = ByReverseHits;
@@ -4021,7 +3977,7 @@ void atomicIRSET::SortByScore ()
     {
       if (TotalEntries > 1 && ComputedS > NoNormalization)
 	{
-	  logf (LOG_DEBUG, "Sorting IRSET by Score.");
+	  message_log (LOG_DEBUG, "Sorting IRSET by Score.");
 	  SORT (Table, TotalEntries, sizeof (IRESULT), IrsetScoreCompare);
 	}
       Sort = ByScore;
@@ -4034,7 +3990,7 @@ void atomicIRSET::SortByAuxCount ()
     {
       if (TotalEntries > 1)
 	{
-	  logf (LOG_DEBUG, "Sorting IRSET by AuxCount.");
+	  message_log (LOG_DEBUG, "Sorting IRSET by AuxCount.");
           SORT (Table, TotalEntries, sizeof (IRESULT), IrsetAuxCountCompare);
 	}
       Sort = ByAuxCount;
@@ -4049,10 +4005,10 @@ void atomicIRSET::SortByFunction(int (*func)(const void *, const void *))
 	{
 	  if (func)
 	    {
-	      logf (LOG_DEBUG, "Sorting IRSET by Function"); 
+	      message_log (LOG_DEBUG, "Sorting IRSET by Function"); 
 	      QSORT(Table, TotalEntries, sizeof(IRESULT), func);
 	    }
-	  else logf (LOG_WARN, "Application Error: Request to sort IRSET by undefined Function");
+	  else message_log (LOG_WARN, "Application Error: Request to sort IRSET by undefined Function");
 	}
        Sort = ByFunction;
     }
@@ -4064,7 +4020,7 @@ void atomicIRSET::SortByIndex ()
     {
       if (TotalEntries > 1)
 	{
-	  logf (LOG_DEBUG, "Sorting IRSET by Index.");
+	  message_log (LOG_DEBUG, "Sorting IRSET by Index.");
 	  SORT (Table, TotalEntries, sizeof(IRESULT), IrsetIndexCompare);
 	}
       Sort = ByIndex;
@@ -4098,14 +4054,14 @@ void atomicIRSET::SortByExtIndex (enum SortBy SortByWhich)
       if (TotalEntries > 1 && Parent)
         {
 	  const int SortNr = SortByWhich-ByExtIndex;
-          logf (LOG_DEBUG, "Sorting IRSET by External Index %d.", SortNr);
+          message_log (LOG_DEBUG, "Sorting IRSET by External Index %d.", SortNr);
 	  // Load the Sort Indexes
 	  if (Parent->SetSortIndexes(SortNr, this))
 	    { 
 	      // Now Sort
 	      SORT (Table, TotalEntries, sizeof(IRESULT), IrsetSortIndexCompare);
 	    }
-	  else logf (LOG_WARN, "IRSET: Could not set external sort #%d", SortNr);
+	  else message_log (LOG_WARN, "IRSET: Could not set external sort #%d", SortNr);
         }
       Sort = SortByWhich;
     }
@@ -4138,7 +4094,7 @@ void atomicIRSET::SortByDate ()
     {
       if (TotalEntries > 1)
 	{
-	  logf (LOG_DEBUG, "Sorting IRSET by Date.");
+	  message_log (LOG_DEBUG, "Sorting IRSET by Date.");
 	  SORT (Table, TotalEntries, sizeof(IRESULT), IrsetDateCompare);
 	}
       Sort = ByDate;
@@ -4158,7 +4114,7 @@ void atomicIRSET::SortByReverseDate ()
     {
       if (TotalEntries > 1)
 	{
-	  logf (LOG_DEBUG, "Sorting IRSET by Reverse Date.");
+	  message_log (LOG_DEBUG, "Sorting IRSET by Reverse Date.");
           SORT (Table, TotalEntries, sizeof(IRESULT), IrsetReverseDateCompare);
 	}
       Sort = ByReverseDate;
@@ -4194,7 +4150,7 @@ void atomicIRSET::SortByKey ()
 		{
 		   Table[i].SortIndex = MainMdt->KeySortPosition( Table[i].Index );
 		}
-	      logf (LOG_DEBUG, "Sorting IRSET by Key.");
+	      message_log (LOG_DEBUG, "Sorting IRSET by Key.");
 	      SORT (Table, TotalEntries, sizeof(IRESULT), IrsetKeyCompare);
 	    }
         }
@@ -4261,7 +4217,7 @@ atomicIRSET::~atomicIRSET ()
 //cerr << "Count = " << __IB_IRESULT_allocated_count;
 
 #if 0
-  if (allocs) logf (LOG_DEBUG, "*** IRSET::Total %d / Used %d / %d expands (%d)", MaxEntries, TotalEntries, allocs, Increment);
+  if (allocs) message_log (LOG_DEBUG, "*** IRSET::Total %d / Used %d / %d expands (%d)", MaxEntries, TotalEntries, allocs, Increment);
 #endif
   if (Table) delete[]Table;
   // else cerr << "No table?" << endl;

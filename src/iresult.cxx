@@ -1,14 +1,10 @@
-#pragma ident  "@(#)iresult.cxx  1.31 02/25/01 00:23:40 BSN"
-
-/************************************************************************
-************************************************************************/
-
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
+#pragma ident  "@(#)iresult.cxx"
 
 /*-@@@
 File:		iresult.cxx
-Version:	1.00
 Description:	Class IRESULT - Internal Search Result
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #include <math.h>
@@ -272,7 +268,7 @@ IRESULT::~IRESULT()
     }
 #ifdef DEBUG_MEMORY
   if (--__IB_IRESULT_allocated_count < 0)
-    logf (LOG_PANIC, "IRESULT global allocated count %ld < 0!", (long)__IB_IRESULT_allocated_count);
+    message_log (LOG_PANIC, "IRESULT global allocated count %ld < 0!", (long)__IB_IRESULT_allocated_count);
 #endif
 }
 
@@ -381,7 +377,7 @@ static IRESULTData *TableAllocate(size_t Len)
   }
   if (pData == NULL)
     {
-      logf (LOG_PANIC|LOG_ERRNO, "Could not allocate iresult table space (%d)", Len);
+      message_log (LOG_PANIC|LOG_ERRNO, "Could not allocate iresult table space (%d)", Len);
       Len = 0;
       throw;
     }

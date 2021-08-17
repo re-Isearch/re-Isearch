@@ -93,7 +93,7 @@ void CSVDOC::AddFieldDefs ()
       for (const STRLIST *p = List.Next(); p != &List; p = p->Next())
 	{
 	  Columns++;
-	  logf (LOG_DEBUG, "%s Column #%d is \"%s\"", Doctype.c_str(), Columns, p->Value().c_str());
+	  message_log (LOG_DEBUG, "%s Column #%d is \"%s\"", Doctype.c_str(), Columns, p->Value().c_str());
 	  FieldNames.Add(p->Value());
 
 	  dfd.SetFieldType( Db->GetFieldType(p->Value()) ); // Get the type added 30 Sep 2003
@@ -113,7 +113,7 @@ void CSVDOC::ParseRecords(const RECORD& FileRecord)
   FileMap.CreateMap(FileName, MapSequential);
   if (!FileMap.Ok())
     {
-      logf (LOG_ERRNO, "%s could not access '%s'", Doctype.c_str(), FileName.c_str());
+      message_log (LOG_ERRNO, "%s could not access '%s'", Doctype.c_str(), FileName.c_str());
       return;			// File not accessed
     }
   off_t RecStart = FileRecord.GetRecordStart();
@@ -124,19 +124,19 @@ void CSVDOC::ParseRecords(const RECORD& FileRecord)
 
   if (RecEnd - RecStart <= 0)
     {
-      logf (LOG_WARN, "zero-length record '%s'[%ld-%ld] -- skipping",
+      message_log (LOG_WARN, "zero-length record '%s'[%ld-%ld] -- skipping",
 	FileName.c_str(), (long)RecStart, (long)RecEnd);
       return;
     }
   else if (RecStart > FileEnd)
     {
-      logf (LOG_ERROR, "%s::ParseRecords(): Seek '%s' to %ld failed",
+      message_log (LOG_ERROR, "%s::ParseRecords(): Seek '%s' to %ld failed",
 	Doctype.c_str(), FileName.c_str(), RecStart);
       return;
     }
   else if (RecEnd > FileEnd)
     {
-      logf (LOG_WARN, "%s::ParseRecord(): End after EOF (%d>%d) in '%s'?",
+      message_log (LOG_WARN, "%s::ParseRecord(): End after EOF (%d>%d) in '%s'?",
 	Doctype.c_str(), RecEnd, FileEnd, FileName.c_str());
       RecEnd = FileEnd;
     }
@@ -175,7 +175,7 @@ void CSVDOC::ParseFields (PRECORD NewRecord)
       FileMap.CreateMap(fn, MapSequential);
       if (!FileMap.Ok())
 	{
-	  logf (LOG_ERROR, "%s:ParseFields Could not address file '%s'", Doctype.c_str(), fn.c_str());
+	  message_log (LOG_ERROR, "%s:ParseFields Could not address file '%s'", Doctype.c_str(), fn.c_str());
 	  return;
 	}
       Lineno = 0;
@@ -209,7 +209,7 @@ void CSVDOC::ParseFields (PRECORD NewRecord)
 	  Columns = 0;
 	  if (tcp) do {
 	    Columns++;
-	    logf (LOG_DEBUG, "%s Column #%d is \"%s\"", Doctype.c_str(), Columns, tcp);
+	    message_log (LOG_DEBUG, "%s Column #%d is \"%s\"", Doctype.c_str(), Columns, tcp);
 	    FieldNames.Add(tcp);
 
 	    dfd.SetFieldType( Db->GetFieldType(tcp) ); // Get the type added 30 Sep 2003
@@ -240,10 +240,10 @@ void CSVDOC::ParseFields (PRECORD NewRecord)
 	if (RecStart != 0)
 	  {
 	    if (Lineno > 0)
-	      logf (LOG_WARN, "File '%s', line %ld (%ld-%ld), has irregular number of columns (%d), adjusting.",
+	      message_log (LOG_WARN, "File '%s', line %ld (%ld-%ld), has irregular number of columns (%d), adjusting.",
 		fn.c_str(), Lineno, RecStart, RecEnd, i+1);
 	    else
-	      logf (LOG_WARN, "File '%s' (%ld-%ld) has irregular number of columns (%d), adjusting.",
+	      message_log (LOG_WARN, "File '%s' (%ld-%ld) has irregular number of columns (%d), adjusting.",
                 fn.c_str(), RecStart, RecEnd, i+1);
 	  }
 	else
@@ -260,10 +260,10 @@ void CSVDOC::ParseFields (PRECORD NewRecord)
 	if (i > Columns && RecStart != 0)
 	  {
 	    if (Lineno > 0)
-	     logf (LOG_WARN, "File '%s', line %ld (%ld-%ld), has more than %ld columns (%d).",
+	     message_log (LOG_WARN, "File '%s', line %ld (%ld-%ld), has more than %ld columns (%d).",
 		fn.c_str(), Lineno, RecStart, RecEnd, Columns, i);
 	    else
-	      logf (LOG_WARN, "File '%s' (%ld-%ld) has more than %d columns (%d).",
+	      message_log (LOG_WARN, "File '%s' (%ld-%ld) has more than %d columns (%d).",
 		fn.c_str(), RecStart, RecEnd, Columns, i);
 	  }
         fieldName = FieldNames[i++];
@@ -277,7 +277,7 @@ void CSVDOC::ParseFields (PRECORD NewRecord)
       {
 	if (Db->KeyLookup (tcp))
 	  {
-	    logf (LOG_ERROR, "%s record in \"%s\" uses a non-unique %s '%s'",
+	    message_log (LOG_ERROR, "%s record in \"%s\" uses a non-unique %s '%s'",
 		Doctype.c_str(), fn.c_str(), fieldName.c_str(), tcp);
 	  }
 	else

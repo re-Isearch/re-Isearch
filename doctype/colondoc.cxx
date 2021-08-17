@@ -79,7 +79,7 @@ FIELDTYPE METADOC::GuessFieldType(const STRING& FieldName, const STRING& Content
 	  else if (Contents.IsDotNumber())     ft = FIELDTYPE::dotnumber;
 
 	  else ft = FIELDTYPE::text;
-	  logf (LOG_INFO, "%s: Field '%s' autotyped as '%s'", Doctype.c_str(), FieldName.c_str(), ft.c_str());
+	  message_log (LOG_INFO, "%s: Field '%s' autotyped as '%s'", Doctype.c_str(), FieldName.c_str(), ft.c_str());
 	}
       else ft = FIELDTYPE::text;
       Db->AddFieldType(FieldName, ft);
@@ -138,7 +138,7 @@ void METADOC::SetSepChar(const STRING& Default)
     }
   else
     sepChar = '=';
-  logf (LOG_DEBUG, "%s: Seperator Character:='%c' (%d)", Doctype.c_str(), sepChar, sepChar);
+  message_log (LOG_DEBUG, "%s: Seperator Character:='%c' (%d)", Doctype.c_str(), sepChar, sepChar);
 }
 
 
@@ -269,7 +269,7 @@ void METADOC::ParseFields (RECORD *NewRecord)
   PFILE fp = ffopen(fn, "rb");
   if (fp == NULL)
     {
-      logf (LOG_ERRNO, "Couldn't access '%s'", (const char *)fn);
+      message_log (LOG_ERRNO, "Couldn't access '%s'", (const char *)fn);
       NewRecord->SetBadRecord();
       return;
     }
@@ -285,7 +285,7 @@ void METADOC::ParseFields (RECORD *NewRecord)
       return;		// ERROR
     }
   if (-1 == fseek (fp, RecStart, SEEK_SET))
-    logf(LOG_ERRNO, "Seek error on \"%s\"", fn.c_str());
+    message_log(LOG_ERRNO, "Seek error on \"%s\"", fn.c_str());
   off_t RecLength = RecEnd - RecStart + 1;
   PCHR RecBuffer = (PCHR)tmpBuffer.Want (RecLength + 1, sizeof(CHR));
   off_t ActualLength = fread (RecBuffer, 1, RecLength, fp);
@@ -315,11 +315,11 @@ void METADOC::ParseFields (RECORD *NewRecord)
 	    sepChar = RecBuffer[i];
 	}
       if (sepChar)
-	logf (LOG_DEBUG, "Detected SepChar as '%c'(0x%x)", sepChar, sepChar);
+	message_log (LOG_DEBUG, "Detected SepChar as '%c'(0x%x)", sepChar, sepChar);
     }
   if (sepChar == '\0')
     {
-      logf (LOG_ERROR, "Usage Error: No Seperator Character specified. Call \
+      message_log (LOG_ERROR, "Usage Error: No Seperator Character specified. Call \
 %s::SetSepChar(Char)", Doctype.c_str());
       NewRecord->SetBadRecord();
       return;
@@ -327,9 +327,9 @@ void METADOC::ParseFields (RECORD *NewRecord)
 
 { const char msg[] = "SepChar '%c'(0x%x) is %s. This is not good practice!";
   if (IsTermChar( sepChar ))
-    logf (LOG_WARN, msg, sepChar, sepChar, "a term character");
+    message_log (LOG_WARN, msg, sepChar, sepChar, "a term character");
   else if (IsDotInWord( sepChar ) ||  IsAfterDotChar(sepChar) )
-    logf (LOG_WARN, msg, sepChar, sepChar, "possibly part of terms");
+    message_log (LOG_WARN, msg, sepChar, sepChar, "possibly part of terms");
 }
 
   PCHR *tags = parse_tags (RecBuffer, ActualLength);
@@ -339,14 +339,14 @@ void METADOC::ParseFields (RECORD *NewRecord)
   if (tags == NULL || tags[0] == NULL)
     {
       if (tags)
-	logf (LOG_WARN,
+	message_log (LOG_WARN,
 #ifdef _WIN32
 	  "No `%s' fields/tags in %s[%I64d,%I64d]", Doctype.c_str(), fn.c_str(), (__int64)RecStart, (__int64)RecEnd);
 #else
 	  "No `%s' fields/tags in %s[%lld,%lld]" , Doctype.c_str(), fn.c_str(), (long long)RecStart, (long long)RecEnd);
 #endif
       else
-	logf (LOG_ERROR,
+	message_log (LOG_ERROR,
 #ifdef _WIN32
 	  "Unable to parse `%s' record in %s[%I64d,%I64d]", Doctype.c_str(), fn.c_str(), (__int64)RecStart, (__int64)RecEnd);
 #else
@@ -357,7 +357,7 @@ void METADOC::ParseFields (RECORD *NewRecord)
     }
   if ((tags[0] - RecBuffer) > 127 || strlen(tags[0]) > 512)
     {
-      logf (LOG_WARN,
+      message_log (LOG_WARN,
 #ifdef _WIN32
 	"%s[%I64d,%I64d] does not seem to be in '%s' format (%lu).",
 	fn.c_str(), (__int64)RecStart, (__int64)RecEnd, Doctype.c_str(), (unsigned long)(tags[0]-RecBuffer));
@@ -514,7 +514,7 @@ DocPresent (const RESULT& ResultRecord,
       STRING Key ( ResultRecord.GetKey() );
 
       if (GetRecordDfdt (Key, &Dfdt) == GDT_FALSE)
-	logf (LOG_ERROR, "Could not find record with key \"%s\"", Key.c_str());
+	message_log (LOG_ERROR, "Could not find record with key \"%s\"", Key.c_str());
 
       STRING FieldName;
       DFD  Dfd;
@@ -531,7 +531,7 @@ DocPresent (const RESULT& ResultRecord,
 
 	  if (FieldName == FULLTEXT_MAGIC)
 	    {
-	      logf (LOG_ERROR, "Reserved fieldname '%s' used as data field. Skipping",
+	      message_log (LOG_ERROR, "Reserved fieldname '%s' used as data field. Skipping",
 		FieldName.c_str());
 	      continue;
 	    }
@@ -1015,7 +1015,7 @@ void DIALOGB::ParseRecords (const RECORD& FileRecord)
   MMAP mapping (Fn, Start, End, MapSequential);
   if (!mapping.Ok())
     {
-       logf(LOG_FATAL|LOG_ERRNO, "Couldn't map '%s' into memory", Fn.c_str());
+       message_log(LOG_FATAL|LOG_ERRNO, "Couldn't map '%s' into memory", Fn.c_str());
        return;
     }
   const UCHR *Buffer  = (const UCHR *)mapping.Ptr();

@@ -1,13 +1,10 @@
-#pragma ident  "@(#)operator.cxx  1.7 10/13/99 12:55:25 BSN"
-
-/************************************************************************
-************************************************************************/
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
+#pragma ident  "@(#)operator.cxx"
 
 /*@@@
 File:		operator.cxx
-Version:	1.00
 Description:	Class OPERATOR - Query Operator
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #include "operator.hxx"

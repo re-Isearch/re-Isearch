@@ -311,7 +311,7 @@ void ANTIHTML::ParseFields (RECORD *NewRecord)
   PFILE fp = Db->ffopen (fn, "rb");
   if (fp == NULL)
     {
-      logf (LOG_ERRNO, "Couldn't access '%s'", (const char *)fn);
+      message_log (LOG_ERRNO, "Couldn't access '%s'", (const char *)fn);
       NewRecord->SetBadRecord();
       return;                   // ERROR
     }
@@ -332,9 +332,9 @@ void ANTIHTML::ParseFields (RECORD *NewRecord)
         sprintf(tmp, "[%ld-%ld]", (long)RecStart, (long)RecEnd);
       else
         tmp[0] = '\0';
-      logf (LOG_WARN, "%s: zero-length record - '%s'%s...",
+      message_log (LOG_WARN, "%s: zero-length record - '%s'%s...",
        Doctype.c_str(), fn.c_str(), tmp);
-      logf (LOG_NOTICE, "%s skipping record", Doctype.c_str());
+      message_log (LOG_NOTICE, "%s skipping record", Doctype.c_str());
 #else
       cerr << Doctype << ": zero-length record - " << fn << endl;
 #endif
@@ -346,7 +346,7 @@ void ANTIHTML::ParseFields (RECORD *NewRecord)
   if (RecStart && -1 == fseek (fp, RecStart, SEEK_SET))
     {
 #if BSN_EXTENSIONS
-      logf (LOG_ERRNO, "%s::ParseRecords(): Seek to %ld failed - '%s', skipping.",
+      message_log (LOG_ERRNO, "%s::ParseRecords(): Seek to %ld failed - '%s', skipping.",
 	Doctype.c_str(), (long)RecStart, fn.c_str());
 #endif
       Db->ffclose(fp);
@@ -375,7 +375,7 @@ void ANTIHTML::ParseFields (RECORD *NewRecord)
 	sprintf(tmp, "[%ld-%ld]", (long)RecStart, (long)RecEnd);
       else
 	tmp[0] = '\0';
-      logf (LOG_WARN, "Unable to parse %s-tags in '%s'%s",
+      message_log (LOG_WARN, "Unable to parse %s-tags in '%s'%s",
 	Doctype.c_str(), fn.c_str(), tmp);
 #endif
       NewRecord->SetBadRecord();
@@ -400,7 +400,7 @@ void ANTIHTML::ParseFields (RECORD *NewRecord)
 	      if ((p = tags_ptr[1]) != NULL)
 		{
 #if BSN_EXTENSIONS
-		  logf (LOG_INFO, "%s: \"%s\"(%u): \
+		  message_log (LOG_INFO, "%s: \"%s\"(%u): \
 Bogus use of <%s> found, using <%s> as end tag.", Doctype.c_str(), fn.c_str(),
 			(unsigned)(*tags_ptr - RecBuffer),
 			tags_ptr[0],
@@ -453,16 +453,16 @@ Bogus use of <%s> found, using <%s> as end tag.", Doctype.c_str(), fn.c_str(),
 		if (FieldName ^= KeyField)
 		  {
 		    if (!Key.IsEmpty())
-		      logf(LOG_WARN, "Duplicate Keys defined: overwriting %s with %s", Key.c_str(), entry_id);
+		      message_log(LOG_WARN, "Duplicate Keys defined: overwriting %s with %s", Key.c_str(), entry_id);
 		    Key = entry_id;
 		  }
 		else if (FieldName ^= DateField)
 		  {
 		    if (RecDate.Ok())
-		      logf (LOG_DEBUG, "Setting date (%s) to %s", FieldName.c_str(), entry_id);
+		      message_log (LOG_DEBUG, "Setting date (%s) to %s", FieldName.c_str(), entry_id);
 		    RecDate = entry_id;
 		    if (!RecDate.Ok())
-		      logf (LOG_WARN, "Unsupported/Unrecognized date format: '%s'", entry_id);
+		      message_log (LOG_WARN, "Unsupported/Unrecognized date format: '%s'", entry_id);
 		  }
 		else
 		  {
@@ -494,11 +494,11 @@ Bogus use of <%s> found, using <%s> as end tag.", Doctype.c_str(), fn.c_str(),
   if (!Key.IsEmpty())
     {
       if (Db->KeyLookup (Key))
-        logf (LOG_ERROR, "Record in \"%s\" uses a non-unique %s '%s'",
+        message_log (LOG_ERROR, "Record in \"%s\" uses a non-unique %s '%s'",
           fn.c_str(), KeyField.c_str(), Key.c_str());
       else
 	{
-	  logf (LOG_DEBUG, "Setting key of record in \"%s\" to '%s'", fn.c_str(), Key.c_str());
+	  message_log (LOG_DEBUG, "Setting key of record in \"%s\" to '%s'", fn.c_str(), Key.c_str());
           NewRecord->SetKey (Key);
 	}
     }

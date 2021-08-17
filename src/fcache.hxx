@@ -1,24 +1,10 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /* ########################################################################
 
 		 FCACHE - Field Coordinate Lookup Cache
-
-   File: fcache.hxx
-   Description: 
-   Created: Thu Dec 12 13:10:12 MET 1996
-   Author: Edward C. Zimmermann
-   Modified: Thu Dec 12 13:10:14 MET 1996
-   Last maintained by: Edward C. Zimmermann
-
-   RCS $Revision: 1.1 $ $State: Exp $
-   
-
-   ########################################################################
-
-   Note: 
-
-   ########################################################################
-
-   Copyright (c) 1996 : BSn and Edward C. Zimmermann <edz@BSn.com>
 
    ######################################################################## */
 

@@ -1,3 +1,5 @@
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 #pragma ident  "@(#)record.cxx  1.37"
 
 
@@ -6,10 +8,7 @@
 
 /*-@@@
 File:		record.cxx
-Version:	1.01
 Description:	Class RECORD - Database Record
-Author:		Nassib Nassar, nrn@cnidr.org
-Modifications:	Edward C. Zimmermann, edz@nonmonotonic.com
 @@@*/
 
 #include "common.hxx"
@@ -218,7 +217,7 @@ GDT_BOOLEAN RECORD::Read (PFILE fp)
   obj_t obj = getObjID (fp);
   if (obj != objRECORD)
     {
-      logf (LOG_DEBUG, "Record:Read() failed: Not a record (id=%d!=%d)",
+      message_log (LOG_DEBUG, "Record:Read() failed: Not a record (id=%d!=%d)",
 	(int)obj, (int)objRECORD);
       PushBackObjID (obj, fp);
       return GDT_FALSE;
@@ -243,7 +242,7 @@ GDT_BOOLEAN RECORD::Read (PFILE fp)
   BYTE b;
   ::Read(&b, fp);
   if ((b != bMarker[IsBadRecord() ? 1 : 0 ])) {
-    logf (LOG_ERROR, "Record fastload corrupt! // check=%c(%d)", (char)b, (int)b);
+    message_log (LOG_ERROR, "Record fastload corrupt! // check=%c(%d)", (char)b, (int)b);
     return GDT_FALSE;
   }
   return GDT_TRUE;

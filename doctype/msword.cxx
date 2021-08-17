@@ -85,24 +85,24 @@ IBDOC_MSWORD::IBDOC_MSWORD(PIDBOBJ DbParent, const STRING& Name) : _VMEMODOC(DbP
 
   usingDefaultFilter = (s.Search(GetDefaultFilter()) != 0);
 
-  logf (LOG_DEBUG, "%s: filter '%s' specified%s", Doctype.c_str(), s.c_str(),
+  message_log (LOG_DEBUG, "%s: filter '%s' specified%s", Doctype.c_str(), s.c_str(),
 	(usingDefaultFilter ? " (default)" : ""));
   if (s.GetLength() && (s != "NULL"))
     {
       Filter = ResolveBinPath(s);
       if (!IsAbsoluteFilePath(Filter))
 	{
-	  logf (LOG_WARN, "%s: Specified filter '%s' not found. Check Installation.",
+	  message_log (LOG_WARN, "%s: Specified filter '%s' not found. Check Installation.",
 		Doctype.c_str(), Filter.c_str()); 
 	}
       else if (!ExeExists(Filter))
 	{
-	  logf (LOG_ERROR, "%s: Filter '%s' %s!", Doctype.c_str(), Filter.c_str(),
+	  message_log (LOG_ERROR, "%s: Filter '%s' %s!", Doctype.c_str(), Filter.c_str(),
 	    Exists(Filter) ?  "is not executable" : "does not exist");
 	  Filter.Clear();
 	}
       else
-	logf (LOG_DEBUG, "%s: External filter set to '%s'", Doctype.c_str(), Filter.c_str());
+	message_log (LOG_DEBUG, "%s: External filter set to '%s'", Doctype.c_str(), Filter.c_str());
     }
   else
     Filter = s;
@@ -163,12 +163,12 @@ off_t IBDOC_MSWORD::RunPipe(FILE *fp, const STRING& Fn)
     {
       if (!IsAbsoluteFilePath (Filter))
 	{
-	  logf (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.",
+	  message_log (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.",
 		Doctype.c_str(), Filter.c_str());
 	  Filter.Clear();
 	}
       else
-	logf (LOG_ERRNO, "%s: Could not open pipe '%s'", Doctype.c_str(), argv[0]);
+	message_log (LOG_ERRNO, "%s: Could not open pipe '%s'", Doctype.c_str(), argv[0]);
       return -1;
     }
 
@@ -201,7 +201,7 @@ off_t IBDOC_MSWORD::RunPipe(FILE *fp, const STRING& Fn)
 	retval = select(1, &rfds, NULL, NULL, &tv);
     }
   if (retval == 0 && !feof(pp))
-    logf(LOG_WARN, "Subprocess '%s' timed out within %d seconds", *argv, MAX_TIME_BETWEEN_CHARS);
+    message_log(LOG_WARN, "Subprocess '%s' timed out within %d seconds", *argv, MAX_TIME_BETWEEN_CHARS);
   _IB_pclose(pp);
   return len;
 }

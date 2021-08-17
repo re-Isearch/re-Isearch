@@ -37,7 +37,7 @@ void PARA::ParseRecords(const RECORD& FileRecord)
    PFILE           fp = fopen(fn, "rb");
    if (!fp)
    {
-      logf(LOG_ERROR,  "Could not access '%s'", (const char *)fn);
+      message_log(LOG_ERROR,  "Could not access '%s'", (const char *)fn);
       return;			// File not accessed
    }
    RECORD          Record (FileRecord);
@@ -52,14 +52,14 @@ void PARA::ParseRecords(const RECORD& FileRecord)
 
    if (RecEnd <= RecStart)
    {
-      logf(LOG_ERROR, "%s::ParseRecords(): Skipping zero-length record - %s",
+      message_log(LOG_ERROR, "%s::ParseRecords(): Skipping zero-length record - %s",
 	(const char *)doctype, (const char *)fn);
       fclose(fp);
       return;
    }
    if (fseek(fp, RecStart, SEEK_SET) == -1)
    {
-      logf(LOG_ERRNO, "%s::ParseRecords(): Seek failed - %s",
+      message_log(LOG_ERRNO, "%s::ParseRecords(): Seek failed - %s",
 	(const char *)doctype, (const char *)fn);
       fclose(fp);
       return;
@@ -69,7 +69,7 @@ void PARA::ParseRecords(const RECORD& FileRecord)
    PCHR RecBuffer = (PCHR)recBuffer.Want (RecLength + 2);
    if (RecBuffer == NULL)
    {
-      logf(LOG_ERROR, "%s::ParseRecords(): Failed to allocate %d bytes - %s",
+      message_log(LOG_ERROR, "%s::ParseRecords(): Failed to allocate %d bytes - %s",
 	(const char *)doctype, RecLength + 1, (const char *)fn);
       fclose(fp);
       return;
@@ -78,7 +78,7 @@ void PARA::ParseRecords(const RECORD& FileRecord)
    off_t ActualLength = fread(RecBuffer, sizeof(char), RecLength, fp);
    if (ActualLength == 0)
    {
-      logf(LOG_ERROR, "%s::ParseRecords(): Failed to fread", (const char *)doctype);
+      message_log(LOG_ERROR, "%s::ParseRecords(): Failed to fread", (const char *)doctype);
       fclose(fp);
       return;
    }
@@ -86,7 +86,7 @@ void PARA::ParseRecords(const RECORD& FileRecord)
 
    if (ActualLength != RecLength)
    {
-      logf(LOG_ERROR, "%s::ParseRecords(): Failed to fread %d bytes. \
+      message_log(LOG_ERROR, "%s::ParseRecords(): Failed to fread %d bytes. \
 Actually read %d bytes - %s", (const char *)doctype,
 	RecLength, ActualLength, (const char *)fn);
       return;

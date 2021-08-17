@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /************************************************************************
 ************************************************************************/
 
@@ -98,6 +102,8 @@ public:
   void   SetGlobalFileEnd(const GPTYPE NewEnd) { GlobalFileEnd = NewEnd; }
   GPTYPE GetGlobalFileEnd() const { return GlobalFileEnd; };
 #endif
+
+  // This gives us the record (document length)
   off_t GetLength() const { return LocalRecordEnd - LocalRecordStart; }
 
   void   SetLocalRecordStart(const UINT4 NewStart) { LocalRecordStart = NewStart; }

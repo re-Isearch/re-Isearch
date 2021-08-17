@@ -1,11 +1,9 @@
-/************************************************************************
-************************************************************************/
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 
 /*@@@
 File:		operand.hxx
-Version:	1.00
 Description:	Class OPERAND - Query Operand
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #ifndef OPERAND_HXX

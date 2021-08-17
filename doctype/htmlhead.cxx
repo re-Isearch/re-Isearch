@@ -186,7 +186,7 @@ GPTYPE HTMLZERO::ParseWords(UCHR* DataBuffer, GPTYPE DataLength,
 	}
       if (zap) DataBuffer[Position] = zapChar; // Zap these...
     }
-  if (zap || quote) logf(LOG_WARN, "%s Record ended in a tag?", Doctype.c_str());
+  if (zap || quote) message_log(LOG_WARN, "%s Record ended in a tag?", Doctype.c_str());
   
   return HTMLHEAD::ParseWords(DataBuffer, DataLength, DataOffset, GpBuffer, GpLength);
 }

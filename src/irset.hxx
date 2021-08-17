@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /************************************************************************
 ************************************************************************/
 
@@ -5,7 +9,6 @@
 File:		irset.hxx
 Version:	1.00
 Description:	Class IRSET - Internal Search Result Set
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #ifndef IRSET_HXX
@@ -20,8 +23,7 @@ Author:		Nassib Nassar, nrn@cnidr.org
 
 // NOTE:
 //
-// What was CosineNormalization shall in the future be called EuclideanNormalization
-//          CosineMetricNormalization shall be  EuclideanNormalization
+// What was CosineMetricNormalization shall in the future be called EuclideanNormalization
 //
 // Cosine shall become traditional Cosine
 // pCosine shall be added
@@ -29,7 +31,7 @@ Author:		Nassib Nassar, nrn@cnidr.org
 ////
 extern enum NormalizationMethods {
   Unnormalized = 0, NoNormalization, CosineNormalization, MaxNormalization, LogNormalization, BytesNormalization,
-  preCosineMetricNormalization, CosineMetricNormalization, UndefinedNormalization
+  preCosineMetricNormalization, CosineMetricNormalization, EuclideanNormalization, UndefinedNormalization
 } defaultNormalization;
 
 class atomicIRSET : public OPERAND {
@@ -482,7 +484,7 @@ public:
 	else
 	  {
 	    // This should never happen!
-	    logf (LOG_PANIC, "Stray IRSET in atomicIRSET *node() [count=%d]", p_->count_);
+	    message_log (LOG_PANIC, "Stray IRSET in atomicIRSET *node() [count=%d]", p_->count_);
 	    p_ = new atomicIRSETptr ( p_->ptr_->GetParent () );
 	  }
       }

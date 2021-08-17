@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #include "protman.hxx"
 //#include "dict.hxx"
 
@@ -37,7 +41,7 @@ int PortTable[] = {
 
 
 NETBOXPROFILE Net;
-FILE *logfp;
+FILE *message_logp;
 
 /*
    Function:	ResolveURL()
@@ -80,7 +84,7 @@ int ResolveURL(const STRING& URL, FILE *fp, size_t *Len)
   //  char Command[64];
   char Command[256];
 #ifdef DEBUG
-  logfp=fopen("protman.log","a");
+  message_logp=fopen("protman.log","a");
 #endif
   if((S = (char *)calloc(1,URL.GetLength()+1)) == NULL) {
     printf("out of memory\n");
@@ -149,28 +153,28 @@ int ResolveURL(const STRING& URL, FILE *fp, size_t *Len)
       strbox_TheTime(Time);
       printf("Begin Gopher Walk: %s\n",Time);	
 #ifdef DEBUG
-      fprintf(logfp,"*************************************************\n");
-      fprintf(logfp,"[%s] Walk: <%s>\n",Time,URL.c_str());
+      fprintf(message_logp,"*************************************************\n");
+      fprintf(message_logp,"[%s] Walk: <%s>\n",Time,URL.c_str());
 #endif
       err= GopherWalk(Host, Port, Command, fp, BSTree);
       bst_Print(BSTree, fp);
       strbox_TheTime(Time);
 #ifdef DEBUG
       bst_Count(BSTree,&Count);
-      fprintf(logfp,"[%s] Read %ld URLs\n",Time,Count);
+      fprintf(message_logp,"[%s] Read %ld URLs\n",Time,Count);
 #endif
       printf("End Gopher Walk: %s\n",Time);	
       return err;
     } else {
       strbox_TheTime(Time);
 #ifdef DEBUG
-      fprintf(logfp,"*************************************************\n");
-      fprintf(logfp,"[%s] Retrieve <%s>\n",Time,URL.c_str());
+      fprintf(message_logp,"*************************************************\n");
+      fprintf(message_logp,"[%s] Retrieve <%s>\n",Time,URL.c_str());
 #endif
       err = ProcessGopherRequest(Host,Port,Command,fp,Len);
       strbox_TheTime(Time);
 #ifdef DEBUG
-      fprintf(logfp,"[%s] Read %ld bytes\n",Time,*Len);
+      fprintf(message_logp,"[%s] Read %ld bytes\n",Time,*Len);
 #endif
       return err;
     }
@@ -287,18 +291,18 @@ int ProcessHTTPRequest(char *Host, int Port, char *Request,FILE *fp,size_t *Len)
 #endif /* USE_PROXY */
 
   if(Net.Open()!=1) {
-    logf (LOG_ERROR, "Failed to open HTTP connection: %s[%i]",Host,Port);
+    message_log (LOG_ERROR, "Failed to open HTTP connection: %s[%i]",Host,Port);
     FREE(NewRequest);
     return -1;
   }
 
   if(Net.SendBuffer(NewRequest,strlen(NewRequest))<=0) {
-    logf (LOG_ERROR, "Failed to send HTTP request: %s[%i]",Host,Port);
+    message_log (LOG_ERROR, "Failed to send HTTP request: %s[%i]",Host,Port);
     FREE(NewRequest);
     return -1;
   }
   if(Net.WaitForData()!=1) {
-    logf (LOG_ERROR, "Failed to send HTTP data: %s[%i]",Host,Port);
+    message_log (LOG_ERROR, "Failed to send HTTP data: %s[%i]",Host,Port);
     FREE(NewRequest);
     return -1;
   }
@@ -319,7 +323,7 @@ int ProcessHTTPRequest(char *Host, int Port, char *Request,FILE *fp,size_t *Len)
       *Len+=err;
       fwrite(Buf,1,err,fp);
     } else {
-      logf (LOG_ERROR, "Failed to read HTTP data: %s[%i]",Host,Port);
+      message_log (LOG_ERROR, "Failed to read HTTP data: %s[%i]",Host,Port);
       Net.Close();
       FREE(NewRequest);
       return -1;
@@ -365,7 +369,7 @@ GopherWalk(char *Host, int Port, char *Selector, FILE *fp, LPBSTNODE Tree)
   Net.SetTimeOutSec(60l);
 
   if(Net.Open()!=1) {
-    logf (LOG_ERROR, "Failed to open Gopher connection: %s[%d]",Host,Port);
+    message_log (LOG_ERROR, "Failed to open Gopher connection: %s[%d]",Host,Port);
     FREE(NewRequest);
     FREE(Buf);
     return -1;
@@ -445,7 +449,7 @@ GopherWalk(char *Host, int Port, char *Selector, FILE *fp, LPBSTNODE Tree)
       }
       /* Duplicate found */
 #ifdef DEBUG
-      fprintf(logfp,"Duplicate URL=%s\n",Temp);
+      fprintf(message_logp,"Duplicate URL=%s\n",Temp);
 #endif
     }
   }

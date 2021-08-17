@@ -1,11 +1,8 @@
-/************************************************************************
-************************************************************************/
-
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 /*@@@
 File:		result.hxx
-Version:	1.01
 Description:	Class RESULT - Search Result
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #ifndef RESULT_HXX

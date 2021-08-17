@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #ifndef _LOG_HXX
 #define _LOG_HXX
 
@@ -38,7 +42,7 @@ GDT_BOOLEAN  log_init (int level, FILE *fp);
 GDT_BOOLEAN  log_init (int level, const char *prefix, FILE *fp);
 GDT_BOOLEAN  log_init (int level, const char *prefix=0, const char *name=0);
 
-void  logf (int level, const char *fmt, ...);
+void  message_log (int level, const char *fmt, ...);
 void  log_message(int level, const char *string);
 
 #ifdef __STRING_HXX__
@@ -49,7 +53,7 @@ inline void  fatal_message(const STRING& String) { log_message(iLOG_FATAL, Strin
 
 int   log_mask_str (const char *str);
 
-#define _IB_DEBUG  if (_ib_debug) logf
+#define _IB_DEBUG  if (_ib_debug) message_log
 
 extern GDT_BOOLEAN _ib_debug;
 

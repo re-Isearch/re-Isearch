@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 // $Id: thesaurus.cxx,v 1.1 2007/05/15 15:47:23 edz Exp $
 
 /*@@@
@@ -81,7 +85,7 @@ void TH_PARENT_LIST::AddEntry(const TH_PARENT& NewParent)
       try {
 	newTable = new TH_PARENT[want];
       } catch (...) {
-	logf (LOG_ERRNO, "Can't allocate TH_PARENT_LIST with %ld elements", (long)want);
+	message_log (LOG_ERRNO, "Can't allocate TH_PARENT_LIST with %ld elements", (long)want);
 	return; // can't expand things;
       }
       for (size_t i=0; i<Count; i++)
@@ -218,7 +222,7 @@ void TH_ENTRY_LIST::AddEntry(const TH_ENTRY& NewChild)
       try {
 	newTable = new TH_ENTRY[want];
       } catch (...) {
-	logf (LOG_ERRNO, "Can't allocate TH_ENTRY_LIST with %ld elements", (long)want);
+	message_log (LOG_ERRNO, "Can't allocate TH_ENTRY_LIST with %ld elements", (long)want);
 	return;
       }
       for (size_t i=0; i<Count; i++)

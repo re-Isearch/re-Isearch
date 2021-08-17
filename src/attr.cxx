@@ -1,14 +1,17 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /*@@@
 File:		attr.cxx
 Version:	1.00
 Description:	Class ATTR - Attribute
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #include "attr.hxx"
 #include "magic.hxx"
 
-#pragma ident  "@(#)attr.cxx  1.5 04/20/99 14:24:13 BSN"
+#pragma ident  "@(#)attr.cxx"
 
 
 ATTR::ATTR()

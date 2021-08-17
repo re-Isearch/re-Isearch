@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)mdtrec.cxx  1.41 08/04/01 03:01:25 BSN"
 
 /************************************************************************
@@ -142,7 +146,7 @@ GDT_BOOLEAN MDTREC::SetKey(const STRING& NewKey)
   GDT_BOOLEAN Ok = GDT_TRUE;
   if (NewKey.GetLength() > DocumentKeySize)
     {
-      logf (LOG_WARN, "Record Key too long (%d), truncated..", NewKey.GetLength());
+      message_log (LOG_WARN, "Record Key too long (%d), truncated..", NewKey.GetLength());
       Ok = GDT_FALSE;
       NewKey.Right(DocumentKeySize).Copy(Key, DocumentKeySize);
     }
@@ -164,7 +168,7 @@ void MDTREC::SetDocumentType(const STRING& NewDocumentType)
   if (Len > DocumentTypeSize)
     {
       if (Len - 1 != DocumentTypeSize)
-        logf (LOG_WARN, "Doctype name too long (%d), truncated..", Len);
+        message_log (LOG_WARN, "Doctype name too long (%d), truncated..", Len);
       Len = DocumentTypeSize;
     }
   NewDocumentType.Copy(DocumentType, Len);
@@ -257,12 +261,12 @@ void MDTREC::SetFullFileName(const STRING& NewFullPath)
 
   if (pathLength == 0)
     {
-      logf (LOG_PANIC, "Nil Path for a MDTREC?");
+      message_log (LOG_PANIC, "Nil Path for a MDTREC?");
       return;
     }
   if (HashTable == NULL)
     {
-      logf (LOG_PANIC, "Nil Hash Table in MDTREC. Can't add paths!");
+      message_log (LOG_PANIC, "Nil Hash Table in MDTREC. Can't add paths!");
       return;
     }
   const char * const path =  NewFullPath.c_str();
@@ -292,10 +296,10 @@ SRCH_DATE MDTREC::GetDate(FILE *fp, INT Index) const
       if (fseek (fp, (Index - 1) * sizeof (MDTREC) + SIZEOF_MAGIC, SEEK_SET) != -1)
         {
 	  if (fread (&date, sizeof(SRCH_DATE), 1, fp) > 1)
-	     logf (LOG_ERRNO, msg, "Read", Index);
+	     message_log (LOG_ERRNO, msg, "Read", Index);
         }
       else
-	logf (LOG_ERRNO, msg, "Seek", Index);
+	message_log (LOG_ERRNO, msg, "Seek", Index);
     }
   return date;
 }
@@ -304,14 +308,14 @@ GDT_BOOLEAN MDTREC::Write(FILE *fp, INT Index) const
 {
   if (fp == NULL)
     {
-      logf (LOG_PANIC, "Can't write MDT element: MDTREC::Write(NULL, %d)", Index);
+      message_log (LOG_PANIC, "Can't write MDT element: MDTREC::Write(NULL, %d)", Index);
       return GDT_FALSE;
     }
   if (Index)
     {
       if (fseek (fp, (Index - 1) * sizeof (MDTREC) + SIZEOF_MAGIC, SEEK_SET) == -1)
 	{
-	  logf (LOG_ERRNO, "Seek error to write MDT element %d", Index); 
+	  message_log (LOG_ERRNO, "Seek error to write MDT element %d", Index); 
 	  return GDT_FALSE; // ERROR
 	}
     }
@@ -324,7 +328,7 @@ GDT_BOOLEAN MDTREC::Read(FILE *fp, INT Index)
   MDTHASHTABLE  *ht = HashTable;
   if (fp == NULL)
     {
-      logf (LOG_PANIC, "Can't read MDT element: MDTREC::Read(NULL, %d)", Index);
+      message_log (LOG_PANIC, "Can't read MDT element: MDTREC::Read(NULL, %d)", Index);
       return GDT_FALSE;
     }
   if (Index)

@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #include <stdlib.h>
 //#include <iostream>
 #include <sys/types.h>
@@ -56,7 +60,7 @@ sHASHTABLE::~sHASHTABLE()
     }
   // free memory
   DeleteTable();
-  logf (LOG_DEBUG, "sHASHTABLE deleted");
+  message_log (LOG_DEBUG, "sHASHTABLE deleted");
 }
 
 
@@ -84,10 +88,10 @@ GDT_BOOLEAN sHASHTABLE::KillAll()
 
 void sHASHTABLE::DeleteTable()
 {
-  logf (LOG_DEBUG, "delete sHASHTABLE table");
+  message_log (LOG_DEBUG, "delete sHASHTABLE table");
 
   if (Table) {
-    logf (LOG_DEBUG, "Deleting sHASHTABLE with %d elements", tableSize);
+    message_log (LOG_DEBUG, "Deleting sHASHTABLE with %d elements", tableSize);
 
 #if 0 /* How it was */
     size_t i = 0;
@@ -117,7 +121,7 @@ void sHASHTABLE::DeleteTable()
     tableSize = 0;
   }
   else
-     logf (LOG_DEBUG, "sHASHTABLE table was empty (nothing to delete)");
+     message_log (LOG_DEBUG, "sHASHTABLE table was empty (nothing to delete)");
   loaded = GDT_FALSE;
 }
 
@@ -175,9 +179,9 @@ static long s_polys[] =  {
   else if (tableSize <= 1000003)
     tableSize = 1000003;
   else
-    logf (LOG_NOTICE, "Hashtable requested for %d>%d!", tableSize, 1000003);
+    message_log (LOG_NOTICE, "Hashtable requested for %d>%d!", tableSize, 1000003);
 
-  logf (LOG_DEBUG, "Hashtable '%s': %d slots", fn.c_str(), tableSize);
+  message_log (LOG_DEBUG, "Hashtable '%s': %d slots", fn.c_str(), tableSize);
   loaded = GDT_FALSE;
 }
 
@@ -227,7 +231,7 @@ GDT_BOOLEAN sHASHTABLE::LoadOnDiskHashTable()
 
   if (!DiskTable.Ok())
     {
-      logf (LOG_ERRNO, "CreateMap (mmap) of '%s'[%d] FAILED!", filename.c_str(), -fd);
+      message_log (LOG_ERRNO, "CreateMap (mmap) of '%s'[%d] FAILED!", filename.c_str(), -fd);
       fd = -1;
       return GDT_FALSE;
     }
@@ -239,7 +243,7 @@ GDT_BOOLEAN sHASHTABLE::LoadOnDiskHashTable()
       int           bytes = 0;
       STRING        temp_str;
 
-      logf (LOG_DEBUG, "Loading Hash of names in '%s' (%ld bytes)", filename.c_str(), file_length);
+      message_log (LOG_DEBUG, "Loading Hash of names in '%s' (%ld bytes)", filename.c_str(), file_length);
       for (off_t newoffset = bytes; newoffset < file_length; newoffset += bytes)
 	{
 	  size_t   hash;
@@ -253,7 +257,7 @@ GDT_BOOLEAN sHASHTABLE::LoadOnDiskHashTable()
 	    }
 	  else if (temp_str != NulString)
 	    {
-	      logf (LOG_PANIC, "'%s' is corrupt!", filename.c_str());
+	      message_log (LOG_PANIC, "'%s' is corrupt!", filename.c_str());
 	      DiskTable.Unmap();
 	      return GDT_FALSE;
 	    }
@@ -284,7 +288,7 @@ check:
       // check to see if this str/offet pair already exists in the hash table
       hash = Hash(str);
       if (hash > tableSize)
-	logf (LOG_PANIC, "Hash table overflow (%d >%d)!", (int)hash, (int)tableSize);
+	message_log (LOG_PANIC, "Hash table overflow (%d >%d)!", (int)hash, (int)tableSize);
       else if (Table)
 	{
 	  node = Table[hash];
@@ -296,7 +300,7 @@ check:
 	    }
 	}
       else
-	logf (LOG_PANIC, "Hash table went puff! Should have %u elements.", (int)tableSize);
+	message_log (LOG_PANIC, "Hash table went puff! Should have %u elements.", (int)tableSize);
       // Did we find it?
       if (node)
        return (node->offset); // YES!
@@ -321,14 +325,14 @@ open_again:
       // need to open file 
       if ((fd = open(filename,  O_RDWR | O_APPEND | O_CREAT | O_BINARY, DEF_PERMIT)) == -1)
 	{
-	  logf (LOG_ERRNO, "Can't open '%s' to add '%s'!", filename.c_str(), str.c_str());
+	  message_log (LOG_ERRNO, "Can't open '%s' to add '%s'!", filename.c_str(), str.c_str());
 	  return GDT_FALSE;
 	}
     }
   // append new string to the end of the file
   if ((newoffset = lseek(fd, 0, SEEK_END)) < 0)
     {
-      logf (LOG_ERRNO, "Can't lseek to end on handle %d. Can't add '%s'!", fd, str.c_str());
+      message_log (LOG_ERRNO, "Can't lseek to end on handle %d. Can't add '%s'!", fd, str.c_str());
       return GDT_FALSE;
     }
   else if (newoffset > 0)
@@ -346,7 +350,7 @@ open_again:
       // with zeros, so that the offset zero is never used.
       if ((newoffset = NulString.RawWrite(fd)) == -1)
 	{
-	  logf (LOG_ERRNO, "Create '%s'.. Write error on handle %d.", filename.c_str(), fd);
+	  message_log (LOG_ERRNO, "Create '%s'.. Write error on handle %d.", filename.c_str(), fd);
 	  return GDT_FALSE;
 	}
     }
@@ -367,7 +371,7 @@ open_again:
       offset += res;
       file_length = offset;
       if ((unsigned)res < (str.GetLength() + sizeof(STRINGData) + 1))
-	logf (LOG_ERRNO, "Write error on handle %d. Wrote %d < %d bytes.", fd,
+	message_log (LOG_ERRNO, "Write error on handle %d. Wrote %d < %d bytes.", fd,
 	res, str.GetLength() + sizeof(STRINGData) + 1);
     }
   else if (errno == EBADF) // Handle open only for reading
@@ -377,7 +381,7 @@ open_again:
       goto open_again;
     }
   else
-    logf (LOG_ERRNO, "Write error on handle %d. Could not write '%s'", fd, str.c_str());
+    message_log (LOG_ERRNO, "Write error on handle %d. Could not write '%s'", fd, str.c_str());
 
   lastCache.str = str;
   return (lastCache.offset = newoffset);
@@ -387,7 +391,7 @@ STRING sHASHTABLE::Get(off_t i)
 {
   // Take the unique id (really the index into the on-disk file) and
   // return the corresponding string.
-  logf (LOG_DEBUG, "Looking up string #0x%lx", i);
+  message_log (LOG_DEBUG, "Looking up string #0x%lx", i);
   
   // The file has to be mmap()'d for this to work.
   STRING         str;
@@ -400,11 +404,11 @@ STRING sHASHTABLE::Get(off_t i)
 
   if ((!DiskTable.Ok() || mmap_reads == GDT_FALSE) && fd >= 0)
     {
-      logf (LOG_DEBUG, "Seeking in '%s'(%ld).", filename.c_str(), i);
+      message_log (LOG_DEBUG, "Seeking in '%s'(%ld).", filename.c_str(), i);
       // the file is opened, but not mmapped.
 #if 1	/* Do normal reads */
       if (str.RawRead(fd, i) <= 0)
-	logf (LOG_ERROR|LOG_ERRNO, "Zero string in MDT??? // '%s'(%ld:%ld)",
+	message_log (LOG_ERROR|LOG_ERRNO, "Zero string in MDT??? // '%s'(%ld:%ld)",
 		filename.c_str(), i, GetFileSize(fd));
       else
 	return str;
@@ -419,18 +423,18 @@ STRING sHASHTABLE::Get(off_t i)
     errno = 0;
     if ((fd = open(filename,O_RDONLY|O_BINARY)) == -1)
       {
-	logf (LOG_ERRNO, msg, i, filename.c_str(), "file open failure");
+	message_log (LOG_ERRNO, msg, i, filename.c_str(), "file open failure");
 	return str;
       }
     // mmap file for fast easy access
-    logf (LOG_DEBUG, "Memory mapping '%s'", filename.c_str());
+    message_log (LOG_DEBUG, "Memory mapping '%s'", filename.c_str());
     DiskTable.CreateMap(fd, MapRandom);
     close(fd);
     fd *= -1;
 
     if (!DiskTable.Ok())
       {
-	logf (LOG_PANIC, msg, i, filename.c_str(), "memory map failure");
+	message_log (LOG_PANIC, msg, i, filename.c_str(), "memory map failure");
 	fd = -1;
 	return str;
       }
@@ -440,7 +444,7 @@ STRING sHASHTABLE::Get(off_t i)
   if ((size_t)file_length > sizeof(STRINGData) && i > 0)
     {
       if (str.RawRead( &DiskTable, (size_t)i) == -1)
-	logf (LOG_PANIC, "Can't lookup string %ld in '%s'! File Truncated to %ld?",
+	message_log (LOG_PANIC, "Can't lookup string %ld in '%s'! File Truncated to %ld?",
 		i, filename.c_str(), file_length);
     }
   return str;
@@ -536,7 +540,7 @@ void MDTHASHTABLE::Init(const STRING& FileStem)
 
 void MDTHASHTABLE::Init(const STRING& FileStem, size_t TableSize)
 {
-  logf (LOG_DEBUG, "Init of '%s' MDT filename table (%d)", FileStem.c_str(), TableSize);
+  message_log (LOG_DEBUG, "Init of '%s' MDT filename table (%d)", FileStem.c_str(), TableSize);
 
   oldFileOffset = 0;
   oldPathOffset = 0;
@@ -555,5 +559,5 @@ GDT_BOOLEAN MDTHASHTABLE::KillAll()
 
 MDTHASHTABLE::~MDTHASHTABLE()
 {
-  logf (LOG_DEBUG, "MDTHASHTABLE deleted");
+  message_log (LOG_DEBUG, "MDTHASHTABLE deleted");
 }

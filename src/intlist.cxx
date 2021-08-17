@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /*@@@
 File:		intlist.cxx
 Version:	1.00
@@ -89,7 +93,7 @@ INT4 INTERVALLIST::LoadTable(INT4 Start, INT4 End)
   INT4   nRecs=0;
 
   if (!(FileName.GetLength())) {
-    logf (LOG_PANIC, "IntervalList FileName not set");
+    message_log (LOG_PANIC, "IntervalList FileName not set");
     return 0;
   }
 
@@ -105,7 +109,7 @@ INT4 INTERVALLIST::LoadTable(INT4 Start, INT4 End)
 
     if (fseek(fp, (off_t)Start*sizeof(INTERVALFLD), SEEK_SET) == -1)
       {
-	logf (LOG_ERRNO, "INTERVALLIST could not seek on '%s' (Start=%ld)",
+	message_log (LOG_ERRNO, "INTERVALLIST could not seek on '%s' (Start=%ld)",
 		FileName.c_str(), (long)Start);
 	return 0;
       }
@@ -140,7 +144,7 @@ INT4 INTERVALLIST::LoadTable(INT4 Start, INT4 End, IntBlock Offset)
   off_t   MoveTo;
   
   if (!(FileName.GetLength())) {
-    logf (LOG_PANIC, "Intervallist FileName not set");
+    message_log (LOG_PANIC, "Intervallist FileName not set");
     return 0;
   }
   
@@ -168,7 +172,7 @@ INT4 INTERVALLIST::LoadTable(INT4 Start, INT4 End, IntBlock Offset)
 
       if (fseek(fp, MoveTo, SEEK_SET) == -1)
 	{
-	  logf (LOG_ERROR, "INTERVALLIST could not seek to '%s'(%ld))",
+	  message_log (LOG_ERROR, "INTERVALLIST could not seek to '%s'(%ld))",
                 FileName.c_str(), (long)MoveTo);
 	  return 0;
 	}
@@ -189,7 +193,7 @@ INT4 INTERVALLIST::LoadTable(INT4 Start, INT4 End, IntBlock Offset)
     }
     fclose(fp);
   } else
-    logf (LOG_ERRNO, "Could not open '%s'", FileName.c_str());
+    message_log (LOG_ERRNO, "Could not open '%s'", FileName.c_str());
   return nRecs;
 }
 
@@ -199,7 +203,7 @@ void INTERVALLIST::WriteTable()
   FILE  *fp;
   
   if (!(FileName.GetLength())) {
-    logf (LOG_PANIC, "INTervalList FileName not set");
+    message_log (LOG_PANIC, "INTervalList FileName not set");
     return;
   }
 
@@ -217,7 +221,7 @@ void INTERVALLIST::WriteTable(INT Offset)
   FILE  *fp;
   
   if (!(FileName.GetLength())) {
-    logf (LOG_PANIC, "INTervalList FileName not set (offset)");
+    message_log (LOG_PANIC, "INTervalList FileName not set (offset)");
     return;
   }
 
@@ -348,7 +352,7 @@ SearchState INTERVALLIST::IntervalMatcher(DOUBLE Key, DOUBLE LowerBound, DOUBLE 
 	return(TOO_LOW);
     }
 
-  logf (LOG_PANIC, "INTERVALLIST: Hideous Matching Error");
+  message_log (LOG_PANIC, "INTERVALLIST: Hideous Matching Error");
   return(NO_MATCH);
 }
 
@@ -402,7 +406,7 @@ SearchState INTERVALLIST::IntervalMatcher(GPTYPE Key,  GPTYPE LowerBound, GPTYPE
 	return(TOO_LOW);
     }
 
-  logf (LOG_PANIC, "Hideous Matching Error");
+  message_log (LOG_PANIC, "Hideous Matching Error");
   return(NO_MATCH);
 }
 
@@ -469,7 +473,7 @@ SearchState INTERVALLIST::DiskFind(STRING Fn, DOUBLE Key, INT4 Relation,
   INTERVALFLD  lowerBound, upperBound, middelValue;
 
   if (!Fp) {
-    logf (LOG_ERRNO, "Could not open %s (Interval list index)", Fn.c_str());
+    message_log (LOG_ERRNO, "Could not open %s (Interval list index)", Fn.c_str());
     *Index = -1;
     return NO_MATCH;
 
@@ -480,7 +484,7 @@ SearchState INTERVALLIST::DiskFind(STRING Fn, DOUBLE Key, INT4 Relation,
 
     if (getObjID(Fp) != objINTLIST)
       {
-        logf (LOG_PANIC, "%s not a interval index??", Fn.c_str());
+        message_log (LOG_PANIC, "%s not a interval index??", Fn.c_str());
         *Index = -1;
         return NO_MATCH;
       }
@@ -701,7 +705,7 @@ SearchState INTERVALLIST::DiskFind(STRING Fn, GPTYPE Key, INT4 Relation,
   INT High, X, OX;
   
   if (!Fp) {
-    logf (LOG_ERRNO, "Could not open %s (Int Index)", Fn.c_str());
+    message_log (LOG_ERRNO, "Could not open %s (Int Index)", Fn.c_str());
     *Index = -1;
     return NO_MATCH;
 
@@ -709,7 +713,7 @@ SearchState INTERVALLIST::DiskFind(STRING Fn, GPTYPE Key, INT4 Relation,
 
     if (getObjID(Fp) != objINTLIST)
       {
-        logf (LOG_PANIC, "%s not a interval index??", Fn.c_str());
+        message_log (LOG_PANIC, "%s not a interval index??", Fn.c_str());
         *Index = -1;
         return NO_MATCH;
       }
@@ -922,7 +926,7 @@ FILE *INTERVALLIST::OpenForAppend(const STRING& Fn)
 
   if (Fp == NULL)
    {
-      logf (LOG_ERRNO, "INTERVALLIST:: Can't open '%s' for reading.", Fn.c_str());
+      message_log (LOG_ERRNO, "INTERVALLIST:: Can't open '%s' for reading.", Fn.c_str());
       return NULL;
    }
   if (getObjID(Fp)!= objINTLIST)
@@ -953,11 +957,11 @@ FILE *INTERVALLIST::OpenForAppend(const STRING& Fn)
       char     scratch[ L_tmpnam+1];
       char    *TempName = tmpnam( scratch ); 
 
-      logf (LOG_WARN, "Could not create '%s', trying tmp '%s'", TmpName.c_str(),
+      message_log (LOG_WARN, "Could not create '%s', trying tmp '%s'", TmpName.c_str(),
 	TempName);
       if ((oFp = fopen(TempName, "wb")) == NULL)
 	{
-	  logf (LOG_ERRNO, "Can't create a temporary interval list '%s'", Fn.c_str());
+	  message_log (LOG_ERRNO, "Can't create a temporary interval list '%s'", Fn.c_str());
 	  fclose(Fp);
 	  return NULL;
 	}
@@ -974,15 +978,15 @@ FILE *INTERVALLIST::OpenForAppend(const STRING& Fn)
   fclose(Fp);
   fclose(oFp);
   if (remove(Fn) == -1)
-    logf (LOG_ERRNO, "Can't remove '%s'", Fn.c_str());
+    message_log (LOG_ERRNO, "Can't remove '%s'", Fn.c_str());
   if (RenameFile(TmpName, Fn) == -1)
-    logf (LOG_ERRNO, "Can't rename '%s' to '%s'", TmpName.c_str(), Fn.c_str());
+    message_log (LOG_ERRNO, "Can't rename '%s' to '%s'", TmpName.c_str(), Fn.c_str());
 
   // Now open for append
   if ((Fp = fopen(Fn, "a+b")) == NULL)
-    logf (LOG_ERRNO, "Could not open '%s' for interval append", Fn.c_str());
+    message_log (LOG_ERRNO, "Could not open '%s' for interval append", Fn.c_str());
   else
-    logf (LOG_DEBUG, "Opening '%s' for interval append", Fn.c_str());
+    message_log (LOG_DEBUG, "Opening '%s' for interval append", Fn.c_str());
   return Fp;
 }
 

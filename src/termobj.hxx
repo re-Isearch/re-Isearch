@@ -1,11 +1,9 @@
-/************************************************************************
-************************************************************************/
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 
 /*@@@
 File:		termobj.hxx
-Version:	1.00
 Description:	Class TERMOBJ - Search Term Base Class
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #ifndef TERMOBJ_HXX

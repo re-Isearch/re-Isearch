@@ -401,7 +401,7 @@ FILETYP::FILETYP (const STRING& FileName, const char *FileCmd)
 	    {
 	      if (cmd.Search(" program text"))
 		{
-		  logf(LOG_INFO, "Identified %s as '%s', not supported",
+		  message_log(LOG_INFO, "Identified %s as '%s', not supported",
 			(const char *)s, (const char *)cmd);
 		  description = cmd;
 		  doctype = "NULL";
@@ -410,18 +410,18 @@ FILETYP::FILETYP (const STRING& FileName, const char *FileCmd)
 		{
 		  description = cmd;
 		  doctype = "PLAINTEXT";
-		  logf(LOG_INFO, "Identified %s as %s, using %s",
+		  message_log(LOG_INFO, "Identified %s as %s, using %s",
                         (const char *)s, (const char *)cmd,
                         (const char *)doctype );
 		}
 	      else
-		logf(LOG_INFO, "Using default for %s: %s",
+		message_log(LOG_INFO, "Using default for %s: %s",
 			(const char *)s, (const char *)cmd);
 	    }
 	  _IB_pclose(fp);
 	}
       else
-	logf(LOG_NOTICE, "%s not identified or doctype not supported.",
+	message_log(LOG_NOTICE, "%s not identified or doctype not supported.",
 		(const char *)s);
     }
 

@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 // $Id: thesaurus.hxx,v 1.1 2007/05/15 15:47:20 edz Exp $
 /************************************************************************
 Copyright Notice

@@ -28,7 +28,7 @@ MEMODOC::MEMODOC (PIDBOBJ DbParent, const STRING& Name) :
   const char AUTODETECT_FIELDTYPES[]   = "AutodetectFieldtypes";
 
   ParseMessageStructure = Getoption(PARSE_MESSAGE_STRUCTURE, "Y").GetBool();
-  logf (LOG_DEBUG, "%s: %s=%d", Doctype.c_str(), PARSE_MESSAGE_STRUCTURE, (int)ParseMessageStructure);
+  message_log (LOG_DEBUG, "%s: %s=%d", Doctype.c_str(), PARSE_MESSAGE_STRUCTURE, (int)ParseMessageStructure);
 
   autoFieldTypes  =  Getoption(AUTODETECT_FIELDTYPES, "Y").GetBool();
   recordsAdded = 0;
@@ -106,7 +106,7 @@ FIELDTYPE MEMODOC::GuessFieldType(const STRING& FieldName, const STRING& Content
 	    ft = FIELDTYPE::hash;
 #endif
 	  else ft = FIELDTYPE::text;
-	  logf (LOG_INFO, "%s: Field '%s' autotyped as '%s'", Doctype.c_str(), FieldName.c_str(), ft.c_str());
+	  message_log (LOG_INFO, "%s: Field '%s' autotyped as '%s'", Doctype.c_str(), FieldName.c_str(), ft.c_str());
 
 	}
       else ft = FIELDTYPE::text;
@@ -150,7 +150,7 @@ void MEMODOC::ParseFields (RECORD *NewRecord)
   PFILE fp = Db->ffopen (fn, "rb");
   if (!fp)
     {
-      logf (LOG_ERRNO, "Can't read '%s'. Skipping", fn.c_str());
+      message_log (LOG_ERRNO, "Can't read '%s'. Skipping", fn.c_str());
       NewRecord->SetBadRecord();
       return;		// ERROR
     }
@@ -179,16 +179,16 @@ void MEMODOC::ParseFields (RECORD *NewRecord)
   if (tags == NULL || tags[0] == NULL)
     {
       if (tags)
-	logf (LOG_WARN, "No `%s' fields/tags in %s [%ld-%ld]", Doctype.c_str(), fn.c_str(),
+	message_log (LOG_WARN, "No `%s' fields/tags in %s [%ld-%ld]", Doctype.c_str(), fn.c_str(),
 		(long)RecStart, (long)RecEnd);
        else
-	logf (LOG_ERROR, "Unable to parse `%s' record in %s", Doctype.c_str(), fn.c_str());
+	message_log (LOG_ERROR, "Unable to parse `%s' record in %s", Doctype.c_str(), fn.c_str());
       NewRecord->SetBadRecord();
       return;
     }
   if ((tags[0] - RecBuffer) > 127 || strlen(tags[0]) > 512)
     {
-      logf (LOG_WARN,
+      message_log (LOG_WARN,
 #ifdef _WIN32
 	"%s[%I64d,%I64d] does not seem to be in '%s' format (%lu)." 
 #else
@@ -288,7 +288,7 @@ void MEMODOC::ParseFields (RECORD *NewRecord)
 		  if (FieldName ^= DateExpiresField) NewRecord->SetDateExpires( Datum );
 		}
 	      else
-		logf (LOG_ERROR, "Unparseable Date in %s", FieldName.c_str());
+		message_log (LOG_ERROR, "Unparseable Date in %s", FieldName.c_str());
 	    }
 	  else if (FieldName ^= LanguageField)
 	    NewRecord->SetLanguage( &RecBuffer[val_start] );
@@ -297,7 +297,7 @@ void MEMODOC::ParseFields (RECORD *NewRecord)
 	  else if (FieldName ^= KeyField)
 	    {
 	      if (!Key.IsEmpty())
-		logf(LOG_WARN, "Duplicate Keys defined: overwriting %s with %s", Key.c_str(), &RecBuffer[val_start]);
+		message_log(LOG_WARN, "Duplicate Keys defined: overwriting %s with %s", Key.c_str(), &RecBuffer[val_start]);
 	      Key = &RecBuffer[val_start];
 	    }
 #endif
@@ -332,7 +332,7 @@ void MEMODOC::ParseFields (RECORD *NewRecord)
     {
       if (Db->KeyLookup (Key))
         {
-          logf (LOG_WARN, "%s Record in \"%s\" used a non-unique %s '%s'",
+          message_log (LOG_WARN, "%s Record in \"%s\" used a non-unique %s '%s'",
                 Doctype.c_str(), fn.c_str(), KeyField.c_str(), Key.c_str());
           Db->MdtSetUniqueKey(NewRecord, Key);
         }
@@ -466,7 +466,7 @@ void MEMODOC::Present (const RESULT& ResultRecord,
 MEMODOC::~MEMODOC ()
 {
   if (recordsAdded)
-    logf(LOG_INFO, "%s: Added %u records", Doctype.c_str(), recordsAdded);
+    message_log(LOG_INFO, "%s: Added %u records", Doctype.c_str(), recordsAdded);
 }
 
 /*-
@@ -578,7 +578,7 @@ size_t MEMODOC::CatMetaInfoIntoFile(FILE *outFp, const STRING& Fn, int level) co
 		      {
 			if (level > 50)
 			  {
-			    logf (LOG_WARN, "Include depth too deep (%d): '%s' ignored.",
+			    message_log (LOG_WARN, "Include depth too deep (%d): '%s' ignored.",
 				level, fld);
 			    continue;
 			  }
@@ -608,7 +608,7 @@ size_t MEMODOC::CatMetaInfoIntoFile(FILE *outFp, const STRING& Fn, int level) co
 			    if (quote == '>')
 			      {
 				if (!IsAbsoluteFilePath(include) && !ResolveConfigPath(&include))
-				  logf (LOG_ERROR, "%s: Can't resolve '%s'", Doctype.c_str(), include.c_str());
+				  message_log (LOG_ERROR, "%s: Can't resolve '%s'", Doctype.c_str(), include.c_str());
 			      }
 			    else if (!IsAbsoluteFilePath(include))
 			      {
@@ -636,7 +636,7 @@ size_t MEMODOC::CatMetaInfoIntoFile(FILE *outFp, const STRING& Fn, int level) co
 	  }
     }
   else
-    logf (LOG_ERROR, "%s: Can't read '%s'", Doctype.c_str(), Fn.c_str());
+    message_log (LOG_ERROR, "%s: Can't read '%s'", Doctype.c_str(), Fn.c_str());
   return lines;
 }
 
@@ -711,7 +711,7 @@ GDT_BOOLEAN _VMEMODOC::GetResourcePath(const RESULT& ResultRecord, STRING *Strin
 off_t _VMEMODOC::RunPipe(FILE *fp, const STRING& Source)
 {
   if (Filter.GetLength())
-    logf (LOG_ERROR, "%s: Undefined RunPipe Method: Can't process '%s'", Doctype.c_str(),
+    message_log (LOG_ERROR, "%s: Undefined RunPipe Method: Can't process '%s'", Doctype.c_str(),
 	Source.c_str());
   return 0;
 }
@@ -729,17 +729,17 @@ void _VMEMODOC::ParseRecords(const RECORD& FileRecord)
   if (!Inode.Ok())
     {
       if (Inode.isDangling())
-        logf(LOG_ERROR, "%s: '%s' is a dangling symbollic link", Doctype.c_str(), Fn.c_str());
+        message_log(LOG_ERROR, "%s: '%s' is a dangling symbollic link", Doctype.c_str(), Fn.c_str());
       else
-        logf(LOG_ERRNO, "%s: Can't stat '%s'.", Doctype.c_str(), Fn.c_str());
+        message_log(LOG_ERRNO, "%s: Can't stat '%s'.", Doctype.c_str(), Fn.c_str());
       return;
     }
   if (Inode.st_size == 0)
     {
-      logf(LOG_ERROR, "'%s' has ZERO (0) length? Skipping.", Fn.c_str());
+      message_log(LOG_ERROR, "'%s' has ZERO (0) length? Skipping.", Fn.c_str());
       return;
     }
-  logf (LOG_DEBUG, "%s: Input = '%s'", Doctype.c_str(), Fn.c_str());
+  message_log (LOG_DEBUG, "%s: Input = '%s'", Doctype.c_str(), Fn.c_str());
        
   off_t start = FileRecord.GetRecordStart();
   off_t end   = FileRecord.GetRecordEnd();
@@ -753,12 +753,12 @@ void _VMEMODOC::ParseRecords(const RECORD& FileRecord)
     key.form("%s.%04x", s.c_str(), i);
   // Now we have a good key
 
-  logf (LOG_DEBUG, "Key set to '%s'", key.c_str());
+  message_log (LOG_DEBUG, "Key set to '%s'", key.c_str());
 
   Db->ComposeDbFn (&s, DbExtCat);
   if (MkDir(s, 0, GDT_TRUE) == -1)
     {
-      logf (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
+      message_log (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
       return;
     }
   // <db_ext>.cat/<Hash>/<Key>.memo
@@ -775,7 +775,7 @@ void _VMEMODOC::ParseRecords(const RECORD& FileRecord)
 
   if ((fp = fopen(outfile, "w")) == NULL)
    {
-     logf (LOG_ERRNO, "%s: Could not create '%s'", Doctype.c_str(), outfile.c_str());
+     message_log (LOG_ERRNO, "%s: Could not create '%s'", Doctype.c_str(), outfile.c_str());
      return;
    }
 
@@ -800,7 +800,7 @@ void _VMEMODOC::ParseRecords(const RECORD& FileRecord)
     {
       unlink(outfile);
       if (bytes >= 0)
-	logf (LOG_WARN, "%s: Skipping '%s': Contained %d chars text?", Doctype.c_str(),
+	message_log (LOG_WARN, "%s: Skipping '%s': Contained %d chars text?", Doctype.c_str(),
 		source.c_str(), bytes);
       return;
     }

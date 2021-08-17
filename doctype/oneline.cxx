@@ -33,7 +33,7 @@ void ONELINE::ParseRecords(const RECORD& FileRecord)
   PFILE Fp = DOCTYPE::ffopen (Fn, "rb");
   if (!Fp)
     {
-      logf (LOG_ERRNO, "Could not access '%s'", Fn.c_str());
+      message_log (LOG_ERRNO, "Could not access '%s'", Fn.c_str());
       return;			// File not accessed
     }
 
@@ -45,7 +45,7 @@ void ONELINE::ParseRecords(const RECORD& FileRecord)
   if (GlobalStart != 0) 
     if ((fseek(Fp, GlobalStart, SEEK_SET)) == -1)
       {
-	logf (LOG_ERRNO, "Can't see to %ld on '%s'. Skipping", GlobalStart, Fn.c_str());
+	message_log (LOG_ERRNO, "Can't see to %ld on '%s'. Skipping", GlobalStart, Fn.c_str());
 	fclose(Fp);
 	return;
       }

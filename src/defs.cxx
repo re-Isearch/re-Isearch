@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)defs.cxx  8.7 08/04/01 02:46:10 BSN"
 #define  _GLOBAL_MESSAGE_LOGGER_INTERNALS 1
 /************************************************************************
@@ -326,7 +330,7 @@ int __IB_CheckUserRegistration(const char *file)
     }
   if (Register)
     {
-      logf (iLOG_DEBUG, "IB Registration");
+      message_log (iLOG_DEBUG, "IB Registration");
 
       FILE *fp, *fp_reg = fopen(Reg, "wt");
       if (fp_reg == NULL)
@@ -415,7 +419,7 @@ static int CheckLicense(long t)
   const unsigned long hostID = _IB_Hostid();
   const long want = (((unsigned long)t)/5L) - (int)(hostID/3L);
 
-  logf (iLOG_DEBUG, "CheckLicense %lx", t);
+  message_log (iLOG_DEBUG, "CheckLicense %lx", t);
 
 #if 0
   if (hostID == 0x7230523a)
@@ -428,13 +432,13 @@ static int CheckLicense(long t)
       if (!lic.IsEmpty())
 	{
 	  if ((fp = fopen(lic, "rt")) != NULL)
-	    logf (iLOG_DEBUG, "Using resolved license file '%s'", lic.c_str());
+	    message_log (iLOG_DEBUG, "Using resolved license file '%s'", lic.c_str());
 	  else
-	    logf (iLOG_ERRNO, "Can't open resolved license file '%s'", lic.c_str());
+	    message_log (iLOG_ERRNO, "Can't open resolved license file '%s'", lic.c_str());
 	}
     }
   else
-    logf (iLOG_DEBUG, "Using default license file '%s'", KeyFile);
+    message_log (iLOG_DEBUG, "Using default license file '%s'", KeyFile);
   long key = 0;
   if (fp)
     {
@@ -465,7 +469,7 @@ static int CheckLicense(long t)
 			&& m[4] == 'o' )
 		    {
 //cerr << "XXX Match magic dog" << endl;
-		      logf (iLOG_INFO, "License expired. Temporary Token generated."); 
+		      message_log (iLOG_INFO, "License expired. Temporary Token generated."); 
 		      key = time(NULL)+60L*60L*24L*14L;
 		    }
 		}
@@ -489,7 +493,7 @@ static int CheckLicense(long t)
 static void sig_size(int sig)
 {
   signal (sig, SIG_IGN);
-  logf(iLOG_PANIC, "File size capacity exceeded (see getrlimit(2)), Index process aborted.");
+  message_log(iLOG_PANIC, "File size capacity exceeded (see getrlimit(2)), Index process aborted.");
   exit (sig);
 };
 #endif
@@ -498,7 +502,7 @@ static void sig_size(int sig)
 static void sig_cpu(int sig)
 {
   signal (sig, SIG_IGN);
-  logf(iLOG_PANIC, "CPU time limit exceeded (see getrlimit(2)), Index process aborted.");
+  message_log(iLOG_PANIC, "CPU time limit exceeded (see getrlimit(2)), Index process aborted.");
   exit (sig);
 };
 #endif
@@ -508,7 +512,7 @@ static void sig_cpu(int sig)
 static void sig_sys(int sig)
 {
   signal (sig, SIG_IGN);
-  logf(iLOG_PANIC, "Caught a bad system call! Index process aborted.");
+  message_log(iLOG_PANIC, "Caught a bad system call! Index process aborted.");
   exit (sig);
 }
 #endif
@@ -516,7 +520,7 @@ static void sig_sys(int sig)
 static void seg_fault (int sig)
 {
   void (*func)(int) = signal (sig, SIG_IGN);
-  logf(iLOG_PANIC, "Caught a segfault signal (%d).", sig);
+  message_log(iLOG_PANIC, "Caught a segfault signal (%d).", sig);
   signal (sig, func);
   exit (-1);
 }
@@ -524,7 +528,7 @@ static void seg_fault (int sig)
 static void seg_bus (int sig)   
 {
   void (*func)(int) = signal (sig, SIG_IGN);
-  logf(iLOG_PANIC, "Caught a bus fault signal (%d).", sig);
+  message_log(iLOG_PANIC, "Caught a bus fault signal (%d).", sig);
   signal (sig, func);
   exit (-1);  
 }
@@ -576,10 +580,10 @@ static void sig_hangup(int sig)
        if (_globalMessageLogger.to_console())
 	{
 	  _globalMessageLogger.use_syslog();
-	  logf (iLOG_ERROR, "*** Terminal hangup. Messages to <syslog>");
+	  message_log (iLOG_ERROR, "*** Terminal hangup. Messages to <syslog>");
 	}
        else
-	logf (iLOG_DEBUG, "Hangup detected (Sig#%d)", sig);
+	message_log (iLOG_DEBUG, "Hangup detected (Sig#%d)", sig);
     }
   signal (sig, sig_hangup);
 }
@@ -658,14 +662,14 @@ long __Register_IB_Application(const char *Appname, FILE *output, int DebugFlag)
 	  time_t eof = CheckLicense(timeout);
           if (eof == 0 || eof < t)
             {
-              logf(iLOG_PANIC, "Sorry your %s license (#%lo:%lx) has expired. \
+              message_log(iLOG_PANIC, "Sorry your %s license (#%lo:%lx) has expired. \
 Please update or install a permanent license key.",
 		LicenseType, timeout,  _IB_Hostid());
               exit(-255);
             }
 	  if ((eof - t) < (60*60*24*3))
 	    {
-	      logf (iLOG_NOTICE, "%s License (#%lo:%lx) will expire in %u hours!",
+	      message_log (iLOG_NOTICE, "%s License (#%lo:%lx) will expire in %u hours!",
 		LicenseType, timeout,  _IB_Hostid(), (unsigned)((eof-t)/60));
 	    }
 	  result = -1;
@@ -673,7 +677,7 @@ Please update or install a permanent license key.",
       else if ((timeout - t) < (60*60*24*10))
         {
           if (ResolveConfigPath("license").IsEmpty())
-           logf(iLOG_NOTICE|iLOG_WARN, "%s License (#%lo:%lx) for this version will expire in %d days."
+           message_log(iLOG_NOTICE|iLOG_WARN, "%s License (#%lo:%lx) for this version will expire in %d days."
 		, LicenseType, timeout,  _IB_Hostid(), (timeout-t)/(60*60*24));
         }
     }
@@ -702,24 +706,24 @@ long _IB_SerialID()
 
 void _IB_WarningMessage(const char *message)
 {
-  logf (iLOG_WARN, "%s", message); 
+  message_log (iLOG_WARN, "%s", message); 
 }
 void _IB_ErrnoMessage(const char *message)
 {
-  logf (iLOG_ERRNO, "%s", message);
+  message_log (iLOG_ERRNO, "%s", message);
 }
 void _IB_ErrorMessage(const char *message)
 {
-  logf (iLOG_ERROR, "%s", message);
+  message_log (iLOG_ERROR, "%s", message);
 }
 void _IB_FatalMessage(const char *message)
 {
-  logf (iLOG_FATAL, "%s", message);
+  message_log (iLOG_FATAL, "%s", message);
 }
 
 void _IB_PanicMessage(const char *message)
 {
-  logf (iLOG_PANIC, "%s", message);
+  message_log (iLOG_PANIC, "%s", message);
 }
 
 

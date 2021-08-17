@@ -76,21 +76,21 @@ their MEMODOC style output to standard output (stdout)";
       Filter = ResolveBinPath(s);
       if (!IsAbsoluteFilePath(Filter))
 	{
-	  logf (LOG_WARN, "%s: Specified filter '%s' not found. Check Installation.",
+	  message_log (LOG_WARN, "%s: Specified filter '%s' not found. Check Installation.",
 		Doctype.c_str(), Filter.c_str()); 
 	}
       else if (!ExeExists(Filter))
 	{
-	  logf (LOG_ERROR, "%s: Filter '%s' %s!", Doctype.c_str(), Filter.c_str(),
+	  message_log (LOG_ERROR, "%s: Filter '%s' %s!", Doctype.c_str(), Filter.c_str(),
 	    Exists(Filter) ?  "is not executable" : "does not exist");
 	  Filter.Clear();
 	}
       else
-	logf (LOG_DEBUG, "%s: External filter set to '%s'", Doctype.c_str(), Filter.c_str());
+	message_log (LOG_DEBUG, "%s: External filter set to '%s'", Doctype.c_str(), Filter.c_str());
     }
   else
     {
-      logf (LOG_DEBUG, "%s de-activated: External filter was set to '%s'", Doctype.c_str(), s.c_str());
+      message_log (LOG_DEBUG, "%s de-activated: External filter was set to '%s'", Doctype.c_str(), s.c_str());
       Filter = NulString;
     }
 
@@ -143,12 +143,12 @@ off_t ADOBE_PDFDOC::RunPipe(FILE *fp, const STRING& Fn)
     {
       if (!IsAbsoluteFilePath (Filter))
 	{
-	  logf (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.",
+	  message_log (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.",
 		Doctype.c_str(), Filter.c_str());
 	  Filter.Clear();
 	}
       else
-	logf (LOG_ERRNO, "%s: Could not open pipe '%s'", Doctype.c_str(), *argv);
+	message_log (LOG_ERRNO, "%s: Could not open pipe '%s'", Doctype.c_str(), *argv);
       return -1;
     }
 

@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #ifndef _LOG_HXX
 #define _LOG_HXX
 
@@ -61,11 +65,20 @@ public:
 
   void        log (int level, const char *fmt, ...); // __attribute__((fmt(printf, 2, 3))) ; 
   void        log_message(int level, const char *string) ;
+
+  void        info_message (const char *str) { log_message(iLOG_INFO, str);}
+  void        panic_message(const char *str) { log_message(iLOG_PANIC, str);}
+  void        error_message(const char *str) { log_message(iLOG_ERROR, str);}
+  void        errno_message(const char *str) { log_message(iLOG_ERRNO, str);}
+  void        fatal_message(const char *str) { log_message(iLOG_FATAL, str);}
+
+/*
 #ifdef __STRING_HXX__
   void        panic_message(const STRING& String) { log_message(iLOG_PANIC, String.c_str());}
   void        error_message(const STRING& String) { log_message(iLOG_ERROR, String.c_str());}
   void        fatal_message(const STRING& String) { log_message(iLOG_FATAL, String.c_str());}
 #endif
+*/
   GDT_BOOLEAN to_syslog() const  { return l_file == syslog_stream; }
   GDT_BOOLEAN to_console() const { return l_console;               }
 protected:

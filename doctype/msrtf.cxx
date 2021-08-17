@@ -66,17 +66,17 @@ IBDOC_MSRTF::IBDOC_MSRTF(PIDBOBJ DbParent, const STRING& Name) : XML(DbParent, N
       Filter = ResolveBinPath(s);
       if (!IsAbsoluteFilePath(Filter))
 	{
-	  logf (LOG_WARN, "%s: Specified filter '%s' not found. Check Installation.",
+	  message_log (LOG_WARN, "%s: Specified filter '%s' not found. Check Installation.",
 		Doctype.c_str(), Filter.c_str()); 
 	}
       else if (!ExeExists(Filter))
 	{
-	  logf (LOG_ERROR, "%s: Filter '%s' %s!", Doctype.c_str(), Filter.c_str(),
+	  message_log (LOG_ERROR, "%s: Filter '%s' %s!", Doctype.c_str(), Filter.c_str(),
 	    Exists(Filter) ?  "is not executable" : "does not exist");
 	  Filter.Clear();
 	}
       else
-	logf (LOG_DEBUG, "%s: External filter set to '%s'", Doctype.c_str(), Filter.c_str());
+	message_log (LOG_DEBUG, "%s: External filter set to '%s'", Doctype.c_str(), Filter.c_str());
     }
   else
     Filter = s;
@@ -92,10 +92,10 @@ void IBDOC_MSRTF::ParseRecords(const RECORD& FileRecord)
 
   Fn = FileRecord.GetFullFileName ();
 
-  logf (LOG_DEBUG, "%s: Input = '%s'", Doctype.c_str(), Fn.c_str());
+  message_log (LOG_DEBUG, "%s: Input = '%s'", Doctype.c_str(), Fn.c_str());
   if (_IB_lstat(Fn, &stbuf) == -1)
     {
-      logf(LOG_ERRNO, "%s: Can't stat '%s'.", Doctype.c_str(), Fn.c_str());
+      message_log(LOG_ERRNO, "%s: Can't stat '%s'.", Doctype.c_str(), Fn.c_str());
       return;
     }
 #ifndef _WIN32
@@ -103,14 +103,14 @@ void IBDOC_MSRTF::ParseRecords(const RECORD& FileRecord)
     {
       if (stat(Fn, &stbuf) == -1)
         {
-          logf(LOG_ERROR, "%s: '%s' is a dangling symbollic link", Doctype.c_str(), Fn.c_str());
+          message_log(LOG_ERROR, "%s: '%s' is a dangling symbollic link", Doctype.c_str(), Fn.c_str());
           return;
         }
     }
 #endif
   if (stbuf.st_size == 0)
     {
-      logf(LOG_ERROR, "'%s' has ZERO (%ld) length? Skipping.", Fn.c_str(), stbuf.st_size);
+      message_log(LOG_ERROR, "'%s' has ZERO (%ld) length? Skipping.", Fn.c_str(), stbuf.st_size);
       return;
     }
 
@@ -137,12 +137,12 @@ void IBDOC_MSRTF::ParseRecords(const RECORD& FileRecord)
     key.form("%s.%04x", s.c_str(), i);
   // Now we have a good key
      
-  logf (LOG_DEBUG, "Key set to '%s'", key.c_str());
+  message_log (LOG_DEBUG, "Key set to '%s'", key.c_str());
 
   Db->ComposeDbFn (&s, DbExtCat);
   if (MkDir(s, 0, GDT_TRUE) == -1 )
     {
-      logf (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
+      message_log (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
       return;
     }
 
@@ -157,11 +157,11 @@ void IBDOC_MSRTF::ParseRecords(const RECORD& FileRecord)
 
   // So we pipe Fn bytes Start to End into outfile
 
-  logf (LOG_DEBUG, "Output to '%s'", outfile.c_str());
+  message_log (LOG_DEBUG, "Output to '%s'", outfile.c_str());
 
   if (Db->_write_resource_path(outfile, FileRecord, mime_type, &urifile) == GDT_FALSE)
     {
-      logf (LOG_ERRNO, "%s: Could not create '%s'", Doctype.c_str(), urifile.c_str());
+      message_log (LOG_ERRNO, "%s: Could not create '%s'", Doctype.c_str(), urifile.c_str());
       return;
     }
 
@@ -169,7 +169,7 @@ void IBDOC_MSRTF::ParseRecords(const RECORD& FileRecord)
   if ((fp = fopen(outfile, "wb")) == NULL)
     {
       unlink(urifile);
-      logf (LOG_ERRNO, "%s: Could not create '%s'", outfile.c_str());
+      message_log (LOG_ERRNO, "%s: Could not create '%s'", outfile.c_str());
       return;
     }
 
@@ -188,14 +188,14 @@ void IBDOC_MSRTF::ParseRecords(const RECORD& FileRecord)
   FILE *pp = _IB_popen(pipe, "r");
   if (pp == NULL)
     {
-      logf (LOG_ERRNO, "%s: Could not open pipe '%s'", Doctype.c_str(), pipe.c_str());
+      message_log (LOG_ERRNO, "%s: Could not open pipe '%s'", Doctype.c_str(), pipe.c_str());
       fclose(fp);
       unlink(urifile);
       unlink(outfile);
 
       if (!IsAbsoluteFilePath (Filter))
 	{
-	  logf (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.",
+	  message_log (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.",
 		Doctype.c_str(), Filter.c_str());
 	  Filter.Clear();
 	}

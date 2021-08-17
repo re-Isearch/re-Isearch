@@ -1,10 +1,10 @@
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 #pragma ident  "@(#)squery.cxx"
 /* ########################################################################
 
    File: squery.cxx
    Description: Class SQUERY - Search Query
-   Originally Created: Thu Dec 28 21:38:30 MET 1995
-   Last maintained by: Edward C. Zimmermann
 
    ########################################################################
 
@@ -626,7 +626,7 @@ SQUERY& SQUERY::Cat(const SQUERY& OtherSquery, const STRING& Opname)
 {
   t_Operator Op = GetOperator(Opname);
   if (Op == OperatorERR)
-    logf (LOG_PANIC, "SQUERY::Cat : Operator %s undefined!", Opname.c_str());
+    message_log (LOG_PANIC, "SQUERY::Cat : Operator %s undefined!", Opname.c_str());
   Cat(OtherSquery, Op);
   return *this;
 }
@@ -915,6 +915,7 @@ size_t SQUERY::SetWords (const STRING& NewTerm, INT Weight, t_Operator Op)
 {
   STRLIST TermList;
   TermList.SplitWords(NewTerm);
+ 
   return SetWords (TermList, Weight, Op);
 }
 
@@ -989,6 +990,9 @@ size_t SQUERY::SetWords (const STRLIST& TermList, const OPERATOR& Operator, PATT
   OPSTACK Stack;
   STERM Sterm;
   size_t count = 0;
+
+ //  cerr << "OPERATOR " <<  Operator << endl;
+
   for (const STRLIST *p = TermList.Next(); p != &TermList; p = p->Next())
     {
       Sterm.SetTerm ( p->Value() );
@@ -1156,7 +1160,7 @@ size_t SQUERY::SetRelevantTerm (const STRING& RelId)
       STRING Data;
       if (pdb->KeyLookup (RecordKey, &RsRecord) == GDT_FALSE)
         {
-          logf (LOG_NOTICE, "Stale relevent element %s", RelId.c_str());
+          message_log (LOG_NOTICE, "Stale relevent element %s", RelId.c_str());
         }
       else if (ESet == BRIEF_MAGIC)
         {
@@ -1709,7 +1713,7 @@ size_t SQUERY::SetTerm (const STRING& NewTerm, GDT_BOOLEAN Ored)
   SetOpstack (Stack);
 
   if (NewTerm.GetLength() < 1024)
-    logf (LOG_DEBUG, "SQUERY::SetTerm(\"%s\",%d) -> %d terms / %d ops", NewTerm.c_str(),
+    message_log (LOG_DEBUG, "SQUERY::SetTerm(\"%s\",%d) -> %d terms / %d ops", NewTerm.c_str(),
         Ored, term_count, op_count);
   if (special) return 1;
   return term_count;
@@ -1811,7 +1815,7 @@ GDT_BOOLEAN SQUERY::isPlainQuery (STRLIST *Words, t_Operator Operator) const
       }
 
     if (fieldCount || operatorCount || rsetCount) return GDT_FALSE;
-    if (otherCount) logf (LOG_WARN, "isPlainQuery(%d): otherCount = %d",
+    if (otherCount) message_log (LOG_WARN, "isPlainQuery(%d): otherCount = %d",
 	(int)Operator, otherCount);
     return GDT_TRUE;
 }
@@ -1885,7 +1889,7 @@ GDT_BOOLEAN SQUERY::isOpQuery (const t_Operator Operator) const
       }
 
     if (operatorCount) return GDT_FALSE;
-    if (otherCount) logf (LOG_WARN, "isOpQuery(%d): otherCount = %d",
+    if (otherCount) message_log (LOG_WARN, "isOpQuery(%d): otherCount = %d",
 	(int)Operator, otherCount);
     return GDT_TRUE;
 }
@@ -2302,7 +2306,7 @@ GDT_BOOLEAN SQUERY::Read (PFILE Fp)
                   Stack << irset;
                 }
               else if (operand_typ == TypeNil)
-                logf (LOG_PANIC, "SQUERY:: TypeNil Operand found in read!");
+                message_log (LOG_PANIC, "SQUERY:: TypeNil Operand found in read!");
             }
           else if (op_typ == TypeOperator)
             {
@@ -2589,7 +2593,7 @@ int QUERY::Run ()
 		case OperatorSortBy:
 		  TempStack << Foo;
 		  break;
-                default: logf (LOG_PANIC, "INTERNAL ERROR: Unknown Unary Operator %d!", (int)op_t );
+                default: message_log (LOG_PANIC, "INTERNAL ERROR: Unknown Unary Operator %d!", (int)op_t );
                 }
             }
           else if (op_t != OperatorNoop && op_t != OperatorERR)
@@ -2639,7 +2643,7 @@ int QUERY::Run ()
 		      TempStack << Foo;
                       break;
                     default:
-                      logf (LOG_ERROR, "RPN Stack contains bogus ops.");
+                      message_log (LOG_ERROR, "RPN Stack contains bogus ops.");
                       // Bad case
                       if (Op1) delete Op1;
                       if (Op2) delete Op2;

@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)scan.cxx"
 /************************************************************************
 ************************************************************************/
@@ -97,7 +101,7 @@ GDT_BOOLEAN atomicSCANLIST::Read(FILE *fp)
     }
   if ((rcount > 0 && count == 0) || rcount == count)
     return GDT_TRUE; // Everthing went OK
-  logf (LOG_ERROR, "Scanlist read failure. Expected %lu elements, got %lu",
+  message_log (LOG_ERROR, "Scanlist read failure. Expected %lu elements, got %lu",
 	(unsigned long) count, (unsigned long)rcount);
   return GDT_FALSE;
 }
@@ -564,7 +568,7 @@ size_t INDEX::_scanAddEntry(SCANLIST *ListPtr,
 {
   if (Buffer == NULL)
     {
-      logf (LOG_PANIC, "INDEX::_scanAddEntry() passed Nil Buffer");
+      message_log (LOG_PANIC, "INDEX::_scanAddEntry() passed Nil Buffer");
       return 0;
     }
 
@@ -704,7 +708,7 @@ size_t INDEX::Scan (SCANLIST *ListPtr, const STRING& Fieldname,
   query.SetQueryTerm(Expression);
   if (query.GetTotalTerms() > 1)
     {
-      logf (LOG_DEBUG, "Expression '%s' = '%s', use ScanSearch", Expression.c_str(), query.GetRpnTerm().c_str());
+      message_log (LOG_DEBUG, "Expression '%s' = '%s', use ScanSearch", Expression.c_str(), query.GetRpnTerm().c_str());
       if (!Cat) ListPtr->Clear();
       return ScanSearch(ListPtr, query, Fieldname); 
     }

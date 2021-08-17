@@ -1,4 +1,8 @@
 /*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
+/*
  * UTIL/CRCTEST.C	- CRC tester, by Matt Dillon
  * 
  * This program is designed to test an N-bit CRC against a word dictionary

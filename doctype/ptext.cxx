@@ -45,11 +45,11 @@ PTEXT::PTEXT(PIDBOBJ DbParent, const STRING& Name) :
 
   if (ParseBody == GDT_FALSE)
     {
-      logf (LOG_INFO, "ParseBody of %s types is disabled", Doctype.c_str());
+      message_log (LOG_INFO, "ParseBody of %s types is disabled", Doctype.c_str());
       return;
     }
   if (allowZeroLengthPages && Doctype.Search("PDF") == 0)
-    logf (LOG_INFO, "Allow Zero Length Pages for %s", Doctype.c_str());
+    message_log (LOG_INFO, "Allow Zero Length Pages for %s", Doctype.c_str());
   initFields = GDT_FALSE;
   initAutoFields = GDT_FALSE;
 }
@@ -121,20 +121,20 @@ void PTEXT::AddFieldDefs()
 
   if (paraFieldName == satzFieldName && !paraFieldName.IsEmpty())
     {
-      logf (LOG_ERROR, "\
+      message_log (LOG_ERROR, "\
 Should not map sentence and paragraph to the same name. Paragraph field disabled!");
       paraFieldName.Clear();
     }
 
   if (lineFieldName == paraFieldName && !paraFieldName.IsEmpty())
     {
-      logf (LOG_ERROR, "\
+      message_log (LOG_ERROR, "\
 Should not map line and paragraph to the same name. Paragraph field disabled!");
       paraFieldName.Clear();
     }
   if (lineFieldName == satzFieldName && !lineFieldName.IsEmpty())
     {
-      logf (LOG_ERROR, "\
+      message_log (LOG_ERROR, "\
 Should not map line and sentence to the same name, Sentence field disabled!");
       satzFieldName.Clear();
     }
@@ -223,13 +223,13 @@ void PTEXT::InitFields()
 
      initAutoFields = GDT_FALSE;
      if (count == 0) {
-       logf (LOG_INFO, "%s: All %d textual body autotag fields disabled.",
+       message_log (LOG_INFO, "%s: All %d textual body autotag fields disabled.",
 		Doctype.c_str(), 6-count);
        ParseBody = GDT_FALSE;
      } else if (count == maxD)
-       logf (LOG_INFO, "%s: All %d textual body autotag fields enabled", Doctype.c_str(), count);
+       message_log (LOG_INFO, "%s: All %d textual body autotag fields enabled", Doctype.c_str(), count);
      else 
-       logf (LOG_INFO, "%s: %d textual body autotag fields enabled, %d disabled.",
+       message_log (LOG_INFO, "%s: %d textual body autotag fields enabled, %d disabled.",
 		Doctype.c_str(), count, maxD-count);
     }
 }
@@ -267,7 +267,7 @@ void PTEXT::ParseFields (PRECORD NewRecord)
 {
   if (Db == NULL)
     {
-      logf (LOG_PANIC, "Can't add to a NIL database");
+      message_log (LOG_PANIC, "Can't add to a NIL database");
       return;
     }
   STRING fn;
@@ -275,7 +275,7 @@ void PTEXT::ParseFields (PRECORD NewRecord)
   PFILE fp = Db->ffopen (fn, "rb");
   if (!fp)
     {
-      logf (LOG_ERRNO, "Can't open '%s'", fn.c_str());
+      message_log (LOG_ERRNO, "Can't open '%s'", fn.c_str());
       return;		// ERROR
     }
 
@@ -647,7 +647,7 @@ while (pos < Length && Length != 0) {
     }
 
 
-  logf (LOG_INFO, "%s: %u lines/%u sentences/%u paragraphs/%u pages.",
+  message_log (LOG_INFO, "%s: %u lines/%u sentences/%u paragraphs/%u pages.",
 	Doctype.c_str(), lineCount, satzCount, paraCount, pageCount);
 
   return pdft;
@@ -968,7 +968,7 @@ while (pos < Length && Length != 0) {
     }
 
 
-  logf (LOG_INFO, "%s: %u lines/%u sentences/%u paragraphs/%u pages.",
+  message_log (LOG_INFO, "%s: %u lines/%u sentences/%u paragraphs/%u pages.",
 	Doctype.c_str(), lineCount, satzCount, paraCount, pageCount);
 }
 

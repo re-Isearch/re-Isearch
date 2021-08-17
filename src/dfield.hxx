@@ -1,7 +1,7 @@
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 /*@@@
 File:		dfield.hxx
-Version:	1.00
-$Revision: 1.1 $
 Description:	Class DATEFLD - Data structures for date 
 @@@*/
 

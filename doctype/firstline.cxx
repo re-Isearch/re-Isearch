@@ -32,7 +32,7 @@ FIRSTLINE::FIRSTLINE (PIDBOBJ DbParent, const STRING& Name):
   StartLine = DOCTYPE::Getoption(option, "1"). GetInt();
   if (StartLine < 1)
     {
-      logf (LOG_ERROR, "%s: Option %s specified with value < 1 (%d)", Doctype.c_str(), option, StartLine);
+      message_log (LOG_ERROR, "%s: Option %s specified with value < 1 (%d)", Doctype.c_str(), option, StartLine);
       StartLine = 1;
     }
 }
@@ -65,7 +65,7 @@ void FIRSTLINE::ParseFields (PRECORD NewRecord)
   PFILE fp = Db->ffopen (fn, "rb");
   if (!fp)
     {
-      logf (LOG_ERRNO, "Could not access %s", fn.c_str() );
+      message_log (LOG_ERRNO, "Could not access %s", fn.c_str() );
       return;		// ERROR
     }
 

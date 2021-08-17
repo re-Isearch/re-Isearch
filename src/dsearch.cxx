@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /* $Id: dsearch.cxx,v 1.1 2007/05/15 15:47:23 edz Exp $ */
 
 /*@@@
@@ -199,14 +203,14 @@ PIRSET INDEX::DateSearch(const SRCH_DATE& Key, const STRING& FieldName, INT4 Rel
   if (ft.IsText())
     {
       Parent->SetErrorCode(113); // "Unsupported attribute type"
-      logf(LOG_DEBUG, "Can't search numeric in a mundane text field '%s'", FieldName.c_str());
+      message_log(LOG_DEBUG, "Can't search numeric in a mundane text field '%s'", FieldName.c_str());
       return pirset;
     }
 
   if (!Parent->DfdtGetFileName(FieldName, ft, &Fn))
     {
       Parent->SetErrorCode(1); // Permanent System Error 
-      logf (LOG_PANIC, "Could not create a table name for field '%s'", FieldName.c_str());
+      message_log (LOG_PANIC, "Could not create a table name for field '%s'", FieldName.c_str());
       return pirset;
     }
 
@@ -410,7 +414,7 @@ complement:
 
   //  SetCache->Add(T1,Relation,FieldName,DBName,pirset);
 #if DEBUG
-  logf (LOG_DEBUG, "NumericSearch - %ld hits in %s for term='%f' relation=%d",
+  message_log (LOG_DEBUG, "NumericSearch - %ld hits in %s for term='%f' relation=%d",
 	pirset->GetTotalEntries(), FieldName.c_str(), Key, Relation);
 #endif
   return(pirset);

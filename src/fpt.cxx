@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)fpt.cxx"
 
 
@@ -52,7 +56,7 @@ void FPT::Init (size_t TableSize)
 	( (int)((_global_streams_count + TableSize+10)) >= kernel_max_streams) &&
 	(_global_opens_count == 0 || _global_opens_count > (_global_streams_count/2)) )
     {
-      logf(LOG_NOTICE, "You MUST increase kernel soft/hard file stream limits (%d). Contact your sysadmin!!",
+      message_log(LOG_NOTICE, "You MUST increase kernel soft/hard file stream limits (%d). Contact your sysadmin!!",
 	kernel_max_streams);
       MaximumEntries = 0;
       Table = NULL;
@@ -63,7 +67,7 @@ void FPT::Init (size_t TableSize)
       if (((kernel_max_streams - _global_streams_count) < (int)(3*TableSize+10)) &&
 		_global_opens_count > (_global_streams_count/2))
 	{
-	  logf (LOG_WARN, "You should increase kernel soft/hard file stream limits (%d).", kernel_max_streams);
+	  message_log (LOG_WARN, "You should increase kernel soft/hard file stream limits (%d).", kernel_max_streams);
 	  if (TableSize > 10) TableSize /= 2;
 	  if (TableSize > 20) TableSize = 16;
 	  if (TableSize < 10) TableSize = 10;
@@ -75,7 +79,7 @@ void FPT::Init (size_t TableSize)
       }
       if (Table == NULL)
 	{
-	  logf (LOG_PANIC|LOG_ERRNO, "FPT::Init() Allocation failure (wanted %d)", TableSize);
+	  message_log (LOG_PANIC|LOG_ERRNO, "FPT::Init() Allocation failure (wanted %d)", TableSize);
 	  TableSize = 0;
 	}
       _global_streams_count += (MaximumEntries = TableSize);
@@ -225,7 +229,7 @@ INT FPT::FreeSlot()
  	}
       if (NewEntry == TotalEntries)
 	{
-	  logf (LOG_DEBUG, "Stream cache is filled, trying to collect garbage..");
+	  message_log (LOG_DEBUG, "Stream cache is filled, trying to collect garbage..");
 	  for (freeEntry = 0; freeEntry < TotalEntries; freeEntry++)
 	    {
 	      if (Table[freeEntry].GetClosed())
@@ -238,7 +242,7 @@ INT FPT::FreeSlot()
 	    }
 	  if (NewEntry == TotalEntries)
 	    {
-	      logf (LOG_DEBUG, "Stream cache is filled and no room is available!");
+	      message_log (LOG_DEBUG, "Stream cache is filled and no room is available!");
 	      return -1;
 	    }
 	}
@@ -301,7 +305,7 @@ PFILE FPT::ffopen (const STRING& FileName, const CHR* Type)
       GDT_BOOLEAN  Opened = Fprec.GetOpened ();
 
       if ((Fp = Fprec.GetFilePointer ()) == NULL) {
-	logf (LOG_ERROR, "Stream cache of '%s' is bonked! Contact bugs@nonmonotonic.com", FileName.c_str());
+	message_log (LOG_ERROR, "Stream cache of '%s' is bonked! Contact bugs@nonmonotonic.com", FileName.c_str());
 	if ((Fp = ::fopen(FileName, Type)) != NULL)
 	  {
 	    Table[z - 1].SetFilePointer (Fp);
@@ -312,9 +316,9 @@ PFILE FPT::ffopen (const STRING& FileName, const CHR* Type)
       } else if (Opened && Fp)
 	{
 	  if (Om[0] != 'r')
-	    logf (LOG_WARN, "FPT: %s (%s) is already opened %s.", Fn.c_str(), Type, Om.c_str());
+	    message_log (LOG_WARN, "FPT: %s (%s) is already opened %s.", Fn.c_str(), Type, Om.c_str());
 	  else
-	    logf (LOG_DEBUG, "FPT: %s (%s) is already opened %s.", Fn.c_str(), Type, Om.c_str());
+	    message_log (LOG_DEBUG, "FPT: %s (%s) is already opened %s.", Fn.c_str(), Type, Om.c_str());
 	}
       if (Om == Type)
 	{
@@ -346,7 +350,7 @@ PFILE FPT::ffopen (const STRING& FileName, const CHR* Type)
 	{
 	  // Oops, could not change mode!
 	  Table[z - 1].SetClosed (); 
-	  logf (LOG_ERRNO, "Could not change mode of %s to %s", FileName.c_str(), Type);
+	  message_log (LOG_ERRNO, "Could not change mode of %s to %s", FileName.c_str(), Type);
 	  LowPriority(z); 
 	}
       else
@@ -386,7 +390,7 @@ opened:
 	  if ((Fp = ::fopen(FileName, Type)) != NULL)
 	    goto opened; // Yea!!
 	  if (errno == 0 || errno == EMFILE || errno == ENFILE)
-	    logf (LOG_ERROR, "Too many open streams: %u active / %u allocated / %u open.",
+	    message_log (LOG_ERROR, "Too many open streams: %u active / %u allocated / %u open.",
 		(unsigned)TotalEntries, _global_streams_count, _global_opens_count);
         }
     }
@@ -514,13 +518,13 @@ void FPT::Sync ()
 	      try { NewTable = new FPREC[ MaximumEntries ]; } catch (...) { NewTable  = NULL; }
 	      if (NewTable  == NULL)
 		{
-		  logf (LOG_PANIC, "Can't sync FPT tables, allocation failed");
+		  message_log (LOG_PANIC, "Can't sync FPT tables, allocation failed");
 		}
 	    }
 	  if (NewTable)
 	    NewTable[i++] = Table[x];
 	  else
-	    logf (LOG_PANIC, "FPREC is NULL");
+	    message_log (LOG_PANIC, "FPREC is NULL");
 	}
     }
   if (i)
@@ -554,7 +558,7 @@ void FPT::CloseAll ()
 	}
       else
         {
-	  logf (LOG_ERROR, "Dangling open '%s'", Table[x].GetFileName().c_str());
+	  message_log (LOG_ERROR, "Dangling open '%s'", Table[x].GetFileName().c_str());
 //	  Table[x].SetClosed (); // Mark as closed
 	}
     }
@@ -568,12 +572,12 @@ FPT::~FPT ()
 {
   CloseAll ();
   if (_global_otherOpens > 0)
-    logf (LOG_ERROR, "Potential %d dangling opened streams.", _global_otherOpens);
+    message_log (LOG_ERROR, "Potential %d dangling opened streams.", _global_otherOpens);
 
  _global_streams_count -= MaximumEntries;
 
   if (Table) delete[]Table;
   if ( _global_streams_count == 0 &&  _global_opens_count)
-  logf (LOG_WARN, "FPT: Closed last FPT but %d file streams still open.", _global_opens_count);
-  else logf (LOG_DEBUG, "Deleted FPT (%d global streams left, %d open)", _global_streams_count, _global_opens_count);
+  message_log (LOG_WARN, "FPT: Closed last FPT but %d file streams still open.", _global_opens_count);
+  else message_log (LOG_DEBUG, "Deleted FPT (%d global streams left, %d open)", _global_streams_count, _global_opens_count);
 }

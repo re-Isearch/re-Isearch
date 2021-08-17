@@ -1,4 +1,6 @@
-#pragma ident  "@(#)mdt.cxx  1.82 08/04/01 03:01:21 BSN"
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
+#pragma ident  "@(#)mdt.cxx"
 
 //// TODO: htonll etc... Current implmentation is 32-bit!!!
 
@@ -182,7 +184,7 @@ GDT_BOOLEAN MDT::BuildKeySortTable()
 
   if (useIndexMap)
     {
-      logf (LOG_ERROR, "MDT Can't build Key Sort Table while tables are mapped.");
+      message_log (LOG_ERROR, "MDT Can't build Key Sort Table while tables are mapped.");
       return GDT_FALSE;
     }
 
@@ -205,9 +207,9 @@ GDT_BOOLEAN MDT::BuildKeySortTable()
       for (_index_id_t i =0; i< TotalEntries; i++)
 	{
 	  if ((index = (size_t)INDEX_MASK(KeyIndex[i].Index)) == 0) {
-	    logf (LOG_WARN, "Undefined key index[%u]", (unsigned)i);
+	    message_log (LOG_WARN, "Undefined key index[%u]", (unsigned)i);
 	  } else if (index > TotalEntries) {
-	    logf (LOG_PANIC, "MDT SortTable/KeyIndex[%u] grok (%u>%u)",
+	    message_log (LOG_PANIC, "MDT SortTable/KeyIndex[%u] grok (%u>%u)",
 		(unsigned)i, (unsigned)index, (unsigned)TotalEntries);
 	  } else {
 	    KeySortTable[index-1].Position = i;
@@ -360,7 +362,7 @@ void MDT::Init()
       MdtFp = NULL;
     }
   InstanceCount++;
-  logf (LOG_DEBUG, "MDT::Init() instance %d", InstanceCount);
+  message_log (LOG_DEBUG, "MDT::Init() instance %d", InstanceCount);
 
   if (IsBigEndian ())
     {
@@ -428,7 +430,7 @@ void MDT::Init()
 	  const GPTYPE cache_version = *((GPTYPE *)ptr);
 	  if (cache_version != CacheVersion || IndexMap.Size() < (2*sizeof(GPTYPE)))
 	    {
-	      logf (LOG_ERROR, "Key/Index Cache version mis-match (!%d)!", CacheVersion);
+	      message_log (LOG_ERROR, "Key/Index Cache version mis-match (!%d)!", CacheVersion);
 	      IndexMap.Unmap();
 	      GpIndex = NULL;
 	      KeyIndex = NULL;
@@ -451,7 +453,7 @@ void MDT::Init()
 	      else // ERROR
 		{
 		  if (GpTotal || TotalEntries)
-		    logf (LOG_WARN, "Key/Index cache defective");
+		    message_log (LOG_WARN, "Key/Index cache defective");
 		  IndexMap.Unmap();
 		  GpIndex   = NULL;
 		  KeyIndex  = NULL;
@@ -465,7 +467,7 @@ void MDT::Init()
 	  useIndexMap = GDT_FALSE;
 	}
     }
-  logf (LOG_DEBUG, "Index %sMapped, MDT %sMapped", useIndexMap ? "" : "not ", useMdtMap ? "" : "not ");
+  message_log (LOG_DEBUG, "Index %sMapped, MDT %sMapped", useIndexMap ? "" : "not ", useMdtMap ? "" : "not ");
 
 if (!useIndexMap) {
   // Load Gp Index
@@ -489,14 +491,14 @@ if (!useIndexMap) {
 	  TotalEntries = (size_t)((s.st_size - 2*sizeof(GPTYPE))/ ( sizeof(GPREC)+sizeof(KEYREC) + sizeof(KEYSORT)));
 	}
       if (version != CacheVersion)
-	logf (LOG_WARN, "MDT: Version of '%s' %d!=%d!", MdtIndexName.c_str(),
+	message_log (LOG_WARN, "MDT: Version of '%s' %d!=%d!", MdtIndexName.c_str(),
 		version, CacheVersion);
 
       if (TotalEntries != (size_t)realTotal)
 	{
 	  long diff = realTotal - TotalEntries;
 	  if (diff < 0) diff *= -1;
-	  logf (LOG_ERROR, "MDT: Format error on Gp/Key cache file '%s' %ld!=%ld [%ld %s] (recoverable)",
+	  message_log (LOG_ERROR, "MDT: Format error on Gp/Key cache file '%s' %ld!=%ld [%ld %s] (recoverable)",
 		MdtIndexName.c_str(), TotalEntries, realTotal, diff, realTotal > TotalEntries ? "missing" : "excess");
 	  TotalEntries = 0;
 	}
@@ -508,7 +510,7 @@ if (!useIndexMap) {
 	  try {
 	    GpIndex = new GPREC[TotalEntries];
 	  } catch (...) {
-	    logf (LOG_PANIC, "Can't allocate %ld bytes for Gp cache (recoverable)", TotalEntries*sizeof(GPREC) );
+	    message_log (LOG_PANIC, "Can't allocate %ld bytes for Gp cache (recoverable)", TotalEntries*sizeof(GPREC) );
 	    GpIndex = NULL;
 	    TotalEntries = 0;
 	  }
@@ -518,7 +520,7 @@ if (!useIndexMap) {
 	    {
 	      // Error
 	      TotalEntries = 0;
-	      logf (LOG_ERROR, "Read error on Gp cache file (recoverable)");
+	      message_log (LOG_ERROR, "Read error on Gp cache file (recoverable)");
 	    }
 	  // Load Key Index
 	  if (TotalEntries)
@@ -527,7 +529,7 @@ if (!useIndexMap) {
 		KeyIndex = new KEYREC[TotalEntries];
 		KeySortTable = new KEYSORT[TotalEntries];
 	      } catch (...) {
-		logf (LOG_PANIC, "Can't allocate memory for %ld element key cache and/or key sort table (recoverable)", TotalEntries);
+		message_log (LOG_PANIC, "Can't allocate memory for %ld element key cache and/or key sort table (recoverable)", TotalEntries);
 		KeyIndex = NULL;
 		KeySortTable = NULL;
 		TotalEntries = 0;
@@ -537,13 +539,13 @@ if (!useIndexMap) {
 	      if (KeyIndex && (bytes != (size_t)_sys_read (fd, (void *)KeyIndex, bytes)))
 		{
 		  // Error
-		  logf (LOG_ERROR, "Read error on key cache file (recoverable)");
+		  message_log (LOG_ERROR, "Read error on key cache file (recoverable)");
 		  TotalEntries = 0;
 		}
 	     bytes = sizeof(KEYSORT)*TotalEntries;
 	      if (KeySortTable && (bytes != (size_t)_sys_read (fd, (void *)KeyIndex, bytes)))
 		{
-		  logf (LOG_ERROR, "Read error on key sort table");
+		  message_log (LOG_ERROR, "Read error on key sort table");
 		}
 	    }
 	  close(fd);
@@ -592,7 +594,7 @@ done:
     }
   if (MdtFp != NULL)
     {
-      logf (LOG_DEBUG, "MDT %s -> %d", MdtName.c_str(), fileno(MdtFp));
+      message_log (LOG_DEBUG, "MDT %s -> %d", MdtName.c_str(), fileno(MdtFp));
       ReadTimestamp(); // Get timestamp
     }
   else
@@ -603,14 +605,14 @@ done:
 	{
 	  if (Fpt != NULL)
 	    {
-	      logf (LOG_INFO, "Insufficient file/stream handles in O/S");
+	      message_log (LOG_INFO, "Insufficient file/stream handles in O/S");
 	      Fpt->CloseAll();
 	      try_open_stream = GDT_FALSE;
 	      goto done;
 	    }
 	}
 #endif
-      logf (LOG_FATAL|LOG_ERRNO, "Could not create/open %s (MDT)", MdtName.c_str());
+      message_log (LOG_FATAL|LOG_ERRNO, "Could not create/open %s (MDT)", MdtName.c_str());
     }
 
   if (reBuildIndexCache)
@@ -622,13 +624,13 @@ done:
 #if USE_MDTHASHTABLE
   if (MDTHashTable != NULL)
     {
-      logf (LOG_ERROR, "MDT Hash Table was already inited in '%s'", MDTHashTable->Filename().c_str());
+      message_log (LOG_ERROR, "MDT Hash Table was already inited in '%s'", MDTHashTable->Filename().c_str());
       delete MDTHashTable;
     }
   try {
     MDTHashTable = new MDTHASHTABLE( FileStem, fastAdd ); 
   } catch (...) {
-    logf (LOG_PANIC|LOG_ERRNO, "Can't allocate multiple document strings table!");
+    message_log (LOG_PANIC|LOG_ERRNO, "Can't allocate multiple document strings table!");
     MDTHashTable = NULL;
   }
   if (_globalMDTHashTable == NULL)
@@ -656,7 +658,7 @@ GDT_BOOLEAN MDT::RebuildIndex()
     }
   else if (TotalEntries)
     {
-      logf (LOG_NOTICE, "Rebuilding Key/Gp indexes..");
+      message_log (LOG_NOTICE, "Rebuilding Key/Gp indexes..");
       // Rebuild by reading MDT
       MDTREC Mdtrec;
       if (useIndexMap)
@@ -676,7 +678,7 @@ GDT_BOOLEAN MDT::RebuildIndex()
 	GpIndex = new GPREC[TotalEntries];
 	KeyIndex = new KEYREC[TotalEntries];
       } catch (...) {
-	logf (LOG_PANIC|LOG_ERRNO,
+	message_log (LOG_PANIC|LOG_ERRNO,
 		"MDT: Gp Index memory allocation for %ld elements failed.", TotalEntries) ;
 	return GDT_FALSE;
       }
@@ -723,7 +725,7 @@ GDT_BOOLEAN MDT::SetIndexNum(INT Num) const
 {
   if (MdtFp== NULL)
     {
-      logf(LOG_ERROR, "MDT:: Can't set index number, stream NIL?");
+      message_log(LOG_ERROR, "MDT:: Can't set index number, stream NIL?");
     }
   else if (Num >= 0)
     {
@@ -735,7 +737,7 @@ GDT_BOOLEAN MDT::SetIndexNum(INT Num) const
 	  return GDT_TRUE;
 	}
       else
-	logf (LOG_ERRNO, "Could not seek to index byte in MDT (fd=%d)", fileno(MdtFp));
+	message_log (LOG_ERRNO, "Could not seek to index byte in MDT (fd=%d)", fileno(MdtFp));
     }
   return GDT_FALSE;
 }
@@ -746,13 +748,13 @@ void MDT::WriteTimestamp()
     {
       time_t Now = time((time_t *)NULL);
       Timestamp.Set(&Now);
-      logf (LOG_DEBUG, "Set timestamp to: %s", Timestamp.ISOdate().c_str());
+      message_log (LOG_DEBUG, "Set timestamp to: %s", Timestamp.ISOdate().c_str());
       if (MdtFp && !ReadOnly)
 	{
 	  if (fseek(MdtFp, 12, SEEK_SET) != -1)
 	    ::Write((UINT4)Now, MdtFp);
 	  else
-	    logf (LOG_ERRNO, "Could not write timestamp (%s)", Timestamp.ISOdate().c_str());
+	    message_log (LOG_ERRNO, "Could not write timestamp (%s)", Timestamp.ISOdate().c_str());
 	}
     }
 }
@@ -811,9 +813,9 @@ void MDT::WriteHeader() const
 /*12 */	  ::Write((UINT4)time((time_t *)NULL), MdtFp); // time 
 	}
       else
-	logf (LOG_ERRNO, "Can't write MDT Header");
+	message_log (LOG_ERRNO, "Can't write MDT Header");
     }
-  else logf (LOG_ERROR, "Can't write MDT Header: MDT not opened!");
+  else message_log (LOG_ERROR, "Can't write MDT Header: MDT not opened!");
 }
 
 GDT_BOOLEAN MDT::Ok() const
@@ -833,7 +835,7 @@ GDT_BOOLEAN MDT::Ok() const
 	  ::Read(&val, MdtFp);
 	  if (val != sizeof(MDTRECORD))
 	    {
-	      logf (LOG_NOTICE, "MDT's records are not compatible with this version.");
+	      message_log (LOG_NOTICE, "MDT's records are not compatible with this version.");
 	      return GDT_FALSE;
 	    }
 	  ::Read(&ch, MdtFp);
@@ -865,7 +867,7 @@ size_t MDT::AddEntry (const MDTREC& MdtRecord)
     }
   if (TotalEntries >=  MdtIndexCapacity)
     {
-      logf (LOG_PANIC, "MDT Capacity of %lu records has been exceeded!",  MdtIndexCapacity);
+      message_log (LOG_PANIC, "MDT Capacity of %lu records has been exceeded!",  MdtIndexCapacity);
       return 0;
     }
 //if (TotalEntries == 0) WriteHeader();
@@ -901,7 +903,7 @@ size_t MDT::AddEntry (const MDTREC& MdtRecord)
 		  MDTREC mdtrec (MdtRecord);
 		  GetUniqueKey (&newKey, GDT_FALSE);
 		  mdtrec.SetKey(newKey);
-		  logf (LOG_ERROR, "Duplicate Key \"%s\" (found at %d). Setting key to \"%s\".",
+		  message_log (LOG_ERROR, "Duplicate Key \"%s\" (found at %d). Setting key to \"%s\".",
 			Key.c_str(), i, newKey.c_str());
 		  return AddEntry (mdtrec);
 		  // left = i; break;
@@ -949,12 +951,12 @@ size_t MDT::AddEntry (const MDTREC& MdtRecord)
   // Have we exceeded the address space of GPTYPE?
   if (NextGlobalGp < oldGlobalGp)
     {
-      logf (LOG_FATAL|LOG_PANIC, "Physical database capacity exceeded (max %lu MB).",
+      message_log (LOG_FATAL|LOG_PANIC, "Physical database capacity exceeded (max %lu MB).",
 	MAX_GPTYPE/(1024L*1024L));
     }
   else if (NextGlobalGp > (MAX_GPTYPE - (2^20)))
     {
-      logf (LOG_WARN, "Physical database capacity nearly reached (%luK, max %lu MB).",
+      message_log (LOG_WARN, "Physical database capacity nearly reached (%luK, max %lu MB).",
 	NextGlobalGp/1024L, MAX_GPTYPE/(1024L*1024L));
     }
 
@@ -990,7 +992,7 @@ STRING MDT::GetKey (const size_t Index, int *Hash) const
     {
       size_t Position = KeySortPosition(Index);
       if (KeyIndex[Position].Index != Index)
-	logf (LOG_PANIC, "MDT::GetKey() table glitch"); 
+	message_log (LOG_PANIC, "MDT::GetKey() table glitch"); 
       Key = STRING(KeyIndex[Position].Key, DocumentKeySize);
       if (Hash) *Hash = KeyIndex[Position].Hash;
 #if 0
@@ -1073,7 +1075,7 @@ size_t MDT::RemoveDeleted ()
 		    }
 		  if (MdtWrongEndian) Mdtrec.FlipBytes ();
 		  if (Mdtrec.Write(MdtFp, n) == GDT_FALSE)
-		    logf (LOG_ERROR|LOG_ERRNO, "RemoveDeleted: Could not write to MDT");
+		    message_log (LOG_ERROR|LOG_ERRNO, "RemoveDeleted: Could not write to MDT");
 		  KeyIndex[n - 1] = KeyIndex[x - 1];
 		  KeyIndex[n - 1].Index = n;
 		  GpIndex[n - 1] = GpIndex[x - 1];
@@ -1094,7 +1096,7 @@ size_t MDT::RemoveDeleted ()
 	    }
 	  if (ftruncate (fileno (MdtFp), (TotalEntries = n - 1) * sizeof (MDTRECORD) + SIZEOF_MAGIC) == -1)
 	    {
-	      logf (LOG_ERROR|LOG_ERRNO, "Could not truncated MDT to %d entries", TotalEntries);
+	      message_log (LOG_ERROR|LOG_ERRNO, "Could not truncated MDT to %d entries", TotalEntries);
 	    }
 	  NextGlobalGp = 0;
 	  Changed = GDT_TRUE;
@@ -1107,11 +1109,11 @@ size_t MDT::RemoveDeleted ()
 GDT_BOOLEAN MDT::GetEntry (const size_t Index, MDTREC* MdtrecPtr) const
 {
   if (MdtFp == NULL)
-    logf (LOG_PANIC, "MdtFp is NULL!");
+    message_log (LOG_PANIC, "MdtFp is NULL!");
 
   if ((Index > 0) && (Index <= TotalEntries))
     {
-      logf (LOG_DEBUG, "GetEntry(%d,..) from fd=%d", fileno(MdtFp));
+      message_log (LOG_DEBUG, "GetEntry(%d,..) from fd=%d", fileno(MdtFp));
       if (useMdtMap)
 	{
 	  *MdtrecPtr = MdtIndex[Index - 1];
@@ -1125,7 +1127,7 @@ GDT_BOOLEAN MDT::GetEntry (const size_t Index, MDTREC* MdtrecPtr) const
       MdtrecPtr->HashTable = MDTHashTable;
       return GDT_TRUE;
     }
-  logf (LOG_PANIC, "MDT::GetEntry Index=%ld : Out of bounds (1,%ld)", (long)Index, (long)TotalEntries);
+  message_log (LOG_PANIC, "MDT::GetEntry Index=%ld : Out of bounds (1,%ld)", (long)Index, (long)TotalEntries);
   return GDT_FALSE;
 }
 
@@ -1151,7 +1153,7 @@ GDT_BOOLEAN MDT::SetDeleted(const size_t Index, GDT_BOOLEAN Delete)
 	      // YES..
 	      mdtrec.SetDeleted(Delete);
 	      mdtrec.Write(MdtFp, Index);
-	      logf (LOG_INFO, "MDT::SetDeleted: Entry #%d %sdeleted", Index, Delete ? "" : "un");
+	      message_log (LOG_INFO, "MDT::SetDeleted: Entry #%d %sdeleted", Index, Delete ? "" : "un");
 #if 1 /* EXPERIMENTAL April 2008 */
 	      if (useIndexMap || useMdtMap)
 		Resize(TotalEntries + 1); // To unmap
@@ -1167,13 +1169,13 @@ GDT_BOOLEAN MDT::SetDeleted(const size_t Index, GDT_BOOLEAN Delete)
 	      Changed = GDT_TRUE; // ADDED 2006 August 18
 	    }
 	  else
-	    logf (LOG_INFO, "MDT::SetDeleted: Entry #%d already %sdeleted", Index, Delete ? "" : "un");
+	    message_log (LOG_INFO, "MDT::SetDeleted: Entry #%d already %sdeleted", Index, Delete ? "" : "un");
 	  return GDT_TRUE;
 	}
-      logf (LOG_ERROR, "MDT::SetDeleted failed: Index %d not available", Index);
+      message_log (LOG_ERROR, "MDT::SetDeleted failed: Index %d not available", Index);
     }
   else if (!ReadOnly)
-    logf (LOG_ERROR, "MDT::SetDeleted failed: MDT Index %d OUT-OF-RANGE (>%d)!", Index, TotalEntries);
+    message_log (LOG_ERROR, "MDT::SetDeleted failed: MDT Index %d OUT-OF-RANGE (>%d)!", Index, TotalEntries);
   return GDT_FALSE;
 }
 
@@ -1302,13 +1304,13 @@ void MDT::Resize (const size_t Entries)
   if (Entries > TotalEntries)
     {
       if (Entries > MdtIndexCapacity)
-	logf (LOG_WARN, "MDT Capacity is %lu records in this version.",  MdtIndexCapacity);
+	message_log (LOG_WARN, "MDT Capacity is %lu records in this version.",  MdtIndexCapacity);
       // Resize Key Index
       KEYREC *OldKeyIndex = KeyIndex;
       try {
 	KeyIndex = new KEYREC[Entries];
       } catch (...) {
-	logf (LOG_ERRNO, "Memory re-alloc failed for %ld KEYRECS", Entries);
+	message_log (LOG_ERRNO, "Memory re-alloc failed for %ld KEYRECS", Entries);
 	KeyIndex = NULL;
       }
       if (OldKeyIndex)
@@ -1322,7 +1324,7 @@ void MDT::Resize (const size_t Entries)
       try {
 	GpIndex = new GPREC[Entries];
       } catch(...) {
-	logf (LOG_ERRNO, "Memory re-alloc failed for %ld GPRECS", Entries);
+	message_log (LOG_ERRNO, "Memory re-alloc failed for %ld GPRECS", Entries);
 	if (KeyIndex)
 	  {
 	    delete[] KeyIndex;
@@ -1427,7 +1429,7 @@ size_t MDT::LookupByKey (const STRING& Key)
       const size_t kLen = Key.Length();
       if (kLen == 0)
 	{
-	  logf (LOG_DEBUG, "MDT::LookupByKey: Zero-length Key lookup?");
+	  message_log (LOG_DEBUG, "MDT::LookupByKey: Zero-length Key lookup?");
 	  return 0;
 	}
       if (kLen > DocumentKeySize)
@@ -1476,7 +1478,7 @@ GPTYPE MDT::GetNameByGlobal(GPTYPE gp, STRING *Path, GPTYPE *Size, GPTYPE *LS, D
       if (LS)      *LS      = Mdtrec.GetLocalRecordStart();
       Start = Mdtrec.GetGlobalFileStart() + Mdtrec.GetLocalRecordStart();
    } else
-     logf(LOG_ERROR, "Lookup failed for %ld", (long) gp);
+     message_log(LOG_ERROR, "Lookup failed for %ld", (long) gp);
    return (Start);
 }
 
@@ -1620,7 +1622,7 @@ size_t MDT::GetMdtRecord (const GPTYPE gp, MDTREC *MdtrecPtr)
   const size_t x = LookupByGp (gp);
   if (x == 0)
     {
-      if (errno == EIDRM) logf (LOG_PANIC, "Could not find GP %ld!", gp);
+      if (errno == EIDRM) message_log (LOG_PANIC, "Could not find GP %ld!", gp);
       *MdtrecPtr = MDTREC(this);
     }
   else if (GetEntry (x, MdtrecPtr))
@@ -1682,7 +1684,7 @@ STRING& MDT::GetUniqueKey (PSTRING StringPtr, GDT_BOOLEAN Override)
 	{
 	  if (StringPtr->IsEmpty())
 	    {
-	      logf (LOG_PANIC, "Can't caculate a unique key. Contact software support.");
+	      message_log (LOG_PANIC, "Can't caculate a unique key. Contact software support.");
 	      break;
 	    }
 	  y = StringPtr->GetInt();
@@ -1704,7 +1706,7 @@ STRING& MDT::GetUniqueKey (PSTRING StringPtr, GDT_BOOLEAN Override)
       MDTREC mdtrec;
       if (GetEntry (Index, &mdtrec))
 	{
-	  logf (LOG_INFO, "Previous duplicate key '%s'%s set to '%s' and marking record deleted.",
+	  message_log (LOG_INFO, "Previous duplicate key '%s'%s set to '%s' and marking record deleted.",
 		OldKey.c_str(),
 		(OldKey.GetLength() > DocumentKeySize) ? "(truncated)" : "",
 		NewKey.c_str());
@@ -1771,12 +1773,12 @@ GDT_BOOLEAN MDT::KillAll()
 {
   GDT_BOOLEAN result = GDT_TRUE;
 
-  logf (LOG_DEBUG, "MDT KillAll()");
+  message_log (LOG_DEBUG, "MDT KillAll()");
   Resize(0);
   if (!ReadOnly && MdtFp) {
     if (EraseFileContents (MdtFp) == -1)
       {
-        logf (LOG_ERRNO, "KillAll: Could not truncate MDT to ZERO entries");
+        message_log (LOG_ERRNO, "KillAll: Could not truncate MDT to ZERO entries");
 	result = GDT_FALSE;
       }
   }
@@ -1820,7 +1822,7 @@ GDT_BOOLEAN MDT::KillAll()
 
 void MDT::FlushMDTIndexes()
 {
-  logf (LOG_DEBUG, "Flushing MDT...");
+  message_log (LOG_DEBUG, "Flushing MDT...");
 
   if ((Changed == GDT_TRUE) && (ReadOnly == GDT_FALSE))
     {
@@ -1834,12 +1836,12 @@ void MDT::FlushMDTIndexes()
 #if 0
       if (KeyIndexSorted)
 	{
-	  logf (LOG_DEBUG, "Debug Code: Checking KeyIndex Sort.");
+	  message_log (LOG_DEBUG, "Debug Code: Checking KeyIndex Sort.");
 	  for (size_t i=1; i < TotalEntries; i++)
 	    {
 	      if (strncmp(KeyIndex[i-1].Key, KeyIndex[i].Key, DocumentKeySize) > 0)
 		{
-		  logf (LOG_ERROR, "KEY SORT ERROR. Contact edz@nonmonotonic.com!!!!");
+		  message_log (LOG_ERROR, "KEY SORT ERROR. Contact edz@nonmonotonic.com!!!!");
 		  KeyIndexSorted = GDT_FALSE;
 		}
 	    }
@@ -1859,7 +1861,7 @@ void MDT::FlushMDTIndexes()
 #ifdef _WIN32
 	  setmode(fd, O_BINARY);
 #endif
-	  logf (LOG_DEBUG, "Writing MDT '%s' lookup cache v%ld %lu elements.",
+	  message_log (LOG_DEBUG, "Writing MDT '%s' lookup cache v%ld %lu elements.",
 			MdtIndexName.c_str(), (long)CacheVersion, (long)TotalEntries);
 	  const GPTYPE total = (GPTYPE)HTONL(TotalEntries);
 	  // Save Gp Index
@@ -1878,7 +1880,7 @@ void MDT::FlushMDTIndexes()
     }
   else if ((MaxEntries == 0) && (Changed == GDT_FALSE) && (ReadOnly == GDT_FALSE))
     {
-      logf (LOG_DEBUG, "Removing MDT rests.");
+      message_log (LOG_DEBUG, "Removing MDT rests.");
       // did nothing so zap junk
       UnlinkFile(MdtName);
       UnlinkFile(MdtIndexName);
@@ -1916,25 +1918,25 @@ MDT::~MDT ()
 	  // Last instance so we can
 	  if (MDTHashTable != _globalMDTHashTable)
 	    {
-	      logf (LOG_DEBUG, "Deleting (delayed) _globalMDTHashTable");
+	      message_log (LOG_DEBUG, "Deleting (delayed) _globalMDTHashTable");
 	      delete _globalMDTHashTable;
 	    }
 	  _globalMDTHashTable = NULL; // Remove global pressence
 	  delete MDTHashTable;
-	  logf (LOG_DEBUG, "Deleting current MDTHashTable");
+	  message_log (LOG_DEBUG, "Deleting current MDTHashTable");
 	}
       else if (MDTHashTable != _globalMDTHashTable) // Other instances still being used
 	{
-	  logf (LOG_DEBUG, "Deleting current MDTHashTable (not _global)");
+	  message_log (LOG_DEBUG, "Deleting current MDTHashTable (not _global)");
 	  delete MDTHashTable;
 	}
       MDTHashTable = NULL;
     }
 #endif
   if (InstanceCount)
-    logf (LOG_DEBUG, "Deleted MDT Instance, %d instances still exist", InstanceCount);
+    message_log (LOG_DEBUG, "Deleted MDT Instance, %d instances still exist", InstanceCount);
   else
-    logf (LOG_DEBUG, "Disposed of all MDT Instances");
+    message_log (LOG_DEBUG, "Disposed of all MDT Instances");
 }
 
 

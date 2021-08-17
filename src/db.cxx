@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #include "db.hxx"
 #include <errno.h>
 #include <stdlib.h>
@@ -286,14 +290,14 @@ DB_ENV *DB::db_init(char *home)
 
   // Rely on calloc to initialize the structure.
   if ((dbenv = (DB_ENV *)calloc(sizeof(DB_ENV), 1)) == NULL)
-    logf (LOG_PANIC, "Insufficent Core!");
+    message_log (LOG_PANIC, "Insufficent Core!");
   else
     {
       dbenv->db_errfile = stderr;
       dbenv->db_errpfx = progname;
       if ((errno = db_appinit(home, NULL, dbenv, DB_CREATE)) != 0)
 	{
-	  logf (LOG_PANIC, "db_appinit %s failed!", home.c_str())
+	  message_log (LOG_PANIC, "db_appinit %s failed!", home.c_str())
 	}
     }
     return (dbenv);

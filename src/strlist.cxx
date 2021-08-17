@@ -1,31 +1,12 @@
-#pragma ident  "@(#)strlist.cxx  1.38 08/19/00 23:58:59 BSN"
-
-/************************************************************************
-************************************************************************/
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
+#pragma ident  "@(#)strlist.cxx"
 
 /*-@@@
 File:		strlist.cxx
-Version:	1.00
 Description:	Class STRLIST - String List
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@-*/
 
-/*
-// History:
-// =======
-// $Log: strlist.cxx,v $
-// Revision 1.1  2007/05/15 15:47:23  edz
-// Initial revision
-//
-// Revision 1.11  1996/05/02  19:52:37  edz
-// Sync
-//
-// Revision 1.3  1995/11/27  00:04:46  edz
-// New method SplitWords to build a STRLIST from a sentence. This
-// should work better than Split(" ", TheString) for getting the
-// words in a list.
-//
-*/
 #include "common.hxx"
 #include "strlist.hxx"
 #include "magic.hxx"
@@ -36,12 +17,12 @@ Author:		Nassib Nassar, nrn@cnidr.org
 
 #if  LISTOBJ_NO_INLINED
 // LISTOBJ 
-LISTOBJ::LISTOBJ () { logf(LOG_DEBUG, "LISTOBJ Create");}
+LISTOBJ::LISTOBJ () { message_log(LOG_DEBUG, "LISTOBJ Create");}
 LISTOBJ::LISTOBJ (const STRING&) {;}
-LISTOBJ::~LISTOBJ() { logf(LOG_DEBUG, "LISTOBJ Destroy");}
+LISTOBJ::~LISTOBJ() { message_log(LOG_DEBUG, "LISTOBJ Destroy");}
 size_t      LISTOBJ::GetTotalEntries () const { return 0; }
 GDT_BOOLEAN LISTOBJ::Load(const STRING& arg) {
-  logf(LOG_DEBUG, "LISTOBJ::Load(%s)", arg.c_str());
+  message_log(LOG_DEBUG, "LISTOBJ::Load(%s)", arg.c_str());
   return GDT_FALSE;
 }
 GDT_BOOLEAN LISTOBJ::InList(const STRING& Word) const {
@@ -186,7 +167,7 @@ STRLIST *STRLIST::AddEntry(const STRING& StringEntry)
 	  VLIST::AddNode(NodePtr);
 	} 
       else
-	logf (LOG_PANIC, "Memory allocation failed in STRLIST::AddEntry(\"%s\")", StringEntry.c_str());
+	message_log (LOG_PANIC, "Memory allocation failed in STRLIST::AddEntry(\"%s\")", StringEntry.c_str());
     }
   return this;
 }
@@ -227,7 +208,7 @@ size_t STRLIST::UniqueSort (const size_t from, const size_t max)
       try {
         TablePtr = new STRING[Total];
       } catch (...) {
-	logf (LOG_PANIC|LOG_ERRNO,
+	message_log (LOG_PANIC|LOG_ERRNO,
 		"Can't allocate %u string slots in STRLIST::UniqueSort().", (unsigned)Total);
         return Total;
       }
@@ -298,7 +279,7 @@ size_t STRLIST::Sort ()
       try {
         TablePtr = new STRING[Total];
       } catch (...) {
-        logf (LOG_PANIC|LOG_ERRNO,
+        message_log (LOG_PANIC|LOG_ERRNO,
 		"Can't allocate %u string slots in STRLIST::Sort().", (unsigned)Total);
         return Total;
       }
@@ -340,7 +321,7 @@ size_t STRLIST::CaseSort ()
       try {
         TablePtr = new STRING[Total];
       } catch (...) {
-        logf (LOG_PANIC|LOG_ERRNO,
+        message_log (LOG_PANIC|LOG_ERRNO,
 		"Can't allocate %u string slots in STRLIST::CaseSort().", (unsigned)Total);
         return Total;
       }

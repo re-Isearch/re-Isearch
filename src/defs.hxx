@@ -1,11 +1,11 @@
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 /************************************************************************
 #define STANDALONE if not part of the lib
 ************************************************************************/
 /*@@@
 File:		defs.hxx
-Version:	2.00
 Description:	General definitions
-Author:		Edward C. Zimmermann (edz@nonmonotonic.com)
 @@@*/
 
 #ifndef PLATFORM_INCLUDED
@@ -119,24 +119,26 @@ inline void         log_message(int level, const char *string) {
 }
 
 #if 0 /* This is just to check to make sure the messages are OK! */
-extern void logf(int, const char *format, ...) __attribute__((format(printf,2,3)));
+extern void message_log(int, const char *format, ...) __attribute__((format(printf,2,3)));
 #else
-#define logf _globalMessageLogger.log
+#define message_log _globalMessageLogger.log
 #endif
 
-inline void  info_message (const char *CString) { log_message(iLOG_INFO, CString);}
-inline void  panic_message(const char *CString) { log_message(iLOG_PANIC, CString);}
-inline void  error_message(const char *CString) { log_message(iLOG_ERROR, CString);}
-inline void  errno_message(const char *CString) { log_message(iLOG_ERRNO, CString);}
-inline void  fatal_message(const char *CString) { log_message(iLOG_FATAL, CString);}
+inline void  info_message (const char *str) {  _globalMessageLogger.info_message(str);}
+inline void  panic_message(const char *str) {  _globalMessageLogger.panic_message(str);}
+inline void  error_message(const char *str) {  _globalMessageLogger.error_message(str);}
+inline void  errno_message(const char *str) {  _globalMessageLogger.errno_message(str);}
+inline void  fatal_message(const char *str) {  _globalMessageLogger.fatal_message(str);}
+/*
 #ifdef __STRING_HXX__
 inline void  panic_message(const STRING& String) { log_message(iLOG_PANIC, String.c_str());}
 inline void  error_message(const STRING& String) { log_message(iLOG_ERROR, String.c_str());}
 inline void  errno_message(const STRING& String) { log_message(iLOG_ERRNO, String.c_str());}
 inline void  fatal_message(const STRING& String) { log_message(iLOG_FATAL, String.c_str());}
 #endif
+*/
 
-#define _IB_DEBUG  if (_ib_debug) logf
+#define _IB_DEBUG  if (_ib_debug) message_log
 extern GDT_BOOLEAN _ib_debug;
 
 

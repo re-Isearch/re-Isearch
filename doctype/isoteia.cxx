@@ -64,7 +64,7 @@ class IBDOC_ISOTEIA : public GILSXML {
 public:
   IBDOC_ISOTEIA (PIDBOBJ DbParent, const STRING& Name) : GILSXML (DbParent, Name) {
 
-    logf (LOG_DEBUG, "IBDOC_ISOTEIA Creation for %s", Name.c_str());
+    message_log (LOG_DEBUG, "IBDOC_ISOTEIA Creation for %s", Name.c_str());
 
     DateCreatedField  = cdate;
     DateModifiedField = mdate;
@@ -91,11 +91,11 @@ public:
 
     if (help.IsEmpty())
       help << myDescription << "\n\n" << myOptions << "\n";
-    logf (LOG_DEBUG, "ISOTEIA: plugin '%s' created", Name.c_str());
+    message_log (LOG_DEBUG, "ISOTEIA: plugin '%s' created", Name.c_str());
   }
 
   virtual void LoadFieldTable() {
-    logf (LOG_DEBUG, "ISOTEIA: LoadFieldTable()");
+    message_log (LOG_DEBUG, "ISOTEIA: LoadFieldTable()");
     if (Db)
       {
 	size_t i;
@@ -207,22 +207,22 @@ DATERANGE  IBDOC_ISOTEIA::ParseDateRange(const STRING& Buffer) const
 	      /* Beginning-Date */
 	      Start.Set( value );
 	      if (!Start.Ok())
-		logf (LOG_WARN, "%s: DateRange Subelement %s contained non-parseable starting date: %s",
+		message_log (LOG_WARN, "%s: DateRange Subelement %s contained non-parseable starting date: %s",
 			Doctype.c_str(), tag, value.c_str());
-	      //logf (LOG_INFO, "%s = %s", tag, Start.RFCdate().c_str());
+	      //message_log (LOG_INFO, "%s = %s", tag, Start.RFCdate().c_str());
 	      break;
 
 	    case 'E': case 'e':
 	      /* Ending-Date */
 	      End.Set (value);
 	      if (!End.Ok())
-		logf (LOG_WARN, "%s: DateRange Subelement %s contained non-parseable ending date: %s",
+		message_log (LOG_WARN, "%s: DateRange Subelement %s contained non-parseable ending date: %s",
 			Doctype.c_str(), tag, value.c_str());
-		//logf (LOG_INFO, "%s = %s", tag, End.RFCdate().c_str());
+		//message_log (LOG_INFO, "%s = %s", tag, End.RFCdate().c_str());
 	      break;
 
 	    default:
-	      logf (LOG_ERROR, "%s: Unknown tag '%s'", Doctype.c_str(), tag);
+	      message_log (LOG_ERROR, "%s: Unknown tag '%s'", Doctype.c_str(), tag);
 	      break;
 	   }
 	}
@@ -335,7 +335,7 @@ int  IBDOC_ISOTEIA::ParseBBox(const STRING& Buffer, BBOXFLD *fld) const
 // Stubs for dynamic loading
 extern "C" {
   IBDOC_ISOTEIA *  __plugin_isoteia_create (IDBOBJ * parent, const STRING& Name) {
-    logf (LOG_INFO, "Creating '%s' DOCTYPE class from plugin", Name.c_str());
+    message_log (LOG_INFO, "Creating '%s' DOCTYPE class from plugin", Name.c_str());
     return new IBDOC_ISOTEIA (parent, Name);
   }
   int          __plugin_isoteia_id  (void) { return DoctypeDefVersion; }

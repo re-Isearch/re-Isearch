@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /*@@@
 File:		dlist.cxx
 Version:	1.00
@@ -136,7 +140,7 @@ GDT_BOOLEAN DATELIST::Resize(size_t Entries)
   try {
     temp =new DATEFLD[Entries];
   } catch (...) {
-    logf (LOG_PANIC, "Memory allocation failure. Can't build Date field array!");
+    message_log (LOG_PANIC, "Memory allocation failure. Can't build Date field array!");
     return GDT_FALSE;
   }
   size_t      CopyCount;
@@ -228,7 +232,7 @@ SearchState DATELIST::Matcher(const SRCH_DATE& Key,
     default: break;
   }
 
-  logf (LOG_PANIC, "Hideous Matching Error");
+  message_log (LOG_PANIC, "Hideous Matching Error");
   return(NO_MATCH);
 }
 
@@ -272,7 +276,7 @@ SearchState DATELIST::Matcher(GPTYPE Key, GPTYPE A, GPTYPE B, GPTYPE C,
       return(TOO_LOW);
   }
 
-  logf (LOG_PANIC, "Hideous Matching Error");
+  message_log (LOG_PANIC, "Hideous Matching Error");
   return(NO_MATCH);
 }
 
@@ -324,7 +328,7 @@ SearchState DATELIST::DiskFind(STRING Fn, const SRCH_DATE& Key, INT4 Relation, I
   PFILE  Fp = fopen(Fn, "rb");
 
   if (!Fp) {
-    logf (LOG_ERRNO, "Can't open date index '%s'", Fn.c_str());
+    message_log (LOG_ERRNO, "Can't open date index '%s'", Fn.c_str());
     *Index = -1;
     return NO_MATCH;
 
@@ -338,9 +342,9 @@ SearchState DATELIST::DiskFind(STRING Fn, const SRCH_DATE& Key, INT4 Relation, I
       {
 	fclose(Fp);
 	if (feof(Fp))
-	  logf (LOG_INFO, "Empty index: '%s'", Fn.c_str());
+	  message_log (LOG_INFO, "Empty index: '%s'", Fn.c_str());
 	else
-	  logf (LOG_PANIC, "%s not a date index??", Fn.c_str());
+	  message_log (LOG_PANIC, "%s not a date index??", Fn.c_str());
         *Index = -1;
         return NO_MATCH;
       }
@@ -464,7 +468,7 @@ SearchState DATELIST::DiskFind(STRING Fn, GPTYPE Key, INT4 Relation, INT4 *Index
   PFILE  Fp = fopen(Fn, "rb");
 
   if (!Fp) {
-    logf (LOG_ERRNO, "Datelist Index open faolure '%s'", Fn.c_str());
+    message_log (LOG_ERRNO, "Datelist Index open faolure '%s'", Fn.c_str());
     *Index = -1;
     return NO_MATCH;
 
@@ -482,9 +486,9 @@ SearchState DATELIST::DiskFind(STRING Fn, GPTYPE Key, INT4 Relation, INT4 *Index
     if (getObjID(Fp) != objDLIST)
       {
 	if (feof(Fp))
-	  logf (LOG_INFO, "Empty index: '%s'", Fn.c_str());
+	  message_log (LOG_INFO, "Empty index: '%s'", Fn.c_str());
 	else
-	  logf (LOG_PANIC, "%s not a date index??", Fn.c_str());
+	  message_log (LOG_PANIC, "%s not a date index??", Fn.c_str());
         *Index = -1;
         return NO_MATCH;
       }
@@ -665,7 +669,7 @@ size_t DATELIST::LoadTable(INT4 Start, INT4 End)
   size_t  nRecs=0;
 
   if ( FileName.IsEmpty() ) {
-    logf (LOG_PANIC, "DATELIST::LoadTable: FileName not set");
+    message_log (LOG_PANIC, "DATELIST::LoadTable: FileName not set");
     return 0;
   }
 
@@ -673,12 +677,12 @@ size_t DATELIST::LoadTable(INT4 Start, INT4 End)
 
   if (Elements == 0)
     {
-//      logf (LOG_WARN, "DATELIST: '%s' is empty!", FileName.c_str());
+//      message_log (LOG_WARN, "DATELIST: '%s' is empty!", FileName.c_str());
       return nRecs;
     }
   if (Start > Elements)
     {
-      logf (LOG_WARN, "DATELIST: Start %d > element count (%ld). Nothing to load.",
+      message_log (LOG_WARN, "DATELIST: Start %d > element count (%ld). Nothing to load.",
 	(int)Start, Elements);
       return nRecs;
     }
@@ -690,7 +694,7 @@ size_t DATELIST::LoadTable(INT4 Start, INT4 End)
 
     if (Start > 0)
       if (fseek(fp, (off_t)Start*sizeof(DATEFLD), SEEK_SET) == -1)
-	logf (LOG_ERRNO, "DATELIST: Seek error on '%s'", FileName.c_str());
+	message_log (LOG_ERRNO, "DATELIST: Seek error on '%s'", FileName.c_str());
 
     Resize(Count + End-Start + 1); // Make sure there is some room
 
@@ -698,7 +702,7 @@ size_t DATELIST::LoadTable(INT4 Start, INT4 End)
     for (size_t i=Start;i<=End;i++){
       if (feof(fp))
 	{
-	  logf (
+	  message_log (
 		(errno ? LOG_ERRNO : LOG_ERROR),
 		"Premature date list read-failure in '%s' [%d into (%d,%d) of %ld]",
 		FileName.c_str(), (int)i, (int)Start, (int)End, Elements);
@@ -712,7 +716,7 @@ size_t DATELIST::LoadTable(INT4 Start, INT4 End)
     }
     fclose(fp);
   } else
-    logf (LOG_ERROR, "Could not open '%s'", FileName.c_str());
+    message_log (LOG_ERROR, "Could not open '%s'", FileName.c_str());
   return nRecs;
 }
 
@@ -727,7 +731,7 @@ size_t DATELIST::LoadTable(INT4 Start, INT4 End, NumBlock Offset)
   size_t nRecs = 0;
 
   if (FileName.IsEmpty() ) {
-    logf (LOG_PANIC, "Numeric List FileName not set");
+    message_log (LOG_PANIC, "Numeric List FileName not set");
     return 0;
   }
 
@@ -745,7 +749,7 @@ size_t DATELIST::LoadTable(INT4 Start, INT4 End, NumBlock Offset)
     if (getObjID(fp)!= objDLIST)
       {
 	fclose(fp);
-	logf (LOG_PANIC, "%s not a date list??", FileName.c_str());
+	message_log (LOG_PANIC, "%s not a date list??", FileName.c_str());
         return 0;
       }
 
@@ -775,14 +779,14 @@ size_t DATELIST::LoadTable(INT4 Start, INT4 End, NumBlock Offset)
 
       if (MoveTo != SIZEOF_HEADER)
 	if (fseek(fp, MoveTo, SEEK_SET) == -1)
-	  logf (LOG_ERRNO, "Can't seek to %ld in '%s'", (long)MoveTo, FileName.c_str());
+	  message_log (LOG_ERRNO, "Can't seek to %ld in '%s'", (long)MoveTo, FileName.c_str());
 
       Resize(Count + End-Start + 1);
       errno = 0;
       for (size_t i=Start; i<=End; i++) {
 	if (feof(fp))
 	  {
-	    logf (LOG_ERRNO, "Premature date list read-failure in '%s' [%d in (%d,%d)]",
+	    message_log (LOG_ERRNO, "Premature date list read-failure in '%s' [%d in (%d,%d)]",
 		FileName.c_str(), i, Start, End);
 	    break;
 	  }
@@ -797,7 +801,7 @@ size_t DATELIST::LoadTable(INT4 Start, INT4 End, NumBlock Offset)
     }
     fclose(fp);
   } else
-    logf (LOG_ERROR, "Could not open '%s'", FileName.c_str());
+    message_log (LOG_ERROR, "Could not open '%s'", FileName.c_str());
 
 #if DEBUG
   cerr << "returning " << nRecs << endl;
@@ -850,7 +854,7 @@ void DATELIST::WriteTable(INT Offset)
       if (MoveTo != SIZEOF_HEADER)
 	{
 	  if (fseek(fp, MoveTo, SEEK_SET) == -1)
-	    logf (LOG_ERRNO, "Can't seek to %ld in '%s'", (long)MoveTo, FileName.c_str());
+	    message_log (LOG_ERRNO, "Can't seek to %ld in '%s'", (long)MoveTo, FileName.c_str());
 	}
 
       for (_Count_t x=0; x<Count; x++)
@@ -905,7 +909,7 @@ FILE *DATELIST::OpenForAppend(const STRING& Fn)
 
   if (Fp == NULL)
    {
-      logf (LOG_ERRNO, "DATELIST:: Can't open '%s' for reading", Fn.c_str());
+      message_log (LOG_ERRNO, "DATELIST:: Can't open '%s' for reading", Fn.c_str());
       return NULL;
    }
   if (getObjID(Fp)!= objDLIST)
@@ -939,11 +943,11 @@ FILE *DATELIST::OpenForAppend(const STRING& Fn)
       char     scratch[ L_tmpnam+1];
       char    *TempName = tmpnam( scratch ); 
 
-      logf (LOG_WARN, "Could not create '%s', trying tmp '%s'", TmpName.c_str(),
+      message_log (LOG_WARN, "Could not create '%s', trying tmp '%s'", TmpName.c_str(),
 	TempName);
       if ((oFp = fopen(TempName, "wb")) == NULL)
 	{
-	  logf (LOG_ERRNO, "Can't create a temporary list '%s'", Fn.c_str());
+	  message_log (LOG_ERRNO, "Can't create a temporary list '%s'", Fn.c_str());
 	  fclose(Fp);
 	  return NULL;
 	}
@@ -963,14 +967,14 @@ FILE *DATELIST::OpenForAppend(const STRING& Fn)
   fclose(Fp);
   fclose(oFp);
   if (::remove(Fn) == -1)
-    logf (LOG_ERRNO, "Can't remove '%s'", Fn.c_str());
+    message_log (LOG_ERRNO, "Can't remove '%s'", Fn.c_str());
   if (RenameFile(TmpName, Fn) == -1)
-    logf (LOG_ERRNO, "Can't rename '%s' to '%s'", TmpName.c_str(), Fn.c_str());
+    message_log (LOG_ERRNO, "Can't rename '%s' to '%s'", TmpName.c_str(), Fn.c_str());
 
   // Now open for append
   if ((Fp = fopen(Fn, "a+b")) == NULL)
-    logf (LOG_ERRNO, "Could not open '%s' for date list append", Fn.c_str());
+    message_log (LOG_ERRNO, "Could not open '%s' for date list append", Fn.c_str());
   else
-    logf (LOG_DEBUG, "Opening '%s' for date list append", Fn.c_str());
+    message_log (LOG_DEBUG, "Opening '%s' for date list append", Fn.c_str());
   return Fp;
 }

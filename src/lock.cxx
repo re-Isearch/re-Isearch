@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)lock.cxx  1.15 08/07/01 14:01:19 BSN"
 
 
@@ -34,11 +38,11 @@ static const char _PID_TEMPLATE[]  = "%s__%lu";
 static inline void mySleep (int sec, int usec)
 {
 #ifdef _WIN32
-  logf (LOG_DEBUG, "Sleep %d seconds", sec);
+  message_log (LOG_DEBUG, "Sleep %d seconds", sec);
 #endif
   Sleep(100*sec+usec);
 #ifdef _WIN32
-  logf (LOG_DEBUG, "awake..");
+  message_log (LOG_DEBUG, "awake..");
 #endif
 }
 
@@ -229,7 +233,7 @@ static int db_lockactive (const char *lfile, int zap)
   if (r != MAXPIDLEN + 1)
     {
       if (unlink(lfile) == -1)
-	logf (LOG_ERRNO, "Can't remove bogus lockfile '%s", lfile);
+	message_log (LOG_ERRNO, "Can't remove bogus lockfile '%s", lfile);
       return 0;
     }
   if ((pid = atoi (pid_str)) == getpid())
@@ -239,7 +243,7 @@ static int db_lockactive (const char *lfile, int zap)
     {
       // Bad lock
       if (unlink(lfile) == -1)
-	logf (LOG_ERRNO, "Can't remove old lock '%s'", lfile);
+	message_log (LOG_ERRNO, "Can't remove old lock '%s'", lfile);
       return 0;
     }
   /*
@@ -250,13 +254,13 @@ static int db_lockactive (const char *lfile, int zap)
     {
       // Stale lock
       if (unlink (lfile) == -1)
-	logf (LOG_ERRNO, "Can't remove stale lock '%s'", lfile);
+	message_log (LOG_ERRNO, "Can't remove stale lock '%s'", lfile);
       return 0;
     }
   if (difftime > 61)
-    logf (LOG_WARN, "Lock '%s' is active for over %ld hour(s) (pid=%ld). Zombie?", lfile, difftime/60, (long)pid);
+    message_log (LOG_WARN, "Lock '%s' is active for over %ld hour(s) (pid=%ld). Zombie?", lfile, difftime/60, (long)pid);
   else
-    logf (LOG_INFO, "Lock '%s' is active %ld minutes (pid=%ld)", lfile, difftime, (long)pid);
+    message_log (LOG_INFO, "Lock '%s' is active %ld minutes (pid=%ld)", lfile, difftime, (long)pid);
   return -1; // Have an active lock
 }
 
@@ -294,7 +298,7 @@ static int db_dolock (char *entry, char *tfile, char *lfile)
     }
   else if (errno == EACCES)
     {
-      logf (LOG_ERRNO, "Don't have permission to set lockfile '%s", lfile);
+      message_log (LOG_ERRNO, "Don't have permission to set lockfile '%s", lfile);
 //    return 0;
     }
   unlink (tfile);

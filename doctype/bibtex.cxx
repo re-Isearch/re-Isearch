@@ -63,7 +63,7 @@ void BIBTEX::ParseRecords (const RECORD& FileRecord)
   MMAP mapping (fn, FileRecord.GetRecordStart(), FileRecord.GetRecordEnd(), MapSequential);
   if (!mapping.Ok())
     {
-      logf (LOG_ERRNO, "%s::ParseRecords: Could not map '%s' into memory", Doctype.c_str(), fn.c_str());
+      message_log (LOG_ERRNO, "%s::ParseRecords: Could not map '%s' into memory", Doctype.c_str(), fn.c_str());
       return;
     }
   PCHR RecBuffer = (PCHR)mapping.Ptr();
@@ -75,7 +75,7 @@ void BIBTEX::ParseRecords (const RECORD& FileRecord)
   PFILE fp = Db->ffopen (fn, "rb");
   if (!fp)
     {
-      logf (LOG_ERRNO, "%s::ParseRecords: Could not access '%s'",
+      message_log (LOG_ERRNO, "%s::ParseRecords: Could not access '%s'",
 	Doctype.c_str(), fn.c_str());
       return;			// File not accessed
     }
@@ -84,14 +84,14 @@ void BIBTEX::ParseRecords (const RECORD& FileRecord)
 
   if (RecEnd - RecStart <= 0)
     {
-      logf (LOG_WARN, "zero-length record '%s'[%ld-%ld] -- skipping",
+      message_log (LOG_WARN, "zero-length record '%s'[%ld-%ld] -- skipping",
 	(const char *)fn, (long)RecStart, (long)RecEnd);
       ffclose (fp);
       return;
     }
   if (fseek (fp, RecStart, 0) == -1)
     {
-      logf (LOG_ERRNO, "%s::ParseRecords(): Seek '%s' to %ld failed",
+      message_log (LOG_ERRNO, "%s::ParseRecords(): Seek '%s' to %ld failed",
 	Doctype.c_str(), fn.c_str(), RecStart);
       ffclose (fp);
       return;
@@ -104,7 +104,7 @@ void BIBTEX::ParseRecords (const RECORD& FileRecord)
   GPTYPE ActualLength = (GPTYPE) fread (RecBuffer, 1, RecLength, fp);
   if (ActualLength == 0)
     {
-      logf (LOG_ERRNO, "%s::ParseRecords(): Failed to fread '%s'",
+      message_log (LOG_ERRNO, "%s::ParseRecords(): Failed to fread '%s'",
 	Doctype.c_str(), fn.c_str());
       ffclose (fp);
       return;
@@ -112,7 +112,7 @@ void BIBTEX::ParseRecords (const RECORD& FileRecord)
   ffclose (fp);
   if (ActualLength != RecLength)
     {
-      logf (LOG_ERRNO, "%s::ParseRecords(): Failed to fread %d bytes, got %d",
+      message_log (LOG_ERRNO, "%s::ParseRecords(): Failed to fread %d bytes, got %d",
 	Doctype.c_str(), RecLength, ActualLength);
       return;
     }
@@ -183,22 +183,22 @@ void BIBTEX::ParseRecords (const RECORD& FileRecord)
   int errors = 0;
   if (quote)
     {
-      logf(LOG_ERROR, "Runaway quote..");
+      message_log(LOG_ERROR, "Runaway quote..");
       errors++;
     }
   if (State == InPrologue)
     {
-      logf(LOG_ERROR, "@ started but no object {} defined");
+      message_log(LOG_ERROR, "@ started but no object {} defined");
       errors++;
     }
   if (State == InRecord)
     {
-      logf(LOG_ERROR, "Record did not end..");
+      message_log(LOG_ERROR, "Record did not end..");
       errors++;
     }
   if (brace != 0)
     {
-      logf(LOG_ERROR, "Input was not wellformed! %d too many %c", 
+      message_log(LOG_ERROR, "Input was not wellformed! %d too many %c", 
 	brace > 0 ? brace : -brace,
 	brace > 0 ? O_BRACE : C_BRACE);
       errors++;
@@ -207,16 +207,16 @@ void BIBTEX::ParseRecords (const RECORD& FileRecord)
     {
       if (errors)
         {
-	  logf (LOG_WARN, "Marking %s %ld-%ld deleted",
+	  message_log (LOG_WARN, "Marking %s %ld-%ld deleted",
 		(const char *)fn, Start, ActualLength);
         }
       else if (Start != 0)
 	{
-	  logf (LOG_INFO, "Ignoring %s trailing bytes %ld-%ld",
+	  message_log (LOG_INFO, "Ignoring %s trailing bytes %ld-%ld",
 		(const char *)fn, Start, ActualLength);
 	}
       else
-	logf (LOG_INFO, "Ignoring '%s', bogus %s record", (const char *)fn, Doctype.c_str());
+	message_log (LOG_INFO, "Ignoring '%s', bogus %s record", (const char *)fn, Doctype.c_str());
       Record.SetBadRecord(); // Delete this record
       Record.SetDocumentType ( "<NIL>" ); // Delete this record
       Record.SetRecordStart (Start);
@@ -282,7 +282,7 @@ void BIBTEX::ParseFields (RECORD *NewRecord)
   PFILE fp = ffopen (fn, "rb");
   if (!fp)
     {
-      logf (LOG_ERRNO, "%s::ParseFields(): Failed to open '%s'", Doctype.c_str(), fn.c_str());
+      message_log (LOG_ERRNO, "%s::ParseFields(): Failed to open '%s'", Doctype.c_str(), fn.c_str());
       return;
     }
 
@@ -295,14 +295,14 @@ void BIBTEX::ParseFields (RECORD *NewRecord)
   if (RecEnd - RecStart <= 0)
     {
       ffclose (fp);
-      logf (LOG_WARN, "zero-length record - '%s' [%ld-%ld] - skipping", fn.c_str(), RecStart, RecEnd);
+      message_log (LOG_WARN, "zero-length record - '%s' [%ld-%ld] - skipping", fn.c_str(), RecStart, RecEnd);
       return;
     }
 
   // Make two copies of the record in memory
   if (fseek (fp, RecStart, 0) == -1)
     {
-      logf (LOG_ERRNO, "%s::ParseFields(): Seek failed - %s", Doctype.c_str(), fn.c_str());
+      message_log (LOG_ERRNO, "%s::ParseFields(): Seek failed - %s", Doctype.c_str(), fn.c_str());
       ffclose (fp);
       return;
     }
@@ -313,7 +313,7 @@ void BIBTEX::ParseFields (RECORD *NewRecord)
   size_t ActualLength = (GPTYPE) fread (RecBuffer, 1, RecLength, fp);
   if (ActualLength == 0)
     {
-      logf (LOG_ERRNO, "%s::ParseFields(): Failed to fread %s",
+      message_log (LOG_ERRNO, "%s::ParseFields(): Failed to fread %s",
 	Doctype.c_str(), fn.c_str());
       ffclose (fp);
       return;
@@ -321,7 +321,7 @@ void BIBTEX::ParseFields (RECORD *NewRecord)
   ffclose (fp);
   if (ActualLength != RecLength)
     {
-      logf (LOG_ERRNO, "%s::ParseFields(): Failed to fread %d bytes, got %d",
+      message_log (LOG_ERRNO, "%s::ParseFields(): Failed to fread %d bytes, got %d",
         Doctype.c_str(), RecLength, ActualLength);
       return;
     }
@@ -448,7 +448,7 @@ void BIBTEX::ParseFields (RECORD *NewRecord)
 		  // Now looking at the start 
 		  if (meta_start >= ActualLength || RecBuffer[meta_start] != '"')
 		    {
-		      logf (LOG_NOTICE|LOG_INFO,
+		      message_log (LOG_NOTICE|LOG_INFO,
 			"Couldn't find \" after %s =, skipping string", abbrev);
 		      break;
 		    }
@@ -463,7 +463,7 @@ void BIBTEX::ParseFields (RECORD *NewRecord)
 		    }
 		  if (meta_end == ActualLength)
 		    {
-		      logf (LOG_NOTICE, "Couldn't find end \" after %s, skipping string", abbrev);
+		      message_log (LOG_NOTICE, "Couldn't find end \" after %s, skipping string", abbrev);
 		      break;
 		    }
 		  // Have a start/end pair
@@ -579,7 +579,7 @@ void BIBTEX::ParseFields (RECORD *NewRecord)
 		}
 	      if (i == ActualLength)
 		{
-		  logf (LOG_NOTICE, "Couldn't find end %c after %s, skipping field",
+		  message_log (LOG_NOTICE, "Couldn't find end %c after %s, skipping field",
 			EndMark, keywords[j].keyword);
 		  break;
 		}
@@ -611,7 +611,7 @@ void BIBTEX::ParseFields (RECORD *NewRecord)
 			}
 		      else
 			{
-			  logf (LOG_NOTICE, "Duplicate BibTeX key \"%s\"", newkey);
+			  message_log (LOG_NOTICE, "Duplicate BibTeX key \"%s\"", newkey);
 			}
 		    }
 		  // Record Date?

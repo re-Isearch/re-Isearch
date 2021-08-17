@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /*@@@
 File:		fct.hxx
 Version:	1.30
@@ -145,9 +149,9 @@ public:
   FCT& operator= (const FCT& Fctable) {
     if (Fctable.p_ == NULL)
       {
-	logf (LOG_PANIC, "FCT pointer backstore nulled!?");
+	message_log (LOG_PANIC, "FCT pointer backstore nulled!?");
 	Clear();
-	logf (LOG_DEBUG, "Cleared");
+	message_log (LOG_DEBUG, "Cleared");
 	return *this;
       }
     ++Fctable.p_->count_;

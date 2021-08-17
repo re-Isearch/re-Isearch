@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 /*--@@@
 File:		dtreg.cxx
 Version:	3.00
@@ -981,7 +985,7 @@ static inline int PluginVersion(HINSTANCE handle, const STRING& module)
       STRING symbol (PluginSymbolPrefix);
       symbol += module;
       symbol += "_id";
-      logf (LOG_DEBUG, "Symbol '%s' load", symbol.c_str());
+      message_log (LOG_DEBUG, "Symbol '%s' load", symbol.c_str());
       int (*func)(void) = (int(*)())dlsym (handle, symbol.c_str());
       if (func)
         version = func();
@@ -997,7 +1001,7 @@ static inline dt_constr_t Creator(HINSTANCE handle, const STRING &module)
       STRING symbol (PluginSymbolPrefix);
       symbol += module;
       symbol += "_create";
-      logf (LOG_DEBUG, "Symbol '%s' load", symbol.c_str());
+      message_log (LOG_DEBUG, "Symbol '%s' load", symbol.c_str());
       create = (dt_constr_t) dlsym (handle, symbol.c_str());
     }
   return create;
@@ -1062,13 +1066,13 @@ dt_constr_t DTREG::open_doctype_constr(const STRING& dt_fname, const STRING& doc
 	    }
 	  if (create == NULL)
 	    {
-	      logf (LOG_ERROR, "'%s' (%s) is not a valid doctype v.%d plugin.",
+	      message_log (LOG_ERROR, "'%s' (%s) is not a valid doctype v.%d plugin.",
 		doctype.c_str(), dt_fname.c_str(), (0xFFF & DoctypeDefVersion));
 	      dlclose(handle);
 	    }
 	}
       else
-	logf (LOG_ERROR, "Error loading plugin %s: %s", dt_fname.c_str(), dlerror());
+	message_log (LOG_ERROR, "Error loading plugin %s: %s", dt_fname.c_str(), dlerror());
     }
   return create;
 }
@@ -1080,7 +1084,7 @@ void DTREG::BuildPluginList (const STRING& dir, STRLIST& dtlist, STRLIST *Query)
 #ifndef _MSDOS
   DIR *plugindir = opendir (dir.c_str());
   if (!plugindir) {
-    logf (LOG_ERRNO, "Can't open plug-in directory '%s'", dir.c_str());
+    message_log (LOG_ERRNO, "Can't open plug-in directory '%s'", dir.c_str());
     return;
   }
   struct dirent *ent;
@@ -1113,10 +1117,10 @@ void DTREG::BuildPluginList (const STRING& dir, STRLIST& dtlist, STRLIST *Query)
 	  if (plugin_version != DoctypeDefVersion)
 	    {
 	      if (plugin_version > 0)
-		logf (LOG_NOTICE, "File %s not comform to the current plug-in specification (%d!=%d).",
+		message_log (LOG_NOTICE, "File %s not comform to the current plug-in specification (%d!=%d).",
 			dt_fname.c_str(), plugin_version, DoctypeDefVersion);
 	      else
-		logf (LOG_DEBUG, "File %s does not comform to the current plug-in specification!",
+		message_log (LOG_DEBUG, "File %s does not comform to the current plug-in specification!",
 			dt_fname.c_str());
 	    }
 	  else if (Creator(handle, module))
@@ -1124,10 +1128,10 @@ void DTREG::BuildPluginList (const STRING& dir, STRLIST& dtlist, STRLIST *Query)
 	      dtlist.AddEntry(dt_name);
 	      if (Query)
 		Query->AddEntry( Description(handle, module) );
-	      logf (LOG_DEBUG, "Adding DOCTYPE plugin '%s' (%s)", dt_name.c_str(), dt_fname.c_str()); 
+	      message_log (LOG_DEBUG, "Adding DOCTYPE plugin '%s' (%s)", dt_name.c_str(), dt_fname.c_str()); 
 	    }
 	  else
-	    logf (LOG_DEBUG, "Can't load DOCTYPE plugin '%s' (%s): %s",
+	    message_log (LOG_DEBUG, "Can't load DOCTYPE plugin '%s' (%s): %s",
 		dt_name.c_str(), dt_fname.c_str(), dlerror());
 #ifdef RTLD_DEFAULT
 	  if (handle != RTLD_DEFAULT)
@@ -1135,7 +1139,7 @@ void DTREG::BuildPluginList (const STRING& dir, STRLIST& dtlist, STRLIST *Query)
 	    dlclose(handle);
 	}
       else
-	logf (LOG_ERROR, "Plugin %s failed: %s", dt_fname.c_str(), dlerror());
+	message_log (LOG_ERROR, "Plugin %s failed: %s", dt_fname.c_str(), dlerror());
     }
   }
   closedir (plugindir);
@@ -1192,7 +1196,7 @@ size_t ReadIndirect(const STRING& Filename, char *Buffer, off_t Start, size_t Le
       if (fp)
         {
           if (fseek(fp, Start, SEEK_SET) == -1)
-            logf (LOG_ERRNO, "Seek Error in '%s' (%ld)!", Filename.c_str(), Start);
+            message_log (LOG_ERRNO, "Seek Error in '%s' (%ld)!", Filename.c_str(), Start);
           else
             n = fread(Buffer, sizeof(char), Length, fp);
           fclose(fp);
@@ -1265,7 +1269,7 @@ size_t GetRecordData(const STRING& Filename, char *Buffer, off_t Start, size_t L
       if (fp)
         {
           if (fseek(fp, Start, SEEK_SET) == -1)
-            logf (LOG_ERRNO, "Seek Error in '%s' (%ld)!", Filename.c_str(), Start);
+            message_log (LOG_ERRNO, "Seek Error in '%s' (%ld)!", Filename.c_str(), Start);
           else
             n = fread(Buffer, sizeof(char), Length, fp);
           fclose(fp);

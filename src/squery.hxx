@@ -1,9 +1,8 @@
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
 /*@@@
 File:		squery.hxx
-Version:	1.00
 Description:	Class SQUERY - Search Query
-Author:		Nassib Nassar, nrn@cnidr.org
-Modifications:	Edward C. Zimmermann, edz@nonmonotonic.com
 @@@*/
 
 #ifndef SQUERY_HXX
@@ -100,6 +99,11 @@ public:
   size_t SetWords (const STRLIST& TermList, const STRING& ESet, INT Weight, t_Operator Op = OperatorOr);
   size_t SetWords (const STRLIST& TermList, const OPERATOR& Operator, int Weight);
   size_t SetWords (const STRLIST& TermList, const OPERATOR& Operator, ATTRLIST *AttrlistPtr = NULL);
+
+
+// size_t SetAndWords (const STRING& TermList, int Weight = 1) { return SetWords(TermList, Weight, OperatorAnd); }
+// size_t SetAndWords (const STRLIST& TermList, int Weight = 1) { return SetWords(TermList, Weight, OperatorAnd); }
+
 
   size_t PhraseToProx (const STRING& Term, const STRING& Field = NulString,
 	GDT_BOOLEAN LeftTruncated = GDT_FALSE, GDT_BOOLEAN Case = GDT_FALSE);

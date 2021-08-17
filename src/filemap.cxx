@@ -1,3 +1,7 @@
+/*
+Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE
+*/
 #pragma ident  "@(#)filemap.cxx  1.7 02/05/01 00:33:19 BSN"
 
 #include "common.hxx"
@@ -56,7 +60,7 @@ GPTYPE FILEMAP::GetKeyByGlobal(GPTYPE gp) const
    if (t)
       Start = t->GpStart + t->LocalStart;
    else
-     logf(LOG_ERROR, "FILEMAP Lookup failed for %ld", (long) gp);
+     message_log(LOG_ERROR, "FILEMAP Lookup failed for %ld", (long) gp);
    return (Start);
 }
 
@@ -77,7 +81,7 @@ GPTYPE FILEMAP::GetNameByGlobal(GPTYPE gp, PSTRING s, GPTYPE *size, GPTYPE *LS, 
       if (size)    *size = t->LocalEnd - t->LocalStart + 1;
       Start = t->GpStart + t->LocalStart;
    } else
-      logf(LOG_ERROR, "FILEMAP Lookup failed for %ld", (long) gp);
+      message_log(LOG_ERROR, "FILEMAP Lookup failed for %ld", (long) gp);
 
    return (Start);
 }
