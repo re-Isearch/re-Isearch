@@ -2,6 +2,8 @@ This is the respositiory for re-Isearch.
 
 Project re-isearch: a novel multimodal search and retrieval engine using mathematical models and algorithms different from the all-too-common inverted index (popularized by Salton in the 1960s). The design allows it to have, in practice, effectively no limits on the frequency of words, term length, number of fields or complexity of structured data and support even overlap--- where fields or structures cross other's boundaries (common examples are quotes, line/sentences, biblical verse, annotations). Its model enables a completely flexible unit of retrieval and modes of search.
 
+Featues/Uses
+
     • Low-code ETL / "Any-to-Any" architecture
     • Handles a wide range of document formats including “live” data.
     • Powerful Search (Structure, Objects, Spatial) / Relevancy Engine
