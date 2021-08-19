@@ -153,11 +153,11 @@ int (*_ib_ResolveConfigPath)(const char *Filename, char *buffer, int length);
 
 // Where it might be installed (default places)
 const char * const __IB_StandardBaseDirs[]= {
-  "/opt/BSN/",
-  "/opt/BSNib/",
-  "/var/opt/BSN",
-  "/var/opt/BSNib",
-  "/usr/local/BSN",
+  "/opt/nonmonotonic/ib",
+  "/opt/re-isearch/",
+  "/var/opt/nonmonotonic/ib",
+  "/var/opt/re-isearch",
+  "/usr/local/nonmonotonic",
   NULL
 };
 
