@@ -100,7 +100,6 @@ WARN=
 OPT=  #-O5 -ffast-math -fomit-frame-pointer 
 
 DEBUG=-g
-DEBUG=-pg
 PIC = -fPIC
 
 # Production version
@@ -115,7 +114,7 @@ OPT= -m64
 
 ## DEBUG OR NOT???
 OPT=-O3 -ftree-vectorize  -ffast-math -msse2
-#OPT=-g
+OPT=-g 
 PIC=-fpic
 
 CFLAGS= $(WARN) $(OPT) $(DEBUG) $(DEFINES) $(PROF)
@@ -144,7 +143,7 @@ SHARED = -shared $(PIC) $(DEBUG)
 
 
 ############### End Differences ######################################
-DEBUG=-g
+DEBUG=-g 
 LDFLAGS +=  $(DEBUG) $(PROF) -m64 
 #
 EXTRA= -lnsl -ldl -lm -lmagic
@@ -348,12 +347,13 @@ DOC_SRCS = \
 	$(DOCTYPE_DIR)/ptext.cxx \
 	$(DOCTYPE_DIR)/binary.cxx \
 	$(DOCTYPE_DIR)/filter.cxx \
-	$(DOCTYPE_DIR)/xpandoc.cxx \
+	$(DOCTYPE_DIR)/xfilter.cxx \
 	$(DOCTYPE_DIR)/ftp.cxx \
 	$(DOCTYPE_DIR)/bibtex.cxx \
 	$(DOCTYPE_DIR)/firstline.cxx \
 	$(DOCTYPE_DIR)/colondoc.cxx \
 	$(DOCTYPE_DIR)/tsldoc.cxx \
+	$(DOCTYPE_DIR)/csvdoc.cxx \
 	$(DOCTYPE_DIR)/ozsearch.cxx \
 	$(DOCTYPE_DIR)/psdoc.cxx \
 	$(DOCTYPE_DIR)/iknowdoc.cxx \
@@ -396,6 +396,7 @@ DOC_SRCS = \
 	$(DOCTYPE_DIR)/antihtml.cxx \
 	$(DOCTYPE_DIR)/htmlcache.cxx \
 	$(DOCTYPE_DIR)/filter2.cxx \
+	$(DOCTYPE_DIR)/pandoc.cxx \
 	$(DOCTYPE_DIR)/pdf.cxx
 
 PLUGIN_SRCS = \
@@ -476,13 +477,10 @@ gdt-sys.h:
 	touch gdt-sys.h
 #	/bin/sh ./configure $(CC)
 
-$(BIN_DIR)/date_parse: $(SRC_DIR)/date.cxx $(SRC_DIR)/date.hxx \
-		$(SRC_DIR)/string.o $(SRC_DIR)/common.o $(SRC_DIR)/logger.o \
-		$(SRC_DIR)/lang-codes.o $(SRC_DIR)/htmlcat.o $(SRC_DIR)/object.o
-	$(CC) $(DEFINES) -DMAIN_STUB=1 -o $(BIN_DIR)/date_parse $(SRC_DIR)/date.cxx \
-		$(SRC_DIR)/string.o $(SRC_DIR)/common.o $(SRC_DIR)/logger.o $(SRC_DIR)/ctype.o \
-		$(SRC_DIR)/lang-codes.o $(SRC_DIR)/qsort.o $(SRC_DIR)/htmlcat.o $(SRC_DIR)/object.o \
-		$(SRC_DIR)/support.o $(SRC_DIR)/mmap.o
+$(BIN_DIR)/date_parse: $(SRC_DIR)/date.cxx $(SRC_DIR)/date.hxx 
+	$(CC) $(DEFINES) -I ../src -I .  -DMAIN_STUB=1 -o $(BIN_DIR)/date_parse $(SRC_DIR)/date.cxx \
+	-L ../lib  $(LDOPTS) $(CORELIBS) -ldl -lmagic
+
 
 recordsyntax: $(SRC_DIR)/recordsyntax.cxx $(SRC_DIR)/recordsyntax.hxx \
 		$(SRC_DIR)/string.o $(SRC_DIR)/common.o $(SRC_DIR)/log.o \
