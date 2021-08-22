@@ -49,11 +49,18 @@ protected:
    GDT_BOOLEAN SetFilter(const STRING& Filter);
    STRING      GetFilter() const { return Filter; }
 
+   GDT_BOOLEAN SetArgs(const STRING& nArgs) {
+      return (Args = nArgs).GetLength() != 0;
+   }
+   STRING      GetArgs() const { return Args; }
+
+
    void        SetMIME_Type(const STRING& m) { MIME_Type = m; }
    STRING      GetMIME_Type() const          { return MIME_Type; }
 
 private:
    STRING Filter;
+   STRING Args;
    STRING MIME_Type;
 };
 
@@ -90,11 +97,18 @@ protected:
    GDT_BOOLEAN SetFilter(const STRING& Filter);
    STRING      GetFilter() const { return Filter; }
 
+   GDT_BOOLEAN SetArgs(const STRING& nArgs) {
+      return (Args = nArgs).GetLength() != 0;
+   }
+   STRING      GetArgs() const { return Args; }
+
+
    void        SetMIME_Type(const STRING& m) { MIME_Type = m; }
    STRING      GetMIME_Type() const          { return MIME_Type; }
 
 private:
    STRING Filter;
+   STRING Args;
    STRING MIME_Type;
 };
 
@@ -130,11 +144,18 @@ protected:
    GDT_BOOLEAN SetFilter(const STRING& Filter);
    STRING      GetFilter() const { return Filter; }
 
+   GDT_BOOLEAN SetArgs(const STRING& nArgs) {
+      return (Args = nArgs).GetLength() != 0;
+   }
+   STRING      GetArgs() const { return Args; }
+
+
    void        SetMIME_Type(const STRING& m) { MIME_Type = m; }
    STRING      GetMIME_Type() const          { return MIME_Type; }
 
 private:
    STRING Filter;
+   STRING Args;
    STRING MIME_Type;
 };
 
@@ -171,11 +192,19 @@ protected:
    GDT_BOOLEAN SetFilter(const STRING& Filter);
    STRING      GetFilter() const { return Filter; }
 
+
+   GDT_BOOLEAN SetArgs(const STRING& nArgs) {
+      return (Args = nArgs).GetLength() != 0;
+   }
+   STRING      GetArgs() const { return Args; }
+
+
    void        SetMIME_Type(const STRING& m) { MIME_Type = m; }
    STRING      GetMIME_Type() const          { return MIME_Type; }
 
 private:
    STRING Filter;
+   STRING Args;
    STRING MIME_Type;
 };
 

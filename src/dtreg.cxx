@@ -106,7 +106,8 @@ enum Doctypes {
   _NIL, // _NIL is not used
   /* 44 */
   _TBINARY,    _ONELINE,
-  _OZSEARCH,   _PAPYRUS,
+  _OZSEARCH,   _PANDOC,
+  _PAPYRUS,
   _PARA,       _PDFDOC,
   _PLAINTEXT,  _PSDOC,
   _PTEXT,      _RDF,
@@ -119,8 +120,8 @@ enum Doctypes {
   _SGMLTAG,    _SIMPLE,
   _SOIF,       _TSLDOC,
   _TSVDOC,     _XBINARY,
-  _FILTER,     _XML,
-  _XMLBASE,	_XPANDOC,
+  _FILTER,     _XFILTER,
+  _XML,        _XMLBASE,
   /* 72 */
   _YAHOOLIST,	_ISOTEIA,
   _CAPRSS,	_RSSCORE,
@@ -151,50 +152,53 @@ static const struct {
   { "BIBCOLON",   _BIBCOLON,   GDT_TRUE}, { "BIBTEX",     _BIBTEX,     GDT_TRUE},
   { "BINARY",     _BINARY,     GDT_TRUE}, { "COLONDOC",   _COLONDOC,   GDT_TRUE},
   { "COLONGRP",   _COLONGRP,   GDT_TRUE}, { "DIALOG-B",   _DIALOGB,    GDT_TRUE},
+
   { "DIF",        _DIF,        GDT_TRUE}, { "DIGESTTOC",  _DIGESTTOC,  GDT_FALSE},
   { "DOCTYPE",    _DOCTYPE,    GDT_FALSE},{ "DVBLINE",    _DVBLINE,    GDT_TRUE},
   { "ENDNOTE",    _ENDNOTE,    GDT_TRUE}, { "EUROMEDIA",  _EUROMEDIA,  GDT_TRUE},
   { "FILMLINE",   _FILMLINE,   GDT_TRUE}, { "FILTER2HTML",_FILTER2HTML,GDT_TRUE}, 
   { "FILTER2MEMO",_FILTER2MEMO,GDT_TRUE}, { "FILTER2TEXT",_FILTER2TEXT,GDT_TRUE},
+
   { "FILTER2XML", _FILTER2XML, GDT_TRUE}, { "FIRSTLINE",  _FIRSTLINE,  GDT_TRUE},
   { "FTP",        _FTP,        GDT_TRUE}, { "GILS",       _GILS,       GDT_TRUE},
   { "GILSXML",    _GILSXML,    GDT_TRUE}, { "HARVEST",    _HARVEST,    GDT_TRUE},
   { "HTML",       _HTML,       GDT_TRUE}, { "HTML--",     _ANTIHTML,   GDT_TRUE},
   { "HTMLCACHE",  _HTMLCACHE,  GDT_TRUE}, { "HTMLHEAD",   _HTMLHEAD,   GDT_TRUE},
+
   { "HTMLMETA",   _HTMLMETA,   GDT_TRUE}, { "HTMLREMOTE", _HTMLREMOTE, GDT_TRUE},
-
   { "IAFADOC",    _IAFADOC,    GDT_TRUE}, { "IKNOWDOC",   _IKNOWDOC,   GDT_TRUE},
-
   { "IRLIST",     _IRLIST,     GDT_TRUE}, { "LISTDIGEST", _LISTDIGEST, GDT_TRUE},
   { "MAILDIGEST", _MAILDIGEST, GDT_TRUE}, { "MAILFOLDER", _MAILFOLDER, GDT_TRUE},
   { "MAILMAN",    _MAILMAN,    GDT_FALSE},{ "MEDLINE",    _MEDLINE,    GDT_TRUE},
+
   { "MEMO",       _MEMODOC,    GDT_TRUE}, { "METADOC",    _METADOC,    GDT_TRUE},
   { "MISMEDIA",   _MISMEDIA,   GDT_TRUE}, { "NEWSFOLDER", _NEWSFOLDER, GDT_TRUE},
   { "NULL",       _NULL,       GDT_FALSE},
-
   { "OCR",        _TBINARY,    GDT_TRUE}, { "ONELINE",    _ONELINE,    GDT_TRUE},
-  { "OZSEARCH",   _OZSEARCH,   GDT_TRUE}, { "PAPYRUS",    _PAPYRUS,    GDT_TRUE},
+  { "OZSEARCH",   _OZSEARCH,   GDT_TRUE}, { "PANDOC",     _PANDOC,     GDT_TRUE},
+
+  { "PAPYRUS",    _PAPYRUS,    GDT_TRUE},
   { "PARA",       _PARA,       GDT_TRUE}, { "PDF",        _PDFDOC,     GDT_TRUE},
   { "PLAINTEXT",  _PLAINTEXT,  GDT_TRUE}, { "PS",         _PSDOC,      GDT_TRUE},
   { "PTEXT",      _PTEXT,      GDT_TRUE}, { "RDF",        _RDF,        GDT_TRUE},
   { "REFERBIB",   _REFERBIB,   GDT_TRUE},
+
   { "RESOURCE",   _RESOURCEDOC,GDT_FALSE},{ "RIS",        _RIS,        GDT_TRUE},
   { "ROADS++",    _ROADSDOC,   GDT_TRUE}, { "RSS.9x",     _RSS091,     GDT_TRUE},
   { "RSS1",       _RSS1,       GDT_TRUE}, { "RSS2",       _RSS2,       GDT_TRUE},
   { "SGML",       _SGML,       GDT_TRUE}, { "SGMLNORM",   _SGMLNORM,   GDT_TRUE},
   { "SGMLTAG",    _SGMLTAG,    GDT_TRUE}, { "SIMPLE",     _SIMPLE,     GDT_TRUE},
+
   { "SOIF",       _SOIF,       GDT_TRUE}, { "TSVDOC",     _TSLDOC,     GDT_TRUE},
   { "TSV",        _TSVDOC,     GDT_TRUE}, { "XBINARY",    _XBINARY,    GDT_TRUE},
-  { "XFILTER",    _FILTER,     GDT_TRUE}, { "XML",         _XML,       GDT_TRUE},
-  { "XMLBASE",    _XMLBASE,    GDT_TRUE}, { "XPANDOC",    _XPANDOC,    GDT_TRUE},
+  { "FILTER",     _FILTER,     GDT_TRUE}, { "XFILTER",    _XFILTER,    GDT_TRUE},
+  { "XML",         _XML,       GDT_TRUE}, { "XMLBASE",    _XMLBASE,    GDT_TRUE},
+  { "YAHOOLIST",  _YAHOOLIST,  GDT_TRUE}, { "ISOTEIA",    _ISOTEIA,    GDT_TRUE},
 
-  { "YAHOOLIST",  _YAHOOLIST,  GDT_TRUE},
-
-  { "ISOTEIA",    _ISOTEIA,    GDT_TRUE}, { "CAP",        _CAPRSS,     GDT_TRUE},
-  { "RSSCORE",    _RSSCORE,    GDT_TRUE}, { "HTMLZERO",   _HTMLZERO,   GDT_TRUE},
-  { "RSSARCHIVE", _RSSCOREARCHIVE, GDT_TRUE}, { "ATOM",       _ATOM,       GDT_TRUE},
-  { "NEWSML",     _NEWSML,     GDT_TRUE}, { "XMLREC",     _XMLREC,     GDT_TRUE},
-  { "CSVDOC",     _CSVDOC,     GDT_TRUE},
+  { "CAP",        _CAPRSS,     GDT_TRUE}, { "RSSCORE",    _RSSCORE,    GDT_TRUE},
+  { "HTMLZERO",   _HTMLZERO,   GDT_TRUE}, { "RSSARCHIVE", _RSSCOREARCHIVE, GDT_TRUE},
+  { "ATOM",       _ATOM,       GDT_TRUE}, { "NEWSML",     _NEWSML,     GDT_TRUE},
+  { "XMLREC",     _XMLREC,     GDT_TRUE}, { "CSVDOC",     _CSVDOC,     GDT_TRUE},
 
   /* Image Formats */
   { "GIF",        _IMAGEGIF,   GDT_FALSE}, { "PNG",        _IMAGEPNG,   GDT_FALSE},
@@ -216,16 +220,23 @@ static const struct {
   { "ALERT",      _CAPRSS,      GDT_FALSE},
   { "ROADSDOC",   _ROADSDOC,    GDT_FALSE},
 
-  { "JPG",        _IMAGEJPEG,  GDT_FALSE},
-  { "TIF",        _IMAGETIFF,  GDT_FALSE},
+  { "JPG",        _IMAGEJPEG,   GDT_FALSE},
+  { "TIF",        _IMAGETIFF,   GDT_FALSE},
 
-  { "ODT",        _XPANDOC,    GDT_TRUE},
+  { "ODT",        _PANDOC,      GDT_TRUE},
+  { "DOCX",       _PANDOC,      GDT_TRUE},
+  { "LATEX",      _PANDOC,      GDT_TRUE},
+  { "MARKDOWN",   _PANDOC,      GDT_TRUE},
+  { "JIRA",      _PANDOC,      GDT_TRUE},
+  { "JSON",       _PANDOC,      GDT_FALSE}, // Supports ONLY Pandoc created JSON
 
-  { "CSLDOC",     _CSVDOC,     GDT_FALSE}, // Old name
-  { "TSLDOC",     _TSLDOC,     GDT_FALSE}, // Old name
 
 
-  { "PLUGIN",     _PLUGIN,     GDT_FALSE}
+  { "CSLDOC",     _CSVDOC,      GDT_FALSE}, // Old name
+  { "TSLDOC",     _TSLDOC,      GDT_FALSE}, // Old name
+
+
+  { "PLUGIN",     _PLUGIN,      GDT_FALSE}
 };
 
 // This is a dummy
@@ -728,10 +739,12 @@ PDOCTYPE        DTREG::GetDocTypePtr(const DOCTYPE_ID& DoctypeId)
       return RegisterDocType (Ident, new XML(Db, Name));
     case _XMLBASE:
       return RegisterDocType (Ident, new XMLBASE(Db, Name));
-    case _XPANDOC:
-      return RegisterDocType (Ident, new XPANDOC(Db, Name));
+    case _XFILTER:
+      return RegisterDocType (Ident, new XFILTER(Db, Name));
     case _XMLREC:
       return RegisterDocType (Ident, new XMLREC(Db, Name));
+    case _RDF:
+      return RegisterDocType (Ident, new RDFREC(Db, Name));
     case _GILSXML:
       return RegisterDocType (Ident, new GILSXML(Db, Name));
     case _RSS091:
@@ -765,6 +778,8 @@ PDOCTYPE        DTREG::GetDocTypePtr(const DOCTYPE_ID& DoctypeId)
       return RegisterDocType (Ident, new FILTER2TEXTDOC(Db, Name));
     case _FILTER2XML:
       return RegisterDocType (Ident, new FILTER2XMLDOC(Db, Name));
+    case _PANDOC:
+      return RegisterDocType (Ident, new PANDOC(Db, Name));
     case _ANTIHTML:
       return RegisterDocType (Ident, new ANTIHTML(Db, Name));
     case _HTMLCACHE:

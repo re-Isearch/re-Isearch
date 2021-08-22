@@ -719,7 +719,7 @@ void HTMLMETA::ParseFields(RECORD *NewRecord)
       } else {
 	switch (ch) {
 	case 0:
-	  message_log (LOG_WARN, "<NUL> character (\\000) in '%s'(%ld) stream. Are you sure its %s (HTML)?",
+	  message_log (LOG_WARN, "<NUL> character (\\000) in '%s'(%ld) stream. Are you sure its %s (HTML)? Setting record as bad.",
 		filename.c_str(), position, Doctype.c_str());
 	  ffclose(fp);
 	  NewRecord->SetBadRecord();

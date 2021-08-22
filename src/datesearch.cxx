@@ -1,14 +1,11 @@
-/*
-Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
 It is made available and licensed under the Apache 2.0 license: see LICENSE
 */
 /* $Id: datesearch.cxx */
 
 /*@@@
 File:		datesearch.cxx
-Version:	$Revision: 1.1 $
 Description:	Class INDEX - date searching methods
-Author:		Archie Warnock (warnock@clark.net), A/WWW Enterprises
 @@@*/
 
 #include <stdlib.h>

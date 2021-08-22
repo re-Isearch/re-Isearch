@@ -6,7 +6,7 @@
 /*-@@@
 File:		medline.cxx
 Version:	$Revision: 1.1 $
-Description:	Class MEDLINE - Medline Document Type
+Description:	Class MEDLINE - Medline (text) Document Type
 Author:		Edward C. Zimmermann, edz@nonmonotonic.net
 Copyright:	Basis Systeme netzwerk, Munich
 @@@-*/
@@ -35,7 +35,7 @@ const char *MEDLINE::Description(PSTRLIST List) const
     List->AddEntry(Doctype);
   List->AddEntry (ThisDoctype);
   DOCTYPE::Description(List);
-  return "Medline Document Type";
+  return "Medline (txt) Document Type";
 }
 
 /* A few user-customizable parser features... */

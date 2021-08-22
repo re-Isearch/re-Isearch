@@ -34,7 +34,7 @@ static const char *mime_application_binary = "application/binary";
 static const char *ini_content_type_tag    = "Content-type";
 
 const char *FILTER2HTMLDOC::GetDefaultFilter() const { return ""; }
-const char *FILTER2XMLDOC::GetDefaultFilter() const  { return ""; }
+const char *FILTER2XMLDOC::GetDefaultFilter()  const { return ""; }
 const char *FILTER2TEXTDOC::GetDefaultFilter() const { return ""; }
 const char *FILTER2MEMODOC::GetDefaultFilter() const { return ""; }
 
@@ -139,6 +139,7 @@ static const char *ini_filter_tag = "Filter";
 
 static STRING SetFilter(const STRING& arg, const STRING& Doctype)
 {
+//cerr << Doctype << " setting filter to " << arg << endl;
   if (arg.GetLength() && (arg != "NULL"))
     {
       STRING Filter (ResolveBinPath(arg));
@@ -280,8 +281,7 @@ FILTER2MEMODOC::FILTER2MEMODOC(PIDBOBJ DbParent, const STRING& Name) : MEMODOC(D
 //
 // This is the common routine that does some of the significant work
 //
-static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord,
-  STRING *Filter, DOCTYPE* Doctype)
+static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord, STRING *Filter, STRING *Args, DOCTYPE* Doctype)
 {
   const char *doctype = Doctype ? Doctype->c_str() : "Filter2";
   if (Filter == NULL || Filter->IsEmpty())
@@ -360,14 +360,17 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord,
 
   // We write full file path as ordinary string
   start = Fn.WriteFile(fp);
-  start += fwrite("\0\0", 1, 2, fp) - 1;
+  start += fwrite("\0\0\n", 1, 3, fp) - 1;
 
 #if 0
   // Here we want to write some metadata into the .cat file
   len += Doctype->CatMetaInfoIntoFile(fp, Fn);
 #endif
 
-  STRING pipe = *Filter + " " +  Fn.Escape();
+
+  STRING pipe = *Filter;
+  if (Args) pipe << " " + Args->Escape();
+  pipe << " " << Fn.Escape();
 
   FILE *pp = _IB_popen(pipe, "r");
   if (pp == NULL)
@@ -430,7 +433,7 @@ void FILTER2XMLDOC::ParseRecords(const RECORD& FileRecord)
       message_log (LOG_WARN, "%s:BeforeIndexing() not called", Doctype.c_str());
       BeforeIndexing();
     }
-  GenRecord(Db, FileRecord, &Filter, this);
+  GenRecord(Db, FileRecord, &Filter, &Args, this);
 }
 void FILTER2TEXTDOC::ParseRecords(const RECORD& FileRecord)
 {
@@ -439,7 +442,7 @@ void FILTER2TEXTDOC::ParseRecords(const RECORD& FileRecord)
       message_log (LOG_WARN, "%s:BeforeIndexing() not called", Doctype.c_str());
       BeforeIndexing();
     }
-  GenRecord(Db, FileRecord, &Filter, this);
+  GenRecord(Db, FileRecord, &Filter, &Args, this);
 }
 void FILTER2HTMLDOC::ParseRecords(const RECORD& FileRecord)
 {
@@ -448,7 +451,7 @@ void FILTER2HTMLDOC::ParseRecords(const RECORD& FileRecord)
       message_log (LOG_WARN, "%s:BeforeIndexing() not called", Doctype.c_str());
       BeforeIndexing();
     }
-  GenRecord(Db, FileRecord, &Filter, this);
+  GenRecord(Db, FileRecord, &Filter, &Args, this);
 }
 void FILTER2MEMODOC::ParseRecords(const RECORD& FileRecord)
 {
@@ -457,7 +460,7 @@ void FILTER2MEMODOC::ParseRecords(const RECORD& FileRecord)
       message_log (LOG_WARN, "%s:BeforeIndexing() not called", Doctype.c_str());
       BeforeIndexing();
     }
-  GenRecord(Db, FileRecord, &Filter, this);
+  GenRecord(Db, FileRecord, &Filter, &Args, this);
 }
 
 

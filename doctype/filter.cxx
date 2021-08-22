@@ -3,7 +3,6 @@ File:		filter.cxx
 Version:	0.01
 Description:	Class FILTERDOC - Binary files
 Author:		Edward C. Zimmermann, edz@nonmonotonic.net
-Copyright:	Basis Systeme netzwerk, Munich
 @@@-*/
 
 #include <ctype.h>
@@ -15,7 +14,7 @@ Copyright:	Basis Systeme netzwerk, Munich
 #include "process.hxx"
 #include "doc_conf.hxx"
 
-#pragma ident  "@(#)filter.cxx  1.11 04/20/01 20:10:17 BSN"
+#pragma ident  "@(#)filter.cxx"
 
 const char *FILTERDOC::GetDefaultClass() const
 {
@@ -75,7 +74,7 @@ FILTERDOC::~FILTERDOC ()
 
 const char *FILTERDOC::Description(PSTRLIST List) const
 {
-  const STRING ThisDoctype("XFILTER");
+  const STRING ThisDoctype("FILTER");
   if (List->IsEmpty() && Doctype != ThisDoctype)
     List->AddEntry(Doctype);
   List->AddEntry (ThisDoctype);

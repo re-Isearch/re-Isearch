@@ -121,6 +121,106 @@ static void dumpXMLHitTable(FCLIST *HitTable, VIDB *vidb, const RESULT& Result)
 }
 
 
+/*
+
+XML
+  
+<folders>
+    <folder id="123" private="0" archived="0" order="1">Shopping</folder>
+</folders>
+
+
+is JSON
+
+{
+    "folders": {
+        "folder":{
+        "@": {
+            "id": "123",
+            "private": "0",
+            "archived": "0",
+            "order": "1"
+            },
+        "#": "Shopping"
+        }
+    }
+}
+
+*/
+
+
+static void dumpJsonHitTable(FCLIST *HitTable, VIDB *vidb, const RESULT& Result)
+{
+  const INT z = HitTable->GetTotalEntries();
+
+  IDBOBJ *idb = vidb->GetIDB( Result.GetVirtualIndex() );
+  MDTREC mdtrec;
+
+
+  if ( idb->GetMainMdt()->GetEntry (Result.GetMdtIndex(), &mdtrec) == GDT_FALSE)
+    {
+      cerr << "Can't resolve record!" << endl;
+      return;
+    } 
+  int offset = mdtrec.GetGlobalFileStart() + mdtrec.GetLocalRecordStart();
+
+  if (z)
+    {
+      FC Fc;
+      STRING Tag;
+      STRING lastTag;
+      FC     lastPeerFC;
+      GDT_BOOLEAN firstTime = GDT_TRUE;
+      cout << "\
+\tHITS:{\n\
+\t@: {\n\
+\t\t\"UNITS\": \"characters\"i,\n\
+\t\t\"NUMBER=\"" << z << "\n\
+\t\t},\n\
+\t#: \"HIT\": {" << endl;
+      for (INT i=1; i <=z ; i++)
+        {
+          if (HitTable->GetEntry(i, &Fc))
+            {
+              GPTYPE Start = Fc.GetFieldStart();
+              GPTYPE End   = Fc.GetFieldEnd();
+	      FC     PeerFC = idb->GetPeerFc(FC(Fc)+=offset,&Tag);
+
+	      if (! (PeerFC == lastPeerFC))
+		{
+		  if (! firstTime)
+		    cout << "  }" << endl; // End Tag
+		  else
+		    firstTime = GDT_FALSE;
+		  if (Tag.GetLength())
+		    {
+			FIELDTYPE ft = idb->GetFieldType(Tag);
+			STRING    value;
+
+			cout << "  <CONTAINER NAME=\"" << Tag
+				<< "\" TYPE=\"" << ft.c_str()
+				<< "\" FC=\"(" << PeerFC.GetFieldStart() << ","
+				<< PeerFC.GetFieldEnd() << ")";
+			if (!ft.IsText() && idb->GetFieldData(PeerFC, Tag, &value)) 
+			  cout << "\" VALUE=\"" << value;
+			cout << "\">" << endl;
+		    }
+		  else
+		    cout << "  <FULLTEXT>" << endl;
+		  lastPeerFC = PeerFC;
+		  lastTag    = Tag;
+		}
+              cout << "    <LOC POS=\"" << Start
+                << "\" LEN=\"" << End-Start+1 << "\"/>" << endl;
+            }
+        }
+      if (lastTag.GetLength())
+	cout << "  </CONTAINER>" << endl;
+      cout << "</HITS>" << endl;
+    }
+}
+
+
 
 
 #if 0

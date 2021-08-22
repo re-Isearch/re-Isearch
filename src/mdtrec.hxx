@@ -9,7 +9,6 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 File:		mdtrec.hxx
 Version:	1.00
 Description:	Class MDTREC - Multiple Document Table Record
-Author:		Nassib Nassar, nrn@cnidr.org
 @@@*/
 
 #ifndef MDTREC_HXX

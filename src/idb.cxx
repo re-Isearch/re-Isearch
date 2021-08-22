@@ -3609,7 +3609,7 @@ STRING IDB::Description() const
   result << MaintainerMailEntry << "=<Email address for maintainer>\n";
   result << PluginsPathEntry << "=<path to directory where plugins are installed>\n";
 
-  result << "\n[" << externalSortSection << "\n";
+  result << "\n[" << externalSortSection << "}\n";
   result << "<nn>=<path> # <nn> is number and path is to the external sort file\n";
   result << "            # if not defined it looks for <DB>.__<nn>\n";
   result << "\n[" << RankingSection << "]\n";

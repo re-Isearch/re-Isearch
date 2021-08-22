@@ -21,6 +21,8 @@ class XMLBASE:public XML
 friend class GILSXML;
 friend class RSS2;
 friend class NEWSML;
+friend class XMLREC;
+friend class RDFREC;
 public:
   XMLBASE (PIDBOBJ DbParent, const STRING& Name);
 
@@ -187,10 +189,9 @@ public:
   const char *Description(PSTRLIST List) const;
 };
 
-#if 1
-
 class XMLREC:public XMLBASE
 {
+friend class RDFREC;
 public:
   XMLREC (PIDBOBJ DbParent, const STRING& Name);
 
@@ -215,6 +216,14 @@ private:
   STRING XMLTail;
 } ;
 
-#endif
+
+class RDFREC:public XMLREC 
+{
+public:
+  RDFREC (PIDBOBJ DbParent, const STRING& Name);
+  const char *Description(PSTRLIST List) const;
+  ~RDFREC ();
+} ;
+
 
 #endif

@@ -1242,8 +1242,14 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
 		{
 		  message_log (LOG_DEBUG, "Recognized %s as ODF", s.c_str());
 		  // OpenDocument Text
-		  if (doctype.SearchAny("text") && PluginExists("ODT")) doctype = "ODT:";
-                  else if (PluginExists("ODF")) doctype = "ODF:"; // Let it handle the rest
+		  if (doctype.SearchAny("text")) {
+		    if (Db->ValidateDocType("ODT"))
+		        doctype = "ODT";
+		    else if (PluginExists("ODT"))
+			doctype = "ODT:";
+		    else if (PluginExists("ODF"))
+			doctype = "ODF:";
+		  } else if (PluginExists("ODF")) doctype = "ODF:"; // Let it handle the rest
 	          // else we can't so handle probably as a resource
 		  else message_log (LOG_DEBUG, "No Open Document Format handler plugin installed.");
 		}

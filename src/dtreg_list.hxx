@@ -60,6 +60,7 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE */
 #include "../doctype/filter.hxx"
 #include "../doctype/psdoc.hxx"
 #include "../doctype/gils_isoteia.hxx"
-#include "../doctype/xpandoc.hxx"
+#include "../doctype/xfilter.hxx"
+#include "../doctype/pandoc.hxx"
 
 #endif

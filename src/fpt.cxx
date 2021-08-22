@@ -7,7 +7,6 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 
 /*-@@@
 File:		fpt.cxx
-Version:	1.01
 Description:	Class FPT - File Pointer Table
 @@@*/
 

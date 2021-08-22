@@ -1463,4 +1463,41 @@ void XMLREC::ParseRecords(const RECORD& FileRecord)
 
 
 
+// `rdf:Description
+
+RDFREC::RDFREC (PIDBOBJ DbParent, const STRING& Name) : XMLREC (DbParent, Name)
+{
+  RecordSeperator  = Getoption("RecordSeperator");
+  if (RecordSeperator.IsEmpty())
+    RecordSeperator  = Getoption("Seperator");
+  if (RecordSeperator.IsEmpty())
+	  RecordSeperator = "rdf:Description";
+  XMLPreface       = Getoption("Preface");
+  if (XMLPreface.IsEmpty())
+    XMLPreface = "\
+<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" \
+xmlns:s=\"http://description.org/schema/\">\n";
+  XMLTail          = Getoption("Tail");
+  if (XMLTail.IsEmpty())
+    XMLTail = "\n</rdf:RDF>\n";
+  SGMLNORM::SetStoreComplexAttributes (Getoption("Complex", "True").GetBool());
+}
+
+
+const char *RDFREC::Description(PSTRLIST List) const
+{
+  const STRING ThisDoctype("RDF");
+  if ( List->IsEmpty() && !(Doctype ^= ThisDoctype))
+    List->AddEntry(Doctype);
+  List->AddEntry (ThisDoctype);
+
+  XMLREC::Description(List);
+  return "\
+RDF-like record format. Uses element name to slice-and-dice records by default\n\
+<rdf:Description>.\n";
+}
+
+RDFREC::~RDFREC () {; }
+
+
 

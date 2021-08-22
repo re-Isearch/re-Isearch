@@ -1,7 +1,17 @@
-/*
-Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
-It is made available and licensed under the Apache 2.0 license: see LICENSE
-*/
+/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+It is made available and licensed under the Apache 2.0 license: see LICENSE */
+
+
+//
+// popen.cxx
+// Handle pipes and processes
+//
+// In contrast to the standard POSIX popen() function which invokes the shell we
+// manage things directly. This is particularly important when running under a 
+// server that may remap the shell to /dev/null for security reasons or limit
+// execution to an inaccessible "safe directory". 
+//
+
 #include "platform.h"
 
 
