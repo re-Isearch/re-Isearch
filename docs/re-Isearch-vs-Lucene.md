@@ -31,20 +31,12 @@ attempts, however, to outline a few points since we\'ve been asked.
         to manage wildly heterogeneous formats and extract also implicit
         structure. re-Isearch supports XML, SGML and other formats as-if
         native.
-
-```{=html}
-<!-- -->
-```
-1.  -   Lucene is packaged in a number of solutions like ElasticSearch,
+    -   Lucene is packaged in a number of solutions like ElasticSearch,
         Solr and Neo4j. They all have applications that are nearly
         turn-key to make it easy to get running. Solr is bundled as the
         built-in search in many applications like CMSs and ECMs,
         Cloudera's Hadoop,\...
-
-```{=html}
-<!-- -->
-```
-1.  -   Re-Isearch is not a complete solution. Its not a turn-key
+    -   Re-Isearch is not a complete solution. Its not a turn-key
         application. Its like Lucene merely enabling technology. Despite
         the command line tools supplied and the available information
         servers (SRU/W, ISO23950/Z.2950 etc.) its really just a library
@@ -80,21 +72,14 @@ attempts, however, to outline a few points since we\'ve been asked.
         need to adhere to the re-Isearch license.
 
 3.  Market Share
-
-```{=html}
-<!-- -->
-```
-1.  -   Lucene has a sizeable market pressence. Lucene has an
+    -   Lucene has a sizeable market pressence. Lucene has an
         infrastructure of consultants. ElasticSearch is publically
         traded and has a market capitalization of more than 14 billion
         USD.
     -   Re-Isearch, despite its more than 20 year history, is the "new
         kid on the block".
 
-```{=html}
-<!-- -->
-```
-1.  Java
+4.  Java
 
     -   Lucene is typically pure Java. Its 100% written in Java. Its
         more or less Java thread safe but not completely.
@@ -119,7 +104,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         \"Business, Commercial or Production use\" without a commercial
         license.
 
-2.  Portability
+5.  Portability
 
     -   Since Lucene is pure Java its portable to platforms with
         suitable JVMs. Packages should just run from platform to
@@ -131,7 +116,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         Applications, of course, written in re-Isearch\'s Java (or other
         language API) are portable to any platform.
 
-3.  Threads
+6.  Threads
 
     -   Lucene is pure Java and with the exception of the query parser
         and a few other bits its thread and more or less process safe.
@@ -180,7 +165,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         sequential queue--- Search performance, after all, is driven
         more by memory access speed and I/O latency than by CPU speed.
 
-4.  Searching multiple indexes, JOINs etc.
+7.  Searching multiple indexes, JOINs etc.
 
     -   With lucene you can only search 1 index with a query. There is
         no means to create virtual indexes. While Lucene/Solr/Elastic
@@ -217,7 +202,7 @@ attempts, however, to outline a few points since we\'ve been asked.
     -   re-Isearch supports also JOINs and via the object system these
         joins can be to RDBMSs.
 
-5.  Permitted document size and speed
+8.  Permitted document size and speed
 
     -   Lucene normally indexes only the first 10,000 words of a
         document. When increasing this default out-of-memory errors can
@@ -243,7 +228,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         in parsing the document structure into records and parsing those
         records into elements.
 
-6.  Field length
+9.  Field length
 
     -   Lucene sets (by default) the max. field length by default to
         10000 terms. This is to set an upper bound for the amount of
@@ -256,7 +241,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         number of terms--- and one can have any number of fields as
         well.
 
-7.  Number of Fields
+10.  Number of Fields
 
     -   Lucene sets a soft maximum number of fields. They generally
         recommend that one don't go beyond 1000. It is just not designed
@@ -265,7 +250,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         index.
     -   Re-Isearch sets no maximum.
 
-8.  Memory Demands
+11.  Memory Demands
 
     -   Lucene (including Java) needs a lot of memory to run. RAM memory
         consumption is more or less constant at a high level during both
@@ -290,7 +275,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         try to run in limited resources and create a minimal impact on
         total system performance (other programs running).
 
-9.  Exclused terms / Stop words
+12.  Exclused terms / Stop words
 
     -   Lucene normally excludes \"common\" words, so-called \"stop
         words\", from the index. The general use is to have these stop
@@ -308,12 +293,12 @@ attempts, however, to outline a few points since we\'ve been asked.
         German (\"was\" in English) but means quite something else in
         English (conflict, name of a 1960s funk band etc.).
 
-10. Term length
+13. Term length
 
     -   Lucene places limits on the lengths of terms
     -   re-Isearch is designed to handle terms/words of any length.
 
-11. Search Terms/Wild cards/Truncated search terms
+14. Search Terms/Wild cards/Truncated search terms
 
     -   Lucene expands wildcards to terms before even searching. Queries
         are re-written into a more basic form consisting of a set of
@@ -377,7 +362,7 @@ attempts, however, to outline a few points since we\'ve been asked.
 
     -   re-Isearch allows for wildcards.
 
-12. Proximity
+15. Proximity
 
     -   Lucene does not really support proximity but a concept of
         \"phrase query slop\": the maximum number of full word \"moves\"
@@ -391,7 +376,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         re-Isearch also has heuristic concepts of near and can also
         restrict proximity to within a common field instance.
 
-13.  Normalization
+16.  Normalization
 
     -   Lucene supports both TD-IDF and BM25 Normalization. BM25 is
         extremely popular and has done quite well in search comparison
@@ -415,15 +400,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         Normalization to more generally outperform BM11 and BM15---BM25
         is just a weight factor that mixes these two algorithms.
 
-```{=html}
-<!-- -->
-```
-1.  
-
-```{=html}
-<!-- -->
-```
-1.  Boolean operations
+17.  Boolean operations
 
     -   Lucene does not use the pure boolean information retrieval model
         or support boolean operators but simulates some of the basic
@@ -438,7 +415,7 @@ attempts, however, to outline a few points since we\'ve been asked.
     -   re-Isearch is overloaded with operators (probably more than most
         people have ever heard of).
 
-2.  Unary operators
+18.  Unary operators
 
     -   Lucene has effectively no unary operators. The closest to unary
         operations are term boost (weight) and \"fuzzy\" but they are
@@ -450,7 +427,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         expression (according to a number of models) restrict to given
         fields/paths etc.
 
-3.  Query Languages/Interfaces
+19.  Query Languages/Interfaces
 
     -   Lucene does not per say have a query language since it contains
         only terms and modifiers (+,-, weight). These may be processed
@@ -478,7 +455,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         programs will need to run their course except in some simple
         cases such as all terms \"ANDed\".
 
-4.  Does the position of the matches in the text affect the scoring?
+20.  Does the position of the matches in the text affect the scoring?
 
     -   In Lucene: No, the position of matches within a field does not
         affect ranking.
@@ -487,7 +464,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         for instance, does use the position of the matches in text to
         affect the scoring. This is all search time and user selectable.
 
-5.  Field differences
+21.  Field differences
 
     -   Lucene lacks diagnostics. Searching even in a field that does
         not exist just returns no results but without reason. Since
@@ -512,7 +489,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         its poor design just as there are reasons why domain names and
         email addresses too are not case dependent.
 
-6.  Structure search
+22.  Structure search
 
     -   Lucene is a traditional inverted index fulltext engine. Its
         quite good at handling a limited number of fields but is
