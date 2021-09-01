@@ -11,13 +11,89 @@ source" side there engines like ElasticSearch, Solr and Neo4j. The last
 around the Lucene engine. This study thus compares re-Isearch to
 Lucene.**
 
-# **Lucene **Comparison**
+# **Apache Solr**
 
-Lucene is a very popular engine. It is the motor behind ElasticSearch,
-Solr, Neo4j and many other products. To compare Lucene with re-Isearch
-is really to compare potatoes with fish. They have quite different
-histories, design considerations and goals. The following short sketch
-attempts, however, to outline a few points since we\'ve been asked.
+**Apache Solr is an open-source search server built on top of **Apache**
+Lucene that provides all of Lucene's search capabilities through HTTP
+requests. It has been around for almost a decade and a half, making it a
+mature product with a broad user community.**
+
+**Solr uses request handlers to ingest data from XML files, CSV files,
+databases, Microsoft Word documents, and PDFs. **It provides** native
+support for the Apache Tika library.**
+
+**A** **S**olr c**onfi**guration requires **at least 512 MB **of HEAP
+memory to allocate to instances.**
+
+**Solr is licensed with the Apache **2.0 **License. **It is an official
+Apache project.**
+
+# **ElasticSearch**
+
+**Elasticsearch is also an open-source search engine built on top of
+Apache Lucene. It extends Lucene's indexing and search functionalities
+using RESTful APIs, and it archives the distribution of data on multiple
+servers using the index and shards concept. Elasticsearch is completely
+based on JSON. It supports data ingestion from multiple sources using
+the Beats family (lightweight data shippers available in the ELK Stack)
+and Logstash.**
+
+**The default Elasticsearch configuration requires 1GB of HEAP memory.
+**
+
+**Elastic started off under the Apache 2.0 license but is now dual
+licensed under both the Elastic License and SSPL. **While the former
+disallows providing the software to third parties as a hosted or managed
+service, **SSPL **allows it but** requires anyone who wants to offer
+ElasticSearch as **a service **to either release all surrounding
+infrastructure as SSPL or get a commercial license. **
+
+# **Re-Isearch**
+
+**Re-Isearch is a reborn open-source search engine built on the basis of
+the Isearch open-source engine and IB (a proprietary fork). **
+
+**The default configuration requires **a minimum heap size 3x the size
+of the largest document it intends to index. It has run well on machines
+with virtual memory and as little as 8 MB RAM.**
+
+**The engine has, in various forms **(and using differing algorithms)**,
+been available since the 1990s **and was originally developed to provide
+structured field search **via the** NISO Z39.50 **protocol** (an
+international standard client--server, application layer communications
+protocol for searching and retrieving information from a database that
+dominates, **for example, the library world)** **. **Its **well
+established user community **was primarily in the **public sector **and
+included** many high profile projects such as the U.S. Patent and
+Trademark Office (USPTO) patent search, the Federal Geographic Data
+Clearinghouse (FGDC), the NASA Global Change Master Directory, the NASA
+EOS Guide System, the NASA Catalog Interoperability Project, the
+astronomical pre-print service based at the Space Telescope Science
+Institute, The PCT Electronic Gazette at the World Intellectual Property
+Organization (WIPO), the SAGE Project of the Special Collections
+Department at Emory University, Eco Companion Australasia (an
+environmental geospatial resources catalog), Australian National Genomic
+Information Service (ANGIS), the Open Directory Project and numerous
+governmental portals.**
+
+**The engine has a number of extensions that enables search
+functionality via ISO23950/Z39.50, OASIS SRU/W and OpenSearch REST
+API.**
+
+**Re-Isearch is licensed under the Apache 2.0 license. The Z39.50, SRU/W
+and other servers are licensed **under highly permissive MIT style
+licenses. Basically these means anyone has permission to use, copy,
+modify, distribute, and sell the software and its documentation, in
+whole or in part, for any purpose without fee.**
+
+# **Lucene **versus re-Isearch**
+
+Lucene is a very popular engine with a massive installed base. It is the
+motor behind ElasticSearch, Solr, Neo4j and many other products. To
+compare Lucene with re-Isearch is really to compare potatoes with fish.
+They have quite different histories, design considerations and goals.
+The following short sketch attempts, however, to outline a few points
+since we\'ve been asked.
 
 1.  Design target
 
@@ -31,55 +107,99 @@ attempts, however, to outline a few points since we\'ve been asked.
         to manage wildly heterogeneous formats and extract also implicit
         structure. re-Isearch supports XML, SGML and other formats as-if
         native.
-    -   Lucene is packaged in a number of solutions like ElasticSearch,
+
+```{=html}
+<!-- -->
+```
+1.  -   Lucene is packaged in a number of solutions like ElasticSearch,
         Solr and Neo4j. They all have applications that are nearly
         turn-key to make it easy to get running. Solr is bundled as the
         built-in search in many applications like CMSs and ECMs,
         Cloudera's Hadoop,\...
-    -   Re-Isearch is not a complete solution. Its not a turn-key
+
+```{=html}
+<!-- -->
+```
+1.  -   Re-Isearch is not a complete solution. Its not a turn-key
         application. Its like Lucene merely enabling technology. Despite
         the command line tools supplied and the available information
         servers (SRU/W, ISO23950/Z.2950 etc.) its really just a library
         and some scaffolding.
 
-2.  Data Import (Document Formats)
+2.  Platform
+
+```{=html}
+<!-- -->
+```
+1.  -   Lucene can run on platforms providing Java. Each operating
+        platform has to provide a JVM. There are some open source takes
+        on Java: primarily OpenJDK variants and Jikes Research VM.
+    -   Re-Isearch can be compiled and run on nearly any POSIX
+        compatible operating system. It uses a simplified subset of C++
+        and has minimal dependencies.
+
+```{=html}
+<!-- -->
+```
+1.  Data Import (Document Formats)
 
     -   Lucene's tokenizer does not really support any document formats
         natively. It depends upon analyzers and these too don't really
         support any formats. Instead Lucene (Solr) depends upon external
         libraries such as Apache Tika.
-    -   Re-Isearch's, to use Lucene's nomenclature, tokenizer and
-        analyers (which we call doctypes) are firmly intertwined into
-        the engine's architecture. It natively indexes a large number of
-        formats like SGML/XML, emails, BibTeX, Medline and over 60 other
-        formats of which many dozens are fundamental such as token
-        seperated values, paragraph text which allow through simple
-        configuration their applications to many 100s of more exotic and
-        proprietary formats. It also supports, like Lucene, filters to
-        convert formats or extract metadata. It can user any filter as
-        well as, naturally, those based upon Apache Tika. Out-of-the-box
-        it supports, for example, in a number of classes the Pandoc tool
-        for a vast array of formats, filters like catdoc for older
-        Microsoft Word files and xls2ssv for older Microsoft
-        Spreadsheets.
+
+    -   Re-Isearch lets one load data as is. There is no need to define
+        a schema in advance. Re-Isearch's, to use Lucene's nomenclature,
+        tokenizer and analyers (which we call doctypes) are firmly
+        intertwined into the engine's architecture. It natively indexes
+        a large number of formats like SGML/XML, emails, BibTeX, Medline
+        and over 60 other formats of which many dozens are fundamental
+        such as token seperated values, paragraph text which allow
+        through simple configuration their applications to many 100s of
+        more exotic and proprietary formats.
+
+    -   Lucene/Solr works with filters to convert or extract metadata.
+
+    -   Re-Isearch also supports filters to convert formats or extract
+        metadata. It can user any filter as well as, naturally, those
+        based upon Apache Tika or any other conversion filter, including
+        custom one-off scripts. Out-of-the-box it supports, for example,
+        in a number of classes the Pandoc tool for a vast array of
+        formats, filters like catdoc for older Microsoft Word files and
+        xls2ssv for older Microsoft Spreadsheets.
+
     -   One adds new Analzers to Lucene by extending Lucene in Java.
-        There is not fool proof protection of intellectual property.
-        Java can always be reverse engineered.
+        There is no fool proof protection of intellectual property. Java
+        can always be reverse engineered.
+
     -   One can add new Doctypes to re-Isearch easily either directly
         via a contribution of source code to its built-in core or via a
         plug-in. Plugins are C or C++ language compiled loadable
         objects. They can be closed source and proprietary. They don't
         need to adhere to the re-Isearch license.
 
-3.  Market Share
-    -   Lucene has a sizeable market pressence. Lucene has an
+    -   Heterogenous Collections
+
+        i.  Lucene has no direct model. Instead one needs to map schemas
+            together.
+        ii. Re-Isearch has been designed for just this.
+
+2.  Market Share
+
+```{=html}
+<!-- -->
+```
+1.  -   Lucene has a sizeable market pressence. Lucene has an
         infrastructure of consultants. ElasticSearch is publically
         traded and has a market capitalization of more than 14 billion
         USD.
     -   Re-Isearch, despite its more than 20 year history, is the "new
         kid on the block".
 
-4.  Java
+```{=html}
+<!-- -->
+```
+1.  Java
 
     -   Lucene is typically pure Java. Its 100% written in Java. Its
         more or less Java thread safe but not completely.
@@ -94,7 +214,9 @@ attempts, however, to outline a few points since we\'ve been asked.
         Java is, in our educated opinion, a fine language for developing
         many kinds of applications (especially given the availability of
         Java developing talent) but is less than ideal for database,
-        search and retrieval.
+        search and retrieval especially on appliances. The Java runtime
+        needs not only at not only at least 128 MB to run but it does
+        not return allocated memory to the host operating system.
     -   re-Isearch allows for applications to use its algorithms to be
         written in Java but does not require the use of Java. Our
         favorite language for writing applications to use re-Isearch is,
@@ -104,7 +226,31 @@ attempts, however, to outline a few points since we\'ve been asked.
         \"Business, Commercial or Production use\" without a commercial
         license.
 
-5.  Portability
+2.  Other scripting languages
+
+    -   Lucene is Java and its extended by Java.
+    -   Re-Isearch has APIs in a number of languages including C\#, C++,
+        D, Go, Guile, Lua, Java, JavaScript (Node.js), Perl. PHP,
+        Python, R, Ruby, Tcl/Tk,...
+
+3.  License
+
+    -   While Lucene is covered by the Apache license and is freely
+        available it depends upon Java. Java is not open source. Java SE
+        remains free of charge for general purpose desktop and server
+        use and is available under the Oracle Binary Code License. Java
+        Runtime Environment (JRE) use for embedded devices or use of
+        commercial features may require a license fee from Oracle.
+    -   Elasticsearch effectively demands from many users a commerical
+        license to provide 3^rd^ party hosted services.
+    -   Apache Solr is covered by Apache 2.0 and is free for any use.
+    -   Re-Isearch is completely unencumbered. The engine is covered by
+        a Apache 2.0 license and servers are generally under MIT/BSD
+        variant licenses. Documentation is provided under the
+        "Attribution 4.0 International (CC BY 4.0) License. There are no
+        restrictions on use.
+
+4.  Portability
 
     -   Since Lucene is pure Java its portable to platforms with
         suitable JVMs. Packages should just run from platform to
@@ -116,7 +262,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         Applications, of course, written in re-Isearch\'s Java (or other
         language API) are portable to any platform.
 
-6.  Threads
+5.  Threads
 
     -   Lucene is pure Java and with the exception of the query parser
         and a few other bits its thread and more or less process safe.
@@ -165,7 +311,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         sequential queue--- Search performance, after all, is driven
         more by memory access speed and I/O latency than by CPU speed.
 
-7.  Searching multiple indexes, JOINs etc.
+6.  Searching multiple indexes, JOINs etc.
 
     -   With lucene you can only search 1 index with a query. There is
         no means to create virtual indexes. While Lucene/Solr/Elastic
@@ -202,7 +348,7 @@ attempts, however, to outline a few points since we\'ve been asked.
     -   re-Isearch supports also JOINs and via the object system these
         joins can be to RDBMSs.
 
-8.  Permitted document size and speed
+7.  Permitted document size and speed
 
     -   Lucene normally indexes only the first 10,000 words of a
         document. When increasing this default out-of-memory errors can
@@ -228,7 +374,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         in parsing the document structure into records and parsing those
         records into elements.
 
-9.  Field length
+8.  Field length
 
     -   Lucene sets (by default) the max. field length by default to
         10000 terms. This is to set an upper bound for the amount of
@@ -241,7 +387,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         number of terms--- and one can have any number of fields as
         well.
 
-10.  Number of Fields
+9.  Number of Fields
 
     -   Lucene sets a soft maximum number of fields. They generally
         recommend that one don't go beyond 1000. It is just not designed
@@ -250,7 +396,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         index.
     -   Re-Isearch sets no maximum.
 
-11.  Memory Demands
+10. Memory Demands
 
     -   Lucene (including Java) needs a lot of memory to run. RAM memory
         consumption is more or less constant at a high level during both
@@ -275,7 +421,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         try to run in limited resources and create a minimal impact on
         total system performance (other programs running).
 
-12.  Exclused terms / Stop words
+11. Exclused terms / Stop words
 
     -   Lucene normally excludes \"common\" words, so-called \"stop
         words\", from the index. The general use is to have these stop
@@ -293,12 +439,12 @@ attempts, however, to outline a few points since we\'ve been asked.
         German (\"was\" in English) but means quite something else in
         English (conflict, name of a 1960s funk band etc.).
 
-13. Term length
+12. Term length
 
     -   Lucene places limits on the lengths of terms
     -   re-Isearch is designed to handle terms/words of any length.
 
-14. Search Terms/Wild cards/Truncated search terms
+13. Search Terms/Wild cards/Truncated search terms
 
     -   Lucene expands wildcards to terms before even searching. Queries
         are re-written into a more basic form consisting of a set of
@@ -362,7 +508,7 @@ attempts, however, to outline a few points since we\'ve been asked.
 
     -   re-Isearch allows for wildcards.
 
-15. Proximity
+14. Proximity
 
     -   Lucene does not really support proximity but a concept of
         \"phrase query slop\": the maximum number of full word \"moves\"
@@ -376,7 +522,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         re-Isearch also has heuristic concepts of near and can also
         restrict proximity to within a common field instance.
 
-16.  Normalization
+15.  Normalization
 
     -   Lucene supports both TD-IDF and BM25 Normalization. BM25 is
         extremely popular and has done quite well in search comparison
@@ -400,7 +546,15 @@ attempts, however, to outline a few points since we\'ve been asked.
         Normalization to more generally outperform BM11 and BM15---BM25
         is just a weight factor that mixes these two algorithms.
 
-17.  Boolean operations
+```{=html}
+<!-- -->
+```
+1.  
+
+```{=html}
+<!-- -->
+```
+1.  Boolean operations
 
     -   Lucene does not use the pure boolean information retrieval model
         or support boolean operators but simulates some of the basic
@@ -415,7 +569,7 @@ attempts, however, to outline a few points since we\'ve been asked.
     -   re-Isearch is overloaded with operators (probably more than most
         people have ever heard of).
 
-18.  Unary operators
+2.  Unary operators
 
     -   Lucene has effectively no unary operators. The closest to unary
         operations are term boost (weight) and \"fuzzy\" but they are
@@ -427,7 +581,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         expression (according to a number of models) restrict to given
         fields/paths etc.
 
-19.  Query Languages/Interfaces
+3.  Query Languages/Interfaces
 
     -   Lucene does not per say have a query language since it contains
         only terms and modifiers (+,-, weight). These may be processed
@@ -455,7 +609,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         programs will need to run their course except in some simple
         cases such as all terms \"ANDed\".
 
-20.  Does the position of the matches in the text affect the scoring?
+4.  Does the position of the matches in the text affect the scoring?
 
     -   In Lucene: No, the position of matches within a field does not
         affect ranking.
@@ -464,22 +618,22 @@ attempts, however, to outline a few points since we\'ve been asked.
         for instance, does use the position of the matches in text to
         affect the scoring. This is all search time and user selectable.
 
-21.  Field differences
+5.  Field differences
 
     -   Lucene lacks diagnostics. Searching even in a field that does
         not exist just returns no results but without reason. Since
-        fields are *Case Sensitive* in Lucene this is a frequent source
-        of error.
+        fields are **Case Sensitive** in Lucene this is a frequent
+        source of error.
 
     -   re-Isearch contains diagnostics.
 
-    -   Lucene\'s fields are *Case Sensitive*. There is, to our
+    -   Lucene\'s fields are **Case Sensitive**. There is, to our
         knowledge, no way to switch it.
 
-    -   re-Isearch *by default* makes field names and paths *case
-        *in*sensitive* (as the case for SGML, SQL etc). Even through XML
-        is case sensitive (and we were among those that opposed it) we
-        are familiar with no productive XML document types and valid
+    -   re-Isearch **by default** makes field names and paths **case
+        **in**sensitive** (as the case for SGML, SQL etc). Even through
+        XML is case sensitive (and we were among those that opposed it)
+        we are familiar with no productive XML document types and valid
         instances with two (or more) siblings differing only in case of
         their names. While possible in XML
 
@@ -489,7 +643,7 @@ attempts, however, to outline a few points since we\'ve been asked.
         its poor design just as there are reasons why domain names and
         email addresses too are not case dependent.
 
-22.  Structure search
+6.  Structure search
 
     -   Lucene is a traditional inverted index fulltext engine. Its
         quite good at handling a limited number of fields but is

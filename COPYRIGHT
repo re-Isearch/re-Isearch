@@ -1,0 +1,89 @@
+The re-Isearch project builds upon more than two decades of development.
+
+Copyright (c) MCNC, Clearinghouse for Networked Information Discovery and Retrieval, 1994-2001.
+Copyright (c) BSn/Munich 1995-2011
+Copyright (c) A/WWW Enterprises, Crownsville, MD, 1995-2001.
+Copyright (c) NONMONOTONIC Networks 2011-2020 
+
+The re-Isearch distribution is:
+  Copyright (c) 2020-21 Edward C. Zimmermann and the re-iSearch project. 
+
+
+This project was funded through the NGI0 Discovery Fund, a fund established by NLnet with financial
+support from the European Commission's Next Generation Internet programme, under the aegis of DG
+Communications Networks, Content and Technology under grant agreement No 825322.
+
+The original Isearch was based on work sponsored by the National Science Foundation under
+Cooperative Agreement No. NCR-9216963. 
+
+
+--------------------------------------------------------------------------
+
+The BER utilities are subject to the following copyright:
+
+(c)1992 OCLC Online Computer Library Center, Inc., 6565 Frantz Road,
+Dublin, Ohio 43017-0702.  OCLC is a registered trademark of OCLC
+Online Computer Library Center, Inc.
+
+NOTICE TO USERS: The BER Utilities ("Software") has been developed by
+OCLC Online Computer Library Center, Inc.  Subject to the terms and
+conditions set forth below, OCLC grants to user a perpetual,
+non-exclusive, royalty-free license to use, reproduce, alter, modify,
+and create derivative works from Software, and to sublicense Software
+subject to the following terms and conditions:
+
+SOFTWARE IS PROVIDED AS IS.  OCLC MAKES NO WARRANTIES,
+REPRESENTATIONS, OR GUARANTEES WHETHER EXPRESS OR IMPLIED REGARDING
+SOFTWARE, ITS FITNESS FOR ANY PARTICULAR PURPOSE, OR THE ACCURACY OF
+THE INFORMATION CONTAINED THEREIN.
+
+User agrees that OCLC shall have no liability to user arising
+therefrom, regardless of the basis of the action, including liability
+for special, consequential, exemplary, or incidental damages,
+including lost profits, even if it has been advised of the possibility
+thereof.
+
+User shall cause the copyright notice of OCLC to appear on all copies
+of Software, including derivative works made therefrom.
+
+
+--------------------------------------------------------------------------
+The MARC utilities are subject to this copyright:
+
+Copyright (c) 1992 The Regents of the University of California.  All
+rights reserved.
+
+Author:	Ray Larson, ray@sherlock.berkeley.edu
+	School of Library and Information Studies, UC Berkeley
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+ 1. Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+ 3. All advertising materials mentioning features or use of this software
+    must display the following acknowledgement:
+	This product includes software developed by the University of
+	California, Berkeley.
+ 4. Neither the name of the University nor the names of its contributors
+    may be used to endorse or promote products derived from this software
+    without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE REGENTS AND THE AUTHOR ``AS IS'' AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS
+BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+--------------------------------------------------------------------------
+
