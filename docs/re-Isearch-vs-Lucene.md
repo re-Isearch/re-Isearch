@@ -48,10 +48,30 @@ service, **SSPL **allows it but** requires anyone who wants to offer
 ElasticSearch as **a service **to either release all surrounding
 infrastructure as SSPL or get a commercial license. **
 
+**
+
+# **MarkLogic**
+
+**MarkLogic is a commerical search system originally developed for XML.
+It indexes the content and structure of documents including words,
+phrases, relationships, and values in over 200 languages with
+tokenization, collation, and stemming for core languages. It supports
+search across its data and metadata using a word or phrase and
+incorporates Boolean logic, stemming, wildcards, case sensitivity,
+punctuation sensitivity, diacritic sensitivity, and search term
+weighting.**
+
+**
+
 # **Re-Isearch**
 
 **Re-Isearch is a reborn open-source search engine built on the basis of
-the Isearch open-source engine and IB (a proprietary fork). **
+the Isearch open-source engine and IB (a proprietary fork). It indexes
+the content and structure of documents including words, phrases,
+relationships, and values. **It **supports search across its data and
+metadata using a word or phrase and incorporates Boolean logic,
+wildcards, case sensitivity, punctuation sensitivity, diacritic
+sensitivity, and search term weighting. **
 
 **The default configuration requires **a minimum heap size 3x the size
 of the largest document it intends to index. It has run well on machines
@@ -62,7 +82,7 @@ been available since the 1990s **and was originally developed to provide
 structured field search **via the** NISO Z39.50 **protocol** (an
 international standard client--server, application layer communications
 protocol for searching and retrieving information from a database that
-dominates, **for example, the library world)** **. **Its **well
+dominates, for example, the library world)** **. **Its **well
 established user community **was primarily in the **public sector **and
 included** many high profile projects such as the U.S. Patent and
 Trademark Office (USPTO) patent search, the Federal Geographic Data
@@ -85,6 +105,61 @@ and other servers are licensed **under highly permissive MIT style
 licenses. Basically these means anyone has permission to use, copy,
 modify, distribute, and sell the software and its documentation, in
 whole or in part, for any purpose without fee.**
+
+**
+
++----------------+----------------+----------------+----------------+
+| re-Isearch     | MarkLogic      | Elasticsearch  | Apache Solr    |
++----------------+----------------+----------------+----------------+
+| NoSQL search   | Operational    | A distributed, | A widely used  |
+| engine         | and            | RESTful modern | distributed,   |
+|                | transactional  | search and     | scalable       |
+|                | Enterprise     | analytics      | search engine  |
+|                | NoSQL database | engine based   | based on       |
+|                |                | on Apache      | Apache Lucene  |
+|                |                | Lucene         |                |
++----------------+----------------+----------------+----------------+
+| NativeXML      | NativeXML      | Search engine  | Search engine  |
+| DBMS, RDF      | DBMS, RDF      |                |                |
+| Store, search  | Store, search  |                |                |
+| engine         | engine         |                |                |
++----------------+----------------+----------------+----------------+
+| Object DBMS    |                | Document store | Spatial DBMS   |
+| including      |                |                |                |
+| Spatial        |                | Spatial DBMS   |                |
++----------------+----------------+----------------+----------------+
+| 1994-2011,     | Since 2001     | Since 2010     | Since 2006     |
+| reborn 2021    |                |                |                |
++----------------+----------------+----------------+----------------+
+| C++            | C++            | Java           | Java           |
++----------------+----------------+----------------+----------------+
+| Free           | Commerical     | Partially Free | Free           |
++----------------+----------------+----------------+----------------+
+| Open Source    | Proprietary    | Open Source    | Open Source    |
++----------------+----------------+----------------+----------------+
+| XML support    | XML support    | JSON Only      | XML support    |
++----------------+----------------+----------------+----------------+
+| Foreign keys,  | No foreign     | No foreign     | No foreign     |
+| Join           | keys           | keys           | keys           |
++----------------+----------------+----------------+----------------+
+| Schema-Free    | Schema-Free    | Schema-Free    | Schema         |
++----------------+----------------+----------------+----------------+
+| Multi-language | Multi-language | Java API       | Java API       |
+| API, Z39.50,   | API, Xquery,   |                |                |
+| SRU/W. CQL, IB | SPARQL,        | RESTful        | RESTful        |
+| Query          |                | HTTP/JSON API  | HTTP/JSON API  |
+| Language,\...  |                |                |                |
++----------------+----------------+----------------+----------------+
+| Search during  | Search during  | No             | No             |
+| index          | index          |                |                |
++----------------+----------------+----------------+----------------+
+| Own algorithms | Own algorithms | Based on       | Based on       |
+|                |                | Lucene         | Lucene         |
+|                |                | (inverted      | (inverted      |
+|                |                | index)         | index)         |
++----------------+----------------+----------------+----------------+
+
+**
 
 # **Lucene **versus re-Isearch**
 
