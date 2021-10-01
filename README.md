@@ -16,7 +16,7 @@ Featues/Uses
     • Freely available under a permissive software license. 
 
 
-Initial project outcome: a freely available and completely open-source (and multiplatform) C++ library, bindings for other languages (such as Python) and some reference sample code using the library in some of these languages.
+Initial release provides a freely available and completely open-source (and multiplatform) C++ library, bindings for other languages (such as Python) and some reference sample code using the library in some of these languages. Applications and add-ons are on the roadmap.
 
 
 In the directory bin/ and lib/ are binaries of standalone tools compiled on Ubuntu 18.04.2 LTS and targetting Intel Skylake or newer processors. They are included solely to enable fast software evaluations.
