@@ -5,7 +5,7 @@ Project re-isearch: a novel multimodal search and retrieval engine using mathema
 Featues/Uses
 
     • Low-code ETL / "Any-to-Any" architecture
-    • Handles a wide range of document formats including “live” data.
+    • Handles a wide range of document formats (from Atom to XML) including “live” data.
     • Powerful Search (Structure, Objects, Spatial) / Relevancy Engine
     • NoSQL Datastore
     • Useful for Analytics
@@ -17,6 +17,8 @@ Featues/Uses
 
 
 Initial project outcome: a freely available and completely open-source (and multiplatform) C++ library, bindings for other languages (such as Python) and some reference sample code using the library in some of these languages.
+
+Under doc/ one can see the native doctypes supported.
 
 
 In the directory bin/ and lib/ are binaries of standalone tools compiled on Ubuntu 18.04.2 LTS and targetting Intel Skylake or newer processors. They are included solely to enable fast software evaluations.
