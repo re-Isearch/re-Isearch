@@ -18,7 +18,7 @@ Featues/Uses
 
 Initial project outcome: a freely available and completely open-source (and multiplatform) C++ library, bindings for other languages (such as Python) and some reference sample code using the library in some of these languages.
 
-Under doc/ one can see the native doctypes supported.
+Under [doctypes/](https://github.com/re-Isearch/re-Isearch/tree/master/doctype) one can see the native doctypes supported.
 
 
 In the directory bin/ and lib/ are binaries of standalone tools compiled on Ubuntu 18.04.2 LTS and targetting Intel Skylake or newer processors. They are included solely to enable fast software evaluations.
