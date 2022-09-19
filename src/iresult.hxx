@@ -14,6 +14,8 @@ Description:	Class IRESULT - Internal Search Result
 #include "date.hxx"
 #include "mdt.hxx"
 
+#include <cmath>
+
 #define USE_GEOSCORE 1
 
 //extern "C" { double  pow(double, double); };
