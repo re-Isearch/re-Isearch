@@ -22,6 +22,7 @@ Description: Class IDBOBJ
 #include "idbobj.hxx"
 #include "doctype.hxx"
 
+
 void IDBOBJ::AddFieldType(const STRING& Definition)
 {
   FieldTypes.AddEntry(Definition);

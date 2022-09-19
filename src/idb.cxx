@@ -1778,6 +1778,11 @@ FC IDB::GetNextFC (const GPTYPE& HitGp, const STRING& fieldname, size_t offset)
 
 #endif
 
+
+// This code does the heavy lifting to figure out what is the name
+// or path (such as XQuery) of where the HitGp is located..
+//
+
 FC IDB::GetPeerFc (const GPTYPE& HitGp, STRING *NodeNamePtr)
 {
   const size_t TotalEntries = MainDfdt->GetTotalEntries ();
@@ -1788,9 +1793,12 @@ FC IDB::GetPeerFc (const GPTYPE& HitGp, STRING *NodeNamePtr)
   size_t       fieldNameCount = 0;
   GDT_BOOLEAN  haveCount = GDT_FALSE;
 
+  // We cache lastPeerField to speed up a bit
   if (lastPeerField <1 || lastPeerField > TotalEntries)
     if ((lastPeerField = TotalEntries/3) < 1) lastPeerField = 1;
-      
+
+//   lastPeerField = 1; // Just for debugging!!!! Remove this later...
+
   const size_t start = lastPeerField-1;
   const size_t end   = TotalEntries+lastPeerField-1;
 
@@ -1800,6 +1808,8 @@ FC IDB::GetPeerFc (const GPTYPE& HitGp, STRING *NodeNamePtr)
       size_t x;
 
       x =  (i % TotalEntries)+1;
+ 
+
       MainDfdt->GetEntry (x, &dfd);
 
       STRING Fn, fieldname ( dfd.GetFieldName () );
@@ -1853,6 +1863,10 @@ FC IDB::GetPeerFc (const GPTYPE& HitGp, STRING *NodeNamePtr)
   return PeerFC;
 }
 
+
+// This code does the heavy lifting to figure out what is the name
+// or path (such as XQuery) of where the range of bytes defined by HitFc is located..
+//
 
 FC IDB::GetPeerFc (const FC& HitFc, STRING *NodeNamePtr)
 {

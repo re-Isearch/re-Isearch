@@ -843,7 +843,7 @@ STRING MakeTempFileName(const STRING& Fn)
         TempName);
       if ((oFp = fopen(TempName, "wb")) == NULL)
         {
-          message_log (LOG_ERRNO, "Can't create a temporary numlist '%s'", Fn.c_str());
+          message_log (LOG_ERRNO, "Can't create a temporary file name '%s'", Fn.c_str());
           return NulString;
         }
       TmpName = TempName; // Set it
@@ -3695,3 +3695,18 @@ BOOL IsRealFile(STRING sAbsFN)
 }
 
 #endif
+
+
+
+// Temporary file 
+
+FILE *makeTemporaryFile (STRING &path, const STRING& Prefix, const char *mode = "wb")
+{
+  STRING  fname = Prefix + "XXXXXX";
+  int fd = mkstemp((char *)fname.c_str()); //Warning this is "dangerous" but we are OK 
+  if (fd > 2) {
+     path = fname;
+     return fdopen(fd, mode);
+  }
+ return NULL;
+}

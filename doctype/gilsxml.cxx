@@ -1341,7 +1341,18 @@ cerr << "LOOKING AT: "<< endl << tmp << endl <<  "##### " << endl;
 		  cerr << "Adding " << GlobalRecordStart << " -- " << (GlobalRecordStart + start - 1)  << endl;
 		}
 #endif
+		//
+		//
+cerr << "XMLREC start = " << start << endl;
+		if (count == 0 && start > 0 ) {
+		   // Create a header element
+		   //
+		   Record.SetRecordStart( GlobalRecordStart);
+		   Record.SetRecordEnd( GlobalRecordStart + start - 1);
+		   Db->DocTypeAddRecord (Record);
+		}
 
+		//
 
 		Record.SetRecordStart( GlobalRecordStart + start );
 		// Scan to end of tag >
@@ -1366,6 +1377,16 @@ cerr << "LOOKING AT: "<< endl << tmp << endl <<  "##### " << endl;
      // i += len - 1;
      }
   } // loop 
+
+
+  // Add trailing bits
+  if (count && start < ActualLength ) {
+	Record.SetRecordEnd( GlobalRecordEnd );
+	Db->DocTypeAddRecord (Record);
+  }
+
+
+
   if (State == Start)
     message_log (LOG_WARN, "Missing </%s>. Bytes %ld-%ld skipped in \"%s\".",
 	RecordSeperator.c_str(), Record.GetRecordStart(), GlobalRecordEnd,

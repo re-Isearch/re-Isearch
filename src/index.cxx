@@ -2252,7 +2252,7 @@ memory_allocation: // This is where we try to get memory
                         // We actually want to give the key here
                         Parent->IndexingStatus (IndexingStatusRecordAdded, Key, nr);
 
-                        if (WriteFieldData (record, position) // edz: Thu Jul  8 14:37:22 MET DST 1999 moved position to *before* AddEntry()
+                        if (WriteFieldData (record, position) // edz: moved position to *before* AddEntry()
                             == GDT_FALSE)
                           {
                             message_log (LOG_ERROR, "Errors writing field data!");

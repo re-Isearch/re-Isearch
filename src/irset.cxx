@@ -1178,7 +1178,7 @@ OPOBJ *atomicIRSET::Not (const STRING& FieldName)
 
 OPOBJ *atomicIRSET::SortBy (const STRING& ByWhat)
 {
-cerr << "SortBy:" << ByWhat << endl;
+// cerr << "SortBy:" << ByWhat << endl;
   if (ByWhat.IsNumber())
     SortBy((enum SortBy) ByWhat.GetInt());
   else switch (ByWhat.GetLength()) {

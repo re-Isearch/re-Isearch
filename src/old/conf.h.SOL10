@@ -1,0 +1,54 @@
+/*@@@
+File:		conf.h (generated from conf.h.in by configure)
+Version:	1.01
+Description:	Variable sizes
+@@@*/
+
+#ifndef CONF_H
+#define CONF_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define HOST_PLATFORM "Solaris 10"
+
+#define SIZEOF_SHORT_INT 2
+#define SIZEOF_INT 4
+#define SIZEOF_LONG_INT 8
+#define SIZEOF_LONG_LONG_INT 8
+#define SIZEOF_DOUBLE 8
+#define SIZEOF_LONG_DOUBLE 16
+
+
+#define IS_LITTLE_ENDIAN 1
+#undef BSD
+#define LINUX
+#define SVR4
+
+#define HAVE_LOCALE 1
+#define UNIX 1
+#define NO_ALLOCA 0
+#define NO_ALLOCA_H 1
+
+
+#ifdef __GNUC__
+# if (__GNUC__ >= 4)
+#  define HOST_COMPILER "GCC/G++ Version 4.2.1 20070704 (prerelease)"
+# elif (__GNUC__ == 3 && __GNUC_MINOR__ > 2)
+#   define HOST_COMPILER "GCC/G++ Version 3.4.2"
+# else
+#   define HOST_COMPILER "GCC/G++"
+# endif
+#else
+# ifdef SVR4
+# define HOST_COMPILER "SunPro CC"
+# endif
+#endif
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

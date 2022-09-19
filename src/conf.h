@@ -13,9 +13,7 @@ extern "C" {
 
 #define HOST_PLATFORM "x86_64 GNU/Linux"
 #include "conf.h.inc"
-# define HOST_COMPILER "g++ (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0"
-
-
+# define HOST_COMPILER "g++-10 (Ubuntu 10.1.0-2ubuntu1~18.04) 10.1.0"
 
 #ifndef LINUX 
 # define LINUX 1

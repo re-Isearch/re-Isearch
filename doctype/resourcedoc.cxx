@@ -25,7 +25,7 @@ RESOURCEDOC::RESOURCEDOC (PIDBOBJ DbParent, const STRING& Name) :
 
 const char *RESOURCEDOC::Description(PSTRLIST List) const
 {
-  const STRING ThisDoctype("RESOURCEDOC");
+  const STRING ThisDoctype("RESOURCE");
   if ( List->IsEmpty() && Doctype != ThisDoctype)
     List->AddEntry(Doctype);
   List->AddEntry (ThisDoctype);

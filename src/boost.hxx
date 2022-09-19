@@ -3,11 +3,16 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE */
 #ifndef _BOOST_H
 # define _BOOST_H 1 
 
+
+#if 0
 extern "C" {
  extern double  log(double);
  extern double  exp(double);
  extern double  pow(double, double);
 };
+#else
+#include <cmath>
+#endif
 
 class BOOST {
 friend class DATE_BOOST;

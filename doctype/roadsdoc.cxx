@@ -32,7 +32,7 @@ void ROADSDOC::SourceMIMEContent(const RESULT& ResultRecord,
 
 const char *ROADSDOC::Description(PSTRLIST List) const
 {
-  const STRING ThisDoctype("ROADSDOC");
+  const STRING ThisDoctype("ROADS++");
   if ( List->IsEmpty() && Doctype != ThisDoctype)
     List->AddEntry(Doctype);
   List->AddEntry (ThisDoctype);

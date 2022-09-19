@@ -704,7 +704,7 @@ public:
   void        GetFieldDefinitionList(STRLIST *StrlistPtr) const;
 
   GDT_BOOLEAN UsePersistantCache() const  { return !PersistantIrsetCache.IsEmpty(); }
-  STRING      PersistantCacheName() const { return PersistantIrsetCache; }
+  STRING PersistantCacheName() const { return PersistantIrsetCache; }
 
   FPT       *GetMainFpt() { return &MainFpt ; }
 

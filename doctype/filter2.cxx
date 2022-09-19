@@ -161,47 +161,35 @@ static STRING SetFilter(const STRING& arg, const STRING& Doctype)
   return NulString;
 }
 
+
+#define _setFilter { \
+  STRING s (::SetFilter(filter, Doctype) ); \
+  if (s.GetLength()) { Filter = s; return GDT_TRUE; } \
+  return GDT_FALSE; }
+
 GDT_BOOLEAN FILTER2HTMLDOC::SetFilter(const STRING& filter)
 {
-  STRING s (::SetFilter(filter, Doctype) );
-  if (s.GetLength()) { Filter = s; return GDT_TRUE; }
-  return GDT_FALSE; 
+  _setFilter;
 }
 GDT_BOOLEAN FILTER2XMLDOC::SetFilter(const STRING& filter)
 {
-  STRING s (::SetFilter(filter, Doctype) );
-  if (s.GetLength()) { Filter = s; return GDT_TRUE; }
-  return GDT_FALSE;
+  _setFilter;
 }
 GDT_BOOLEAN FILTER2TEXTDOC::SetFilter(const STRING& filter)
 {
-  STRING s (::SetFilter(filter, Doctype) );
-  if (s.GetLength()) { Filter = s; return GDT_TRUE; }
-  return GDT_FALSE;
+  _setFilter;
 }
 GDT_BOOLEAN FILTER2MEMODOC::SetFilter(const STRING& filter)
 {
-  STRING s (::SetFilter(filter, Doctype) );
-  if (s.GetLength()) { Filter = s; return GDT_TRUE; }
-  return GDT_FALSE;
+  _setFilter;
 }
 
 static const STRING NulFilter ("NULL");
 
+
 void FILTER2HTMLDOC::BeforeIndexing()
 {
-  DOCTYPE::BeforeIndexing();
-
-  MIME_Type = Getoption(ini_content_type_tag, mime_application_binary);
-  Filter = ::SetFilter( Getoption(ini_filter_tag, GetDefaultFilter()) , Doctype);
-  if (Filter.IsEmpty()) message_log (LOG_ERROR, "%s: No %s set. Nothing to do?", Doctype.c_str(), ini_filter_tag);
-  else if (Filter.Equals(  NulFilter ))
-    Filter.Clear();
-  else
-    message_log (LOG_INFO, "%s: Using '%s' to filter to HTML.", Doctype.c_str(), Filter.c_str());
-}
-void FILTER2XMLDOC::BeforeIndexing()
-{
+  const char *format = "HTML";
   DOCTYPE::BeforeIndexing();
   MIME_Type = Getoption(ini_content_type_tag, mime_application_binary);
   Filter = ::SetFilter( Getoption(ini_filter_tag, GetDefaultFilter()) , Doctype);
@@ -209,10 +197,24 @@ void FILTER2XMLDOC::BeforeIndexing()
   else if (Filter.Equals (  NulFilter ))
     Filter.Clear();
   else
-    message_log (LOG_INFO, "%s: Using '%s' to filter to XML.", Doctype.c_str(), Filter.c_str());
+    message_log (LOG_INFO, "%s: Using '%s' to filter to %s.", Doctype.c_str(), Filter.c_str(), format);
+
+}
+void FILTER2XMLDOC::BeforeIndexing()
+{
+  const char *format = "XML";
+  DOCTYPE::BeforeIndexing();
+  MIME_Type = Getoption(ini_content_type_tag, mime_application_binary);
+  Filter = ::SetFilter( Getoption(ini_filter_tag, GetDefaultFilter()) , Doctype);
+  if (Filter.IsEmpty()) message_log (LOG_ERROR, "%s: No %s set. Nothing to do?", Doctype.c_str(), ini_filter_tag);
+  else if (Filter.Equals (  NulFilter ))
+    Filter.Clear();
+  else
+    message_log (LOG_INFO, "%s: Using '%s' to filter to %s.", Doctype.c_str(), Filter.c_str(), format);
 }
 void FILTER2TEXTDOC::BeforeIndexing()
 {
+  const char *format = "PTEXT";
   DOCTYPE::BeforeIndexing();
   MIME_Type = Getoption(ini_content_type_tag, mime_application_binary);
   Filter = ::SetFilter( Getoption(ini_filter_tag, GetDefaultFilter()) , Doctype);
@@ -221,10 +223,11 @@ void FILTER2TEXTDOC::BeforeIndexing()
   else if (Filter.Equals(  NulFilter ))
     Filter.Clear();
   else
-    message_log (LOG_INFO, "%s: Using '%s' to filter to Ascii text (PTEXT).", Doctype.c_str(), Filter.c_str());
+    message_log (LOG_INFO, "%s: Using '%s' to filter to %s.", Doctype.c_str(), Filter.c_str(), format);
 }
 void FILTER2MEMODOC::BeforeIndexing()
 {
+  const char *format="MEMO";
   DOCTYPE::BeforeIndexing();
   MIME_Type = Getoption(ini_content_type_tag, mime_application_binary);
   Filter = ::SetFilter( Getoption(ini_filter_tag, GetDefaultFilter()) , Doctype);
@@ -233,7 +236,7 @@ void FILTER2MEMODOC::BeforeIndexing()
   else if (Filter.Equals(  NulFilter ))
     Filter.Clear();
   else
-    message_log (LOG_INFO, "%s: Using '%s' to filter to MEMO.", Doctype.c_str(), Filter.c_str());
+    message_log (LOG_INFO, "%s: Using '%s' to filter to %s.", Doctype.c_str(), Filter.c_str(), format);
 }
 
 

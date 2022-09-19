@@ -1,0 +1,1183 @@
+/*@@@
+File:		rldcache.cxx
+Version:	1.0
+$Revision$
+Description:	Cache & cache entry class
+@@@*/
+
+//
+// Remote/local document caching
+//
+#include "rldcache.hxx"
+
+CHR   GTime[256];
+FILE *rldcache_log;
+int   GPid;
+
+#define RLDCACHE_LOGFILE "/tmp/rldcache.log"
+
+// Define time to live
+#define REFRESH_TIME 3600*24*7
+
+const INT NEW_ENTRY     = 0;
+const INT UPDATE_ENTRY  = 1;
+const INT CORRECT_ENTRY = 2;
+
+// #define USE_PROXY
+
+/// Here is the RLDCACHE class
+RLDCACHE::RLDCACHE() 
+{
+  INT    euid;
+  STRING CachePath;
+  CHR    cCacheName[32];
+
+  debug      = 0;
+  TTL        = REFRESH_TIME;
+  CacheState = NO_CACHE;
+
+#if defined(GDBM)
+  Cache_dbp  = (GDBM_FILE*)NULL;
+#else
+  Cache_dbp  = (DB*)NULL;
+#endif
+
+  euid = (int)getpid();
+  sprintf(cCacheName, "%6d", euid);
+  DataFile = "rldcache_";
+  DataFile.Cat(cCacheName);
+  DataFile.Cat(".db");
+  CachePath = "/tmp";
+
+  CreateInit(CachePath,GDT_FALSE);
+}
+
+
+RLDCACHE::RLDCACHE(STRING& NewPath) 
+{
+  INT    euid;
+  CHR    cCacheName[20];
+
+  debug      = 0;
+  Path       = NewPath;
+  TTL        = REFRESH_TIME;
+  CacheState = NO_CACHE;
+
+#if defined(GDBM)
+  Cache_dbp  = (GDBM_FILE*)NULL;
+#else
+  Cache_dbp  = (DB*)NULL;
+#endif
+
+  euid = (int)getpid();
+  sprintf(cCacheName, "%6d", euid);
+  DataFile = "rldcache_";
+  DataFile.Cat(cCacheName);
+  DataFile.Cat(".db");
+
+  CreateInit(Path,GDT_FALSE);
+}
+
+
+RLDCACHE::RLDCACHE(STRING& NewPath, GDT_BOOLEAN ForceNew) 
+{
+  INT    euid;
+  CHR    cCacheName[20];
+
+  debug      = 0;
+  Path       = NewPath;
+  TTL        = REFRESH_TIME;
+  CacheState = NO_CACHE;
+
+#if defined(GDBM)
+  Cache_dbp  = (GDBM_FILE*)NULL;
+#else
+  Cache_dbp  = (DB*)NULL;
+#endif
+
+  euid = (int)getpid();
+  sprintf(cCacheName, "%6d", euid);
+  DataFile = "rldcache_";
+  DataFile.Cat(cCacheName);
+  DataFile.Cat(".db");
+
+  CreateInit(Path,ForceNew);
+}
+
+
+RLDCACHE::RLDCACHE(STRING& NewPath, STRING& CacheName, GDT_BOOLEAN ForceNew) 
+{
+  debug      = 0;
+  Path       = NewPath;
+  DataFile   = CacheName;
+  TTL        = REFRESH_TIME;
+  CacheState = NO_CACHE;
+
+#if defined(GDBM)
+  Cache_dbp  = (GDBM_FILE*)NULL;
+#else
+  Cache_dbp  = (DB*)NULL;
+#endif
+
+  CreateInit(Path,ForceNew);
+}
+
+
+void
+RLDCACHE::CreateInit(STRING& NewPath, GDT_BOOLEAN ForceNew)
+{
+  struct stat Stats;
+  INT         euid, read_write;
+  INT         ret;
+
+  if (ForceNew) {
+    if (NewPath.GetLength() == 0) {
+      cerr << "RLDCACHE::Init: Invalid Path [NULL]" << endl;
+      return;
+    }
+
+    CHR *pNewPath;
+    pNewPath = NewPath.NewCString();
+
+    // Does directory exist?
+    if (stat(pNewPath, &Stats) != 0) {
+      if (mkdir(pNewPath,0755) != 0) {
+	perror("RLDCACHE::CreateInit");
+	fflush(stdout); 
+	fflush(stderr);
+	return;
+      }
+      // OK, try it again
+      if (stat(pNewPath, &Stats) != 0) {
+	perror("RLDCACHE::CreateInit");
+	fflush(stdout); 
+	fflush(stderr);
+	return;
+      }
+    }
+
+    // Make sure the directory is really a directory
+    if (!S_ISDIR(Stats.st_mode)) {
+      // Not a directory - bail out...
+      perror("RLDCACHE::CreateInit");
+      fflush(stdout); 
+      fflush(stderr);
+      return;
+    }
+    delete [] pNewPath;
+
+    // Build the class path variable  
+    if (Path.GetLength() > 0) {
+      SetPath(NewPath);
+    } else {
+      cerr << "RLDCACHE::CreateInit: Path buffer not allocated" << endl;
+      return;
+    }
+  }
+
+  // Build the class variable for the cache name
+  if (DataFile.GetLength() > 0) {
+    SetCacheFilename(DataFile);
+  } else {
+    cerr << "RLDCACHE::CreateInit: DataFile buffer not allocated" << endl;
+    return;
+  }
+
+  CHR *pDataFile;
+  pDataFile = DataFile.NewCString();
+  if (stat(pDataFile, &Stats) != 0) {
+    if (ForceNew) {
+      // The cache does not exist, so create it
+      cerr << "Creating new cache [" << DataFile << "]" << endl;
+
+      // Create the cache
+#if defined(GDBM)
+      Cache_dbp = new GDBM_FILE;
+
+#else
+      if ((ret = db_create(&Cache_dbp, NULL, 0)) != 0) {
+	fprintf(stderr, "db_create: %s\n", db_strerror(ret));
+	exit(1);
+      }
+#endif
+      //      CacheState = CLOSED;
+      CacheState = CacheOpen(OPEN_WRITE);
+      if (CacheState != OPEN_WRITE) {
+	// Something is clearly wrong...
+	delete [] pDataFile;
+      	return;
+      }
+      CacheClose();
+
+    } else {
+      CacheState = NO_CACHE;
+    }
+
+  } else {
+    // The file exists
+    if (!S_ISREG(Stats.st_mode)) {
+      // Something is horribly wrong - not a regular file
+      perror("RLDCACHE::CreateInit");
+      delete [] pDataFile;
+      fflush(stdout); 
+      fflush(stderr);
+      return;
+    } 
+
+    // Create the cache
+#if defined(GDBM)
+    //    Cache_dbp = new GDBM_FILE;
+    GDBM_FILE dbp;
+    Cache_dbp = &dbp;
+
+#else
+    if ((ret = db_create(&Cache_dbp, NULL, 0)) != 0) {
+      fprintf(stderr, "db_create: %s\n", db_strerror(ret));
+      exit(1);
+    }
+#endif
+
+    // Make sure it opens nicely - we may want to change this to provide
+    // a way to open it readonly for non-owners (like the http owner)
+    //    CacheState = CLOSED;
+    CacheState = CacheOpen(OPEN_WRITE);
+    if (CacheState != OPEN_WRITE) {
+      // Something is clearly wrong...
+      delete [] pDataFile;
+      return;
+    } 
+    CacheClose();
+  }
+  delete [] pDataFile;
+  return;
+}
+
+
+RLD_State
+RLDCACHE::CacheOpen()
+{
+  return CacheOpen(OPEN_WRITE);
+}
+
+
+RLD_State
+RLDCACHE::CacheOpen(RLD_State mode)
+{
+  INT ret=0;
+  CHR *pDataFile;
+#if defined(GDBM)
+  GDBM_FILE *dbp;
+  int open_flag;
+#else
+  DB* dbp;
+  u_int32_t open_flag;
+#endif
+
+  // Somehow we got here with no cache open!
+  if (!Cache_dbp)
+    return NO_CACHE;
+
+  if (CacheState == mode)
+    return CacheState;
+
+  if (CacheState == OPEN_READ) {
+    CacheClose();
+  } else if (CacheState == OPEN_WRITE) {
+    CacheClose();
+  } else if (CacheState == CLOSED) {
+    // do nothing
+  } else if (CacheState == NO_CACHE) {
+    // do nothing
+  } else {
+    // WTF?
+    return NO_CACHE;
+  }
+
+  dbp = Cache_dbp;
+  pDataFile = DataFile.NewCString();
+
+// Check version
+#if defined(DBM41) || defined (DBM42) || defined (DBM43) || defined (DBM44) 
+    // Berkeley DB, v4.1 and later
+  if (mode == OPEN_READ) {
+    open_flag = DB_RDONLY;
+  } else if (mode == OPEN_WRITE) {
+    open_flag = DB_CREATE;
+  } else {
+    return mode;
+  }
+
+  if ((ret = dbp->open(dbp, 
+		       NULL,
+		       pDataFile, 
+		       NULL, 
+		       DB_HASH, 
+		       open_flag, 
+		       0644)) != 0) {	
+    fprintf(stderr, "RLDCACHE::CacheOpen()::db_open: %s\n", 
+	    db_strerror(ret));
+    CacheState = NO_CACHE;
+    delete [] pDataFile;
+    return CacheState;
+  }
+
+#elif defined(DBM)
+    // Berkeley DB, v4.0 and earlier
+  if (mode == OPEN_READ) {
+    open_flag = DB_RDONLY;
+  } else if (mode == OPEN_WRITE) {
+    open_flag = DB_CREATE;
+  } else {
+    return mode;
+  }
+
+  if ((ret = dbp->open(dbp, 
+		       pDataFile, 
+		       NULL, 
+		       DB_HASH, 
+		       open_flag, 
+		       0644)) != 0) {	
+    fprintf(stderr, "RLDCACHE::CacheOpen()::db_open: %s\n", 
+	    db_strerror(ret));
+    CacheState = NO_CACHE;
+    delete [] pDataFile;
+    return CacheState;
+  }
+
+#elif defined(GDBM)
+  // GDBM
+  if (mode == OPEN_READ) {
+    open_flag = GDBM_READER;
+  } else if (mode == OPEN_WRITE) {
+    open_flag = GDBM_WRCREAT;
+  } else {
+    return mode;
+  }
+
+  //  *dbp=gdbm_open(pDataFile,0,GDBM_WRCREAT,0666,0);
+  *dbp=gdbm_open(pDataFile,512,open_flag,0644,0);
+  if (!(*dbp)) {
+    fprintf(stderr, "RLDCACHE::CacheOpen::gdbm_open: %s\n", 
+	    gdbm_strerror(ret));
+    CacheState = NO_CACHE;
+    delete [] pDataFile;
+    return CacheState;
+  }
+
+#else 
+  // Standard Unix DB
+  if ((dbp=dbopen(pDataFile,O_CREAT, 
+		  S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IWOTH,
+		  DB_HASH,NULL)) !=0) {
+    fprintf(stderr, "RLDCACHE::CacheOpen()::db_open: %s\n", 
+	    db_strerror(ret));
+    CacheState = NO_CACHE;
+    delete [] pDataFile;
+    return CacheState;
+  }
+#endif
+  CacheState = mode;
+
+#ifdef DEBUG
+  cerr << "Cache opened " << CacheState << endl;
+#endif
+  delete [] pDataFile;
+  return CacheState;
+}
+
+
+// Legacy method
+RLD_State
+RLDCACHE::CacheOpenReadonly()
+{
+  return CacheOpen(OPEN_READ);
+}
+
+
+
+RLD_State
+RLDCACHE::CacheReopen(RLD_State mode)
+{
+  CacheClose();
+  return CacheOpen(mode);
+}
+
+
+// This was the default behavior
+RLD_State
+RLDCACHE::CacheReopen()
+{
+  return CacheReopen(OPEN_WRITE);
+}
+
+
+void
+RLDCACHE::CacheClose()
+{
+  
+  if (CacheState == CLOSED)
+    return;
+
+  if (Cache_dbp) {
+
+#if defined(GDBM)
+    gdbm_close(*Cache_dbp);
+    //  delete Cache_dbp;
+#else
+    Cache_dbp->close(Cache_dbp, 0);
+#endif
+
+    CacheState = CLOSED;
+
+  } else {
+    CacheState = NO_CACHE;
+  }
+
+#ifdef DEBUG
+  cerr << "Cache closed" << endl;
+#endif
+  return;
+}
+
+
+void 
+RLDCACHE::Delete()
+{
+  return;
+}
+
+
+/*
+Name:	RLDCACHE::Fopen
+Desc:	Opens the file pointed to by cache item Name.
+Pre:	Name is a URL or local file name
+	mode is the file mode to use for opening
+Post:
+Notes:  If the item is in the cache, the related file is opened and 
+        the pointer is returned.  If the item is not in the cache, it 
+        is retrieved (if it happens to be a URL), stored locally in 
+        the cache and opened.  If the items is a local file, it is 
+        just opened. 
+*/
+FILE*
+RLDCACHE::Fopen(STRING& Name, CHR* mode)
+{
+  FILE        *fp;
+  RLDENTRY    *Entry;
+  GDT_BOOLEAN  InCache;
+
+  // Do we already have the requested URL (or filename) in cache?
+  Entry = GetEntryByName(Name);
+  if (Entry == NULL_RLDENTRY) {
+    Entry = GetFile(Name);
+    //    cerr << "Retrieved " << Name << " remotely (from Internet).";
+
+  } else {
+    //    cerr << "Retrieved " << Name << " locally (from cache).";
+    // We got the entry, now see if it is valid.
+    STRING LocalFileName;
+    CHR *pLocalFileName;
+    struct stat Stats;
+
+    // First, see if the file still exists in the local directory
+    LocalFileName = Entry->GetFileName();
+    pLocalFileName = LocalFileName.NewCString();
+
+    // stat the file
+    if (stat(pLocalFileName, &Stats) != 0) {
+      // not found - go get a fresh copy
+      Entry = GetFile(Name);
+      if (Entry == NULL_RLDENTRY)
+	return (FILE *)NULL;
+    }
+
+    if (Entry->Expired(TTL)) {
+      Entry = GetFile(Name);
+      if (Entry == NULL_RLDENTRY)
+	return (FILE *)NULL;
+    }
+  }
+
+  // If the entry has expired and hasn't been freshened, we will have
+  // a NULL entry here
+  if (Entry == NULL_RLDENTRY)
+    return (FILE *)NULL;
+
+  fp = Entry->OpenFile(mode);
+  return fp;
+}
+
+
+/*
+Name:	RLDCACHE::GetFile
+Desc:	Accepts queries for files via URL or local file name and returns
+	the requested portion of the document.
+Pre:	File is a URL or local file name
+	Start is the starting byte offset into the file
+	Count is the number of bytes to return from Start position
+	Len returns the actual length of the file read
+	TTL is the time to live in seconds.
+	No flags defined yet
+Post:
+Notes:	If you want the entire document, request a Count of -1
+*/
+RLDENTRY*
+RLDCACHE::GetFile(STRING& URL)
+{
+  CHR         *FileName;
+  RLDENTRY    *NewEntry;
+  FILE        *fp;
+  time_t       CurTime;
+  size_t       Len;
+  INT          err, State;
+  STRING       TmpName;
+  STRING       sPath,sFile;
+  STRINGINDEX  n;
+
+  // Convert the URL to a local file name in the cache path
+  //  n = URL.Search(':');
+  n = URL.Search("://");
+  if (n > 0)
+    TmpName = UrlToFile(Path,URL);
+  else
+    TmpName = URL;
+
+  // Strip out the path part of the name to see if that path exists, and
+  // create it if it does not.
+  sPath = TmpName;
+  sFile = TmpName;
+  n = sPath.SearchReverse('/'); // right-most slash
+  sPath.EraseAfter(n-1);
+  sFile.EraseBefore(n+1);
+
+  // Now, see if all of the subdirectories in the path exist
+  if (!(mkpath(sPath,0755))) {
+    cerr << "RLDCACHE::GetFile: Failed to create path " << sPath << endl;
+    return NULL_RLDENTRY;
+  }
+
+  // Open the cache file to hold the retrieved contents
+  FileName = TmpName.NewCString();
+  if ((fp = fopen(FileName, "w")) == NULL) {
+    cerr << "RLDCACHE::GetFile: Can''t open " << TmpName << endl;
+    perror("RLDCACHE::GetFile");
+    delete [] FileName;
+    fflush(stdout); 
+    fflush(stderr);
+    return NULL_RLDENTRY;
+  }
+  delete [] FileName;
+  
+  // Retrieve the file by URL and stuff in into the file TmpName
+  CHR *chrURL = URL.NewCString();
+  if ((err=ResolveURL(chrURL,fp)) <= 0) {
+    if (err == URL_NOT_AVAILABLE)
+      cerr << "RLDCACHE::GetFile: Non-existent URL " << URL << endl;
+    else 
+      cerr << "RLDCACHE::GetFile: Bad URL type" << endl;
+    fclose(fp);
+	delete [] chrURL;
+    return NULL_RLDENTRY;
+  }
+  fclose(fp);
+  time(&CurTime);
+
+  //  Now, build the entry and stuff it into the cache index
+  NewEntry = new RLDENTRY(URL, TmpName, CurTime);
+  if (NewEntry == NULL_RLDENTRY) {
+    return NULL_RLDENTRY;
+  }
+
+  // Update the cache data file
+  if (UpdateEntry(NewEntry) == -1) {
+    return NULL_RLDENTRY;
+  }
+
+  if (debug)
+    NewEntry->Print(stdout);
+
+#ifdef USE_PROXY
+  unlink(NewEntry->GetFileName());
+  DeleteEntry(NewEntry);
+#endif
+
+  return NewEntry;
+}
+
+
+//Pre:	Name is a URL or local file name
+RLDENTRY*
+RLDCACHE::GetEntryByName(STRING& Name)
+{
+  RLDENTRY *Entry;
+  INT       ret;
+  CHR      *pkey;
+  CHR      *pData;
+ 
+#if defined(GDBM)
+  datum     key, data;
+#else
+  DBT       key, data;
+#endif
+
+  if (CacheState == NO_CACHE) {
+    cerr << "RLDCACHE::GetEntryByName: No cache" << endl;
+    return NULL_RLDENTRY;
+  }
+
+  if (CacheState != OPEN_READ)
+    CacheState = CacheReopen(OPEN_READ);
+
+  if (CacheState != OPEN_READ) {
+    cerr << "RLDCACHE::GetEntryByName: open failed - " << DataFile << endl;
+    CacheClose();
+    return NULL_RLDENTRY;
+  }
+
+  pkey = Name.NewCString(); // delete this later
+  memset(&key, 0, sizeof(key));
+  memset(&data, 0, sizeof(data));
+#if defined(GDBM)
+  key.dptr = pkey;
+  key.dsize = strlen(pkey)+1;
+
+  data = gdbm_fetch(*Cache_dbp,key);
+  if (data.dsize > 0) {
+    Entry = new RLDENTRY;
+    Entry->SetName(Name);
+    pData = new CHR[data.dsize + 1];
+    pData[0] = '\0';
+    strncpy(pData, (CHR*)data.dptr, data.dsize);
+    pData[data.dsize] = '\0';
+    Entry->Unpack(pData);
+
+    delete [] pkey;
+    delete [] pData;
+    CacheClose();
+    return Entry;
+
+  } else {
+    delete [] pkey;
+    CacheClose();
+    return NULL_RLDENTRY;
+  }
+
+#else
+  key.data = pkey;
+  key.size = strlen(pkey);
+
+  ret = Cache_dbp->get(Cache_dbp, NULL, &key, &data, 0);
+  if ((ret == 0) && (data.data != NULL)) {
+    Entry = new RLDENTRY;
+    Entry->SetName(Name);
+    pData = new CHR[data.size + 1];
+    pData[0] = '\0';
+    strncpy(pData, (CHR*)data.data, data.size);
+    pData[data.size] = '\0';
+    Entry->Unpack(pData);
+
+    delete [] pkey;
+    delete [] pData;
+    CacheClose();
+    return Entry;
+
+  } else if (ret == DB_NOTFOUND) {
+    //    fprintf(stderr,"%s\n",db_strerror(ret));
+    delete [] pkey;
+    CacheClose();
+    return NULL_RLDENTRY;
+
+  } else {
+    fprintf(stderr,"%s\n",db_strerror(ret));
+  }
+#endif
+  delete [] pkey;
+  CacheClose();
+  return NULL_RLDENTRY;
+}
+
+
+//Pre:	Name is a URL or local file name
+GDT_BOOLEAN
+RLDCACHE::EntryExists(STRING& Name)
+{
+  RLDENTRY *Entry;
+  Entry = GetEntryByName(Name);
+  if (Entry == NULL_RLDENTRY)
+    return GDT_FALSE;
+  return GDT_TRUE;
+}
+
+
+INT 
+RLDCACHE::UpdateEntry(RLDENTRY *e)
+{
+  INT       ret;
+  RLDENTRY  Entry;
+  STRING    Buffer;
+  CHR      *dbm_buffer;
+  CHR      *pkey;
+  CHR       cLength[128], cTimeStamp[128];
+
+#if defined(GDBM)
+  datum     key,data;
+  int       write_flag;
+#else
+  DBT       key,data;
+  u_int32_t write_flag;
+#endif
+
+  if (CacheState == NO_CACHE) {
+    cerr << "RLDCACHE::UpdateEntry: No cache" << endl;
+    return -1;
+  }
+
+  if (EntryExists(e->Name)) {
+    // we have the entry, so replace it
+#if defined(GDBM)
+    write_flag = GDBM_REPLACE;
+#else
+    write_flag = 0;
+#endif
+
+  } else {
+    // it is a new entry, so insert it
+#if defined(GDBM)
+    write_flag = GDBM_INSERT;
+#else
+    write_flag = DB_NOOVERWRITE;
+#endif
+  }
+
+  if (CacheState != OPEN_WRITE) {
+    CacheState = CacheReopen(OPEN_WRITE);
+  }
+
+  if (CacheState != OPEN_WRITE) {
+    cerr << "RLDCACHE::UpdateEntry:Cache " << DataFile 
+	 << " not opened for writing." << endl;
+    return -1;
+  }
+
+  pkey = e->Name.NewCString();
+
+  // Make the data buffer
+  sprintf(cLength,"%ld", (long)e->Length);
+  sprintf(cTimeStamp,"%ld",(long)e->TimeStamp);
+  Buffer = e->FileName;
+  Buffer.Cat("|");
+  Buffer.Cat(cLength);
+  Buffer.Cat("|");
+  Buffer.Cat(cTimeStamp);
+  dbm_buffer = Buffer.NewCString();
+
+#ifdef DBM_DEBUG
+  if (data.data != NULL) {
+    fprintf (stderr,"key is  ->%s<-\n", key.data);
+    fprintf (stderr,"data is ->%s<-\n\n", data.data);
+  }
+#elif defined(GDBM_DEBUG)
+  if (data.dptr != NULL) {
+    fprintf (stderr,"key is  ->%s<-\n", key.dptr);
+    fprintf (stderr,"data is ->%s<-\n\n", data.dptr);
+  }
+#endif
+
+  // Open up the cache index and replace the entry
+  memset(&key, 0, sizeof(key));
+  memset(&data, 0, sizeof(data));
+
+#if defined(GDBM)
+  key.dptr = pkey;
+  key.dsize = strlen(pkey)+1;
+  data.dptr = dbm_buffer;
+  data.dsize = strlen(dbm_buffer)+1;
+  ret = gdbm_store(*Cache_dbp,key,data,write_flag);
+  if (ret != 0) {
+    fprintf(stderr, "RLDCACHE::UpdateEntry::gdbm_store: %s\n",
+	    gdbm_strerror(ret));
+  } else {
+    gdbm_sync(*Cache_dbp);
+  }
+
+#else
+  key.data = pkey;
+  key.size = strlen(pkey)+1;
+  data.data = dbm_buffer;
+  data.size = strlen(dbm_buffer)+1;
+
+  if ((ret = Cache_dbp->put(Cache_dbp, NULL, &key, &data, write_flag)) == 0) {
+    Cache_dbp->sync(Cache_dbp,0);
+
+  } else
+    fprintf(stderr,"RLDCACHE::UpdateEntry:db->put: %s\n",db_strerror(ret));
+#endif
+
+  CacheClose();
+  CacheReopen(OPEN_READ);
+  delete [] pkey;
+  return 0;
+}
+
+
+INT 
+RLDCACHE::DeleteEntry(RLDENTRY *e)
+{
+  /*
+    INT    err;
+    datum  dbm_key, return_data;
+    CHR   *pkey;
+ 
+    //  if (CacheState == CLOSED)
+    //    CacheState = CacheOpen(GDBM_WRITER);
+
+    if (!CacheState) {
+    cerr << "RLDCACHE::DeleteEntry: " << DataFile << endl;
+    return -1;
+    }
+
+    if (EntryExists(e->Name)) {
+    pkey = e->Name;
+    dbm_key.dptr = pkey;
+    dbm_key.dsize = strlen(pkey)+1;
+
+    // Delete the entry from the cache index
+    //    err = gdbm_delete (dbf, dbm_key);
+    } 
+  */
+  return 0;
+}
+
+
+// This method deletes the temp files associated with expired cache
+// entries.  It is called separately so that one can delete the files
+// before just deleting the cache file instead of reorganizing the 
+// cache file.  Files older than Minutes minutes will be deleted.
+//
+// Eventually, we may want to fix this so it only deletes files in /tmp
+void
+RLDCACHE::DeleteFiles(int Minutes)
+{
+  /*
+  RLDENTRY *Entry;
+  IS_TIME_T    time_now;
+  IS_TIME_T    MaxTime;
+  datum     dbm_key, return_data;
+  CHR      *pkey;
+  CHR      *pData;
+
+  dbm_key.dptr=(CHR*)NULL;
+  
+  MaxTime  = Minutes * 60L;
+  time_now = time((IS_TIME_T*)NULL);
+  Entry    = new RLDENTRY;
+
+  if (Entry == NULL_RLDENTRY) {
+    cerr << "RLDCACHE::DeleteFiles: failed to allocate RLDENTRY" << endl;
+    return;
+  }
+
+  //  CacheClose();
+  
+  if (CacheState == CLOSED) {
+    //    CacheState = CacheOpen(GDBM_WRITER);
+//    CacheState = CacheOpen(GDBM_READER);
+
+    if (CacheState == CLOSED) {
+      cerr << "RLDCACHE::CleanCache: " << DataFile << endl;
+      return;
+    }
+  }
+
+//  return_data = gdbm_firstkey(dbf);
+  
+  // Walk through the cache and save the keys of items which need to 
+  // be deleted.  We do not delete them yet because gdbm_delete may change
+  // the hash table and cause some items to be missed.
+  while (return_data.dptr != NULL) {
+    // Now, we have the key - read the data
+    dbm_key = return_data;
+//    return_data = gdbm_fetch(dbf, dbm_key);
+
+    if (return_data.dptr != NULL) {
+      pData = new CHR[return_data.dsize + 1];
+      strncpy(pData, return_data.dptr, return_data.dsize);
+      pData[return_data.dsize] = '\0';
+
+      Entry->Unpack(pData);
+
+      if ((time_now - Entry->TimeStamp) >= MaxTime) {
+	// Delete the temp file now, and clean up the cache index next
+	unlink(Entry->FileName);
+      }
+      delete [] pData;
+    }
+
+    free (return_data.dptr); // this was mallocated by the gdbm_fetch call
+//    return_data = gdbm_nextkey(dbf, dbm_key);
+  }
+  delete Entry;
+  */  
+}
+
+
+// This method deletes the temp files associated with expired cache
+// entries, then cleans up the cache entries.  Files older than 
+// Minutes minutes will be deleted.
+// 
+// Eventually, we may want to fix this so it only deletes files in /tmp
+RLDENTRY *RLDCACHE::CleanCache(int Minutes)
+{
+  /*
+  RLDENTRY *Entry;
+  INT       err;
+  IS_TIME_T    time_now;
+  IS_TIME_T    MaxTime;
+  datum     dbm_key, return_data;
+  CHR      *pkey;
+  CHR      *pData;
+  STRLIST   KeyToDeleteList;
+  STRING    KeyToDelete;
+  IS_SIZE_T    delete_count;
+  
+  dbm_key.dptr = (CHR*)NULL;
+  MaxTime  = Minutes * 60L;
+  time_now = time((IS_TIME_T*)NULL);
+  Entry    = new RLDENTRY;
+
+  if (Entry == NULL_RLDENTRY) {
+    cerr << "RLDCACHE::CleanCache: failed to allocate RLDENTRY" << endl;
+    return NULL_RLDENTRY;
+  }
+
+//  if (CacheState == CLOSED) {
+//    CacheState = CacheOpen(GDBM_WRITER);
+
+    if (CacheState == CLOSED) {
+      cerr << "RLDCACHE::CleanCache: " << DataFile << endl;
+      return NULL_RLDENTRY;
+    }
+  }
+
+//  return_data = gdbm_firstkey(dbf);
+
+  // Walk through the cache and save the keys of items which need to 
+  // be deleted.  We do not delete them yet because gdbm_delete may change
+  // the hash table and cause some items to be missed.
+  while (return_data.dptr) {
+    pData = new CHR[return_data.dsize + 1];
+    strncpy(pData, return_data.dptr, return_data.dsize);
+    pData[return_data.dsize] = '\0';
+
+    Entry->Unpack(pData);
+    if ((time_now - Entry->TimeStamp) >= MaxTime) {
+      KeyToDelete = Entry->Name;
+      KeyToDeleteList.AddEntry(KeyToDelete);
+
+      // Delete the temp file now, and clean up the cache index next
+      unlink(Entry->FileName);
+      delete [] pData;
+    }
+
+    dbm_key = return_data;
+//    return_data = gdbm_nextkey(dbf, dbm_key);
+    free (dbm_key.dptr);
+  }
+
+  // Now, walk through the STRLIST and delete each entry in
+  delete_count = KeyToDeleteList.GetTotalEntries();
+
+  for (IS_SIZE_T i=0; i<delete_count; i++) {
+    KeyToDeleteList.GetEntry(i, &KeyToDelete);
+    pData = KeyToDelete.NewCString();
+    dbm_key.dptr = pData;
+    dbm_key.dsize = strlen(pData)+1;
+//    err = gdbm_delete(dbf, dbm_key);
+    delete [] pData;
+  }
+
+  delete Entry;
+  */
+  return NULL_RLDENTRY;
+}
+
+
+// Walks through the cache (by UID) and prints
+// out all the file info found there
+RLDENTRY *
+RLDCACHE::WalkCache()
+{
+  /*
+  RLDENTRY *Entry;
+  FILE *fp;
+  int err;
+
+  Entry = new RLDENTRY;
+
+  if(Entry == NULL_RLDENTRY) 
+    return NULL_RLDENTRY;
+
+  if((fp = fopen(DataFile, "r")) == NULL) {
+    perror("RLDCACHE::WalkCache");
+    cerr << "RLDCACHE::WalkCache: " << DataFile << endl;
+    return NULL_RLDENTRY;
+  }
+  do {
+    if((err=fread(Entry,1,sizeof(RLDENTRY),fp))!=sizeof(RLDENTRY)) {
+      fclose(fp);
+      return NULL_RLDENTRY;
+    }
+    Entry->Print(stdout);
+  } while(err > 0);
+  fclose(fp);	
+  */
+  return NULL_RLDENTRY;
+}
+
+
+RLDCACHE::~RLDCACHE() {
+    CacheClose();
+}
+
+
+////////////////////////////////////////////////////////////////////
+// Here is the RLDENTRY Class
+RLDENTRY::RLDENTRY() {
+  debug    = 0;
+  Length   = 0;
+  TimeStamp= 0;
+}
+
+
+//RLDENTRY::RLDENTRY(STRING& Name, STRING& FileName, IS_SIZE_T Len, IS_TIME_T Time) {
+RLDENTRY::RLDENTRY(STRING& Name, STRING& FileName, IS_TIME_T Time) {
+  CreateInit(Name, FileName, 0, Time);
+}
+
+
+// Initializes a new RLDENTRY
+void
+RLDENTRY::CreateInit(STRING& NewEntryName, STRING& NewFileName, size_t NewLen, time_t NewTime)
+{
+  if (NewEntryName.GetLength() == 0) {
+    cerr << "RLDENTRY::CreateInit: Buffer allocation failed [Name]"
+	 << endl;
+    return;
+  }
+
+  if (NewFileName.GetLength() == 0) {
+    cerr << "RLDENTRY::CreateInit: Buffer allocation failed [FileName]"
+	 << endl;
+    return;
+  }
+		
+  debug     = 0;
+  Name      = NewEntryName;
+  FileName  = NewFileName;
+  Length    = NewLen;
+  TimeStamp = NewTime;
+
+  return;
+}
+
+
+// Prints the RLDENTRY on the file pointer
+void 
+RLDENTRY::Print(FILE *fp)
+{
+  if (this == NULL_RLDENTRY)
+    return;
+
+  if (Name.GetLength() > 0) {
+    Name.Print(fp);
+    fprintf(fp, "\n");
+  }
+
+  if (FileName.GetLength() > 0) {
+    FileName.Print(fp);
+    fprintf(fp, "\n");
+  }
+
+  //  if (Name[0] != '\0')
+  //    fprintf(fp, "Name:\t\t%s\n", Name);
+  //  if (FileName[0] != '\0')
+  //    fprintf(fp, "FileName:\t%s\n", FileName);
+	
+  fprintf(fp, "Length:\t\t%ld\n", (long)Length);
+  fprintf(fp, "Time:\t\t%s\n", ctime(&TimeStamp));
+}
+
+
+// Unpacks the data read from disk into the object member variables
+void
+RLDENTRY::Unpack(CHR *pData) {
+  INT i=0,j=0;
+  CHR tmp[2048];
+
+  // Get the file name
+  while (pData[i] != '|') {
+    //    FileName[i] = pData[i];
+    FileName.Cat(pData[i]);
+    i++;
+  }
+
+  // Skip the separator
+  i++;
+  
+  // Get the file length
+  while (pData[i] != '|') {
+    tmp[j] = pData[i];
+    i++;
+    j++;
+  }
+  tmp[j] = '\0';
+  Length = (size_t)atol(tmp);
+
+  // Skip the separator
+  i++;
+  
+  // Get the timestamp
+  j=0;
+  while (pData[i] != '\0') {
+    tmp[j] = pData[i];
+    i++;
+    j++;
+  }
+  tmp[j] = '\0';
+  TimeStamp =  (time_t) atol(tmp);
+}
+
+
+// Opens the file associated with the entry
+FILE*
+RLDENTRY::OpenFile(CHR *mode) {
+  FILE *fp;
+
+  if ((fp = fopen(GetFileName(), mode)) == NULL) {
+    return (FILE*)NULL;
+  }
+  return fp;
+}
+
+
+GDT_BOOLEAN
+RLDENTRY::Expired(time_t TTL) {
+  time_t CurTime;
+
+  if (TTL < 0) {
+    return GDT_FALSE; // file never expires if TTL < 0
+  }
+
+  time(&CurTime);
+  if ((CurTime - TimeStamp) > TTL) {
+    // Entry is too old
+    return GDT_TRUE;
+  }
+  // Entry is still good
+  return GDT_FALSE;
+}
+
+
+RLDENTRY::~RLDENTRY() {
+}
+

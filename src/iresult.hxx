@@ -16,7 +16,7 @@ Description:	Class IRESULT - Internal Search Result
 
 #define USE_GEOSCORE 1
 
-extern "C" { double  pow(double, double); };
+//extern "C" { double  pow(double, double); };
 
 class GEOSCORE {
 #define K_TARGET 0.5
