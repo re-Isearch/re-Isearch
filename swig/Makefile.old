@@ -1,0 +1,57 @@
+PROJECT=ib
+CCC=CC
+############################################################
+#### This is the configuration stuff  ######################
+
+SWIG=swig1.3a3
+TYP=python
+PREFIX=Py
+OPTIONS=-shadow
+
+############ end configuration #############################
+############################################################
+BIN_DIR=../$(TYP)
+MODULE=$(PREFIX)$(PROJECT)
+target: $(BIN_DIR)/$(MODULE)c.so
+VERSION=`cat .version`
+#PyIB
+OPT=-c -Kpic -fast
+SHARED=-G -s
+INC=-I/usr/local/include/$(TYP) -I../src
+LIBS=-lBSn -liDoc -liSearch -lIBctype
+
+
+target: $(MODULE)c.so
+
+OBJS=ib_$(TYP)wrap.o #pyglue.o
+
+.version: ../bin/Iindex
+	./vergen
+
+ib_$(TYP)wrap.cxx: IB.i my_typedefs.i .version
+	$(SWIG) -c++  -$(TYP) $(OPTIONS) -o ib_$(TYP)wrap.cxx IB.i
+
+$(MODULE): IB.i my_typedefs.i
+	$(SWIG) -c++ -$(TYP)  $(OPTIONS) -o ib_$(TYP)wrap.cxx ib.i
+
+ib_$(TYP)wrap.o: ib_$(TYP)wrap.cxx
+	$(CCC) $(OPT) $(INC) ib_$(TYP)wrap.cxx
+
+pyglue.o: pyglue.cxx
+	$(CCC) $(OPT) $(INC) pyglue.cxx
+
+$(MODULE)c.so: $(OBJS)
+	$(CCC) $(SHARED) -o $(MODULE)c.$(VERSION).so $(OBJS) -R../lib:/opt/BSN/lib -L../lib $(LIBS) 
+	rm -f $(MODULE)c.so
+	ln -s $(MODULE)c.$(VERSION).so $(MODULE)c.so
+
+$(BIN_DIR)/$(MODULE)c.so: $(MODULE)c.so
+	/bin/rm ../$(TYP)/$(MODULE).py
+	/bin/cp *.py ../$(TYP)
+	touch ../$(TYP)/$(MODULE)c.so
+	/bin/rm ../$(TYP)/$(MODULE)c.so
+	/bin/cp $(MODULE)c.$(VERSION).so ../$(TYP)
+	cd ../$(TYP)
+	ln -s $(MODULE)c.$(VERSION).so ../$(TYP)/$(MODULE)c.so 
+	mv ../$(TYP)/$(MODULE).py ../$(TYP)/$(MODULE).$(VERSION).py
+	ln -s $(MODULE).$(VERSION).py ../$(TYP)/$(MODULE).py

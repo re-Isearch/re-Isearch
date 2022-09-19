@@ -1,0 +1,56 @@
+PROJECT=IB
+CCC=CC
+############################################################
+#### This is the configuration stuff  ######################
+
+SWIG=swig
+TYP=tcl8
+PREFIX=Tcl
+OPTIONS= -namespace
+EXT=.tcl
+
+############ end configuration #############################
+############################################################
+BIN_DIR=../$(TYP)
+MODULE=$(PROJECT)
+#$(PREFIX)$(PROJECT)
+VERSION=`cat .version`
+#PyIB
+OPT=-c -Kpic -fast
+SHARED=-G -s
+INC=-I/usr/local/include/$(TYP) -I/usr/local/include -I../src
+LIBS=-lBSn -liDoc -liSearch -libIO -lIBctype
+LIBRARY=$(PREFIX)$(MODULE)
+
+
+target: dll 
+
+OBJS=ib_$(TYP)wrap.o
+
+.version: ../bin/Iindex
+	./vergen
+	touch $(MODULE).$(VERSION)$(EXT)
+	cp .version ../lib/$(TYP)
+
+ib_$(TYP)wrap.cxx: ib.i my_typedefs.i .version
+	$(SWIG) -c++  -$(TYP) $(OPTIONS) -o ib_$(TYP)wrap.cxx ib.i
+
+$(MODULE): ib.i my_typedefs.i
+	$(SWIG) -c++ -$(TYP) $(OPTIONS) -o ib_$(TYP)wrap.cxx ib.i
+
+ib_$(TYP)wrap.o: ib_$(TYP)wrap.cxx
+	$(CCC) $(OPT) $(INC) ib_$(TYP)wrap.cxx
+
+
+dll: ../lib/$(TYP)/$(LIBRARY).so
+
+../lib/$(TYP)/$(LIBRARY).so: $(MODULE).so
+	cp -f .version ../lib/$(TYP)
+	cp $(LIBRARY).so.$(VERSION) ../lib/$(TYP)
+	rm -f ../lib/$(TYP)/$(LIBRARY).so
+	cd ../lib/$(TYP); ln -s $(LIBRARY).so.$(VERSION) $(LIBRARY).so
+
+$(MODULE).so: $(OBJS)
+	$(CCC) $(SHARED) -o $(LIBRARY).so.$(VERSION) $(OBJS) -R../lib:/opt/BSN/lib -L../lib $(LIBS) 
+	rm -f $(LIBRARY).so
+	ln -s $(LIBRARY).so.$(VERSION) $(LIBRARY).so

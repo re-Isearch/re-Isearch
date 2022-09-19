@@ -1,0 +1,28 @@
+# $Id: php4.cxx,v 1.6 2003/12/17 19:09:17 beazley Exp $
+
+LTLIBRARY_NAME          = php_IB.la
+LTLIBRARY_SOURCES       = 
+LTLIBRARY_SOURCES_CPP   = ib_phpwrap.cxx 
+LTLIBRARY_OBJECTS_X = $(LTLIBRARY_SOURCES_CPP:.cpp=.lo) $(LTLIBRARY_SOURCES_CPP:.cxx=.lo)
+LTLIBRARY_SHARED_NAME   = php_IB.la
+LTLIBRARY_SHARED_LIBADD = $(IB_SHARED_LIBADD)
+
+include $(top_srcdir)/build/dynlib.mk
+
+# patch in .cxx support to php build system to work like .cpp
+.SUFFIXES: .cxx
+
+.cxx.o:
+	$(CXX_COMPILE) -c $<
+
+.cxx.lo:
+	$(CXX_PHP_COMPILE)
+
+.cxx.slo:
+	$(CXX_SHARED_COMPILE)
+
+
+# make it easy to test module
+testmodule:
+	php -q -d extension_dir=modules IB.php
+

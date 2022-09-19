@@ -1,0 +1,85 @@
+CC_ABI_VERSION=1
+LIBX=64
+CCC=g++ -DO_BUILD_IB64 -fabi-version=$(CC_ABI_VERSION)
+
+
+PROJECT=IB$(LIBX)
+SHARED=-shared -s
+
+########## Target Selection  ##############################
+TYP=python64
+PREFIX=Py
+OPTIONS=-DO_BUILD_IB64 -module $(PROJECT) -shadow -classic  #-interface $(PREFIX)$(PROJECT) # -opt -interface $(MODULE)
+EXT=.py
+############################################################
+
+############################################################
+#### This is the configuration stuff  ######################
+
+SWIG=swig 
+INCLUDE=/usr/local/include/python2.3
+OPT= -DSWIG -O5 -march=pentiumpro 
+
+PIC=-fpic
+
+############ end configuration #############################
+############################################################
+
+
+BIN_DIR=../$(TYP)
+MODULE=$(PREFIX)$(PROJECT)
+VERSION=`cat .version`
+CCCFLAGS=-c $(PIC) $(OPT)
+INC=-I/usr/local/include/$(TYP) -I../src -I$(INCLUDE)
+LIBS=-lBSn -libDoc$(LIBX) -libSearch$(LIBX) -libProcess -libIO -lIBctype
+
+
+target: dll 
+
+OBJS=ib_$(TYP)wrap.o #pyglue.o
+
+.version: ../bin/Iindex
+	./vergen
+	touch $(MODULE).$(VERSION)$(EXT)
+	rm $(PROJECT).$(VERSION)$(EXT)
+	cp .version ../lib/$(TYP)
+
+ib_$(TYP)wrap.cxx: ib.i my_typedefs.i .version
+	#@rm -f $(PROJECT)$(EXT)
+	#@rm -f $(PROJECT).$(VERSION)$(EXT)
+	$(SWIG) -python -c++ $(OPTIONS) -o ib_$(TYP)wrap.cxx ib.i
+	#rm -f $(PROJECT).$(VERSION)$(EXT)
+	#mv $(PROJECT)$(EXT) $(PROJECT).$(VERSION)$(EXT)
+	#ln -s $(PROJECT).$(VERSION)$(EXT) $(PROJECT)$(EXT)
+
+$(MODULE): ib.i my_typedefs.i
+	@rm -f $(PROJECT)$(EXT)
+	@rm -f $(PROJECT).$(VERSION)$(EXT)
+	$(SWIG) -c++ -$(TYP)  $(OPTIONS) -o ib_$(TYP)wrap.cxx ib.i
+	rm -f $(PROJECT).$(VERSION)$(EXT)
+	mv $(PROJECT)$(EXT) $(PROJECT).$(VERSION)$(EXT)
+	ln -s $(PROJECT).$(VERSION)$(EXT) $(PROJECT)$(EXT)
+
+
+ib_$(TYP)wrap.o: ib_$(TYP)wrap.cxx
+	$(CCC) $(CCCFLAGS) $(INC) ib_$(TYP)wrap.cxx
+
+pyglue.o: pyglue.cxx
+	$(CCC) $(CCCFLAGS) $(INC) pyglue.cxx
+
+
+dll: ../lib/$(TYP)/$(MODULE).so
+ 
+../lib/$(TYP)/$(MODULE).so: $(MODULE).so
+	cp -f $(MODULE).so.$(VERSION) ../lib/$(TYP)
+	cp -f $(PROJECT).$(VERSION)$(EXT) ../lib/$(TYP)
+	cp -f .version ../lib/$(TYP)
+	rm -f ../lib/$(TYP)/$(MODULE).so
+	cd ../lib/$(TYP); ln -s $(MODULE).so.$(VERSION) $(MODULE).so; touch $(PROJECT)$(EXT); rm $(PROJECT)$(EXT); ln -s $(PROJECT).$(VERSION)$(EXT) $(PROJECT)$(EXT)
+
+$(MODULE).so: $(OBJS)
+	$(CCC) $(SHARED) -o $(MODULE).so.$(VERSION) $(OBJS)  -L../lib $(LIBS) 
+	rm -f $(MODULE).so
+	rm -f $(PROJECT)c.so
+	ln -s $(MODULE).so.$(VERSION) $(MODULE).so
+	ln -s $(MODULE).so $(PROJECT)c.so
