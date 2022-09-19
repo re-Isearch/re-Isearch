@@ -1,0 +1,12 @@
+[Default]
+#
+# From http://www.loc.gov/standards/sru/cql/cql-context-set.html
+#
+# Indexes
+#cql.resultSetId=
+cql.serverChoice=1016/Any
+cql.anywhere=1016/Any
+#cql.allRecords=
+#
+# Relations
+cql.scr=all

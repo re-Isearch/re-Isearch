@@ -1,0 +1,62 @@
+vasprintf.lo vasprintf.o: vasprintf.c ../config.h /usr/include/assert.h \
+  /usr/include/stdio.h /usr/include/sys/feature_tests.h \
+  /usr/include/sys/ccompile.h /usr/include/sys/isa_defs.h \
+  /usr/include/iso/stdio_iso.h /usr/include/sys/va_list.h \
+  /usr/include/stdio_tag.h /usr/include/stdio_impl.h \
+  /usr/include/iso/stdio_c99.h /usr/include/string.h \
+  /usr/include/iso/string_iso.h /usr/include/stdlib.h \
+  /usr/include/iso/stdlib_iso.h /usr/include/iso/stdlib_c99.h \
+  /usr/local/lib/gcc/i386-pc-solaris2.10/3.4.6/include/stdarg.h \
+  /usr/include/ctype.h /usr/include/iso/ctype_iso.h \
+  /usr/include/iso/ctype_c99.h \
+  /usr/local/lib/gcc/i386-pc-solaris2.10/3.4.6/include/limits.h \
+  /usr/local/lib/gcc/i386-pc-solaris2.10/3.4.6/include/syslimits.h \
+  /usr/include/iso/limits_iso.h /usr/include/sys/int_limits.h
+
+../config.h:
+
+/usr/include/assert.h:
+
+/usr/include/stdio.h:
+
+/usr/include/sys/feature_tests.h:
+
+/usr/include/sys/ccompile.h:
+
+/usr/include/sys/isa_defs.h:
+
+/usr/include/iso/stdio_iso.h:
+
+/usr/include/sys/va_list.h:
+
+/usr/include/stdio_tag.h:
+
+/usr/include/stdio_impl.h:
+
+/usr/include/iso/stdio_c99.h:
+
+/usr/include/string.h:
+
+/usr/include/iso/string_iso.h:
+
+/usr/include/stdlib.h:
+
+/usr/include/iso/stdlib_iso.h:
+
+/usr/include/iso/stdlib_c99.h:
+
+/usr/local/lib/gcc/i386-pc-solaris2.10/3.4.6/include/stdarg.h:
+
+/usr/include/ctype.h:
+
+/usr/include/iso/ctype_iso.h:
+
+/usr/include/iso/ctype_c99.h:
+
+/usr/local/lib/gcc/i386-pc-solaris2.10/3.4.6/include/limits.h:
+
+/usr/local/lib/gcc/i386-pc-solaris2.10/3.4.6/include/syslimits.h:
+
+/usr/include/iso/limits_iso.h:
+
+/usr/include/sys/int_limits.h:

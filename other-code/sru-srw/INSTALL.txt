@@ -1,0 +1,89 @@
+Installation of Isearch-sru requires a number of steps.
+
+1.  Configure Apache
+
+If you are going to use Apache as the web server interface to handle
+the SRU requests, it is necessary to configure it so that it can
+translate the incoming requests appropriately.  The index (target)
+name looks, to the wweb server, like a CGI script.  We use mod_rewrite
+to pull off the translation successfully.  To do this, include the
+following code either in httpd.conf, or in a separate file
+(mod_rewrite.conf works nicely) and include that into httpd.conf.  The
+configuration will look something like this:
+
+RewriteEngine on
+RewriteLog /var/log/apache2/rewrite_log
+RewriteLogLevel 4
+RewriteRule ^/sru/fgdc([^?]*)$ /srv/www/sru-bin/isearch-sru.cgi?x-db=fgdc&%{QUERY_STRING} [L]
+
+
+Note that the RewriteRule will require editing - replace "fgdc" with
+the name of your index.  You can include as many of these are you have
+indexes, one line for each index.  To have apache load the separate
+config file when it starts up, your http.conf file should include a
+line like:
+
+Include /etc/apache2/mod_rewrite.conf
+
+or whatever the correct path and name for your file might be.  After
+you make these changes, you will have to restart Apache.
+
+2.  Create Apache aliases (if desired)
+
+In order to keep things straight, I use an Alias declaration in my
+Apache config file to allow me to keep the Isearch-sru files separate:
+
+
+Alias /sru/ /srv/www/sru-bin/
+<Directory "/srv/www/sru-bin">
+ AllowOverride None
+ Options +ExecCGI -Includes
+ Order allow,deny
+ Allow from all
+</Directory>
+
+This ensures that the URLs in the RewriteRule make sense.  If you opt
+not to use an alias, just install the files (see step #3) in cgi-bin.
+
+3.  Install files in sru-bin
+
+Copy the following files to the sru-bin directory:
+
+isearch-sru.cgi
+isru.dtd
+isru.xsl
+Isearch-db.sru
+Isearch-sru.ini
+sru_dc.map
+sru_geo.map
+sru_gils.map
+sru_rec.map
+
+4.  Customizing Isearch-sru
+
+The file Isearch-sru.ini contains some site-specific strings that can
+be customized - you will want to modify the parameters DebugLevel,
+Server, Port, Title and Description according to your site's
+configuration.  Nothing else in the file needs to be changed unless
+you want to experiment.
+
+The file Isearch-db.sru contains the index-specific information.  Note
+that the external name (the one the server responds to) is given in
+brackets to define a section.  It is not necessary to use the same
+name as the index created by the Iindex2 program.  You can specify the
+base name of the index with the IndexName parameter.  You will want to
+modify the parameters Path (so the indexes can be located for
+searching), Title and Description (so that your site responds
+appropriately to Explain requests).  Do this for each index you are
+providing access to.
+
+The files isru.dtd and isru.xsl are used by the discovery step.  Note
+that the SRU/SRW protocol does not include a mechanism for discovering
+what indexes are hosted at the site.  Isearch-cgi will provide a list
+of the indexes if no parameters are sent, with links to the Explain
+request.
+
+The map files provide the mappings between the various element sets
+defined for SRU/SRW and the specific field names in the indexes.  If
+you are indexing FGDC-style XML metadata, these do not need to be
+changed.

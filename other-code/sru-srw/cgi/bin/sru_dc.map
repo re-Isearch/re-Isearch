@@ -1,0 +1,25 @@
+[Default]
+# From http://www.dublincore.org/documents/dces/
+# Crosswalk to GILS Z39.50 from http://www.loc.gov/marc/dccross.html
+#
+dc.contributor=1003/METADATA_IDINFO_CITATION_CITEINFO_ORIGIN
+dc.coverage=2060/METADATA_IDINFO_SPDOM_BOUNDING,2062/METADATA_IDINFO_TIMEPERD
+dc.creator=1003/METADATA_IDINFO_CITATION_CITEINFO_ORIGIN
+dc.date=31/METADATA_IDINFO_CITATION_CITEINFO_PUBDATE
+dc.description=62/METADATA_IDINFO_DESCRIPT_ABSTRACT
+dc.format=2022/LinkageType
+dc.identifier=12/TITLE@CATID
+dc.language=54/Code-language
+dc.publisher=2000/DISTRIB
+dc.relation=2068/CROSSREF
+dc.rights=2005/USECONST
+dc.source=2035/SRCCONTR
+dc.subject=2002/METADATA_IDINFO_KEYWORDS_THEME_THEMEKEY
+dc.title=4/METADATA_IDINFO_CITATION_CITEINFO_TITLE
+dc.type=1031/TYPESRC
+
+#dc.coverage=2050/SupplementalInformation,2045/TimePeriodTextual,2060/METADATA_IDINFO_SPDOM_BOUNDING
+#dc.creator=1005/originator,1098/creator
+#dc.identifier=12/TITLE@CATID,1007/Control-Identifier
+#dc.publisher=2000/Distributor,2001/DistributorName,1131/publisher
+#dc.relation=2070/CrossReferenceRelationship,2047/CrossReferenceLinkage,2046/CrossReferenceTitle

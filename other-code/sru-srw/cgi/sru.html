@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- $Id: sru.html 166 2006-05-25 19:57:31Z warnock $ -->
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+ <head>
+  <title>A simple HTML-form SRU client</title>
+ </head>
+ <body>
+  <h1>A simple HTML-form SRU client</h1>
+  <p>
+   This version of the client is set up to use the ultra-simple local
+   SRU server. 
+  </p>
+  <hr>
+  <h2><a href="http://chagny.awcubed.com/sru-bin/isearch-sru.cgi">List Known Databases</a></h2>
+  <hr>
+  <h2><a href="/sru-bin/fgdc">FGDC Explain Request</a></h2>
+  <hr>
+  <h2>Search/Retrieve Request</h2>
+  <form method="get" action="/sru-bin/isearch-sru.cgi">
+  <input name="x-database" value="fgdc" type="hidden">
+  <!-- form method="post" action="/sru-bin/fgdc" -->
+   <table>
+    <tr>
+     <td align="right">
+      CQL Query (<i>e.g.,</i> "geo.title=water"):
+     </td>
+     <td>
+      <input type="text" name="query" size="40"/>
+     </td>
+    </tr>
+<!--
+    <tr>
+     <td align="right">
+      Database:
+     </td>
+     <td>
+      <select name="x-database" size="1">
+       <option value="fgdc" selected="selected">FGDC</option>
+       <option value="sgml">SGML</option>
+      </select>
+     </td>
+    </tr>
+-->
+    <tr>
+     <td align="right">
+      First record to fetch:
+     </td>
+     <td>
+      <input type="text" name="startRecord" size="10" value="1"/>
+     </td>
+    </tr>
+    <tr>
+     <td align="right">
+      Number of records:
+     </td>
+     <td>
+      <input type="text" name="maximumRecords" size="10" value="1"/>
+     </td>
+    </tr>
+    <tr>
+     <td></td>
+     <td align="right">
+      <input type="hidden" name="version" value="1.1"/>
+      <input name="recordSchema" value="geo" type="hidden">
+      <input type="hidden" name="operation" value="searchRetrieve"/>
+      <input type="submit" value="Search"/>
+     </td>
+    </tr>
+   </table>
+  </form>
+  <hr/>
+ </body>
+</html>

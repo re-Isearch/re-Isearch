@@ -1,0 +1,104 @@
+is_tar.lo is_tar.o: is_tar.c file.h ../config.h /usr/include/stdio.h \
+  /usr/include/sys/feature_tests.h /usr/include/sys/ccompile.h \
+  /usr/include/sys/isa_defs.h /usr/include/iso/stdio_iso.h \
+  /usr/include/sys/va_list.h /usr/include/stdio_tag.h \
+  /usr/include/stdio_impl.h /usr/include/iso/stdio_c99.h \
+  /usr/include/errno.h /usr/include/sys/errno.h /usr/include/fcntl.h \
+  /usr/include/sys/types.h /usr/include/sys/machtypes.h \
+  /usr/include/ia32/sys/machtypes.h /usr/include/sys/int_types.h \
+  /usr/include/sys/select.h /usr/include/sys/time_impl.h \
+  /usr/include/sys/time.h /usr/include/time.h /usr/include/iso/time_iso.h \
+  /usr/include/sys/fcntl.h /usr/include/stdint.h \
+  /usr/include/sys/stdint.h /usr/include/sys/int_limits.h \
+  /usr/include/sys/int_const.h /usr/include/inttypes.h \
+  /usr/include/sys/inttypes.h /usr/include/sys/int_fmtio.h \
+  /usr/include/regex.h /usr/include/sys/stat.h \
+  /usr/include/sys/stat_impl.h \
+  /usr/local/lib/gcc/i386-pc-solaris2.10/3.4.6/include/stdarg.h magic.h \
+  /usr/include/string.h /usr/include/iso/string_iso.h \
+  /usr/include/ctype.h /usr/include/iso/ctype_iso.h \
+  /usr/include/iso/ctype_c99.h tar.h
+
+file.h:
+
+../config.h:
+
+/usr/include/stdio.h:
+
+/usr/include/sys/feature_tests.h:
+
+/usr/include/sys/ccompile.h:
+
+/usr/include/sys/isa_defs.h:
+
+/usr/include/iso/stdio_iso.h:
+
+/usr/include/sys/va_list.h:
+
+/usr/include/stdio_tag.h:
+
+/usr/include/stdio_impl.h:
+
+/usr/include/iso/stdio_c99.h:
+
+/usr/include/errno.h:
+
+/usr/include/sys/errno.h:
+
+/usr/include/fcntl.h:
+
+/usr/include/sys/types.h:
+
+/usr/include/sys/machtypes.h:
+
+/usr/include/ia32/sys/machtypes.h:
+
+/usr/include/sys/int_types.h:
+
+/usr/include/sys/select.h:
+
+/usr/include/sys/time_impl.h:
+
+/usr/include/sys/time.h:
+
+/usr/include/time.h:
+
+/usr/include/iso/time_iso.h:
+
+/usr/include/sys/fcntl.h:
+
+/usr/include/stdint.h:
+
+/usr/include/sys/stdint.h:
+
+/usr/include/sys/int_limits.h:
+
+/usr/include/sys/int_const.h:
+
+/usr/include/inttypes.h:
+
+/usr/include/sys/inttypes.h:
+
+/usr/include/sys/int_fmtio.h:
+
+/usr/include/regex.h:
+
+/usr/include/sys/stat.h:
+
+/usr/include/sys/stat_impl.h:
+
+/usr/local/lib/gcc/i386-pc-solaris2.10/3.4.6/include/stdarg.h:
+
+magic.h:
+
+/usr/include/string.h:
+
+/usr/include/iso/string_iso.h:
+
+/usr/include/ctype.h:
+
+/usr/include/iso/ctype_iso.h:
+
+/usr/include/iso/ctype_c99.h:
+
+tar.h:

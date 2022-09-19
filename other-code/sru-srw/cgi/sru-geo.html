@@ -1,0 +1,774 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>
+      SRU Geospatial Search Demo
+    </title>
+  </head>
+  <body>
+    <noscript>
+    <h1>
+      This form requires JavaScript but it appears to be disabled.
+    </h1></noscript>
+    <h2>
+      SRU Geospatial Search Demo (derived from A/WWW Enterprises <a href=
+      "http://server.awcubed.com/FGDCsearch.html">Isearch-cgi Demo</a>)
+    </h2>
+    <form name="geoForm" action="/cgi-bin/isearch-cgi/" method="post" id=
+    "geoForm">
+      <input type="hidden" value="test" name="DATABASE" /> <input type=
+      "hidden" value="ALL" name="SEARCH_TYPE" /> <input type="hidden" value=
+      "4" name="NTERMS" /> <!--THIS IS TERM_1-->
+       Search in <select name="FIELD_1">
+        <option value="FULLTEXT">
+          FullText
+        </option>
+        <option value="METADATA_IDINFO_CITATION_CITEINFO_ORIGIN">
+          Origin
+        </option>
+        <option value="METADATA_IDINFO_CITATION_CITEINFO_TITLE" selected=
+        "selected">
+          Title
+        </option>
+        <option value="METADATA_IDINFO_DESCRIPT">
+          Description
+        </option>
+        <option value="METADATA_IDINFO_DESCRIPT_ABSTRACT">
+          Abstract
+        </option>
+        <option value="METADATA_IDINFO_DESCRIPT_PURPOSE">
+          Purpose
+        </option>
+        <option value="METADATA_IDINFO_KEYWORDS">
+          Keywords
+        </option>
+        <option value="METADATA_IDINFO_KEYWORDS_THEME_THEMEKEY">
+          Theme Keywords
+        </option>
+        <option value="METADATA_IDINFO_KEYWORDS_PLACE_PLACEKEY">
+          Place Keywords
+        </option>
+      </select> for the <input type="radio" checked="checked" value=
+      "wordlist" name="STRUCTURE_1" />Word(s) / <input type="radio" value=
+      "phrase" name="STRUCTURE_1" />Phrase <input value="water" name=
+      "TERM_1" /> <input type="hidden" value="match" name="RELATION_1" />
+      <table border="0">
+        <tbody>
+          <tr>
+            <td>
+              <select size="2" name="BOOLEAN_1">
+                <option selected="selected">
+                  or
+                </option>
+                <option>
+                  and
+                </option>
+              </select>
+            </td>
+            <td>
+              <!--  THIS IS TERM_2  -->
+              search the field <select name="FIELD_2">
+                <option value="METADATA_IDINFO_CITATION_CITEINFO_PUBDATE">
+                  Publication Date
+                </option>
+                <option value="METADATA_IDINFO_TIMEPERD" selected="selected">
+                  Time Period of Content
+                </option>
+                <option value=
+                "METADATA_IDINFO_TIMEPERD_TIMEINFO_RNGDATES_BEGDATE">
+                  Time Period Beginning Date
+                </option>
+                <option value=
+                "METADATA_IDINFO_TIMEPERD_TIMEINFO_RNGDATES_ENDDATE">
+                  Time Period Ending date
+                </option>
+              </select> for dates which are <select name="RELATION_2">
+                <option value="bf">
+                  Before
+                </option>
+                <option value="bd">
+                  Before or during
+                </option>
+                <option value="du" selected="selected">
+                  During
+                </option>
+                <option value="da">
+                  During or after
+                </option>
+                <option value="af">
+                  After
+                </option>
+              </select> <input name="TERM_2" /><br />
+              (CCYYMMDD or CCYYMMDD,CCYYMMDD) <input type="hidden" value=
+              "isoDate" name="STRUCTURE_2" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <table border="0">
+        <tbody>
+          <tr>
+            <td>
+              <select size="2" name="BOOLEAN_2">
+                <option selected="selected">
+                  or
+                </option>
+                <option>
+                  and
+                </option>
+              </select>
+            </td>
+            <td>
+              <!--  THIS IS TERM_3  -->
+              search the field <select name="FIELD_3">
+                <option value="EXTENT" selected="selected">
+                  Extent
+                </option>
+                <option value="METADATA_DATAQUAL_LINEAGE_SRCINFO_SRCSCALE">
+                  Source Scale
+                </option>
+                <option value="METADATA_IDINFO_SPDOM_BOUNDING_NORTHBC">
+                  North Bounding Coordinate
+                </option>
+                <option value="METADATA_IDINFO_SPDOM_BOUNDING_SOUTHBC">
+                  South Bounding Coordinate
+                </option>
+                <option value="METADATA_IDINFO_SPDOM_BOUNDING_EASTBC">
+                  East Bounding Coordinate
+                </option>
+                <option value="METADATA_IDINFO_SPDOM_BOUNDING_WESTBC">
+                  West Bounding Coordinate
+                </option>
+              </select> for values which are <select name="RELATION_3">
+                <option value="lt">
+                  &lt;
+                </option>
+                <option value="le">
+                  &lt;=
+                </option>
+                <option value="eq">
+                  =
+                </option>
+                <option value="ge">
+                  &gt;=
+                </option>
+                <option value="gt">
+                  &gt;
+                </option>
+                <option value="ne">
+                  &lt;&gt;
+                </option>
+              </select> <input name="TERM_3" /> <input type="hidden" value=
+              "numeric" name="STRUCTURE_3" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <table border="0">
+        <tbody>
+          <tr>
+            <td align="center" rowspan="6">
+              <!-- THIS IS THE SPATIAL TERM -->
+              <input type="hidden" value="and" name="SP_BOOLEAN" />
+              <input type="hidden" value="METADATA_IDINFO_SPDOM_BOUNDING"
+              name="SP_FIELD" /> Search within this bounding box (Texas) ? 
+              <!-- Defaulted to Texas (North 37.15, West -107.31, South 25.19, East -92.85) -->
+               <input type="radio" value="yes" name="do_spatial" /> Yes /
+              <input type="radio" checked="checked" value="no" name=
+              "do_spatial" /> No
+            </td>
+            <td></td>
+            <td>
+              <table cellspacing="3" border="0">
+                <tbody>
+                  <tr>
+                    <!-- Input the North Bounding Coordinate in decimal degrees. -->
+                    <th>
+                       
+                    </th>
+                    <th valign="bottom" align="center">
+                      <i>North</i> <input size="5" value="37.15" name=
+                      "SP_NORTHBC" />
+                    </th>
+                    <th>
+                       
+                    </th>
+                  </tr>
+                  <tr>
+                    <!-- Input the West and East Bounding Coordinate in decimal degrees. -->
+                    <th valign="bottom" align="center">
+                      <i>West</i> <input size="5" value="-107.31" name=
+                      "SP_WESTBC" />
+                    </th>
+                    <td valign="top" align="center">
+                       
+                    </td>
+                    <th valign="bottom" align="center">
+                      <i>East</i> <input size="5" value="-92.85" name=
+                      "SP_EASTBC" />
+                    </th>
+                  </tr>
+                  <tr>
+                    <!-- Input the South Bounding Coordinate in decimal degrees. -->
+                    <td>
+                       
+                    </td>
+                    <th valign="bottom" align="center">
+                      <i>South</i> <input size="5" value="25.19" name=
+                      "SP_SOUTHBC" />
+                    </th>
+                    <td>
+                       
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table><input type="hidden" value="spatial" name="SP_STRUCTURE" />
+      <input type="hidden" value="overlap" name="SP_RELATION" />
+      <table border="0">
+        <tbody>
+          <tr>
+            <td>
+              <select size="2" name="BOOLEAN_3">
+                <option selected="selected">
+                  or
+                </option>
+                <option>
+                  and
+                </option>
+              </select>
+            </td>
+            <td>
+              <!-- THIS IS TERM_4 -->
+              search in <select name="FIELD_4">
+                <option value="FULLTEXT" selected="selected">
+                  Full Text
+                </option>
+                <option value="METADATA_IDINFO_CITATION_CITEINFO_ORIGIN">
+                  Origin
+                </option>
+                <option value="METADATA_IDINFO_CITATION_CITEINFO_PUBDATE">
+                  Publication Date (CCYYMMDD)
+                </option>
+                <option value="METADATA_IDINFO_CITATION_CITEINFO_title">
+                  Title
+                </option>
+                <option value="METADATA_IDINFO_DESCRIPT">
+                  Description
+                </option>
+                <option value="METADATA_IDINFO_DESCRIPT_ABSTRACT">
+                  Abstract
+                </option>
+                <option value="METADATA_IDINFO_DESCRIPT_PURPOSE">
+                  Purpose
+                </option>
+                <option value="METADATA_IDINFO_KEYWORDS">
+                  Keywords
+                </option>
+                <option value="METADATA_IDINFO_KEYWORDS_THEME_THEMEKEY">
+                  Theme Keywords
+                </option>
+                <option value="METADATA_IDINFO_KEYWORDS_PLACE_PLACEKEY">
+                  Place Keywords
+                </option>
+              </select> for the <input type="radio" checked="checked" value=
+              "wordlist" name="STRUCTURE_4" />Word(s) / <input type="radio"
+              value="phrase" name="STRUCTURE_4" />Phrase <input name=
+              "TERM_4" /> <input type="hidden" value="match" name=
+              "RELATION_4" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <table border="0">
+        <tbody>
+          <tr>
+            <td width="50%">
+              Return the <select name="ELEMENT_SET">
+                <option value="B">
+                  Brief
+                </option>
+                <option value="S">
+                  Summary
+                </option>
+                <option value="F" selected="selected">
+                  Full
+                </option>
+              </select> element set in <select name="RECSYNTAX">
+                <option value="xml" selected="selected">
+                  xml
+                </option>
+                <option value="html">
+                  html
+                </option>
+                <option value="SUTRS">
+                  plain text
+                </option>
+              </select> format.<br />
+              Maximum number of hits to retrieve at one time: <input size="4"
+              value="50" name="MAXHITS" />
+            </td>
+            <td width="50%">
+              <input type="submit" value="Run Isite query as A/WWW demo" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </form>
+    <form name="serverParms" id="serverParms">
+      <input type="hidden" value="1" name="startRecord" /> Host <select name=
+      "baseURL">
+        <option value="http://localhost/sru-bin/echo.cgi">
+          Test input
+        <option value="http://localhost/sru-bin/fgdc">
+          Archie's local FGDC catalog (schemas: dc gils geo)
+        </option>
+        <option value="http://server.awcubed.com/sru-bin/fgdc">
+          Archie's demo FGDC catalog (schemas: dc gils geo)
+        </option>
+        <option value="http://estatistica.cnj.gov.br:9000">
+          Rondon catalog (schemas: dc gils geo)
+        </option>
+        <option value="http://z3950.loc.gov:7090/voyager">
+          LoC catalog (schemas: dc mods2 mods marcxml)
+        </option>
+        <option value="http://www.gils.net:9000/framework">
+          YAZ Proxy to server.awcubed.com:210/framework
+        </option>
+        <option value="http://cap.deepwebtech.com/cgi-bin/sru">
+          CAP alerts search (schemas: cap dc gils geo)
+        </option>
+        <option value="http://research.deepwebtech.com/usgs/services/SRW">
+          agregated stuff (schemas: cap dc gils geo)
+        </option>
+        <option value=
+        "http://research.deepwebtech.com/srw-server/services/SRW">
+          Science.Gov search (schemas: cap dc gils geo)
+        </option>
+        <option value="http://www.gils.net:9000/registry">
+          YAZ Proxy to registry.fgdc.gov:5210/registry
+        </option>
+        <option value="http://www.gils.net:9000/default">
+          YAZ Proxy to www.geodata.gov:210/default
+        </option>
+        <option value="http://www.gils.net:9000/UNWater_Metadata">
+          YAZ Proxy to geoinfo.uneca.org:2210/UNWater_Metadata
+        </option>
+        <option value="http://www.gils.net:9000/emis">
+          YAZ Proxy to edclxs25.cr.usgs.gov:5210/emis
+        </option>
+        <option value="http://www.gils.net:9000/fgdc">
+          YAZ Proxy to server.awcubed.com:210/fgdc
+        </option>
+        <option value="http://142.150.190.37:2200/unicorn">
+          University of Toronto Gateway (schemas: dc mods2 mods marcxml)
+        </option>
+        <option value="http://www.oclc.org/research/software/srw">
+          OCLC SOAR (schemas: dc lom)
+        </option>
+        <option value="http://tweed.lib.ed.ac.uk:8080/elf/search/oxford">
+          SRW Test, JISC e-Learning Framework Test(schemas: dc lom rli)
+        </option>
+      </select> Schema <select name="schema">
+        <option value="">
+          default
+        </option>
+        <option value="XML" selected="selected">
+          xml
+        </option>
+        <option value="dc">
+          dc
+        </option>
+        <option value="mods">
+          mods
+        </option>
+        <option value="marcxml">
+          marcxml
+        </option>
+        <option value="gils">
+          gils
+        </option>
+        <option value="geo">
+          geo
+        </option>
+        <option value="cap">
+          cap
+        </option>
+      </select>
+      <table cellspacing="2" cellpadding="2" width="100%" border="0">
+        <tbody>
+          <tr>
+            <td align="center" width="20%">
+              CQL Context
+            </td>
+            <td align="center" width="20%">
+              <input type="radio" checked="checked" value="implicit" name=
+              "context_CQL" />implicit / <input type="radio" value="explicit"
+              name="context_CQL" />explicit
+            </td>
+            <td width="60%">
+              <input size="60" value=
+              'cql="info:srw/cql-context-set/1/cql-v1.1"' name=
+              "context_CQL_Identifier" />
+            </td>
+          </tr>
+          <tr>
+            <td align="center" width="20%">
+              REC Context
+            </td>
+            <td align="center" width="20%">
+              <input type="radio" checked="checked" value="implicit" name=
+              "context_REC" />implicit / <input type="radio" value="explicit"
+              name="context_REC" />explicit
+            </td>
+            <td width="60%">
+              <input size="60" value=
+              'rec="info:srw/cql-context-set/2/rec-1.0"' name=
+              "context_REC_Identifier" />
+            </td>
+          </tr>
+          <tr>
+            <td align="center" width="20%">
+              DC Context
+            </td>
+            <td align="center" width="20%">
+              <input type="radio" checked="checked" value="implicit" name=
+              "context_DC" />implicit / <input type="radio" value="explicit"
+              name="context_DC" />explicit
+            </td>
+            <td width="60%">
+              <input size="60" value=
+              'dc="info:srw/cql-context-set/1/dc-v1.1"' name=
+              "context_DC_Identifier" />
+            </td>
+          </tr>
+          <tr>
+            <td align="center" width="20%">
+              GILS Context
+            </td>
+            <td align="center" width="20%">
+              <input type="radio" checked="checked" value="implicit" name=
+              "context_GILS" />implicit / <input type="radio" value=
+              "explicit" name="context_GILS" />explicit
+            </td>
+            <td width="60%">
+              <input size="60" value=
+              'gils="http://www.gils.net/context-set.html"' name=
+              "context_GILS_Identifier" />
+            </td>
+          </tr>
+          <tr>
+            <td align="center" width="20%">
+              Geo Context
+            </td>
+            <td align="center" width="20%">
+              <input type="radio" checked="checked" value="implicit" name=
+              "context_GEO" />implicit / <input type="radio" value="explicit"
+              name="context_GEO" />explicit
+            </td>
+            <td width="60%">
+              <input size="60" value=
+              'geo="http://www.blueangeltech.com/Standards/GeoProfile/"'
+              name="context_GEO_Identifier" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <input id="makeCQLButton" onclick="makeCQL();" type="button"
+      value="show CQL only" /> 
+      <input id="makeSRWButton" onclick="makeSRW();" type="button" 
+      value="show SRW (SOAP)" /> 
+      <input id="runSRWButton" onclick="runSRW();" type="button" 
+      value="Run SRW" /> 
+      <input id="makeSRUButton" onclick="makeSRU();" type="button" 
+      value="show SRU (URL)" /> 
+      <input id="runSRUButtonProxy" onclick="runSRUproxy();" type="button" 
+      value="Run SRU via proxy" /> 
+      <input id="runSRUButton" onclick="runSRU();" type="button" 
+      value="Run SRU" /> 
+      <textarea name="showArea" rows="15" cols="120">
+</textarea>
+    </form>
+    <form name="submitProxy" id="submitProxy" action=
+    "http://www.gils.net/proxySRW.php" method="post">
+      <input type="hidden" name="stringSRU" value="" /> 
+      <input type="hidden" name="service" value="" /> 
+      <input type="hidden" name="version" value="1.1" /> 
+      <input type="hidden" name="query" value="" /> 
+      <input type="hidden" name="startRecord" value="" /> 
+      <input type="hidden" name="maximumRecords" value="" /> 
+      <input type="hidden" name="recordSchema" value="" />
+    </form>
+    <form name="submitSRU" id="submitSRU" 
+    action="" method="post">
+    </form>
+<script language="JavaScript" type="text/javascript">
+//<![CDATA[
+var baseURL;
+var req;        // object for HTTP Post, used with SRW
+var stringSRW;
+var stringSRU;
+var stringCQL;
+var GEO_TERM_1, GEO_TERM_2, GEO_TERM_3, GEO_SPATIAL, GEO_TERM_4;
+var submitDone;
+
+function runSRU () {
+  makeSRU();
+  document.submitSRU.action = stringSRU;
+  document.submitSRU.submit();
+}
+
+function runSRUproxy () {
+  makeSRU();
+  document.submitProxy.stringSRU.value = stringSRU;
+  document.submitProxy.submit();
+}
+
+function makeSRU () {
+  baseURL = document.serverParms.baseURL.value;
+  makeCQL();
+  var SRU_schema = "";
+  if(document.serverParms.schema.value !== "") {
+    SRU_schema = "recordSchema=" + document.serverParms.schema.value  + "&";
+  }
+  var SRU_startRecord = "";
+  if(document.serverParms.startRecord.value !== "1") { SRU_startRecord = "startRecord=" + document.serverParms.startRecord.value + "&"; }
+
+  var SRU_maximumRecords = document.geoForm.MAXHITS.value;
+  if(SRU_maximumRecords !== "") { SRU_maximumRecords = "maximumRecords=" + SRU_maximumRecords + "&"; }
+
+  stringSRU = baseURL + "?operation=searchRetrieve&version=1.1&" +
+               SRU_startRecord + SRU_maximumRecords +
+               SRU_schema + "query=" +  escape(stringCQL) + "&";
+  document.serverParms.showArea.value = stringSRU;
+}
+
+function runSRW () {
+  makeSRW();
+  if (!submitDone) {
+    submitDone = true;
+    document.serverParms.runSRWButton.value = 'Please wait...';
+    document.serverParms.runSRWButton.disabled = true;
+  }
+  document.submitProxy.enctype = "application/soap+xml";
+  if(baseURL == "http://cap.deepwebtech.com/cgi-bin/sru") { document.submitProxy.service.value = "srwCAP"};
+  if(baseURL == "http://research.deepwebtech.com/srw-server/services/SRW") { document.submitProxy.service.value = "srwGovScience"};
+  if(baseURL == "http://www.gils.net:9000/registry") { document.submitProxy.service.value = "srwRegistry"};
+  if(baseURL == "http://www.gils.net:9000/geodata") { document.submitProxy.service.value = "srwGeodata"};
+  if(baseURL == "http://www.gils.net:9000/UNWater_Metadata") { document.submitProxy.service.value = "srwUNWaterMetadata"};
+  if(baseURL == "http://www.gils.net:9000/emis") { document.submitProxy.service.value = "srwEMIS"};
+  if(baseURL == "http://www.gils.net:9000/fgdc") { document.submitProxy.service.value = "srwFGDC"};
+  if(baseURL == "http://www.gils.net:9000/framework") { document.submitProxy.service.value = "srwFramework"};
+  if(baseURL == "http://z3950.loc.gov:7090/voyager") { document.submitProxy.service.value = "srwLOC"};
+  if(baseURL == "http://142.150.190.37:2200/unicorn") { document.submitProxy.service.value = "srwToronto"};
+  if(baseURL == "http://www.oclc.org/research/software/srw") { document.submitProxy.service.value = "srwOCLC"};
+  if(baseURL == "http://tweed.lib.ed.ac.uk:8080/elf/search/oxford") { document.submitProxy.service.value = "srwJISC"};
+
+  try {
+    document.submitProxy.submit();
+  }
+  catch ( e ) {
+     alert ( e );
+  }
+}
+
+function makeSRW () {
+  baseURL = document.serverParms.baseURL.value;
+  makeCQL();
+  document.submitProxy.query.value = stringCQL;
+  var SRW_maximumRecords = "";
+  if(document.geoForm.MAXHITS.value !== "") {
+    SRW_maximumRecords = "      <maximumRecords>" + document.geoForm.MAXHITS.value + "<\/maximumRecords>\n";
+    document.submitProxy.maximumRecords.value = document.geoForm.MAXHITS.value;
+  }
+  var SRW_schema = "";
+  if(document.serverParms.schema.value !== "") {
+    SRW_schema = "      <recordSchema>" + document.serverParms.schema.value + "<\/recordSchema>\n";
+    document.submitProxy.recordSchema.value = document.serverParms.schema.value;
+  }
+  document.submitProxy.startRecord.value = document.serverParms.startRecord.value;
+  stringSRW  =  "    <searchRetrieveRequest>\n" +
+                "      <version>1.1<\/version>\n" +
+                "      <query>" + stringCQL + "<\/query>\n" +
+                "      <startRecord>" + document.serverParms.startRecord.value + "<\/startRecord>\n" +
+                SRW_maximumRecords + SRW_schema +
+                "    <searchRetrieveRequest>\n";
+  document.serverParms.showArea.value = stringSRW;
+}
+
+function makeCQL() {
+  var CQL_TERMS = "";
+  var boolean_1, boolean_2, boolean_3;
+  if(document.geoForm.BOOLEAN_1.selectedIndex === 0) { boolean_1 = "or"; }
+    else { boolean_1 = "and"; }        // [0] = or [1] = and
+  if(document.geoForm.BOOLEAN_2.selectedIndex === 0) { boolean_2 = "or"; }
+    else { boolean_2 = "and"; }        // [0] = or [1] = and
+  if(document.geoForm.BOOLEAN_3.selectedIndex === 0) { boolean_3 = "or"; }
+    else { boolean_3 = "and"; }        // [0] = or [1] = and
+  var n_terms = 0;
+  if(document.geoForm.TERM_1.value !== "") {
+    n_terms = n_terms + 1;
+    makeGeoTerm1();
+    CQL_TERMS = GEO_TERM_1;
+  }
+  if(document.geoForm.TERM_2.value !== "") {
+    n_terms = n_terms + 1;
+    makeGeoTerm2();
+    if(n_terms === 1) {
+      CQL_TERMS = GEO_TERM_2;
+    }
+    else {
+      CQL_TERMS = "(" + CQL_TERMS + ")" + boolean_1 + "(" + GEO_TERM_2 + ")";
+    }
+  }
+  if(document.geoForm.TERM_3.value !== "") {
+    n_terms = n_terms + 1;
+    makeGeoTerm3();
+    if(n_terms === 1) {
+      CQL_TERMS = GEO_TERM_3;
+    }
+    else {
+      CQL_TERMS = "(" + CQL_TERMS + ")" + boolean_2 + "(" + GEO_TERM_3 + ")";
+    }
+  }
+  if(document.geoForm.do_spatial[0].checked) {
+    n_terms = n_terms + 1;
+    makeGeoSpatial();
+    if(n_terms === 1) {
+      CQL_TERMS = GEO_SPATIAL;
+    }
+    else {
+      CQL_TERMS = "(" + CQL_TERMS + ")" + document.geoForm.SP_BOOLEAN.value + "(" + GEO_SPATIAL + ")";
+    }
+  }
+  if(document.geoForm.TERM_4.value !== "") {
+    n_terms = n_terms + 1;
+    makeGeoTerm4();
+    if(n_terms === 1) {
+      CQL_TERMS = GEO_TERM_4; }
+    else {
+      CQL_TERMS = "(" + CQL_TERMS + ")" + boolean_3 + "(" + GEO_TERM_4 + ")";
+    }
+  }
+  if(n_terms === 0) {
+    alert("Error: You must enter at least one query term.");
+  }
+  var context_explicit;
+  var context_stringCQL = "";
+  if(document.serverParms.context_CQL[1].checked) {
+    context_stringCQL = document.serverParms.context_CQL_Identifier.value;
+  }
+  var context_REC_string = "";
+  if(document.serverParms.context_REC[1].checked) {
+    context_REC_string = document.serverParms.context_REC_Identifier.value;
+  }
+  var context_DC_string = "";
+  if(document.serverParms.context_DC[1].checked) {
+    context_DC_string = document.serverParms.context_DC_Identifier.value;
+  }
+  var context_GILS_string = "";
+  if(document.serverParms.context_GILS[1].checked) {
+    context_GILS_string = document.serverParms.context_GILS_Identifier.value;
+  }
+  var context_GEO_string = "";
+  if(document.serverParms.context_GEO[1].checked) {
+    context_GEO_string = document.serverParms.context_GEO_Identifier.value;
+  }
+  context_explicit = context_stringCQL + context_REC_string +
+               context_DC_string + context_GILS_string + context_GEO_string;
+  stringCQL = context_explicit + CQL_TERMS;
+  document.serverParms.showArea.value = stringCQL;
+}
+
+function makeGeoTerm1 () {
+  var GEO_INDEX_1, GEO_RELATION_1;
+  if(document.geoForm.FIELD_1.value === "FULLTEXT") {GEO_INDEX_1 ="cql.serverChoice";}
+  if(document.geoForm.FIELD_1.value === "METADATA_IDINFO_CITATION_CITEINFO_ORIGIN") {GEO_INDEX_1 ="gils.origin";}
+  if(document.geoForm.FIELD_1.value === "METADATA_IDINFO_CITATION_CITEINFO_TITLE") {GEO_INDEX_1 ="dc.title";}
+  if(document.geoForm.FIELD_1.value === "METADATA_IDINFO_DESCRIPT") {GEO_INDEX_1 ="dc.description";}
+  if(document.geoForm.FIELD_1.value === "METADATA_IDINFO_DESCRIPT_ABSTRACT") {GEO_INDEX_1 ="gils.abstract";}
+  if(document.geoForm.FIELD_1.value === "METADATA_IDINFO_DESCRIPT_PURPOSE") {GEO_INDEX_1 ="gils.purpose";}
+  if(document.geoForm.FIELD_1.value === "METADATA_IDINFO_KEYWORDS") {GEO_INDEX_1 ="gils.keywords";}
+  if(document.geoForm.FIELD_1.value === "METADATA_IDINFO_KEYWORDS_THEME_THEMEKEY") {GEO_INDEX_1 ="gils.theme";}
+  if(document.geoForm.FIELD_1.value === "METADATA_IDINFO_KEYWORDS_PLACE_PLACEKEY") {GEO_INDEX_1 ="gils.place";}
+  if(document.geoForm.STRUCTURE_1[0].checked) { GEO_RELATION_1 = "any"; } // equivalent to word list
+  if(document.geoForm.STRUCTURE_1[1].checked) { GEO_RELATION_1 = "all"; } // equivalent to phrase
+  GEO_TERM_1 = GEO_INDEX_1 + " " +
+               GEO_RELATION_1 + " " +
+               "\"" + document.geoForm.TERM_1.value + "\"";
+}
+function makeGeoTerm2 () {
+  var GEO_INDEX_2, GEO_RELATION_2;
+  if(document.geoForm.FIELD_2.value === "METADATA_IDINFO_CITATION_CITEINFO_PUBDATE") {GEO_INDEX_2 ="gils.pubdate";}
+  if(document.geoForm.FIELD_2.value === "METADATA_IDINFO_TIMEPERD") {GEO_INDEX_2 ="gils.timeperiod";}
+  if(document.geoForm.FIELD_2.value === "METADATA_IDINFO_TIMEPERD_TIMEINFO_RNGDATES_BEGDATE") {GEO_INDEX_2 ="gils.begdate";}
+  if(document.geoForm.FIELD_2.value === "METADATA_IDINFO_TIMEPERD_TIMEINFO_RNGDATES_ENDDATE") {GEO_INDEX_2 ="gils.enddate";}
+  if(document.geoForm.RELATION_2.value === "bf") {GEO_RELATION_2 ="<";}
+  if(document.geoForm.RELATION_2.value === "bd") {GEO_RELATION_2 ="<=";}
+  if(document.geoForm.RELATION_2.value === "du") {GEO_RELATION_2 ="=";}
+  if(document.geoForm.RELATION_2.value === "da") {GEO_RELATION_2 =">=";}
+  if(document.geoForm.RELATION_2.value === "af") {GEO_RELATION_2 =">";}
+  GEO_TERM_2 = GEO_INDEX_2 + " " +
+               GEO_RELATION_2 + " /" +
+               document.geoForm.STRUCTURE_2.value + " " +
+               "\"" + document.geoForm.TERM_2.value + "\"";
+}
+function makeGeoTerm3 () {
+  var GEO_INDEX_3, GEO_RELATION_3;
+  if(document.geoForm.FIELD_3.value === "EXTENT") {GEO_INDEX_3 ="gils.extent";}
+  if(document.geoForm.FIELD_3.value === "METADATA_DATAQUAL_LINEAGE_SRCINFO_SRCSCALE") {GEO_INDEX_3 ="gils.scale";}
+  if(document.geoForm.FIELD_3.value === "METADATA_IDINFO_SPDOM_BOUNDING_NORTHBC") {GEO_INDEX_3 ="gils.northBoundingCoordinate";}
+  if(document.geoForm.FIELD_3.value === "METADATA_IDINFO_SPDOM_BOUNDING_SOUTHBC") {GEO_INDEX_3 ="gils.southBoundingCoordinate";}
+  if(document.geoForm.FIELD_3.value === "METADATA_IDINFO_SPDOM_BOUNDING_EASTBC") {GEO_INDEX_3 ="gils.eastBoundingCoordinate";}
+  if(document.geoForm.FIELD_3.value === "METADATA_IDINFO_SPDOM_BOUNDING_WESTBC") {GEO_INDEX_3 ="gils.westBoundingCoordinate";}
+  if(document.geoForm.RELATION_3.value === "lt") {GEO_RELATION_3 ="<";}
+  if(document.geoForm.RELATION_3.value === "le") {GEO_RELATION_3 ="<=";}
+  if(document.geoForm.RELATION_3.value === "eq") {GEO_RELATION_3 ="=";}
+  if(document.geoForm.RELATION_3.value === "gt") {GEO_RELATION_3 =">";}
+  if(document.geoForm.RELATION_3.value === "ge") {GEO_RELATION_3 =">=";}
+  if(document.geoForm.RELATION_3.value === "ne") {GEO_RELATION_3 ="<>";}
+  GEO_TERM_3 = GEO_INDEX_3 + " " +
+               GEO_RELATION_3 + " " +
+               "\"" + document.geoForm.TERM_3.value + "\"";
+}
+function makeGeoSpatial() {
+  // in YAZ PQN, this should be
+  //    find @attr 1=2060 @attr 2=7 @attr 4=201 "<north> <west> <south> <east>"
+  // 1=2060 means Use Attribute: bounding rectangle (2060)
+  // 2=7    means Relation Attribute: overlaps (7)
+  // 4=201  means Structure Attribute: co-ordinate string (201)
+  // the 'coordinate string' structure is space-delimited decimal coordinates
+  //     in order of North West South East
+  GEO_SPATIAL = "gils.bounds " +
+                "within/partial/nwse " +
+                "\"" + document.geoForm.SP_NORTHBC.value + " " + document.geoForm.SP_WESTBC.value +
+                " " + document.geoForm.SP_SOUTHBC.value + " " + document.geoForm.SP_EASTBC.value + "\"";
+}
+
+function makeGeoTerm4 () {
+  var GEO_INDEX_4, GEO_STRUCTURE_4;
+  if(document.geoForm.FIELD_4.value === "FULLTEXT") {GEO_INDEX_4 = "cql.serverChoice";}
+  if(document.geoForm.FIELD_4.value === "METADATA_IDINFO_CITATION_CITEINFO_ORIGIN") {GEO_INDEX_4 ="gils.origin";}
+  if(document.geoForm.FIELD_4.value === "METADATA_IDINFO_CITATION_CITEINFO_PUBDATE") {GEO_INDEX_4 ="dc.date";}
+  if(document.geoForm.FIELD_4.value === "METADATA_IDINFO_CITATION_CITEINFO_TITLE") {GEO_INDEX_4 ="dc.title";}
+  if(document.geoForm.FIELD_4.value === "METADATA_IDINFO_DESCRIPT") {GEO_INDEX_4 ="dc.description";}
+  if(document.geoForm.FIELD_4.value === "METADATA_IDINFO_DESCRIPT_ABSTRACT") {GEO_INDEX_4 ="gils.abstract";}
+  if(document.geoForm.FIELD_4.value === "METADATA_IDINFO_DESCRIPT_PURPOSE") {GEO_INDEX_4 ="gils.purpose";}
+  if(document.geoForm.FIELD_4.value === "METADATA_IDINFO_KEYWORDS") {GEO_INDEX_4 ="gils.keywords";}
+  if(document.geoForm.FIELD_4.value === "METADATA_IDINFO_KEYWORDS_THEME_THEMEKEY") {GEO_INDEX_4 ="gils.theme";}
+  if(document.geoForm.FIELD_4.value === "METADATA_IDINFO_KEYWORDS_PLACE_PLACEKEY") {GEO_INDEX_4 ="gils.place";}
+  if(document.geoForm.STRUCTURE_4[0].checked) { GEO_RELATION_4 = "any"; } // equivalent to word list
+  if(document.geoForm.STRUCTURE_4[1].checked) { GEO_RELATION_4 = "all"; } // equivalent to phrase
+  GEO_TERM_4 = GEO_INDEX_4 + " " +
+               GEO_RELATION_4 + " " +
+               "\"" + document.geoForm.TERM_4.value + "\"";
+}
+
+//]]>
+</script>
+  </body>
+</html>

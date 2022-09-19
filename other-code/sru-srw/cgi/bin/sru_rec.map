@@ -1,0 +1,63 @@
+[Default]
+#
+# From http://srw.cheshire3.org/schemas/rec/1.0/rec.xsd
+#
+# recordType elements
+rec.size=recsize
+rec.id=12/TITLE@CATID
+#rec.lang
+#rec.within
+rec.score=score
+#rec.modifiable
+#rec.history
+#
+# historyType elements
+rec.history.created=1012/METADATA_METAINFO_METD
+#rec.history.createdBy
+#rec.history.modification
+rec.history.lastModified=1012/METADATA_METAINFO_METD
+#rec.history.lastModifiedBy
+#
+# modificationType elements
+#
+# From http://srw.cheshire3.org/contextSets/rec/1.1/
+#	info:srw/cql-context-set/2/rec-1.1 
+#
+# Basic Information
+rec.identifier=12/TITLE@CATID
+#rec.versionIdentifier
+rec.checksumValue=checksum
+#rec.noteText
+#rec.languageCode
+rec.formatCode=recsyntax
+#rec.typeCode
+rec.byteCount=recsize
+#rec.wordCount
+#rec.statusCode
+#rec.locationIdentifer
+rec.resultsetPosition=position
+rec.relevanceValue=score
+rec.relevancePosition=position
+#rec.collectionCount
+#rec.collectionName
+#rec.collectionIdentifier
+#rec.authorityIndicator
+#
+# Events and History
+rec.creationDate=1012/METADATA_METAINFO_METD
+rec.creationAgentName=1005/METADATA_IDINFO_CITATION_CITEINFO_ORIGIN
+rec.modificationDate=1012/METADATA_METAINFO_METD
+#rec.modificationAgentName
+#rec.modificationType
+rec.lastModificationDate=1012/METADATA_METAINFO_METD
+#rec.lastModificationAgentName
+#rec.lastModificationType
+#rec.submissionDate
+#rec.submissionAgentName
+rec.publicationDate31/METADATA_IDINFO_CITATION_CITEINFO_PUBDATE
+rec.publicationAgentName=1018/METADATA_IDINFO_CITATION_CITEINFO_PUBINFO_PUBLISH
+#rec.retrievalDate
+#rec.retrievalAgentName
+#rec.lastRetrievalDate
+#rec.lastRetrievalAgentName
+#rec.retrievalCount

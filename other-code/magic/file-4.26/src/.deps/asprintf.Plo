@@ -1,0 +1,4 @@
+asprintf.lo asprintf.o: asprintf.c \
+  /usr/local/lib/gcc/i386-pc-solaris2.10/3.4.6/include/stdarg.h
+
+/usr/local/lib/gcc/i386-pc-solaris2.10/3.4.6/include/stdarg.h:
