@@ -1,0 +1,601 @@
+The following language codes are available:
+ Code	Language
+ ----	---------
+ aa	Afar
+ aar	Afar
+ ab	Abkhazian
+ abk	Abkhazian
+ ace	Achinese
+ ach	Acoli
+ ada	Adangme
+ af	Afrikaans
+ afa	Afro-Asiatic
+ afh	Afrihili
+ afr	Africaans
+ ajm	Aljamia
+ aka	Akan
+ akk	Akkadian
+ alb	Albanian
+ ale	Aleut
+ alg	Algonquian languages
+ am	Amharic
+ amh	Amharic
+ ang	Old-English
+ apa	Apache languages
+ ar	Arabic
+ ara	Arabic
+ arc	Aramaic
+ arm	Armenian
+ arn	Araucanian
+ arp	Arapaho
+ art	Artificial
+ arw	Arawak
+ as	Assamese
+ asm	Assamese
+ ath	Athapascan languages
+ ava	Avaric
+ ave	Avestan
+ awa	Awandhi
+ ay	Aymara
+ aym	Aymara
+ az	Azerbaijani
+ aze	Azerbaijani
+ ba	Bashkir
+ bad	Banda
+ bai	Bamileke languages
+ bak	Bashkir
+ bal	Baluchi
+ bam	Bambara
+ ban	Balinese
+ baq	Basque
+ bas	Basa
+ bat	Baltic
+ be	Byelorussian
+ bej	Beja
+ bel	Byelorussian
+ bem	Bemba
+ ben	Bengali
+ ber	Berber languages
+ bg	Bulgarian
+ bh	Bihari
+ bho	Bhojpuri
+ bi	Bislama
+ bih	Bihari
+ bik	Bikol
+ bin	Bini
+ bis	Bislama
+ bla	Siksika
+ bn	Bengali; Bangla
+ bo	Tibetan
+ bod	Tibetan
+ br	Breton
+ bra	Braj
+ bre	Breton
+ bug	Buginese
+ bul	Bulgarian
+ bur	Burmese
+ ca	Catalan
+ cad	Caddo
+ cai	Central American Indian
+ car	Carib
+ cat	Catalan
+ cau	Caucasian
+ ceb	Cebuano
+ cel	Celtic
+ ces	Czeck
+ cha	Chamorro
+ chb	Chibcha
+ che	Chechen
+ chg	Chagatai
+ chi	Chinese
+ chn	Chinook jargon
+ cho	Choctaw
+ chr	Cherokee
+ chu	Church Slavic
+ chv	Chuvash
+ chy	Cheyenne
+ co	Corsican
+ cop	Coptic
+ cor	Cornish
+ cos	Corsican
+ cpe	English-Creoles and pidgins
+ cpf	French-Creoles and pidgins
+ cpp	Portuguese-Creoles and pidgins
+ cre	Cree
+ crp	Misc-Creoles and pidgins
+ cs	Czech
+ cus	Cushitic
+ cy	Welsh
+ cym	Welsh
+ cze	Czech
+ da	Dansk
+ dak	Dakota
+ dan	Dansk
+ de	Deutsch
+ de-AT	Austrian German
+ de-CH	Swiss-German
+ de-DE	German (Germany)
+ del	Delaware
+ deu	Deutsch
+ din	Dinka
+ doi	Dogri
+ dra	Dravidian
+ dua	Duala
+ dum	Middle-Dutch
+ dut	Dutch
+ dyu	Dyula
+ dz	Bhutani
+ dzo	Dzongkha
+ efi	Efik
+ egy	Egyptian
+ eka	Ekajuk
+ el	Greek
+ ell	Modern-Greek
+ elx	Elamite
+ en	English
+ en-AU	English (Australia)
+ en-CA	Canadian-English
+ en-GB	British-English
+ en-IE	Irish-English
+ en-NZ	English (New Zealand)
+ en-UK	UK English
+ en-US	US English
+ en-cokney	Cokney-English
+ eng	English
+ enm	Middle-English
+ eo	Esperanto
+ epo	Esperanto
+ es	Español
+ es-AR	Spanish (Argentina)
+ es-BO	Spanish (Bolivia)
+ es-CL	Spanish (Chile)
+ es-CO	Spanish (Colombia)
+ es-CR	Spanish (Costa Rica)
+ es-EC	Spanish (Ecuador)
+ es-ES	Spanish (Spain)
+ es-GT	Spanish (Guatemala)
+ es-MX	Spanish (Mexico)
+ es-NI	Spanish (Nicaragua)
+ es-PA	Spanish (Panama)
+ es-PE	Spanish (Peru)
+ es-PY	Spanish (Paraguay)
+ es-SV	Spanish (El Salvador)
+ es-UY	Spanish (Uruguay)
+ es-VE	Spanish (Venezuela)
+ esk	Eskimo
+ esl	Español
+ est	Estonian
+ et	Estonian
+ eth	Ethiopic
+ eu	Basque
+ eus	Basque
+ ewe	Ewe
+ ewo	Ewondo
+ fa	Persian
+ fan	Fang
+ fao	Faroese
+ fas	Persian
+ fat	Fanti
+ fi	Finnish
+ fij	Fijian
+ fin	Finnish
+ fiu	Finno-Ugrian
+ fj	Fiji
+ fo	Faeroese
+ fon	Fon
+ fr	Francais
+ fr-BE	French (Belgium)
+ fr-CA	French (Canadian)
+ fr-CH	French (Swiss)
+ fr-FR	French (France)
+ fra	Francais
+ fre	Francais
+ frm	Middle-French
+ fro	Old-French
+ fry	Friesian
+ ful	Fulah
+ fy	Frisian
+ ga	Irish
+ gaa	Ga
+ gae	Gaelic
+ gai	Irish
+ gay	Gayo
+ gd	Gaelic
+ gdh	Gaelic
+ gem	Germanic
+ geo	Georgian
+ ger	Deutsch
+ gil	Gilbertese
+ gl	Galician
+ glg	Gallegan
+ gmh	Middle-High-German
+ gn	Guamni
+ goh	Old-High-German
+ gon	Gondi
+ got	Gothic
+ grb	Grebo
+ grc	Ancient-Greek
+ gre	Modern-Greek
+ grn	Guarani
+ gu	Gujarati
+ guj	Gujarati
+ ha	Hausa
+ hai	Haida
+ hau	Hausa
+ haw	Hawaiian
+ he	Hebrew
+ heb	Hebrew
+ her	Herero
+ hi	Hindi
+ hil	Hiligaynon
+ him	Himachali
+ hin	Hindi
+ hmo	Hiri Motu
+ hr	Croatian
+ hu	Hungarian
+ hun	Hungarian
+ hup	Hupa
+ hy	Armenian
+ hye	Armenian
+ i-sami-no	North Sami (Norway)
+ ia	Interlingua
+ iba	Iban
+ ibo	Igbo
+ ice	Icelandic
+ id	Indonesian
+ ie	lnteriingue
+ ijo	Ijo
+ ik	Knupiak
+ iku	Inuktitut
+ ile	Interlingue
+ ilo	Iloko
+ in	Indonesian
+ ina	Interlingua (International Auxilary Language Association)
+ inc	Indic
+ ind	Indonesian
+ ine	Indo-European
+ ipk	Inupiak
+ ira	Iranian
+ iri	Irish
+ iro	Iroquoian languages
+ is	Icelandic
+ isl	Icelandic
+ it	Italiano
+ it-CH	Italian (Swiss)
+ it-IT	Italian (Italy)
+ ita	Italiano
+ iu	Inuktitut
+ iw	Hebrew
+ ja	Japanese
+ jav	Javanese
+ jaw	Javanese
+ ji	Yiddish
+ jpn	Japanese
+ jpr	Judeo-Persian
+ jrb	Judeo-Arabic
+ jw	Javanese
+ ka	Georgian
+ kaa	Kara-Kalpak
+ kab	Kabyle
+ kac	Kachin
+ kal	Greenlandic
+ kam	Kamba
+ kan	Kannada
+ kar	Karen
+ kas	Kashmiri
+ kat	Georgian
+ kau	Kanuri
+ kaw	Kawi
+ kaz	Kazakh
+ kha	Khasi
+ khi	Khoisan
+ khm	Khmer
+ kho	Khotanese
+ kik	Kikuyu
+ kin	Kinyarwanda
+ kir	Kirghiz
+ kk	Kazakh
+ kl	Greaenlandic
+ km	Cambodian
+ kn	Kannada
+ ko	Korean
+ kok	Konkani
+ kon	Kongo
+ kor	Korean
+ kpe	Kpelle
+ kro	Kru
+ kru	Kurukh
+ ks	Kashmiri
+ ku	Kurdish
+ kua	Kuanyama
+ kur	Kurdish
+ kus	Kusaie
+ kut	Kutenai
+ ky	Kirghiz
+ la	Latin
+ lad	Ladino
+ lah	Lahnda
+ lam	Lamba
+ lao	Lao
+ lap	Lapp languages
+ lat	Latin
+ lav	Latvian
+ lin	Lingala
+ lit	Lithuanian
+ ln	Lingala
+ lo	Laothian
+ lol	Mongo
+ loz	Lozi
+ lt	Lithuainnian
+ lub	Luba-Katanga
+ lug	Ganda
+ lui	Luiseno
+ lun	Lunda
+ luo	Luo
+ lv	Lettish
+ mac	Macedonian
+ mad	Madurese
+ mag	Magahi
+ mah	Marshall
+ mai	Maithili
+ mak	Makasar
+ mal	Malayalam
+ man	Mandingo
+ mao	Maori
+ map	Austronesian
+ mar	Marathi
+ mas	Masai
+ max	Manx
+ may	Malay
+ men	Mende
+ mg	Malagasy
+ mi	Maori
+ mic	Micmac
+ min	Minangkabau
+ mis	Miscellaneous
+ mk	Macedonian
+ mke	Macedonian
+ mkh	Mon-Khmer
+ ml	Malayalam
+ mlg	Malagasy
+ mlt	Maltese
+ mn	Mongolian
+ mni	Manipuri
+ mno	Manobo languages
+ mo	Moldavian
+ moh	Mohawk
+ mol	Moldavian
+ mon	Mongolian
+ mos	Mossi
+ mr	Marathi
+ mri	Maori
+ ms	Malay
+ msa	Malay
+ mt	Maltese
+ mul	Multiple languages
+ mun	Munda
+ mus	Creek
+ mwr	Marwari
+ my	Burmese
+ mya	Burmese
+ myn	Mayan languages
+ na	Nauru
+ nah	Aztec
+ nai	North American Indian
+ nau	Nauru
+ nav	Navajo
+ nde	Ndebele
+ ndo	Ndonga
+ ne	Nepali
+ nep	Nepali
+ new	Newari
+ nic	Niger-Kordofanian
+ niu	Niuean
+ nl	Dutch
+ nl-BE	Dutch (Belgium)
+ nl-NL	Dutch (Holland)
+ nld	Dutch
+ no	Norwegian
+ no-bok	Norwegian Book Language
+ no-nyn	Norwegian New Norwegian
+ non	Old-Norse
+ nor	Norwegian
+ nso	Northern Sohto
+ nub	Nubian languages
+ nya	Nyanja
+ nym	Nyamwezi
+ nyn	Nyankole
+ nyo	Nyoro
+ nzi	Nzima
+ oc	Occitan
+ oci	Langue d'oc
+ oji	Ojibwa
+ om	Afan Oromo
+ or	Oriya
+ ori	Oriya
+ orm	Oromo
+ osa	Osage
+ oss	Ossetic
+ ota	Ottoman-Turkish
+ oto	Otomian languages
+ pa	Punjabi
+ paa	Papuan-Australian
+ pag	Pangasinan
+ pal	Pahlavi
+ pam	Pampanga
+ pan	Panjabi
+ pap	Papiamento
+ pau	Palauan
+ peo	Old-Persian
+ per	Persian
+ pl	Polish
+ pli	Pali
+ pol	Polish
+ pon	Ponape
+ por	Portuguese
+ pra	Prakrit languages
+ pro	Old-Provencal
+ ps	Pushto
+ pt	Portuguese
+ pt-BR	Portuguese (Brazil)
+ pt-PT	Portuguese (Portugal)
+ pus	Pushto
+ qu	Ouechua
+ que	Quechua
+ raj	Rajasthani
+ rar	Rarotongan
+ rm	Rhaeto-Romance
+ rn	Kirundi
+ ro	Romanian
+ roa	Romance
+ roh	Raeto-Romance
+ rom	Romany
+ ron	Romanian
+ ru	Russian
+ rum	Romanian
+ run	Rundi
+ rus	Russian
+ rw	Kinya
+ sa	Sanskrit
+ sad	Sandawe
+ sag	Sango
+ sai	South American Indian
+ sal	Salishan
+ sam	Samaritan Aramaic
+ san	Sanskrit
+ sco	Scots
+ scr	Serbo-Croatian
+ sd	Sindhi
+ sel	Selkup
+ sem	Semitic
+ sg	Sangro
+ sh	Serbo-Croatian
+ shn	Shan
+ si	Singhalese
+ sid	Sidamo
+ sin	Sinhalese
+ sio	Siouan languages
+ sit	Sino-Tibetan
+ sk	Slovak
+ sl	Slovenian
+ sla	Slavic
+ slk	Slovak
+ slo	Slovak
+ slv	Slovenian
+ sm	Samoan
+ smo	Samoan
+ sn	Shona
+ sna	Shona
+ snd	Sindhi
+ so	Somali
+ sog	Sogdian
+ som	Somali
+ son	Songhai
+ sot	Sotho
+ spa	Español
+ sq	Albanian
+ sqi	Albanian
+ sr	Serbian
+ srr	Serer
+ ss	Siswati
+ ssa	Nilo-Saharan
+ ssw	Swazi
+ st	Sesotho
+ su	Sundanese
+ suk	Sukuma
+ sun	Sundanese
+ sus	Susu
+ sux	Sumerian
+ sv	Svenska
+ sve	Svenska
+ sw	Swahili
+ swa	Swahili
+ swe	Svenska
+ syr	Syriac
+ ta	Tamil
+ tah	Tahitian
+ tam	Tamil
+ tat	Tatar
+ te	Tegulu
+ tel	Telugu
+ tem	Timne
+ ter	Tereno
+ tg	Tajik
+ tgk	Tajik
+ tgl	Tagalog
+ th	Thai
+ tha	Thai
+ ti	Tigrinya
+ tib	Tibetan
+ tig	Tigre
+ tir	Tigrinya
+ tiv	Tivi
+ tk	Turkmen
+ tl	Tagalog
+ tli	Tlingit
+ tn	Setswana
+ to	Tonga
+ tog	Nyasa-Tonga
+ ton	Tonga
+ tr	Turkish
+ tru	Truk
+ ts	Tsonga
+ tsi	Tsimshian
+ tsn	Tswana
+ tso	Tsonga
+ tt	Tatar
+ tuk	Turkmen
+ tum	Tumbuka
+ tur	Turkish
+ tut	Altaic
+ tw	Twi
+ twi	Twi
+ ug	Uigur
+ uga	Ugaritic
+ uig	Uighur
+ uk	Ukrainian
+ ukr	Ukrainian
+ umb	Umbundu
+ und	Undetermined
+ ur	Urdu
+ urd	Urdu
+ us	American
+ uz	Uzbek
+ uzb	Uzbek
+ vai	Vai
+ ven	Venda
+ vi	Vietnamese
+ vie	Vietnamese
+ vo	Volapuek
+ vol	Volapuk
+ vot	Votic
+ wak	Wakashan languages
+ wal	Walamo
+ war	Waray
+ was	Washo
+ wel	Welsh
+ wen	Sorbian languages
+ wo	Wolof
+ wol	Wolof
+ x-klingon	Klingon (TV series Star Trek)
+ xh	Xhosa
+ xho	Xhosa
+ yao	Yao
+ yap	Yap
+ yi	Yiddish
+ yid	Yiddish
+ yo	Yoruba
+ yo	Yoruba
+ yor	Yoruba
+ za	Zhuang
+ zap	Zapotec
+ zen	Zenaga
+ zh	Chinese
+ zha	Zhuang
+ zho	Chinese
+ zu	Zulu
+ zul	Zulu
+ zun	Zuni
+ zz	Misc
+ zzz	Unknown
+

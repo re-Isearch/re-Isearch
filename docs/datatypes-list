@@ -1,0 +1,80 @@
+The following fundamental data types are currently supported (v.37.17):
+   string  	// String (full text)
+   numerical  	// Numerical IEEE floating
+   computed  	// Computed Numerical
+   range  	// Range of Numerbers
+   date  	// Date/Time in any of a large number of well defined formats
+   date-range  	// Range of Date as Start/End but also +N Seconds (to Years)
+   gpoly  	// Geospatial n-ary bounding coordinates
+   box  	// Geospatial bounding box coordinates (N,W,S,E)
+   time  	// Numeric computed value for seconds since 1970, used as date.
+   ttl  	// Numeric computed value for time-to-live in seconds.
+   expires  	// Numeric computed ttl value as date of expiration.
+   boolean  	// Boolean type
+   currency  	// Monetary currency
+   dotnumber  	// Dot number (Internet v4/v6 Addresses, UIDs etc)
+   phonetic  	// Computed phonetic hash applied to each word (for names)
+   phone2  	// Phonetic hash applied to the whole field
+   metaphone  	// Metaphone hash applied to each word (for names)
+   metaphone2  	// Metaphone hash (whole field)
+   hash  	// Computed 64-bit hash of field contents
+   casehash  	// Computed case-independent hash of text field contents
+   lexi  	// Computed case-independent lexical hash (first 8 characters)
+   privhash  	// Undefined Private Hash (callback)
+   isbn  	// ISBN: International Standard Book Number
+   telnumber  	// ISO/CCITT/UIT Telephone Number
+   creditcard  	// Credit Card Number
+   iban  	// IBAN: International Bank Account Number
+   bic  	// BIC : International Identifier Code (SWIFT)
+   db_string  	// External DB String (callback)
+   callback  	// Local callback 0 (External)
+   local1  	// Local callback 1 (External)
+   local2  	// Local callback 2 (External)
+   local3  	// Local callback 3 (External)
+   local4  	// Local callback 4 (External)
+   local5  	// Local callback 5 (External)
+   local6  	// Local callback 6 (External)
+   local7  	// Local callback 7 (External)
+   special  	// Special text (reserved)
+They are also available via the following alternative 'compatibility' names:
+   text     	// Alias of string
+   num     	// Alias of numerical
+   number     	// Alias of numerical
+   num-range     	// Alias of range
+   numrange     	// Alias of range
+   numericalrange     	// Alias of range
+   numerical-range     	// Alias of range
+   daterange     	// Alias of date-range
+   duration     	// Alias of date-range
+   bounding-box     	// Alias of box
+   boundingbox     	// Alias of box
+   phonhash     	// Alias of phonetic
+   name     	// Alias of metaphone
+   lastname     	// Alias of metaphone2
+   hashcase     	// Alias of casehash
+   hash1     	// Alias of privhash
+   tel     	// Alias of telnumber
+   telnum     	// Alias of telnumber
+   phone     	// Alias of telnumber
+   telephone     	// Alias of telnumber
+   inet     	// Alias of dotnumber
+   ipv4     	// Alias of dotnumber
+   ipv6     	// Alias of dotnumber
+   xs:string     	// Alias of string
+   xs:normalizedString     	// Alias of string
+   xs:boolean     	// Alias of boolean
+   xs:decimal     	// Alias of numerical
+   xs:integer     	// Alias of numerical
+   xs:long     	// Alias of numerical
+   xs:int     	// Alias of numerical
+   xs:short     	// Alias of numerical
+   xs:unsignedLong     	// Alias of numerical
+   xs:unsignedInt     	// Alias of numerical
+   xs:unsignedShort     	// Alias of numerical
+   xs:positiveInteger     	// Alias of numerical
+   xs:nonNegativeInteger     	// Alias of numerical
+   xs:negativeInteger     	// Alias of numerical
+   xs:positiveInteger     	// Alias of numerical
+   xs:dateTime     	// Alias of date
+   xs:time     	// Alias of time
+
