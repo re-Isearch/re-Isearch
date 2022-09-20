@@ -1,0 +1,56 @@
+Usage is: ../bin/Iutil [-d db] [options]
+Options:
+ -d (X)         // Use (X) as the root name for database files.
+ -id (X)        // Select document with docid (X).
+ -thes (X)      // File (X) contains Thesaurus.
+ -import (X)    // Import database: (X) as the root name for imported db files.
+ -centroid      // Create centroid.
+ -vi            // View summary information about the database/record.
+ -vf            // View list of fields defined in the database.
+ -v             // View list of documents in the database.
+ -mdt           // Dump MDT (debug option).
+ -inx           // Dump INX (debug option).
+ -check         // Check INX for consistency (WARNING: Slow and I/O expensive!).
+ -skip [offset] // Skip offset in above test
+ -level NN      // Set message level to NN (0-255).
+ -newpaths      // Prompt for new pathnames for files.
+ -relative (Dir)// Relativize all paths with respect to (Dir).
+                // "." is current directory, "" is db path.
+ -mvdir old=new // Change all paths old to new.
+                // Example: /opt=/var will change /opt/main.html to /var/main.html but
+                // not change /opt/html/main.html (see -dirmv below to change base of tree)
+ -dirmv old=new // Move the base of tree from old to new.
+                // Example: /opt=/var will change /opt/html/main.html to /var/html/main.html etc.
+ -del key       // Mark individual documents (by key) to be deleted from database.
+                // Note: to remove records by file use the Idelete command instead.
+ -del_expired   // Mark expired documents as deleted.
+ -autodelete    // Set the autodelete expired flag to true.
+ -deferdelete   // Set the autodelete expired flag to false.
+ -undel key     // Unmark documents (by key) that were marked for deletion.
+ -c             // Cleanup database by removing unused data (useful after -del).
+ -erase         // Erase the entire database.
+ -g (X)         // Use (X) as Stopwords list (language).
+ -gl0]          // Clear external stopwords list and use default.
+ -gt (X)        // Set (X) as the global document type for the database.
+                // Specify X as * to get a list of available doctypes.
+ -gt0           // Clear the global document type for the database.
+ -server host   // Set the server hostname or IP address.
+ -web URL=base  // map base/XXX -> URL/XXX (e.g. http://www.nonmonotonic.com/=/var/html-data/nonmonotonic.net/).
+ -mirror ROOT   // Set Mirror root.
+ -collapse      // Collapse last two database indexes.
+ -optimize      // Optimize database indexes.
+ -pcache (X)    // Set presentation cache base directory to (X).
+                // Uses X/<DATABASE> for files. (X) must exist and be writable.
+ -fill (X)[,..] // Fill the headline cache (not CacheDir must be set beforehand!) for the
+                // different record syntaxes (,-list), where (X) is the Record Syntax OID
+                // or any of the "shorthand names" HTML, SUTRS, USMARC, XML.
+ -clip (NN)     // Set Db Search cut-off default.
+ -priority (N.N)// Set priority factor.
+ -title (X)     // Set database title to (X).
+ -copyright (X) // Set database copyright statement.
+ -comments (X)  // Set database comments statement.
+ -o (X)         // Document type specific option.
+
+Example:  Iutil -d POETRY -del key1 key2 key3
+          Iutil -d LITERATURE -import POETRY
+

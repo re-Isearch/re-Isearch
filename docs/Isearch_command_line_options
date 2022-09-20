@@ -1,0 +1,181 @@
+Isearch -d db [options] term...
+options:
+  -d (X)           // Search database with root name (X).
+  -cd (X)          // Change working directory to (X).
+  -id (X)          // Request document(s) with docid (X).
+  -D (X)           // Load Result Set from file (X).
+  -p (X)           // Present element set (X) with results.
+  -P (X)           // Present Ancestor (X) content for hits.
+                   // where X may be as (X)/(Y) where (X) is an ancestor
+                   // and (Y) is a descendant of that ancestor.
+  -c               // Sort results Chronologically.
+  -cr              // Sort result from oldest to newest.
+  -s               // Sort results by Score (Relevant Ranked).
+  -sc              // Sort results by Score modified by Category.
+  -smag (NN.NN)    // Sort results by Score/Category with Magnetism factor NN.NN
+  -scat            // Sort results by Category.
+  -snews           // Sort results by News Rank.
+  -h               // Sort results by different matches (see -joint).
+  -k               // Sort results by Key.
+  -n               // Don't sort (By indexing order).
+  -cosine_norm     // Cosine Normalization (default).
+  -euclidean_norn  // Euclidean Normalization.
+  -max_norm        // Max. normalization. 
+  -log_norm        // Log Normalization.
+  -bytes_norm      // Bytes Normalization.
+  -no_norm         // Don't calculate scores or normalize.
+  -sort B[entley]|S[edgewick]|D[ualPivot] // Which variation of QuickSort to use
+  -show            // Show first hit neighborhood.
+  -summary         // Show summary/description.
+  -XML             // Present Results in XML-like structure.
+  -H[TML]          // Use HTML Record Presentation.
+  -q[uiet]         // Print results and exit immediately.
+  -t[erse]         // Print terse results.
+  -tab             // Use Terse tab format.
+  -scan field      // scan service.
+  -shell           // Interactive mode.
+  -rpn             // Interpret as an RPN query.
+  -infix           // Interpret as an InFix-Notation query.
+                   //   Additional Unary Ops:  ! for NOT, field/  for WITHIN:field
+  -words           // Interpret as words.
+  -and             // Interpret as intersection of words.
+  -smart field     // Fielded Smart search.
+  -regular         // Regular Query (fields, weights etc. but no operators).
+  -syn             // Do synonym expansion.
+  -priority (NN.NN)// Over-ride priority factor with NN.NN
+  -scale (NN)      // Normalize score to 0-(NN) (scale).
+  -max (NN)        // Max. NN hits
+  -clip (NN)       // Clip at NN.
+  -common (NN)     // Set common words threshold at NN.
+  -reduce          // Reduce result set (MiniMax of different matches).
+  -reduce0         // Same as -h -reduce
+  -drop_h (NN)     // Drop all results with less than NN different matches.
+  -drop_a (NN)     // Drop all results with absolute score less than NN.
+  -drop_s (NN)     // Drop all results with scaled score less than NN.
+  -prefix (X)      // Add prefix (X) to matched terms in document.
+  -suffix (X)      // Add suffix (X) to matched terms in document.
+  -headline (X)    // Use alternative headline display using element (X).
+  -filename        // Filenames ONLY.
+  -filesystem      // Same as -q -filename -byterange
+  -hits            // Show total matches per record.
+  -joint           // Show joint total (different matches) per record.
+  -score           // Show unnormalized scores.
+  -date            // Print date.
+  -datemodified    // Print date modified.
+  -key             // Print Record Key.
+  -doctype         // Print Record doctype.
+  -byterange       // Print the byte range of each document within
+                   // the file that contains it.
+  -range (X)[-(Y)] // Show the (X)th to (Y)th result in set
+  -daterange (X)   // Limit search to records in the range (X)
+                   // Specified as YYYY[MM[DD]][-YYYY[MM[DD]]] or
+                   // YYYY[MM[DD]]/[[YYYY]MM]DD
+                   // Example: 2005 would return all records of the year 2005
+                   // Note: The date here is the 'date of the record'
+                   // in contrast to ordinary date fields.
+                   // Note2: -daterange limits ALL searches to the range. The unary
+                   // operator WITHIN:<daterange> applies to a search set.
+  -startdoc (NN)   // Display result set starting with the (NN)th
+                   // document in the list.
+  -enddoc (NN)     // Display result set ending with the (NN)th document
+                   // in the list.
+  -o (X)]          // Document type specific option.
+  -table (X)       // Save Result Set into file (X)
+  -level (NN)      // Set message level to NN (0-255).
+  -debug           // Load of debug messages.
+  -bench           // Show rusage
+  -pager (EXE)     // Use program EXE to page results (e.g. more).
+  -more            // Same as -pager /bin/more
+  (...)            // Terms (X), (Y), .. or a query sentence.
+                   // If -rpn was specified then the sentence is expected to be in RPN.
+                   // If -infix then the conventional in-fix notation is expected.
+                   // If -words or -regular then OR'd.  Default is Smart search.
+
+                   // Fielded Search: [[fieldname][relation]]searchterm[*][:n]
+                   // Relations are <,>,>=,<=,<> whose semantics of depends upon the
+                   // field datatype.
+
+                   // In addition one may prefix with fieldname/ for fielded text searching.
+                   // Append * for right truncation.
+                   // Prepend * for left truncation.
+                   // Use combination of * and ? for glob matching.
+                   // Append ~ for phonetic (soundex) search.
+                   // Append = for exact (case dependent) search.
+                   // Append > for exact right truncated search (=*).
+                   // Append . for "exact-term" (e.g. "auto" won't match "auto-mobile")
+                   // Append :n for term weighting (default=1).
+                   //   (Use negative values to lower rank.)
+                   // Use "literal phrase" for literal search
+
+                   // Note: the term prefix RECT (as in RECT{N,W,S,E}) is reserved
+                   // for bounding box searches in pre-defined numeric fields (quadrants).
+
+                   // Note: dates can be specified in many different formats
+                   // and the software tries to be "smart". Date ranges too
+                   // can be specified using various formats including ISO 8601.
+
+                   // Binary Operators:
+                   //   OR    := Union, the set of all elements in either of two sets
+                   //   AND   := Intersection, the set of all elements in both sets
+                   //   ANDNOT:= Elements in the one set but NOT in the other
+                   //   XOR   := Exclusive Union, elements in either but not both
+                   //   ADJ   := Matching terms are adjacent to one another
+                   //   NEAR[:num] := matching terms in the sets are within  elements
+                   //   BEFORE[:num] and AFTER[:num] := As NEAR but in specific order
+                   //     num as integer is characters. As fraction of 1 its % of doc
+                   //   DIST[>,>=,<,<=]num := distance between words in source measured in bytes.
+                   //   PEER  := Elements in the same (unnamed) final tree leaf node
+                   //   PEERa := like PEER but after
+                   //   PEERb := like PEER but ordered after
+                   //   XPEER := Not in the same container
+                   //   AND:field := Elements in the same node instance of field
+                   //   BEFORE:field := like AND:field but before
+                   //   AFTER:field := like AND:field but after
+                   //   FOLLOWS, PRECEDES := Within some ordered elements of one another
+                   //   FAR   := Elements a "good distance" away from each other
+                   //   NEAR  := Elements "near" one another.
+
+                   // Unary Operators:
+                   //   NOT               := Set compliment
+                   //   WITHIN[:field]    := Records with elements within the specified field
+                   //      RPN queries "term WITHIN:field" and "field/term" are equivalent.
+                   //      (for performance the query "field/term" is prefered to "term WITHIN:field")
+                   //   WITHIN[:daterange] := Only records with record dates within the range
+                   //   WITHKEY:pattern    := Only records whose key match pattern
+                   //   SIBLING            := only hits in the same container
+                   //   INSIDE[:field]     := Hits are limited to those in the specified field
+                   //   XWITHIN[:field]    := Absolutely NOT in the specified field
+
+                   //   FILE:pattern       := Records whose local file path match pattern
+                   //   REDUCE[:nnn]   := Reduce set to those records with nnn matching terms
+                   //   NOTE: REDUCE:metric is a special kind of unary operator that trims the result
+                   //   to metric cutoff regarding the number of different terms (see -h and -joint).
+                   //   Reduce MUST be specified with a positive metric and 0 (Zero) is a special case
+                   //   designating the max. number of different terms found in the set.
+
+                   //   HITCOUNT:nnn := Trim set to contain only records with min. nnn hits.
+                   //   HITCOUNT[>,>=,<,<=]num := as above. Example: HITCOUNT>10 means to include only
+                   //       those records with MORE than 10 hits.
+                   //   TRIM:nnn    := Truncate set to max. nnn elements
+                   //   BOOST:nnn   := Boost score by nnn (as weight)
+                   //   SORTBY:<ByWhat> := Sort the set "ByWhat" (reserved names: Date, Score, Hits, etc. )
+                   //   Must be specified with -n to have effect.
+
+Examples: Isearch -d POETRY truth 'beaut*' urn:2
+          Isearch -d FTP -headline L C++
+          Isearch -d WEBPAGES title/library
+          Isearch -d WEBPAGE  -rpn library WITHIN:title
+          Isearch -d WEBPAGES library WITHIN:title
+          Isearch -d STORIES -rpn title/cat title/dog OR title/mouse OR
+          Isearch -d STORIES -infix title/(cat or dog or mouse)
+          Isearch -d POETRY -rpn speaker/hamlet line/love AND:scene
+          Isearch -d POETRY -infix (speaker/hamlet and:scene line/love)
+          Isearch -d POETRY -infix act/(speaker/hamlet and:scene line/love)
+          Isearch -d MAIL -H -infix from/edz AND 'subject/"Isearch Doctypes"'
+          Isearch -d KFILM -XML -show -rpn microsoft NT AND windows NOT
+          Isearch -d BILLS -rpn vendor/BSn price<100 AND
+          Isearch -d NEWS  -rpn unix WITHIN:2006
+          Isearch -d SHAKESPEARE -P SPEECH/SPEAKER -rpn out spot PEER
+Note: "Built-in" Elements for -p and -headline: F for Full, B for Brief and S for Short.
+Additional Special elements: R for Raw, H for Highlight, L for location/redirect and M for metadata.
+

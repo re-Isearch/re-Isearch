@@ -1,0 +1,102 @@
+Usage is: Iindex [-d db] [options] [file...]
+Options:
+ -d db              // Use database db.
+ -setuid X          // Run under user-id/name X (when allowed).
+ -setgid X          // Run under group-id/name X (when allowed).
+ -cd X              // Change working directory to X before indexing.
+ -thes source       // Compile search thesaurus from file source.
+ -T Title           // Set Title as database title.
+ -R Rights          // Set Rights as Copyright statement.
+ -C Comment         // Set Comment as comment statement.
+ -mem NN            // Advise min. of NN RAM.
+ -memory NN         // Force min. of NN RAM.
+                    // Note: Specifying more memory than available process RAM can
+                    // have a detrimental effect on performance.
+ -relative_paths    // Use relative paths (relative to index path).
+ -base path         // Specify a base path for relative paths.
+ -rel               // Use relative paths and assume relation between index location
+                    // and files remains constant.
+ -absolute_paths    // Make file paths absolute (default).
+ -ds NN             // Set the sis block to NN (max 64).
+ -mdt NN            // Advise NN records for MDT.
+ -common NN         // Set common words threshold at NN.
+ -sep sep           // Use C-style sep as record separator.
+ -s sep             // Same as -sep but don't escape (literal).
+ -xsep sep          // Use C-style sep as record separator but ignore sep.
+ -start NN          // Start from pos NN in file (0 is start).
+ -end nn            // End at pos nn (negative to specify bytes from end-of-file).
+ -override          // Override Keys: Mark older key duplicates as deleted (default).
+ -no-override       // Don't override keys.
+ -centroid          // Create centroid.
+ -t [name:]class[:] // Use document type class to process documents.
+ -charset X         // Use charset X (e.g. Latin-1, iso-8859-1, iso-8859-2,..).
+ -lang ISO          // Set the language (ISO names) for the records.
+                    // Specify help for a list of registered languages.
+ -locale X          // Use locale X (e.g. de, de_CH, pl_PL, ...)
+                    // These set both -charset and -lang above.
+                    // Specify help for a list of registered locales.
+ -stop              // Use stoplist during index (default is none)
+ -l name            // Use stoplist file name; - for "builtin".
+ -f list            // File containing list of filenames; - for stdin.
+ -recursive         // Recursively descend subdirectories.
+ -follow            // Follow links.
+ -include pattern   // Include files matching pattern.
+ -exclude pattern   // Exclude files matching pattern.
+ -incldir pattern   // Include dirs matching pattern.
+ -excldir pattern   // Exclude dirs matching pattern.
+ -name pattern      // Like -recursive -include.
+                    // pattern is processed using Unix "glob" conventions:
+                    // * Matches any sequence of zero or more characters.
+                    // ? Matches any single character, [chars] matches any single
+                    // character in chars, a-b means characters between a and b.
+                    // {a,b...} matches any of the strings a, b etc.
+                    // -include, -incldir, -excldir and -name may be specified multiple
+                    // times (including is OR'd and excluding is AND'd).
+ -r                 // -recursive shortcut: used with -t to auto-set -name.
+ -o opt=value       // Document type class specific option.
+                    // Generic: HTTP_SERVER, WWW_ROOT, MIRROR_ROOT, PluginsPath
+ -log file          // Log messages to file; <stderr> (or -) for stderr, <stdout>
+                    // for stdout or <syslog[N]> for syslog facility using LOG_LOCALN when
+                    // N is 0-7, if N is 'D' then use LOG_DAEMON, and 'U' then LOG_USER.
+ -e file            // like -log above but only log errors.
+ -syslog facility    // Define an alternative facility (default is LOG_LOCAL2) for <syslog> where
+                    // facility is LOG_AUTH, LOG_CRON, LOG_DAEMON, LOG_KERN, LOG_LOCALN (N is 0-7), etc.
+ -level NN          // Set message mask to NN (0-255) where the mask is defined as (ORd): PANIC (1),
+                    // FATAL (2), ERROR (4), ERRNO (8), WARN (16), NOTICE (32), INFO (64), DEBUG (128).
+ -quiet             // Only important messages and notices.
+ -silent            // Silence messages (same as -level 0).
+ -verbose           // Verbose messages.
+ -maxsize NNNN      // Set Maximum Record Size (ignore larger)[-1 for unlimited].
+ -nomax             // Allow for records limited only by system resources [-maxsize -1].
+ -a                 // (Fast) append to database.
+ -O                 // Optimize in max. RAM. (-optimize -mem -1)
+ -Z                 // Optimize in max. RAM but minimize disk (-merge -mem -1)
+ -fast              // Fast Index (No Merging).
+ -optimize          // Merge sub-indexes (Optimize)
+ -merge             // Merge sub-indexes during indexing
+ -collapse          // Collapse last two database indexes.
+ -append            // Add and merge (like -a -optimize)
+ -incr              // Incremental Append
+ -qsort B[entley]|S[edgewick]|D[ualPivot] // Which variation of Qsort to use
+ -copyright         // Print the copyright statement.
+ -version           // Print Indexer version.
+ -api               // Print API Shared libs version.
+ -capacities        // Print capacities.
+ -kernel            // Print O/S kernel capacities.
+ -help              // Print options (this list).
+ -help d[octypes]   // Print the doctype classes list (same as -thelp)
+ -help l[ang]       // Print the language help (same as -lang help)
+ -help l[ocale]     // Print the locale list (same as -locale help)
+ -help o[ptions]    // Print the options (db.ini) help.
+ -help t[types]     // Print the currently supported data types.
+ -thelp             // Show available doctype base classes.
+ -thelp XX          // Show Help for doctype class XX.
+ -xhelp             // Show the information Web.
+
+NOTE: Default "database.ini" configurations may be stored in _default.ini
+in the configuration locations.
+Options are set in section [DbInfo] as:
+   Option[<i>]= # where <i> is an integer counting from 1 to 1024
+Example:  Option[1]=WWW_ROOT=/var/httpd/htdocs/
+
+

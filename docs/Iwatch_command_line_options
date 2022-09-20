@@ -1,0 +1,6 @@
+Iwatch: Run a program when a file is added or deleted from dir.
+Usage: ../bin/Iwatch [-s sec] [-d dir] command args ...
+ [-s sec]	Number of seconds between checks (300)
+ [-d dir]	Directory to watch ('.')
+ [-p sec]	Number of seconds to not look after command (10)
+

@@ -1,0 +1,22 @@
+Idelete -- Program to delete files from the index.
+Usage: Idelete [options] file ...
+  -d (X)      // Use (X) as the root name for database files.
+  -o (X)      // Document type specific option.
+  -sub (X)    // Default=".wastebasket"
+  -pre (X)]   // Prepend base to path (default="")
+  -quiet      // Quiet
+  -f [(X)|-]  // Read list from a file (X) or - for stdin
+  -mark       // Just mark as Deleted and don't move or remove
+              // like Iutil -del but by file name and not by key.
+  -shredder   // WARNING: Dangerous option!!
+              // Don't move things to wastebasket but REMOVE/DELETE!
+              // WARNING: THIS REMOVES AND DESTROYS THE SOURCE!!!!!!!
+  -debug      // debug...
+
+Example: ../bin/Idelete -d DATABASE foo
+  // this marks the records in foo as deleted and moves
+  // path/foo to path/.wastebasket/foo.
+
+Note: In the datebase.ini [Idelete] .wasterbasket= and .prepend= 
+override the command line arguments!
+
