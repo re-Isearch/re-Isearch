@@ -1,0 +1,13 @@
+
+## Doctype.ini options may also be embeded into database.ini files as:
+##  
+
+[<Doctype>]  # Doctype, e.g. [TEXT]
+# Options are those from the <doctype>.ini [General] section <key>=<value>. Example:
+FieldType=<file to load for field definitions>  # default <doctype>.fields
+DateExpiresField=<Date of record expiration>
+
+
+## Many doctypes has their own expansive set of options.
+# Consult the individual Doctype documentation:  -thelp <doctype>
+

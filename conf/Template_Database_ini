@@ -1,0 +1,85 @@
+## Ini file (<database>.ini) options:
+[DbInfo]
+Collections=<List of virtual databases>
+Databases=<List of physical databases>
+vdb-file=<Path to file list> (default: <database>.vdb) # File has 1 entry per line
+
+## Physical database level <database>.ini Options:
+[DbInfo]
+Databases=<Path to db stem (Physical Indexes)> # Default: same directory as .ini
+BaseDir=<Base Directory> # WARNING: CRITICAL VALUE
+useRelativePaths=<bool> # Use relative paths (0 or 1)
+AutoDeleteExpired=<bool> # Automatically delete expired records (0 or 1)
+MaxRecordSize=nnnn # Max. Record size (bytes) to index (default 51mb).
+Headline[/RecordSyntax]=<format of headline>
+Summary[/RecordSyntax]=<format of summary>
+CacheSize=nnn  # Size of cache
+Persist=<bool>  # Should the cache persist?
+SearchCutoff=nnn    # Stop searching after nnn hits
+MaxRecordsAdvice=nnnn   # Suggest limit for set complements.
+CacheDir=<Directory to store cache>
+VersionNumber=<Version>
+Locale=<Global Locale Name>
+Segment=<Short DB Title for use as virtual segment name>
+Title=<Database Title> # Complete (exported) title
+Comments=<Comments>
+Copyright=<Copyright Statement>
+StopList=<Language or Path/Format to stopwords list file>
+DateCreated=<DateCreated>
+DateLastModified=<Date of last modification>
+Maintainer.Name=<Name of DB maintainer>
+Maintainer.Email=<Email address for maintainer>
+PluginsPath=<path to directory where plugins are installed>
+
+[External Sort}
+<nn>=<path> # <nn> is number and path is to the external sort file
+            # if not defined it looks for <DB>.__<nn>
+
+[Ranking]
+PriorityFactor=fff.ff   # Priority factor
+IndexBoostFactor=fff.ff # Boost score by index position
+FreshnessBoostFactor=fff.ff # Boost score by freshness
+FreshnessBaseDateLine=date # Date/time, Records newer than this date
+# get FreshnessBoostFactor added, older get substracted. The unit
+# of resolution is defined by the precision of the specified date. Default is the date
+# specified in DateLastModified [DbInfo] (Minutes resolution)
+LongevityBoostFactor=fff.fff # Boost score by difference in days between
+# the date created and date modified of the records.
+
+[HTTP]
+Pages=<Path to root of htdoc tree>
+IP-Name=<ip address of server>
+Server=<Server Name, e.g. www.nonmonotonic.com>
+
+[Mirror]
+Root=<Path to root of mirror tree>
+
+[<Doctype>/Metadata-Maps]
+<Tag>=<TagValue> # TagValue of <Ignore> means Ignore it
+
+## Low level index <database>.ini Options:
+ [DbSearch]
+ MaxTermSearchTime=<nnn>	# Max. time in seconds to search for a term (advice) [default 6].
+ MaxSearchTime=<nnn>	# Max. time in seconds (nnn) to run a query (advice) [default 18].
+ FindConcatWords=<bool>	# True/False: Search "flow-er"? Not found then "flower".
+ PhraseWaterlimit=nnn	# At this point we go into heuristic modus for phrases.
+ Freeform=<bool>	# Should we NOT store hits (no proximity etc.)?
+ Phonetic=[soundex|metaphone] # Algorithm to use for phonetic term searches.
+
+ [FindConcatWords]
+ Force=<bool>	# Force search of XX-YY-ZZ for XXYYZZ if no match.
+
+ [TermAliases]
+ <Term>=<TermAlias>	# To map one term to another
+
+ [CommonWords]
+ Threshold=nnnn	# Frequency to call common
+ Words=<word1> <word2> .... # A list of common words with space seperators
+
+## Geospatial RECT{North West South East} [Note the canonical order]
+## queries need to have their data fields defined via Gpoly-types or:
+ [BOUNDING-BOX]
+ North=<Numeric Field for North Coordinates [NORTHBC]>
+ East= <Numeric Field for East Coordinatesi [EASTBC]>
+ West= <Numeric Field for West Coordinatesi [WESTBC]>
+ South=<Numeric Field for South Coordinates [SOUTHBC]>
