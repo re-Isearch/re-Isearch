@@ -1,4 +1,4 @@
-![](Pictures/1000000000000392000001A558604D9925AFD706.png){width="1.7756in"
+![](Pictures/1000000000000392000001A5EBFB59E4A20F62B0.png){width="1.7756in"
 height="0.8181in"}Author: Edward C. Zimmermann \<edz\@nonmonotonic.net\>
 
 **Copyright and License**: This handbook is (c) Copyright 2021, Edward
@@ -20,8 +20,8 @@ Commission\'s Next Generation Internet programme, under the aegis of DG
 Communications Networks, Content and Technology under grant agreement No
 825322.
 
-![](Pictures/10000201000000BE00000050CAEB3F855588BA6B.png){width="1.1098in"
-height="0.4673in"}![](Pictures/10000201000003E80000013BEB44A98A06A5475A.png){width="1.7102in"
+![](Pictures/10000001000000BE000000500FD32188BB573067.png){width="1.1098in"
+height="0.4673in"}![](Pictures/10000001000003E80000013B9ADE3CA2CC4568C9.png){width="1.7102in"
 height="0.5382in"}
 
 The latest version should be available via
@@ -56,12 +56,11 @@ Geographic Data Clearinghouse (FGDC), the NASA Global Change Master
 Directory, the NASA EOS Guide System, the NASA Catalog Interoperability
 Project, the astronomical pre-print service based at the Space Telescope
 Science Institute, The PCT Electronic Gazette at the World Intellectual
-Property Organization (WIPO), \[\[Linsearch (a search engine for Open
-Source Software designed by Miles Efron), the SAGE Project of the
-Special Collections Department at Emory University, Eco Companion
-Australasia (an environmental geospatial resources catalog), the Open
-Directory Project and numerous governmental portals in the context of
-the Government Information Locator Service (GILS) GPO mandate (ended in
+Property Organization (WIPO), the SAGE Project of the Special
+Collections Department at Emory University, Eco Companion Australasia
+(an environmental geospatial resources catalog), the Open Directory
+Project and numerous governmental portals in the context of the
+Government Information Locator Service (GILS) GPO mandate (ended in
 2005). A number of sites worldwide continue (despite development long
 ago suspended) continue to use Isearch in their production systems.
 
@@ -86,11 +85,11 @@ Its radical approach and re-think of search was even on display at the
 ISEA2008[^2]: 14th International Symposium on Electronic Art in a
 collaboration with the Dutch design cooperative Metahaven:
 <https://isea-archives.siggraph.org/art-events/metahaven-exodus-cross-search/>.
-In the words of the project "**Exodus is the **compound name for a
+In the words of the project "**Exodus is the compound name for a
 'research engine' into algorithms and visual strategies for searching
-the internet, revealing the structural properties of web content and its
-inherent distribution of influence. Exodus promotes bridging behaviour
-across the web's new borders of power.**"
+the internet, revealing **the structural properties of web content and
+its inherent distribution of influence. Exodus promotes bridging
+behaviour across the web's new borders of power.**"
 
 Development of IB halted in 2011 as its main developers moved on to
 other projects. While still being deployed by a number of sites---why
@@ -131,7 +130,9 @@ information, network objects and databases.
 -   Low-code ETL / \"Any-to-Any\" architecture
 -   Handles a wide range of document formats including "live" data.
 -   Powerful Search (Structure, Objects, Spatial) / Relevancy Engine
--   NoSQL Datastore
+-   NoSQL-like Datastore
+-   Set based with an exhaustive collection of (binary and unary) set
+    operations.
 -   Useful for Analytics
 -   Useful for Recommendation / Autosuggestion
 -   Embeddable in products (comparatively low resource demands)
@@ -230,7 +231,206 @@ constraints of \"records\" as unit of information, one can immediately
 derive value from content with the flexibility to enhance content and
 the application incrementally over time without \"breaking anything\".
 
-## []{#anchor-3}Unit of Retrieval
+## []{#anchor-3}Differences from typical NoSQL, XML and Graph databases
+
+First and foremost, re-Isearch is ***not*** meant to be a primary
+datastore. It does not adhere to ACID (atomicity, consistency,
+isolation, durability) properties. Re-Isearch is about quickly searching
+high volumes of unstructured, semi-structured, or structured text for
+specific objects (words, phrases, numbers etc.) and less about storing
+and manipulating structured data.
+
+In contrast to typical fulltext indexes, re-Isearch is about powerful
+structural search without limitations. NoSQL databases don't need a
+fixed schema but most don't really allow for powerful structural search
+and relationship exploration as they are are aggregate-oriented,
+grouping the data based on a particular criterion into a specific pigeon
+hole model (e.g. json store or..). One well-known strategy for adding
+relationships to such stores is to embed an aggregate's identifier
+inside the field belonging to another aggregate --- effectively
+introducing foreign keys. These joins, however, can become prohibitively
+expensive. Graph databases are, by contrast, designed for relations but
+tend for fulltext search within nodes to be quite sub-optimal. Most use
+an inverted index---not much different from both SQL and typical NoSQL
+indexes---to build a text index. Given the potentially high number of
+nodes in a graph this tends to be only realistic when applied to a small
+number of nodes. Running fulltext on the labels of all nodes in a graph
+(a not terribly uncommon worst practice) results in extremely poor
+performance and does not scale.
+
+#### []{#anchor-4}Difference to XML databases
+
+Look that the following two documents:
+
+**\<!\-- doc 1 \--\>**
+
+**\<document id=\"1\" foo=\"bar\"/\>**
+
+**\<!\-- doc 2 \--\>**
+
+**\<document id=\"2\"\>**
+
+* *\<element foo=\"bar\" /\>**
+
+**\</doc\>**
+
+A typical XML database won't be able to link the two "documents" via
+"bar" of type "foo". With a graph database design the Bar node is shared
+and we can query for all nodes connected to Bar.
+
+With re-Isearch we expliot its support of complex attributes just search
+for "bar" in \@foo (which is the anonomyous attribute "foo", alongside
+document\@foo and element\@foo from doc1 resp. doc2).
+
+#### []{#anchor-5}Differences to Graph Databases (Joins)
+
+In an RDMS a join statement is mainly used to combine two tables based
+on a specified common field between them. If we talk in terms of
+Relational algebra, it is the cartesian product of two tables followed
+by the selection operation.
+
+In a Graph Database we traverse and don't join. We build and extend a
+graph. There is the concept of graph and not document (or record). While
+re-Isearch can traverse the implicit graph of a record it can do more.
+Re-isearch is designed and optimized for a generic and flexible search
+and provides a mechanism to support searching for virtually joined (or
+related) records in completely different indexes via a shared common
+index key. Our joins can apply across results from search in different
+indexes (normal conjugation like AND, OR can only apply within an
+index).
+
+The motivation is to allow a search for two different indexes with
+different views to data to be able to aggregate and filter into a
+result.
+
+Example (using XML syntax for ease of explanation) motivated by RDBMS
+use cases:
+
+**In index1:**
+
+**\<document **id=1234567"**\>**
+
+** \<**name\>**\"**Edward Zimmermann\</name\>**
+
+** \<key="1234567" **/\>**
+
+**\...**
+
+**In index2:**
+
+**\<document **id**=\"**1234567**\"\>**
+
+* \<*org\>Nonmonotonic**\<**org**/\>**
+
+**\...**
+
+In Index1 we have names (typical relational model). In Index 2 we have
+orgs and other information.
+
+We can search Index2 for records that have org "nonmonotonic" and search
+Index1 for people named "Edward" to answer the question do we have any
+Edwards wotking for an org named Nonmonotonic? What is their id (which
+we use as a unique key to identify a person).
+
+This is a bit different from the models searching RDMS. With these
+systems we typically join a number of tables together and then search
+that new table. That is why SQL has inclusive and exclusive, multiple
+types---inner, outter and cross---and left, right etc. joins.
+
+Our joins apply like a variation of conjunction (OR, AND) applied across
+results from search to create a new search result set rather than search
+applied to conjugated data.
+
+We support 3 variantions to join two result sets:
+
+  ------- -----------------------------------------------------------------------------------------
+  JOIN    Join, a set containing elements shared (common record keys) between both sets.
+  JOINL   Join left, a set containing those on the right PLUS those on the left with common keys
+  JOINR   Join right, a set containing those of the left PLUS those on the right with common keys
+  ------- -----------------------------------------------------------------------------------------
+
+Beyond this simple example there are a weath of use cases where
+different searchers may have different index views. Since these indexes
+can be themselves collections (even on-the-fly defined) we have a means
+to efficiently search and combine.
+
+We ***don't*** support arbitary elements at search time for the key to
+use for joins but use the record keys which were defined (or created) at
+index time. This has been a conscious and explicit design decision as we
+have, to date, not seen a business cases for joins using arbitary
+field/path contents as keys for search. These joins using a search time
+specified foreign key not only would demand some knowledge about the
+structure and inter-relationships of the data (in SQL we have fixed
+schemas which have apriori been crafted for specific use cases and
+models of search and retrieval so this is a reasonable assumption but in
+re-Isearch we are completely unbrideled and generally have no unified
+much less fixed schema) but also slower as it would have to retrieve the
+contents of the specified field/path (see also the[ scan
+operation](#15.Scan Service|outline)) to create the key values to join
+against---in re-Isearch the result sets (IRSETs) that are joined don't
+yet have their paths etc. resolved (RSETs).
+
+Should this functionality be needed it could be easily implemented using
+one of the extension languages (Python, Tcl et al). Using the extension
+language for an application rather than relying solely on the query
+language is not just more powerful and flexible but would also typically
+be also more performant as it need not be as generic in approach.
+
+Let's look at the following:
+
+**from **index1:**
+
+**\<document\>**
+
+** \<**name\>**\"**Edward Zimmermann\</name\>**
+
+** \<**org\>Nonmonotonic Networks\</org\>**
+
+**\...**
+
+**from **index2:**
+
+**
+
+**\<document\>**
+
+* \<name*\>Nonmonotonic\<**name**/\>**
+
+** \<**field\>machine learning\</field\>**
+
+**...**
+
+**
+
+**L**et's assume **in this example** that** the first index contains
+records about people and the second contains intelligence about
+organizations.**
+
+**
+
+**Now I'm interested in searching for **an "**Edward" that is working in
+an organization is is active in "machine learning".**
+
+**
+
+**Since the second index is about activity we search it for records
+where the field contains "machine learning" (field/"machine learning").
+In this result set we use the value of the name field and use that to
+search in index1 as the value for org. Using the field for name will
+give us a result set listing the relevant names.**
+
+**
+
+**This approach is not only more flexible and more powerful it is also
+potentially much more performant tha**n** generic foreign key joins as
+the intermediate sets will often be significantly smaller **(average
+**sort** performance is O(n log n) where n is the number of results
+**while the search itself is ** O**(**p **log **m**) **where m is the
+number of unique **terms in the index **and p is the number of terms in
+the query** so as n grows it tends to dominate the limiting performance
+).** **
+
+## []{#anchor-6}Unit of Retrieval
 
 \
 In \"traditional\" search engine models there is a standard unit of the
@@ -248,24 +448,29 @@ The domain of search is information and this may be a relevant part of a
 document or a collection of relevant documents (such as a Journal,
 Newspaper, Encyclopedia, Social Network etc.).
 
-# []{#anchor-4}Hardware & OS Prerequisites
+# []{#anchor-7}Hardware & OS Prerequisites
 
-The re-Isearch engine is developed in a simplified version of C++. It is
-intended to be compile-able on the widest possible range of hardware,
-operating systems and compilers. It is also designed to run, if needed,
-in a comparatively small memory footprint (previous version have run on
-32-bit machines with as little as 8 MB physical RAM[^3]) making it
-suitable for appliances. It has also been designed to try to impose a
-minimal computing impact on the host. Rather than run multiple threads
-and a high CPU workload it's strategy is to be fast but not at the cost
-of other processes, heat or increased energy consumption.
+The re-Isearch engine is developed in a simplified version of C++.
+Standard object paradigms like strings, lists, hashmaps etc. are handled
+internally. It is intended to be compile-able on the widest possible
+range of hardware, operating systems and compilers. It is designed to be
+completely unencumbered by license restrictions[^3]. It is also designed
+to run, if needed, in a comparatively small memory footprint (previous
+version have run on 32-bit machines with as little as 8 MB physical
+RAM[^4]) making it suitable for appliances. It has also been designed to
+try to impose a minimal computing impact on the host. Rather than run
+multiple threads and a high CPU workload it's strategy is to be fast but
+not at the cost of other processes, heat or increased energy
+consumption.
 
 Within this design, the limiting factor is I/O. Performance is related
 more to memory and storage throughput than CPU speed. Fast SSDs (SAS
 SSDs and for those with external disks NVMe units connected via USB
 versions USB 3.1 rev 2 or Thunderbolt are at an obvious advantage) are
-preferable over HDDs. Gigabit interconnect and faster bus sytems like
-NVLINK over PCIe deliver more than CPU cores. The faster the RAM, the
+preferable over HDDs. Using mainboards with more PCIe lanes and Gigabit
+interconnect for clusters delivers more than CPU cores---a suitably
+designed machine using, for example, an energy efficient ARM CPU can
+outperform a 24-core Xenon for this use case. The faster the RAM, the
 better the I/O bandwidth and the faster the mass storage the better.
 More RAM memory too delivers a boost since the engine can use it to
 speed up indexing (and in searching large collections can cache more in
@@ -275,18 +480,22 @@ search is random access but using memory mapping.
 While a board such as the Raspberry Pi Zero or B might be ill-suited due
 to their poor I/O performance (typically max. 25 MB/s), the Raspberry 4
 with its USB 3.0 interface is already fine for some use cases. Keeping
-to lower cost ARM based embedded boards[^4] the \$50 USD NVIDIA Nano is
+to lower cost ARM based embedded boards[^5] the \$50 USD NVIDIA Nano is
 probably a better choice. With its 4 lanes and 5 GB/s interfaces it can
-get beyond 200 MB/s.
+get beyond 200 MB/s. On personal hardware, performance on Apple's new M1
+hardware (iPad, Macbook)\--which also have Thunderbolt 4 interfaces---is
+impressive.
 
-Running on a reference Intel® Core™ i7-6920HQ (2.90 GHz) notebook using
-a low cost Samsung T5 USB 3.2 drive (500 MB/sec read/write) and using
-for indexing 512MB Memory, we get around 5600k words/min (roughly ½
-million emails in under 20 minutes). Indexing full text (without deep
-parsing) we see speeds 17-20x as fast. On the i7 notebook that results
-in better than 70 million words/min. Despite the process being I/O bound
-and designed for minimal system impact, we see on generic desktops and
-servers performance as fast as 99000k words/min .
+Benchmarking on more mainstream hardware. Tests running on our reference
+Intel® Core™ i7-6920HQ (2.90 GHz) notebook using a low cost Samsung T5
+USB 3.2 drive (500 MB/sec read/write) and indexing with 512MB Memory,
+get on average around 5600k words/min (roughly ½ million emails in under
+20 minutes). Indexing full text (without deep parsing) we see speeds
+17-20x as fast. On the i7 notebook that results in better than 70
+million words/min. Despite the process being I/O bound and designed for
+minimal system impact, we see on generic desktops and servers
+performance as fast as 99000k words/min . Most of the indexing time is
+spent analyzing document structure and parsing.
 
 This all without a noticeable workload. Thunderbolt 4 (already provided
 on a 2021 Apple hardware) provides up to 40 Gbit/s and some newer drives
@@ -295,6 +504,15 @@ are already appearing that have read/write rates over 2.5 GB/s.
 A typical data center server can easily handle many parallel indexing
 jobs while concurrently providing search without a hitch and
 substantially higher I/O throughputs.
+
+Search time depends too on I/O but also the memory allocator and is most
+strongly tied to the size of each intermediate set built to process the
+query. Each query must allocate storage and has performance O(ln n + ln
+m) where n is the number of unique words in the index and m is the
+number of instances of the field searched. The query time is then the
+sum of all these. Once done we have the time it takes to rank (should
+that have been requested) the results. Sorting alone by score is O(ln n)
+where n is the number of items in the set.
 
 While the primary development platform for the precursor to re-Isearch,
 the IB engine, was Solaris SPARC it was used extensively on x86, MIPS,
@@ -383,16 +601,16 @@ Thunderbolt 4.
 -   Choose a faster file system configured for the use case
 -   If possible choose faster memory, fast disks, preferably SSDs
 
-# []{#anchor-5}Design
+# []{#anchor-8}Design
 
-![](Pictures/10000000000002AF000001E36B830EB7D12459E7.png){width="3.4402in"
+![](Pictures/10000000000002AF000001E336BFBEAFFC50B16B.png){width="3.4402in"
 height="2.4181in"}The** Core **engine contains all the classes and
 methods (C++) to ingest documents, parse them, create indexes, store
 objects and provide search thereto. On a higher metalevel we have the
 engine kernel which provides the core indexing, search, retrieval and
 presentation services, manages objects and dispatches to handlers.
 
-## []{#anchor-6}**Datatypes** (object data types handled polymorphic to text)
+## []{#anchor-9}**Datatypes** (object data types handled polymorphic to text)
 
 Data types are handled by the core and extendable within code. Many of
 these are well known from standard schemas such as string, boolean,
@@ -509,7 +727,7 @@ The parser supports number of special reserved terms for dates such as
 days ago\" etc. Inputs such as 2/10/2010 are ambiguous and should they
 be desired added as local formats (See next section).
 
-#### []{#anchor-7}Relative dates controlled vocabulary
+#### []{#anchor-10}Relative dates controlled vocabulary
 
 "Today" := the LOCAL date (of the server) without time (day precision).\
 "Yester\[day\|week\|month\|year\]" := the past X (X precision) from the
@@ -559,13 +777,13 @@ respective unit, e.g. last month starts at midnight of the first and
 ends just as midnight strikes on the last day of the month (in Oct. its
 the 31th day).
 
-#### []{#anchor-8}Local Extensions to handle \"ambiguous\" national formats
+#### []{#anchor-11}Local Extensions to handle \"ambiguous\" national formats
 
 A number of local formats can be easily added via a \"datemsk.ini\"
 file. That file is quite simple and uses host-platform STRPTIME(3)
 function.
 
-#### []{#anchor-9}ISO-8601:2019
+#### []{#anchor-12}ISO-8601:2019
 
 ISO 8601:2004 has been superseded by ISO 8601:2019 which now contains
 two parts. Part 1 specifies basic rules. Part 2 specifies extensions,
@@ -645,7 +863,7 @@ allows for dates to have uncertain or even unknown values---values that
 may be corrected in the future or filled-in once additional information
 is available.
 
-## []{#anchor-10}**Object** Indexes ** **(data type handlers)
+## []{#anchor-13}**Object** Indexes ** **(data type handlers)
 
 The indexer supports a number of datatypes. These are handled by a data
 type registry. All data is stored as string (the octets defining the
@@ -665,7 +883,7 @@ into the registry.
 Paths to index items of a specific datatype have the optional :type
 qualified, e.g. *DATE* is as datatype specifically as date *DATE:date.*
 
-## ![](Pictures/10000000000002AF000001E35B8DF8D91DF1E2DD.png){width="3.2425in" height="2.2791in"}[]{#anchor-11}**Doctypes **(Document handlers)
+## ![](Pictures/10000000000002AF000001E3FE27CE3A2BD7828E.png){width="3.2425in" height="2.2791in"}[]{#anchor-14}**Doctypes **(Document handlers)
 
 Services to handle the various document formats (ingest, parse,
 recognize start and end of records with multi-record file formats,
@@ -687,7 +905,7 @@ photographs alongside the embedded metadata is readily implemented. All
 parsers have some self documentation available at runtime of their
 options and class tree.
 
-## []{#anchor-12}Field Unification (indexing/search)
+## []{#anchor-15}Field Unification (indexing/search)
 
 Since the engine is designed to support a wide range of heterogenous
 documents and record formats a facility was developed to allow for name,
@@ -701,7 +919,7 @@ the search indexing target). Field unification can also be used to map
 elements that the same name and similar semantics but different
 different datatypes (such as computed versus numerical).
 
-## []{#anchor-13}**Ranking** (search results)
+## []{#anchor-16}**Ranking** (search results)
 
 The set of elements (records) on a search response tends to be sorted by
 scores---but there are a number of other sorting methods available.
@@ -724,7 +942,7 @@ more importance (or less). There are also methods to cluster or shift
 position in results ranking with hits (matches) that are closer to one
 another („magnitism").
 
-## []{#anchor-14}**Presentation **(retrieval)
+## []{#anchor-17}**Presentation **(retrieval)
 
 For presentation the engine uses something called "Record Syntax" to
 define the response syntax either through reconstruction, reconstitution
@@ -739,7 +957,7 @@ structure and addresses of content. This allows one to control the final
 reconstruction to exclude sensitive information that might have been in
 the original record but to be excluded from some presentations.
 
-# []{#anchor-15}Indexing
+# []{#anchor-18}Indexing
 
 There are many options and hyperparameters available to indexing. One
 can create applications using either the native C++ interface, one of
@@ -807,7 +1025,7 @@ Indexes can be combined by two means:
 -   Import: the import of one db into another
 -   Virtualization: a map that defines what dbs to use for search
 
-#### []{#anchor-16}Import
+#### []{#anchor-19}Import
 
 Imagine we have two indexes: db1 and db2. One contains file1, file2,
 file3 and the other contains file4, file5 and file6.
@@ -827,39 +1045,6 @@ Performance searching the combined database is no different than if a
 single database was initially created rather than two. If db1 has n
 unique words and db2 has m unique words the big O performance is
 typically O(ln (n+m)),
-
-#### []{#anchor-17}Virtualization
-
-Here instead of importing the data from one database into another we
-just create a virtual map of databases to search. Search is linear
-across each database. Performance is
-[]{#anchor-18}[]{#anchor-19}[]{#anchor-20}[]{#anchor-21}[]{#anchor-22}[]{#anchor-23}[]{#anchor-24}[]{#anchor-25}[]{#anchor-26}[]{#anchor-27}∑*
-Oi *where Oi is the performance of the ith database---*typically * Oi is
-*O(ln n) where n is the number of unique words in the index. *As one can
-see import (physically importing and merging one database into another)
-provides faster search than virtualization. With two databases db1 and
-db2 with respectively n and m unique words the typical big O performance
-is O(ln(n) + ln(m)).
-
-The overwhelming advantage of virtualization is the speed and ease of
-their creation as they are defined by a single plain text configuration
-file. They can be created on the fly and disposed of at will.
-
-There are two ways: either setting the correct values in a db.ini file
-or by providing a db.vdb file
-
-In an .ini
-
-\[DbInfo\]
-
-Collections=\<List of virtual databases\>
-
-Databases=\<List of physical databases\>
-
-vdb-file=\<Path to file list\> (default: \<database\>.vdb) \# File has 1
-entry per line
-
-A db.vdb file is just a line (one per line) of paths to db.ini files.
 
 -   Index organization
 
@@ -1949,7 +2134,7 @@ Example: Iutil -d POETRY -del key1 key2 key3
 
 Iutil -d LITERATURE -import POETRY
 
-# []{#anchor-28}Idelete Command Line Utility
+# []{#anchor-20}Idelete Command Line Utility
 
 The Idelete command line utility is used to delete files from an index
 (database). To remove individual records by key one uses the Iutil tool.
@@ -2003,7 +2188,7 @@ arguments
 
 .prepend=
 
-# []{#anchor-29}Iwatch Command Line Tool
+# []{#anchor-21}Iwatch Command Line Tool
 
 Iwatch is a very simple but useful command line utility. It watches a
 directory on the file system and then executes a program when a file is
@@ -2021,7 +2206,7 @@ Typical use case is a document spool. Incoming document deposited in a
 directory can be moved to a processing directory and then added to an
 index.
 
-# []{#anchor-30}Record Organization
+# []{#anchor-22}Record Organization
 
 During indexing each document is broken down into a number of records.
 Each of these records has a number of metadata elements associated with
@@ -2046,12 +2231,12 @@ it:
 
 -   Priority
 
-#### []{#anchor-31}Date
+#### []{#anchor-23}Date
 
 The Date of the record is defined by *DateField*. The contents of the
 field are parsed as a date fieldtype.
 
-#### []{#anchor-32}Language
+#### []{#anchor-24}Language
 
 The language of the record is defined by *LanguageField*. The contents
 of the field are parsed to identify a language according to language
@@ -2084,7 +2269,7 @@ For unknown or unspecified or mixed
 
 {\"zzz\", 597, \"Unknown\"}
 
-#### []{#anchor-33}
+#### []{#anchor-25}
 
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Nort | [     | аҧсуа | [*    | *abk* | *abk* | *abk* | also  |
@@ -2094,7 +2279,7 @@ For unknown or unspecified or mixed
 |   | ian]( | s://e | ҧсшәа | w.loc |       |       |       | bkhaz |
 |   | https | n.wik |       | .gov/ |       |       |       | []{#  |
 |   | ://en | ipedi |       | stand |       |       |       | ancho |
-|   | .wiki | a.org |       | ards/ |       |       |       | r-34} |
+|   | .wiki | a.org |       | ards/ |       |       |       | r-26} |
 |   | pedia | /wiki |       | iso63 |       |       |       |       |
 |   | .org/ | /Abkh |       | 9-2/p |       |       |       |       |
 |   | wiki/ | azian |       | hp/la |       |       |       |       |
@@ -2107,7 +2292,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Af   | [     | A     | [*    | *aar* | *aar* | *aar* | []{#  |
 |   | ro-As | Afar] | faraf | aa*]( |       |       |       | ancho |
-|   | iatic | (http |       | https |       |       |       | r-35} |
+|   | iatic | (http |       | https |       |       |       | r-27} |
 |   | ](htt | s://e |       | ://ww |       |       |       |       |
 |   | ps:// | n.wik |       | w.loc |       |       |       |       |
 |   | en.wi | ipedi |       | .gov/ |       |       |       |       |
@@ -2125,7 +2310,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [     | Afri  | [*    | *afr* | *afr* | *afr* | []{#  |
 |   | -Euro | Afrik | kaans | af*]( |       |       |       | ancho |
-|   | pean] | aans] |       | https |       |       |       | r-36} |
+|   | pean] | aans] |       | https |       |       |       | r-28} |
 |   | (http | (http |       | ://ww |       |       |       |       |
 |   | s://e | s://e |       | w.loc |       |       |       |       |
 |   | n.wik | n.wik |       | .gov/ |       |       |       |       |
@@ -2183,7 +2368,7 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | *fat* |
 |   |       |       |       |       |       |       |       | []{#  |
 |   |       |       |       |       |       |       |       | ancho |
-|   |       |       |       |       |       |       |       | r-37} |
+|   |       |       |       |       |       |       |       | r-29} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Alb  | Shqip | [*    | *sqi* | ***a  | *sq   | [     |
 |   | -Euro | anian |       | sq*]( |       | lb*** | i* +  | macro |
@@ -2207,11 +2392,11 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | 639-6 |
 |   |       |       |       |       |       |       |       | []{#  |
 |   |       |       |       |       |       |       |       | ancho |
-|   |       |       |       |       |       |       |       | r-38} |
+|   |       |       |       |       |       |       |       | r-30} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Af   | [A    | አማርኛ  | [*    | *amh* | *amh* | *amh* | []{#  |
 |   | ro-As | mhari |       | am*]( |       |       |       | ancho |
-|   | iatic | c](ht |       | https |       |       |       | r-39} |
+|   | iatic | c](ht |       | https |       |       |       | r-31} |
 |   | ](htt | tps:/ |       | ://ww |       |       |       |       |
 |   | ps:// | /en.w |       | w.loc |       |       |       |       |
 |   | en.wi | ikipe |       | .gov/ |       |       |       |       |
@@ -2257,11 +2442,11 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | *arb* |
 |   |       |       |       |       |       |       |       | []{#  |
 |   |       |       |       |       |       |       |       | ancho |
-|   |       |       |       |       |       |       |       | r-40} |
+|   |       |       |       |       |       |       |       | r-32} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [     | ara   | [*    | *arg* | *arg* | *arg* | []{#  |
 |   | -Euro | Arago | gonés | an*]( |       |       |       | ancho |
-|   | pean] | nese] |       | https |       |       |       | r-41} |
+|   | pean] | nese] |       | https |       |       |       | r-33} |
 |   | (http | (http |       | ://ww |       |       |       |       |
 |   | s://e | s://e |       | w.loc |       |       |       |       |
 |   | n.wik | n.wik |       | .gov/ |       |       |       |       |
@@ -2309,11 +2494,11 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | enian |
 |   |       |       |       |       |       |       |       | []{#  |
 |   |       |       |       |       |       |       |       | ancho |
-|   |       |       |       |       |       |       |       | r-42} |
+|   |       |       |       |       |       |       |       | r-34} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Ass  | অস    | [*    | *asm* | *asm* | *asm* | []{#  |
 |   | -Euro | amese | মীয়া | as*]( |       |       |       | ancho |
-|   | pean] | ](htt |       | https |       |       |       | r-43} |
+|   | pean] | ](htt |       | https |       |       |       | r-35} |
 |   | (http | ps:// |       | ://ww |       |       |       |       |
 |   | s://e | en.wi |       | w.loc |       |       |       |       |
 |   | n.wik | kiped |       | .gov/ |       |       |       |       |
@@ -2335,7 +2520,7 @@ For unknown or unspecified or mixed
 |   | aucas | s://e | Ӏарул | ://ww |       |       |       | Avar  |
 |   | ian]( | n.wik | мацӀ  | w.loc |       |       |       | []{#  |
 |   | https | ipedi |       | .gov/ |       |       |       | ancho |
-|   | ://en | a.org |       | stand |       |       |       | r-44} |
+|   | ://en | a.org |       | stand |       |       |       | r-36} |
 |   | .wiki | /wiki |       | ards/ |       |       |       |       |
 |   | pedia | /Avar |       | iso63 |       |       |       |       |
 |   | .org/ | _lang |       | 9-2/p |       |       |       |       |
@@ -2361,7 +2546,7 @@ For unknown or unspecified or mixed
 |   | pean_ | uage) |       | ngcod |       |       |       | ages) |
 |   | langu |       |       | es_na |       |       |       | []{#  |
 |   | ages) |       |       | me.ph |       |       |       | ancho |
-|   |       |       |       | p?iso |       |       |       | r-45} |
+|   |       |       |       | p?iso |       |       |       | r-37} |
 |   |       |       |       | _639_ |       |       |       |       |
 |   |       |       |       | 1=ae) |       |       |       |       |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
@@ -2379,7 +2564,7 @@ For unknown or unspecified or mixed
 |   | ages) |       |       | ngcod |       |       | rolan | uage) |
 |   |       |       |       | es_na |       |       | guage | []{#  |
 |   |       |       |       | me.ph |       |       | #aym) | ancho |
-|   |       |       |       | p?iso |       |       |       | r-46} |
+|   |       |       |       | p?iso |       |       |       | r-38} |
 |   |       |       |       | _639_ |       |       |       |       |
 |   |       |       |       | 1=ay) |       |       |       |       |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
@@ -2402,11 +2587,11 @@ For unknown or unspecified or mixed
 |   |       |       |       | 1=az) |       |       |       | Azeri |
 |   |       |       |       |       |       |       |       | []{#  |
 |   |       |       |       |       |       |       |       | ancho |
-|   |       |       |       |       |       |       |       | r-47} |
+|   |       |       |       |       |       |       |       | r-39} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [B    | baman | [*    | *bam* | *bam* | *bam* | []{#  |
 |   | iger- | ambar | ankan | bm*]( |       |       |       | ancho |
-|   | -Cong | a](ht |       | https |       |       |       | r-48} |
+|   | -Cong | a](ht |       | https |       |       |       | r-40} |
 |   | o](ht | tps:/ |       | ://ww |       |       |       |       |
 |   | tps:/ | /en.w |       | w.loc |       |       |       |       |
 |   | /en.w | ikipe |       | .gov/ |       |       |       |       |
@@ -2424,7 +2609,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [B    | ба    | [*    | *bak* | *bak* | *bak* | []{#  |
 |   | Turki | ashki | шҡорт | ba*]( |       |       |       | ancho |
-|   | c](ht | r](ht | теле  | https |       |       |       | r-49} |
+|   | c](ht | r](ht | теле  | https |       |       |       | r-41} |
 |   | tps:/ | tps:/ |       | ://ww |       |       |       |       |
 |   | /en.w | /en.w |       | w.loc |       |       |       |       |
 |   | ikipe | ikipe |       | .gov/ |       |       |       |       |
@@ -2442,7 +2627,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Lan  | [Basq | eus   | [*    | *eus* | ***b  | *eus* | []{#  |
 |   | guage | ue](h | kara, | eu*]( |       | aq*** |       | ancho |
-|   | i     | ttps: | eu    | https |       |       |       | r-50} |
+|   | i     | ttps: | eu    | https |       |       |       | r-42} |
 |   | solat | //en. | skera | ://ww |       |       |       |       |
 |   | e](ht | wikip |       | w.loc |       |       |       |       |
 |   | tps:/ | edia. |       | .gov/ |       |       |       |       |
@@ -2460,7 +2645,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Be   | белар | [*    | *bel* | *bel* | *bel* | []{#  |
 |   | -Euro | larus | уская | be*]( |       |       |       | ancho |
-|   | pean] | ian]( | мова  | https |       |       |       | r-51} |
+|   | pean] | ian]( | мова  | https |       |       |       | r-43} |
 |   | (http | https |       | ://ww |       |       |       |       |
 |   | s://e | ://en |       | w.loc |       |       |       |       |
 |   | n.wik | .wiki |       | .gov/ |       |       |       |       |
@@ -2483,7 +2668,7 @@ For unknown or unspecified or mixed
 |   | s://e | /en.w |       | w.loc |       |       |       | angla |
 |   | n.wik | ikipe |       | .gov/ |       |       |       | []{#  |
 |   | ipedi | dia.o |       | stand |       |       |       | ancho |
-|   | a.org | rg/wi |       | ards/ |       |       |       | r-52} |
+|   | a.org | rg/wi |       | ards/ |       |       |       | r-44} |
 |   | /wiki | ki/Be |       | iso63 |       |       |       |       |
 |   | /Indo | ngali |       | 9-2/p |       |       |       |       |
 |   | -Euro | _lang |       | hp/la |       |       |       |       |
@@ -2513,11 +2698,11 @@ For unknown or unspecified or mixed
 |   |       |       |       | 1=bi) |       |       |       | ence. |
 |   |       |       |       |       |       |       |       | []{#  |
 |   |       |       |       |       |       |       |       | ancho |
-|   |       |       |       |       |       |       |       | r-53} |
+|   |       |       |       |       |       |       |       | r-45} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [B    | bos   | [*    | *bos* | *bos* | *bos* | []{#  |
 |   | -Euro | osnia | anski | bs*]( |       |       |       | ancho |
-|   | pean] | n](ht | jezik | https |       |       |       | r-54} |
+|   | pean] | n](ht | jezik | https |       |       |       | r-46} |
 |   | (http | tps:/ |       | ://ww |       |       |       |       |
 |   | s://e | /en.w |       | w.loc |       |       |       |       |
 |   | n.wik | ikipe |       | .gov/ |       |       |       |       |
@@ -2535,7 +2720,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Bret | brez  | [*    | *bre* | *bre* | *bre* | []{#  |
 |   | -Euro | on](h | honeg | br*]( |       |       |       | ancho |
-|   | pean] | ttps: |       | https |       |       |       | r-55} |
+|   | pean] | ttps: |       | https |       |       |       | r-47} |
 |   | (http | //en. |       | ://ww |       |       |       |       |
 |   | s://e | wikip |       | w.loc |       |       |       |       |
 |   | n.wik | edia. |       | .gov/ |       |       |       |       |
@@ -2553,7 +2738,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [     | бълг  | [*    | *bul* | *bul* | *bul* | []{#  |
 |   | -Euro | Bulga | арски | bg*]( |       |       |       | ancho |
-|   | pean] | rian] | език  | https |       |       |       | r-56} |
+|   | pean] | rian] | език  | https |       |       |       | r-48} |
 |   | (http | (http |       | ://ww |       |       |       |       |
 |   | s://e | s://e |       | w.loc |       |       |       |       |
 |   | n.wik | n.wik |       | .gov/ |       |       |       |       |
@@ -2576,7 +2761,7 @@ For unknown or unspecified or mixed
 |   | ps:// | /en.w |       | w.loc |       |       |       | anmar |
 |   | en.wi | ikipe |       | .gov/ |       |       |       | []{#  |
 |   | kiped | dia.o |       | stand |       |       |       | ancho |
-|   | ia.or | rg/wi |       | ards/ |       |       |       | r-57} |
+|   | ia.or | rg/wi |       | ards/ |       |       |       | r-49} |
 |   | g/wik | ki/Bu |       | iso63 |       |       |       |       |
 |   | i/Sin | rmese |       | 9-2/p |       |       |       |       |
 |   | o-Tib | _lang |       | hp/la |       |       |       |       |
@@ -2589,7 +2774,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Ca   | ca    | [*    | *cat* | *cat* | *cat* | []{#  |
 |   | -Euro | talan | talà, | ca*]( |       |       |       | ancho |
-|   | pean] | ](htt | val   | https |       |       |       | r-58} |
+|   | pean] | ](htt | val   | https |       |       |       | r-50} |
 |   | (http | ps:// | encià | ://ww |       |       |       |       |
 |   | s://e | en.wi |       | w.loc |       |       |       |       |
 |   | n.wik | kiped |       | .gov/ |       |       |       |       |
@@ -2607,7 +2792,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Au   | [Cha  | Ch    | [*    | *cha* | *cha* | *cha* | []{#  |
 |   | stron | morro | amoru | ch*]( |       |       |       | ancho |
-|   | esian | ](htt |       | https |       |       |       | r-59} |
+|   | esian | ](htt |       | https |       |       |       | r-51} |
 |   | ](htt | ps:// |       | ://ww |       |       |       |       |
 |   | ps:// | en.wi |       | w.loc |       |       |       |       |
 |   | en.wi | kiped |       | .gov/ |       |       |       |       |
@@ -2625,7 +2810,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Nort | [C    | но    | [*    | *che* | *che* | *che* | []{#  |
 |   | heast | heche | хчийн | ce*]( |       |       |       | ancho |
-|   | C     | n](ht | мотт  | https |       |       |       | r-60} |
+|   | C     | n](ht | мотт  | https |       |       |       | r-52} |
 |   | aucas | tps:/ |       | ://ww |       |       |       |       |
 |   | ian]( | /en.w |       | w.loc |       |       |       |       |
 |   | https | ikipe |       | .gov/ |       |       |       |       |
@@ -2643,7 +2828,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [Chic | chiC  | [*    | *nya* | *nya* | *nya* | []{#  |
 |   | iger- | hewa] | heŵa, | ny*]( |       |       |       | ancho |
-|   | -Cong | (http | chin  | https |       |       |       | r-61} |
+|   | -Cong | (http | chin  | https |       |       |       | r-53} |
 |   | o](ht | s://e | yanja | ://ww |       |       |       |       |
 |   | tps:/ | n.wik |       | w.loc |       |       |       |       |
 |   | /en.w | ipedi |       | .gov/ |       |       |       |       |
@@ -2673,13 +2858,13 @@ For unknown or unspecified or mixed
 |   | etan_ | uage) |       | ngcod |       |       | rolan | uage) |
 |   | langu |       |       | es_na |       |       | guage | []{#  |
 |   | ages) |       |       | me.ph |       |       | #zho) | ancho |
-|   |       |       |       | p?iso |       |       |       | r-62} |
+|   |       |       |       | p?iso |       |       |       | r-54} |
 |   |       |       |       | _639_ |       |       |       |       |
 |   |       |       |       | 1=zh) |       |       |       |       |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [C    | чӑваш | [*    | *chv* | *chv* | *chv* | []{#  |
 |   | Turki | huvas | чӗлхи | cv*]( |       |       |       | ancho |
-|   | c](ht | h](ht |       | https |       |       |       | r-63} |
+|   | c](ht | h](ht |       | https |       |       |       | r-55} |
 |   | tps:/ | tps:/ |       | ://ww |       |       |       |       |
 |   | /en.w | /en.w |       | w.loc |       |       |       |       |
 |   | ikipe | ikipe |       | .gov/ |       |       |       |       |
@@ -2697,7 +2882,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [C    | Ker   | [*    | *cor* | *cor* | *cor* | []{#  |
 |   | -Euro | ornis | newek | kw*]( |       |       |       | ancho |
-|   | pean] | h](ht |       | https |       |       |       | r-64} |
+|   | pean] | h](ht |       | https |       |       |       | r-56} |
 |   | (http | tps:/ |       | ://ww |       |       |       |       |
 |   | s://e | /en.w |       | w.loc |       |       |       |       |
 |   | n.wik | ikipe |       | .gov/ |       |       |       |       |
@@ -2715,7 +2900,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Cor  | c     | [*    | *cos* | *cos* | *cos* | []{#  |
 |   | -Euro | sican | orsu, | co*]( |       |       |       | ancho |
-|   | pean] | ](htt | l     | https |       |       |       | r-65} |
+|   | pean] | ](htt | l     | https |       |       |       | r-57} |
 |   | (http | ps:// | ingua | ://ww |       |       |       |       |
 |   | s://e | en.wi | corsa | w.loc |       |       |       |       |
 |   | n.wik | kiped |       | .gov/ |       |       |       |       |
@@ -2745,13 +2930,13 @@ For unknown or unspecified or mixed
 |   | langu |       |       | ngcod |       |       | rolan | uage) |
 |   | ages) |       |       | es_na |       |       | guage | []{#  |
 |   |       |       |       | me.ph |       |       | #cre) | ancho |
-|   |       |       |       | p?iso |       |       |       | r-66} |
+|   |       |       |       | p?iso |       |       |       | r-58} |
 |   |       |       |       | _639_ |       |       |       |       |
 |   |       |       |       | 1=cr) |       |       |       |       |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Cro  | hrv   | [*    | *hrv* | *hrv* | *hrv* | []{#  |
 |   | -Euro | atian | atski | hr*]( |       |       |       | ancho |
-|   | pean] | ](htt | jezik | https |       |       |       | r-67} |
+|   | pean] | ](htt | jezik | https |       |       |       | r-59} |
 |   | (http | ps:// |       | ://ww |       |       |       |       |
 |   | s://e | en.wi |       | w.loc |       |       |       |       |
 |   | n.wik | kiped |       | .gov/ |       |       |       |       |
@@ -2769,7 +2954,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Cz   | češ   | [*    | *ces* | ***c  | *ces* | []{#  |
 |   | -Euro | ech]( | tina, | cs*]( |       | ze*** |       | ancho |
-|   | pean] | https | český | https |       |       |       | r-68} |
+|   | pean] | https | český | https |       |       |       | r-60} |
 |   | (http | ://en | jazyk | ://ww |       |       |       |       |
 |   | s://e | .wiki |       | w.loc |       |       |       |       |
 |   | n.wik | pedia |       | .gov/ |       |       |       |       |
@@ -2787,7 +2972,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Dani | dansk | [*    | *dan* | *dan* | *dan* | []{#  |
 |   | -Euro | sh](h |       | da*]( |       |       |       | ancho |
-|   | pean] | ttps: |       | https |       |       |       | r-69} |
+|   | pean] | ttps: |       | https |       |       |       | r-61} |
 |   | (http | //en. |       | ://ww |       |       |       |       |
 |   | s://e | wikip |       | w.loc |       |       |       |       |
 |   | n.wik | edia. |       | .gov/ |       |       |       |       |
@@ -2805,7 +2990,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [D    | ދ     | [*    | *div* | *div* | *div* | []{#  |
 |   | -Euro | ivehi | ިވެހި | dv*]( |       |       |       | ancho |
-|   | pean] | ](htt |       | https |       |       |       | r-70} |
+|   | pean] | ](htt |       | https |       |       |       | r-62} |
 |   | (http | ps:// |       | ://ww |       |       |       |       |
 |   | s://e | en.wi |       | w.loc |       |       |       |       |
 |   | n.wik | kiped |       | .gov/ |       |       |       |       |
@@ -2886,11 +3071,11 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | /vls) |
 |   |       |       |       |       |       |       |       | []{#  |
 |   |       |       |       |       |       |       |       | ancho |
-|   |       |       |       |       |       |       |       | r-71} |
+|   |       |       |       |       |       |       |       | r-63} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Si   | [Dzo  | ར     | [*    | *dzo* | *dzo* | *dzo* | []{#  |
 |   | no-Ti | ngkha | ྫོང་ཁ | dz*]( |       |       |       | ancho |
-|   | betan | ](htt |       | https |       |       |       | r-72} |
+|   | betan | ](htt |       | https |       |       |       | r-64} |
 |   | ](htt | ps:// |       | ://ww |       |       |       |       |
 |   | ps:// | en.wi |       | w.loc |       |       |       |       |
 |   | en.wi | kiped |       | .gov/ |       |       |       |       |
@@ -2908,7 +3093,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [E    | En    | [*    | *eng* | *eng* | *eng* | []{#  |
 |   | -Euro | nglis | glish | en*]( |       |       |       | ancho |
-|   | pean] | h](ht |       | https |       |       |       | r-73} |
+|   | pean] | h](ht |       | https |       |       |       | r-65} |
 |   | (http | tps:/ |       | ://ww |       |       |       |       |
 |   | s://e | /en.w |       | w.loc |       |       |       |       |
 |   | n.wik | ikipe |       | .gov/ |       |       |       |       |
@@ -2947,7 +3132,7 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | 1887  |
 |   |       |       |       |       |       |       |       | []{#  |
 |   |       |       |       |       |       |       |       | ancho |
-|   |       |       |       |       |       |       |       | r-74} |
+|   |       |       |       |       |       |       |       | r-66} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [Est  | e     | [*    | *est* | *est* | *es   | [macr |
 |   | Urali | onian | esti, | et*]( |       |       | t* +  | olang |
@@ -2963,13 +3148,13 @@ For unknown or unspecified or mixed
 |   | ages) | uage) |       | ngcod |       |       | rolan | uage) |
 |   |       |       |       | es_na |       |       | guage | []{#  |
 |   |       |       |       | me.ph |       |       | #est) | ancho |
-|   |       |       |       | p?iso |       |       |       | r-75} |
+|   |       |       |       | p?iso |       |       |       | r-67} |
 |   |       |       |       | _639_ |       |       |       |       |
 |   |       |       |       | 1=et) |       |       |       |       |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [Ewe  | E     | [*    | *ewe* | *ewe* | *ewe* | []{#  |
 |   | iger- | ](htt | ʋegbe | ee*]( |       |       |       | ancho |
-|   | -Cong | ps:// |       | https |       |       |       | r-76} |
+|   | -Cong | ps:// |       | https |       |       |       | r-68} |
 |   | o](ht | en.wi |       | ://ww |       |       |       |       |
 |   | tps:/ | kiped |       | w.loc |       |       |       |       |
 |   | /en.w | ia.or |       | .gov/ |       |       |       |       |
@@ -2987,7 +3172,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [F    | før   | [*    | *fao* | *fao* | *fao* | []{#  |
 |   | -Euro | aroes | oyskt | fo*]( |       |       |       | ancho |
-|   | pean] | e](ht |       | https |       |       |       | r-77} |
+|   | pean] | e](ht |       | https |       |       |       | r-69} |
 |   | (http | tps:/ |       | ://ww |       |       |       |       |
 |   | s://e | /en.w |       | w.loc |       |       |       |       |
 |   | n.wik | ikipe |       | .gov/ |       |       |       |       |
@@ -3005,7 +3190,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Au   | [Fiji | vosa  | [*    | *fij* | *fij* | *fij* | []{#  |
 |   | stron | an](h | Vak   | fj*]( |       |       |       | ancho |
-|   | esian | ttps: | aviti | https |       |       |       | r-78} |
+|   | esian | ttps: | aviti | https |       |       |       | r-70} |
 |   | ](htt | //en. |       | ://ww |       |       |       |       |
 |   | ps:// | wikip |       | w.loc |       |       |       |       |
 |   | en.wi | edia. |       | .gov/ |       |       |       |       |
@@ -3023,7 +3208,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [F    | s     | [*    | *fin* | *fin* | *fin* | []{#  |
 |   | Urali | innis | uomi, | fi*]( |       |       |       | ancho |
-|   | c](ht | h](ht | s     | https |       |       |       | r-79} |
+|   | c](ht | h](ht | s     | https |       |       |       | r-71} |
 |   | tps:/ | tps:/ | uomen | ://ww |       |       |       |       |
 |   | /en.w | /en.w | kieli | w.loc |       |       |       |       |
 |   | ikipe | ikipe |       | .gov/ |       |       |       |       |
@@ -3041,7 +3226,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Fren | fra   | [*    | *fra* | ***f  | *fra* | []{#  |
 |   | -Euro | ch](h | nçais | fr*]( |       | re*** |       | ancho |
-|   | pean] | ttps: |       | https |       |       |       | r-80} |
+|   | pean] | ttps: |       | https |       |       |       | r-72} |
 |   | (http | //en. |       | ://ww |       |       |       |       |
 |   | s://e | wikip |       | w.loc |       |       |       |       |
 |   | n.wik | edia. |       | .gov/ |       |       |       |       |
@@ -3076,11 +3261,11 @@ For unknown or unspecified or mixed
 |   |       |       |       | 1=ff) |       |       |       | Fula  |
 |   |       |       |       |       |       |       |       | []{#  |
 |   |       |       |       |       |       |       |       | ancho |
-|   |       |       |       |       |       |       |       | r-81} |
+|   |       |       |       |       |       |       |       | r-73} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Gal  | G     | [*    | *glg* | *glg* | *glg* | []{#  |
 |   | -Euro | ician | alego | gl*]( |       |       |       | ancho |
-|   | pean] | ](htt |       | https |       |       |       | r-82} |
+|   | pean] | ](htt |       | https |       |       |       | r-74} |
 |   | (http | ps:// |       | ://ww |       |       |       |       |
 |   | s://e | en.wi |       | w.loc |       |       |       |       |
 |   | n.wik | kiped |       | .gov/ |       |       |       |       |
@@ -3098,7 +3283,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Kar  | [Geo  | ქა    | [*    | *kat* | ***g  | *kat* | []{#  |
 |   | tveli | rgian | რთული | ka*]( |       | eo*** |       | ancho |
-|   | an](h | ](htt |       | https |       |       |       | r-83} |
+|   | an](h | ](htt |       | https |       |       |       | r-75} |
 |   | ttps: | ps:// |       | ://ww |       |       |       |       |
 |   | //en. | en.wi |       | w.loc |       |       |       |       |
 |   | wikip | kiped |       | .gov/ |       |       |       |       |
@@ -3116,7 +3301,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Germ | De    | [*    | *deu* | ***g  | *deu* | []{#  |
 |   | -Euro | an](h | utsch | de*]( |       | er*** |       | ancho |
-|   | pean] | ttps: |       | https |       |       |       | r-84} |
+|   | pean] | ttps: |       | https |       |       |       | r-76} |
 |   | (http | //en. |       | ://ww |       |       |       |       |
 |   | s://e | wikip |       | w.loc |       |       |       |       |
 |   | n.wik | edia. |       | .gov/ |       |       |       |       |
@@ -3154,7 +3339,7 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | *grc* |
 |   |       |       |       |       |       |       |       | []{#  |
 |   |       |       |       |       |       |       |       | ancho |
-|   |       |       |       |       |       |       |       | r-85} |
+|   |       |       |       |       |       |       |       | r-77} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [G    | Ava   | [*    | *grn* | *grn* | *gr   | [macr |
 |   | Tupia | uaran | ñe\'ẽ | gn*]( |       |       | n* +  | olang |
@@ -3170,13 +3355,13 @@ For unknown or unspecified or mixed
 |   | ages) | uage) |       | ngcod |       |       | rolan | uage) |
 |   |       |       |       | es_na |       |       | guage | []{#  |
 |   |       |       |       | me.ph |       |       | #grn) | ancho |
-|   |       |       |       | p?iso |       |       |       | r-86} |
+|   |       |       |       | p?iso |       |       |       | r-78} |
 |   |       |       |       | _639_ |       |       |       |       |
 |   |       |       |       | 1=gn) |       |       |       |       |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Guj  | ગુ    | [*    | *guj* | *guj* | *guj* | []{#  |
 |   | -Euro | arati | જરાતી | gu*]( |       |       |       | ancho |
-|   | pean] | ](htt |       | https |       |       |       | r-87} |
+|   | pean] | ](htt |       | https |       |       |       | r-79} |
 |   | (http | ps:// |       | ://ww |       |       |       |       |
 |   | s://e | en.wi |       | w.loc |       |       |       |       |
 |   | n.wik | kiped |       | .gov/ |       |       |       |       |
@@ -3194,7 +3379,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [Hait | K     | [*    | *hat* | *hat* | *hat* | []{#  |
 |   | Creol | ian]( | reyòl | ht*]( |       |       |       | ancho |
-|   | e](ht | https | ay    | https |       |       |       | r-88} |
+|   | e](ht | https | ay    | https |       |       |       | r-80} |
 |   | tps:/ | ://en | isyen | ://ww |       |       |       |       |
 |   | /en.w | .wiki |       | w.loc |       |       |       |       |
 |   | ikipe | pedia |       | .gov/ |       |       |       |       |
@@ -3212,7 +3397,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Af   | [Ha   | (H    | [*    | *hau* | *hau* | *hau* | []{#  |
 |   | ro-As | usa]( | ausa) | ha*]( |       |       |       | ancho |
-|   | iatic | https | ه     | https |       |       |       | r-89} |
+|   | iatic | https | ه     | https |       |       |       | r-81} |
 |   | ](htt | ://en | َوُسَ | ://ww |       |       |       |       |
 |   | ps:// | .wiki |       | w.loc |       |       |       |       |
 |   | en.wi | pedia |       | .gov/ |       |       |       |       |
@@ -3246,7 +3431,7 @@ For unknown or unspecified or mixed
 |   |       |       |       | _639_ |       |       |       | *iw   |
 |   |       |       |       | 1=he) |       |       |       | *.[]{ |
 |   |       |       |       |       |       |       |       | #anch |
-|   |       |       |       |       |       |       |       | or-90 |
+|   |       |       |       |       |       |       |       | or-82 |
 |   |       |       |       |       |       |       |       | }[\[1 |
 |   |       |       |       |       |       |       |       | \]](h |
 |   |       |       |       |       |       |       |       | ttps: |
@@ -3266,11 +3451,11 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | ge-1) |
 |   |       |       |       |       |       |       |       | []{#  |
 |   |       |       |       |       |       |       |       | ancho |
-|   |       |       |       |       |       |       |       | r-91} |
+|   |       |       |       |       |       |       |       | r-83} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [Here | Otjih | [*    | *her* | *her* | *her* | []{#  |
 |   | iger- | ro](h | erero | hz*]( |       |       |       | ancho |
-|   | -Cong | ttps: |       | https |       |       |       | r-92} |
+|   | -Cong | ttps: |       | https |       |       |       | r-84} |
 |   | o](ht | //en. |       | ://ww |       |       |       |       |
 |   | tps:/ | wikip |       | w.loc |       |       |       |       |
 |   | /en.w | edia. |       | .gov/ |       |       |       |       |
@@ -3288,7 +3473,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Hin  | हि    | [*    | *hin* | *hin* | *hin* | []{#  |
 |   | -Euro | di](h | न्दी, | hi*]( |       |       |       | ancho |
-|   | pean] | ttps: | हिंदी | https |       |       |       | r-93} |
+|   | pean] | ttps: | हिंदी | https |       |       |       | r-85} |
 |   | (http | //en. |       | ://ww |       |       |       |       |
 |   | s://e | wikip |       | w.loc |       |       |       |       |
 |   | n.wik | edia. |       | .gov/ |       |       |       |       |
@@ -3306,7 +3491,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Au   | [Hiri | Hiri  | [*    | *hmo* | *hmo* | *hmo* | []{#  |
 |   | stron | Motu] | Motu  | ho*]( |       |       |       | ancho |
-|   | esian | (http |       | https |       |       |       | r-94} |
+|   | esian | (http |       | https |       |       |       | r-86} |
 |   | ](htt | s://e |       | ://ww |       |       |       |       |
 |   | ps:// | n.wik |       | w.loc |       |       |       |       |
 |   | en.wi | ipedi |       | .gov/ |       |       |       |       |
@@ -3324,7 +3509,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [     | m     | [*    | *hun* | *hun* | *hun* | []{#  |
 |   | Urali | Hunga | agyar | hu*]( |       |       |       | ancho |
-|   | c](ht | rian] |       | https |       |       |       | r-95} |
+|   | c](ht | rian] |       | https |       |       |       | r-87} |
 |   | tps:/ | (http |       | ://ww |       |       |       |       |
 |   | /en.w | s://e |       | w.loc |       |       |       |       |
 |   | ikipe | n.wik |       | .gov/ |       |       |       |       |
@@ -3371,7 +3556,7 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | tion) |
 |   |       |       |       |       |       |       |       | []{#  |
 |   |       |       |       |       |       |       |       | ancho |
-|   |       |       |       |       |       |       |       | r-96} |
+|   |       |       |       |       |       |       |       | r-88} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Au   | [In   | B     | [*    | *ind* | *ind* | *ind* | Co    |
 |   | stron | dones | ahasa | id*]( |       |       |       | vered |
@@ -3395,7 +3580,7 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | *in   |
 |   |       |       |       |       |       |       |       | *.[]{ |
 |   |       |       |       |       |       |       |       | #anch |
-|   |       |       |       |       |       |       |       | or-97 |
+|   |       |       |       |       |       |       |       | or-89 |
 |   |       |       |       |       |       |       |       | }[\[1 |
 |   |       |       |       |       |       |       |       | \]](h |
 |   |       |       |       |       |       |       |       | ttps: |
@@ -3415,7 +3600,7 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | ge-1) |
 |   |       |       |       |       |       |       |       | []{#  |
 |   |       |       |       |       |       |       |       | ancho |
-|   |       |       |       |       |       |       |       | r-98} |
+|   |       |       |       |       |       |       |       | r-90} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [I    | (or   | [*    | *ile* | *ile* | *ile* | c     |
 |   | Const | nterl | igina | ie*]( |       |       |       | onstr |
@@ -3442,11 +3627,11 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | 1922  |
 |   |       |       |       |       |       |       |       | []{#  |
 |   |       |       |       |       |       |       |       | ancho |
-|   |       |       |       |       |       |       |       | r-99} |
+|   |       |       |       |       |       |       |       | r-91} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
-|   | [Indo | [Ir   | Ga    | [*    | *gle* | *gle* | *gle* | []{#a |
-|   | -Euro | ish]( | eilge | ga*]( |       |       |       | nchor |
-|   | pean] | https |       | https |       |       |       | -100} |
+|   | [Indo | [Ir   | Ga    | [*    | *gle* | *gle* | *gle* | []{#  |
+|   | -Euro | ish]( | eilge | ga*]( |       |       |       | ancho |
+|   | pean] | https |       | https |       |       |       | r-92} |
 |   | (http | ://en |       | ://ww |       |       |       |       |
 |   | s://e | .wiki |       | w.loc |       |       |       |       |
 |   | n.wik | pedia |       | .gov/ |       |       |       |       |
@@ -3462,9 +3647,9 @@ For unknown or unspecified or mixed
 |   |       |       |       | _639_ |       |       |       |       |
 |   |       |       |       | 1=ga) |       |       |       |       |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
-|   | [N    | [     | Asụsụ | [*    | *ibo* | *ibo* | *ibo* | []{#a |
-|   | iger- | Igbo] | Igbo  | ig*]( |       |       |       | nchor |
-|   | -Cong | (http |       | https |       |       |       | -101} |
+|   | [N    | [     | Asụsụ | [*    | *ibo* | *ibo* | *ibo* | []{#  |
+|   | iger- | Igbo] | Igbo  | ig*]( |       |       |       | ancho |
+|   | -Cong | (http |       | https |       |       |       | r-93} |
 |   | o](ht | s://e |       | ://ww |       |       |       |       |
 |   | tps:/ | n.wik |       | w.loc |       |       |       |       |
 |   | /en.w | ipedi |       | .gov/ |       |       |       |       |
@@ -3492,9 +3677,9 @@ For unknown or unspecified or mixed
 |   | i/Esk | upiaq |       | 9-2/p |       |       | SO_63 | /Macr |
 |   | imo–A | _lang |       | hp/la |       |       | 9_mac | olang |
 |   | leut_ | uage) |       | ngcod |       |       | rolan | uage) |
-|   | langu |       |       | es_na |       |       | guage | []{#a |
-|   | ages) |       |       | me.ph |       |       | #ipk) | nchor |
-|   |       |       |       | p?iso |       |       |       | -102} |
+|   | langu |       |       | es_na |       |       | guage | []{#  |
+|   | ages) |       |       | me.ph |       |       | #ipk) | ancho |
+|   |       |       |       | p?iso |       |       |       | r-94} |
 |   |       |       |       | _639_ |       |       |       |       |
 |   |       |       |       | 1=ik) |       |       |       |       |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
@@ -3511,14 +3696,14 @@ For unknown or unspecified or mixed
 |   | nstru | age)) |       | hp/la |       |       |       | of    |
 |   | cted_ |       |       | ngcod |       |       |       | Espe  |
 |   | langu |       |       | es_na |       |       |       | ranto |
-|   | ages) |       |       | me.ph |       |       |       | []{#a |
-|   |       |       |       | p?iso |       |       |       | nchor |
-|   |       |       |       | _639_ |       |       |       | -103} |
+|   | ages) |       |       | me.ph |       |       |       | []{#  |
+|   |       |       |       | p?iso |       |       |       | ancho |
+|   |       |       |       | _639_ |       |       |       | r-95} |
 |   |       |       |       | 1=io) |       |       |       |       |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
-|   | [Indo | [     | Ísl   | [*    | *isl* | ***i  | *isl* | []{#a |
-|   | -Euro | Icela | enska | is*]( |       | ce*** |       | nchor |
-|   | pean] | ndic] |       | https |       |       |       | -104} |
+|   | [Indo | [     | Ísl   | [*    | *isl* | ***i  | *isl* | []{#  |
+|   | -Euro | Icela | enska | is*]( |       | ce*** |       | ancho |
+|   | pean] | ndic] |       | https |       |       |       | r-96} |
 |   | (http | (http |       | ://ww |       |       |       |       |
 |   | s://e | s://e |       | w.loc |       |       |       |       |
 |   | n.wik | n.wik |       | .gov/ |       |       |       |       |
@@ -3534,9 +3719,9 @@ For unknown or unspecified or mixed
 |   |       |       |       | _639_ |       |       |       |       |
 |   |       |       |       | 1=is) |       |       |       |       |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
-|   | [Indo | [I    | Ita   | [*    | *ita* | *ita* | *ita* | []{#a |
-|   | -Euro | talia | liano | it*]( |       |       |       | nchor |
-|   | pean] | n](ht |       | https |       |       |       | -105} |
+|   | [Indo | [I    | Ita   | [*    | *ita* | *ita* | *ita* | []{#  |
+|   | -Euro | talia | liano | it*]( |       |       |       | ancho |
+|   | pean] | n](ht |       | https |       |       |       | r-97} |
 |   | (http | tps:/ |       | ://ww |       |       |       |       |
 |   | s://e | /en.w |       | w.loc |       |       |       |       |
 |   | n.wik | ikipe |       | .gov/ |       |       |       |       |
@@ -3555,9 +3740,9 @@ For unknown or unspecified or mixed
 |   | [Esk  | [I    | ᐃ     | [*    | *iku* | *iku* | *ik   | mac   |
 |   | imo-- | nukti | ᓄᒃᑎᑐᑦ | iu*]( |       |       | u* +  | rolan |
 |   | Aleut | tut]( |       | https |       |       | [2](h | guage |
-|   | ](htt | https |       | ://ww |       |       | ttps: | []{#a |
-|   | ps:// | ://en |       | w.loc |       |       | //en. | nchor |
-|   | en.wi | .wiki |       | .gov/ |       |       | wikip | -106} |
+|   | ](htt | https |       | ://ww |       |       | ttps: | []{#  |
+|   | ps:// | ://en |       | w.loc |       |       | //en. | ancho |
+|   | en.wi | .wiki |       | .gov/ |       |       | wikip | r-98} |
 |   | kiped | pedia |       | stand |       |       | edia. |       |
 |   | ia.or | .org/ |       | ards/ |       |       | org/w |       |
 |   | g/wik | wiki/ |       | iso63 |       |       | iki/I |       |
@@ -3570,9 +3755,9 @@ For unknown or unspecified or mixed
 |   |       |       |       | _639_ |       |       |       |       |
 |   |       |       |       | 1=iu) |       |       |       |       |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
-|   | [Ja   | [Jap  | 日    | [*    | *jpn* | *jpn* | *jpn* | []{#a |
-|   | ponic | anese | 本語  | ja*]( |       |       |       | nchor |
-|   | ](htt | ](htt | (にほ | https |       |       |       | -107} |
+|   | [Ja   | [Jap  | 日    | [*    | *jpn* | *jpn* | *jpn* | []{#  |
+|   | ponic | anese | 本語  | ja*]( |       |       |       | ancho |
+|   | ](htt | ](htt | (にほ | https |       |       |       | r-99} |
 |   | ps:// | ps:// | んご) | ://ww |       |       |       |       |
 |   | en.wi | en.wi |       | w.loc |       |       |       |       |
 |   | kiped | kiped |       | .gov/ |       |       |       |       |
@@ -3590,7 +3775,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Au   | [Jav  | ꦧꦱꦗꦮ, | [*    | *jav* | *jav* | *jav* | []{#a |
 |   | stron | anese | Basa  | jv*]( |       |       |       | nchor |
-|   | esian | ](htt | Jawa  | https |       |       |       | -108} |
+|   | esian | ](htt | Jawa  | https |       |       |       | -100} |
 |   | ](htt | ps:// |       | ://ww |       |       |       |       |
 |   | ps:// | en.wi |       | w.loc |       |       |       |       |
 |   | en.wi | kiped |       | .gov/ |       |       |       |       |
@@ -3608,7 +3793,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Esk  | [     | ka    | [*    | *kal* | *kal* | *kal* | []{#a |
 |   | imo-- | Kalaa | laall | kl*]( |       |       |       | nchor |
-|   | Aleut | llisu | isut, | https |       |       |       | -109} |
+|   | Aleut | llisu | isut, | https |       |       |       | -101} |
 |   | ](htt | t](ht | kala  | ://ww |       |       |       |       |
 |   | ps:// | tps:/ | allit | w.loc |       |       |       |       |
 |   | en.wi | /en.w | oq    | .gov/ |       |       |       |       |
@@ -3626,7 +3811,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [D    | [K    | ಕನ್ನಡ | [*    | *kan* | *kan* | *kan* | []{#a |
 |   | ravid | annad |       | kn*]( |       |       |       | nchor |
-|   | ian]( | a](ht |       | https |       |       |       | -110} |
+|   | ian]( | a](ht |       | https |       |       |       | -102} |
 |   | https | tps:/ |       | ://ww |       |       |       |       |
 |   | ://en | /en.w |       | w.loc |       |       |       |       |
 |   | .wiki | ikipe |       | .gov/ |       |       |       |       |
@@ -3656,13 +3841,13 @@ For unknown or unspecified or mixed
 |   | aran_ |       |       | ngcod |       |       | rolan | uage) |
 |   | langu |       |       | es_na |       |       | guage | []{#a |
 |   | ages) |       |       | me.ph |       |       | #kau) | nchor |
-|   |       |       |       | p?iso |       |       |       | -111} |
+|   |       |       |       | p?iso |       |       |       | -103} |
 |   |       |       |       | _639_ |       |       |       |       |
 |   |       |       |       | 1=kr) |       |       |       |       |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Kas  | कश्   | [*    | *kas* | *kas* | *kas* | []{#a |
 |   | -Euro | hmiri | मीरी, | ks*]( |       |       |       | nchor |
-|   | pean] | ](htt | كش    | https |       |       |       | -112} |
+|   | pean] | ](htt | كش    | https |       |       |       | -104} |
 |   | (http | ps:// | ميري‎ | ://ww |       |       |       |       |
 |   | s://e | en.wi |       | w.loc |       |       |       |       |
 |   | n.wik | kiped |       | .gov/ |       |       |       |       |
@@ -3680,7 +3865,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [Kaza | қазақ | [*    | *kaz* | *kaz* | *kaz* | []{#a |
 |   | Turki | kh](h | тілі  | kk*]( |       |       |       | nchor |
-|   | c](ht | ttps: |       | https |       |       |       | -113} |
+|   | c](ht | ttps: |       | https |       |       |       | -105} |
 |   | tps:/ | //en. |       | ://ww |       |       |       |       |
 |   | /en.w | wikip |       | w.loc |       |       |       |       |
 |   | ikipe | edia. |       | .gov/ |       |       |       |       |
@@ -3705,7 +3890,7 @@ For unknown or unspecified or mixed
 |   | ipedi | kiped |       | stand |       |       |       | odian |
 |   | a.org | ia.or |       | ards/ |       |       |       | []{#a |
 |   | /wiki | g/wik |       | iso63 |       |       |       | nchor |
-|   | /Aust | i/Cen |       | 9-2/p |       |       |       | -114} |
+|   | /Aust | i/Cen |       | 9-2/p |       |       |       | -106} |
 |   | roasi | tral_ |       | hp/la |       |       |       |       |
 |   | atic_ | Khmer |       | ngcod |       |       |       |       |
 |   | langu | _lang |       | es_na |       |       |       |       |
@@ -3716,7 +3901,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [     | G     | [*    | *kik* | *kik* | *kik* | []{#a |
 |   | iger- | Kikuy | ĩkũyũ | ki*]( |       |       |       | nchor |
-|   | -Cong | u](ht |       | https |       |       |       | -115} |
+|   | -Cong | u](ht |       | https |       |       |       | -107} |
 |   | o](ht | tps:/ |       | ://ww |       |       |       |       |
 |   | tps:/ | /en.w |       | w.loc |       |       |       |       |
 |   | /en.w | ikipe |       | .gov/ |       |       |       |       |
@@ -3734,7 +3919,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [     | Ik    | [*    | *kin* | *kin* | *kin* | []{#a |
 |   | iger- | Kinya | inyar | rw*]( |       |       |       | nchor |
-|   | -Cong | rwand | wanda | https |       |       |       | -116} |
+|   | -Cong | rwand | wanda | https |       |       |       | -108} |
 |   | o](ht | a](ht |       | ://ww |       |       |       |       |
 |   | tps:/ | tps:/ |       | w.loc |       |       |       |       |
 |   | /en.w | /en.w |       | .gov/ |       |       |       |       |
@@ -3752,7 +3937,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [Ki   | Кырг  | [*    | *kir* | *kir* | *kir* | []{#a |
 |   | Turki | rghiz | ызча, | ky*]( |       |       |       | nchor |
-|   | c](ht | ](htt | К     | https |       |       |       | -117} |
+|   | c](ht | ](htt | К     | https |       |       |       | -109} |
 |   | tps:/ | ps:// | ыргыз | ://ww |       |       |       |       |
 |   | /en.w | en.wi | тили  | w.loc |       |       |       |       |
 |   | ikipe | kiped |       | .gov/ |       |       |       |       |
@@ -3773,7 +3958,7 @@ For unknown or unspecified or mixed
 |   | c](ht | (http |       | https |       |       | [2](h | guage |
 |   | tps:/ | s://e |       | ://ww |       |       | ttps: | []{#a |
 |   | /en.w | n.wik |       | w.loc |       |       | //en. | nchor |
-|   | ikipe | ipedi |       | .gov/ |       |       | wikip | -118} |
+|   | ikipe | ipedi |       | .gov/ |       |       | wikip | -110} |
 |   | dia.o | a.org |       | stand |       |       | edia. |       |
 |   | rg/wi | /wiki |       | ards/ |       |       | org/w |       |
 |   | ki/Ur | /Komi |       | iso63 |       |       | iki/I |       |
@@ -3791,7 +3976,7 @@ For unknown or unspecified or mixed
 |   | -Cong | https |       | https |       |       | [3](h | guage |
 |   | o](ht | ://en |       | ://ww |       |       | ttps: | []{#a |
 |   | tps:/ | .wiki |       | w.loc |       |       | //en. | nchor |
-|   | /en.w | pedia |       | .gov/ |       |       | wikip | -119} |
+|   | /en.w | pedia |       | .gov/ |       |       | wikip | -111} |
 |   | ikipe | .org/ |       | stand |       |       | edia. |       |
 |   | dia.o | wiki/ |       | ards/ |       |       | org/w |       |
 |   | rg/wi | Kongo |       | iso63 |       |       | iki/I |       |
@@ -3806,7 +3991,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Kore | [Kore | 한    | [*    | *kor* | *kor* | *kor* | []{#a |
 |   | anic] | an](h | 국어  | ko*]( |       |       |       | nchor |
-|   | (http | ttps: |       | https |       |       |       | -120} |
+|   | (http | ttps: |       | https |       |       |       | -112} |
 |   | s://e | //en. |       | ://ww |       |       |       |       |
 |   | n.wik | wikip |       | w.loc |       |       |       |       |
 |   | ipedi | edia. |       | .gov/ |       |       |       |       |
@@ -3827,7 +4012,7 @@ For unknown or unspecified or mixed
 |   | pean] | h](ht | ک     | https |       |       | [3](h | guage |
 |   | (http | tps:/ | وردی‎ | ://ww |       |       | ttps: | []{#a |
 |   | s://e | /en.w |       | w.loc |       |       | //en. | nchor |
-|   | n.wik | ikipe |       | .gov/ |       |       | wikip | -121} |
+|   | n.wik | ikipe |       | .gov/ |       |       | wikip | -113} |
 |   | ipedi | dia.o |       | stand |       |       | edia. |       |
 |   | a.org | rg/wi |       | ards/ |       |       | org/w |       |
 |   | /wiki | ki/Ku |       | iso63 |       |       | iki/I |       |
@@ -3842,7 +4027,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [Kuan | Kua   | [*    | *kua* | *kua* | *kua* | []{#a |
 |   | iger- | yama] | nyama | kj*]( |       |       |       | nchor |
-|   | -Cong | (http |       | https |       |       |       | -122} |
+|   | -Cong | (http |       | https |       |       |       | -114} |
 |   | o](ht | s://e |       | ://ww |       |       |       |       |
 |   | tps:/ | n.wik |       | w.loc |       |       |       |       |
 |   | /en.w | ipedi |       | .gov/ |       |       |       |       |
@@ -3862,7 +4047,7 @@ For unknown or unspecified or mixed
 |   | -Euro | in](h | tine, | la*]( |       |       |       | cient |
 |   | pean] | ttps: | l     | https |       |       |       | []{#a |
 |   | (http | //en. | ingua | ://ww |       |       |       | nchor |
-|   | s://e | wikip | l     | w.loc |       |       |       | -123} |
+|   | s://e | wikip | l     | w.loc |       |       |       | -115} |
 |   | n.wik | edia. | atina | .gov/ |       |       |       |       |
 |   | ipedi | org/w |       | stand |       |       |       |       |
 |   | a.org | iki/L |       | ards/ |       |       |       |       |
@@ -3878,7 +4063,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Luxe | Lëtz  | [*    | *ltz* | *ltz* | *ltz* | []{#a |
 |   | -Euro | mbour | ebuer | lb*]( |       |       |       | nchor |
-|   | pean] | gish] | gesch | https |       |       |       | -124} |
+|   | pean] | gish] | gesch | https |       |       |       | -116} |
 |   | (http | (http |       | ://ww |       |       |       |       |
 |   | s://e | s://e |       | w.loc |       |       |       |       |
 |   | n.wik | n.wik |       | .gov/ |       |       |       |       |
@@ -3896,7 +4081,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [Ga   | Lu    | [*    | *lug* | *lug* | *lug* | []{#a |
 |   | iger- | nda]( | ganda | lg*]( |       |       |       | nchor |
-|   | -Cong | https |       | https |       |       |       | -125} |
+|   | -Cong | https |       | https |       |       |       | -117} |
 |   | o](ht | ://en |       | ://ww |       |       |       |       |
 |   | tps:/ | .wiki |       | w.loc |       |       |       |       |
 |   | /en.w | pedia |       | .gov/ |       |       |       |       |
@@ -3914,7 +4099,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [L    | Lim   | [*    | *lim* | *lim* | *lim* | []{#a |
 |   | -Euro | imbur | burgs | li*]( |       |       |       | nchor |
-|   | pean] | gan]( |       | https |       |       |       | -126} |
+|   | pean] | gan]( |       | https |       |       |       | -118} |
 |   | (http | https |       | ://ww |       |       |       |       |
 |   | s://e | ://en |       | w.loc |       |       |       |       |
 |   | n.wik | .wiki |       | .gov/ |       |       |       |       |
@@ -3932,7 +4117,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [L    | Li    | [*    | *lin* | *lin* | *lin* | []{#a |
 |   | iger- | ingal | ngála | ln*]( |       |       |       | nchor |
-|   | -Cong | a](ht |       | https |       |       |       | -127} |
+|   | -Cong | a](ht |       | https |       |       |       | -119} |
 |   | o](ht | tps:/ |       | ://ww |       |       |       |       |
 |   | tps:/ | /en.w |       | w.loc |       |       |       |       |
 |   | /en.w | ikipe |       | .gov/ |       |       |       |       |
@@ -3950,7 +4135,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Ta   | [Lao  | ພາ    | [*    | *lao* | *lao* | *lao* | []{#a |
 |   | i--Ka | ](htt | ສາລາວ | lo*]( |       |       |       | nchor |
-|   | dai]( | ps:// |       | https |       |       |       | -128} |
+|   | dai]( | ps:// |       | https |       |       |       | -120} |
 |   | https | en.wi |       | ://ww |       |       |       |       |
 |   | ://en | kiped |       | w.loc |       |       |       |       |
 |   | .wiki | ia.or |       | .gov/ |       |       |       |       |
@@ -3968,7 +4153,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Li   | lie   | [*    | *lit* | *lit* | *lit* | []{#a |
 |   | -Euro | thuan | tuvių | lt*]( |       |       |       | nchor |
-|   | pean] | ian]( | kalba | https |       |       |       | -129} |
+|   | pean] | ian]( | kalba | https |       |       |       | -121} |
 |   | (http | https |       | ://ww |       |       |       |       |
 |   | s://e | ://en |       | w.loc |       |       |       |       |
 |   | n.wik | .wiki |       | .gov/ |       |       |       |       |
@@ -3991,7 +4176,7 @@ For unknown or unspecified or mixed
 |   | tps:/ | tps:/ |       | w.loc |       |       |       | Shaba |
 |   | /en.w | /en.w |       | .gov/ |       |       |       | []{#a |
 |   | ikipe | ikipe |       | stand |       |       |       | nchor |
-|   | dia.o | dia.o |       | ards/ |       |       |       | -130} |
+|   | dia.o | dia.o |       | ards/ |       |       |       | -122} |
 |   | rg/wi | rg/wi |       | iso63 |       |       |       |       |
 |   | ki/Ni | ki/Lu |       | 9-2/p |       |       |       |       |
 |   | ger–C | ba-Ka |       | hp/la |       |       |       |       |
@@ -4007,7 +4192,7 @@ For unknown or unspecified or mixed
 |   | pean] | n](ht | v     | https |       |       | [2](h | guage |
 |   | (http | tps:/ | aloda | ://ww |       |       | ttps: | []{#a |
 |   | s://e | /en.w |       | w.loc |       |       | //en. | nchor |
-|   | n.wik | ikipe |       | .gov/ |       |       | wikip | -131} |
+|   | n.wik | ikipe |       | .gov/ |       |       | wikip | -123} |
 |   | ipedi | dia.o |       | stand |       |       | edia. |       |
 |   | a.org | rg/wi |       | ards/ |       |       | org/w |       |
 |   | /wiki | ki/La |       | iso63 |       |       | iki/I |       |
@@ -4022,7 +4207,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [     | G     | [*    | *glv* | *glv* | *glv* | []{#a |
 |   | -Euro | Manx] | aelg, | gv*]( |       |       |       | nchor |
-|   | pean] | (http | G     | https |       |       |       | -132} |
+|   | pean] | (http | G     | https |       |       |       | -124} |
 |   | (http | s://e | ailck | ://ww |       |       |       |       |
 |   | s://e | n.wik |       | w.loc |       |       |       |       |
 |   | n.wik | ipedi |       | .gov/ |       |       |       |       |
@@ -4040,7 +4225,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Ma   | макед | [*    | *mkd* | ***m  | *mkd* | []{#a |
 |   | -Euro | cedon | онски | mk*]( |       | ac*** |       | nchor |
-|   | pean] | ian]( | јазик | https |       |       |       | -133} |
+|   | pean] | ian]( | јазик | https |       |       |       | -125} |
 |   | (http | https |       | ://ww |       |       |       |       |
 |   | s://e | ://en |       | w.loc |       |       |       |       |
 |   | n.wik | .wiki |       | .gov/ |       |       |       |       |
@@ -4061,7 +4246,7 @@ For unknown or unspecified or mixed
 |   | esian | ](htt | mal   | https |       |       | 11](h | guage |
 |   | ](htt | ps:// | agasy | ://ww |       |       | ttps: | []{#a |
 |   | ps:// | en.wi |       | w.loc |       |       | //en. | nchor |
-|   | en.wi | kiped |       | .gov/ |       |       | wikip | -134} |
+|   | en.wi | kiped |       | .gov/ |       |       | wikip | -126} |
 |   | kiped | ia.or |       | stand |       |       | edia. |       |
 |   | ia.or | g/wik |       | ards/ |       |       | org/w |       |
 |   | g/wik | i/Mal |       | iso63 |       |       | iki/I |       |
@@ -4112,11 +4297,11 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | *ind* |
 |   |       |       |       |       |       |       |       | []{#a |
 |   |       |       |       |       |       |       |       | nchor |
-|   |       |       |       |       |       |       |       | -135} |
+|   |       |       |       |       |       |       |       | -127} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [D    | [     | മ     | [*    | *mal* | *mal* | *mal* | []{#a |
 |   | ravid | Malay | ലയാളം | ml*]( |       |       |       | nchor |
-|   | ian]( | alam] |       | https |       |       |       | -136} |
+|   | ian]( | alam] |       | https |       |       |       | -128} |
 |   | https | (http |       | ://ww |       |       |       |       |
 |   | ://en | s://e |       | w.loc |       |       |       |       |
 |   | .wiki | n.wik |       | .gov/ |       |       |       |       |
@@ -4134,7 +4319,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Af   | [M    | Malti | [*    | *mlt* | *mlt* | *mlt* | []{#a |
 |   | ro-As | altes |       | mt*]( |       |       |       | nchor |
-|   | iatic | e](ht |       | https |       |       |       | -137} |
+|   | iatic | e](ht |       | https |       |       |       | -129} |
 |   | ](htt | tps:/ |       | ://ww |       |       |       |       |
 |   | ps:// | /en.w |       | w.loc |       |       |       |       |
 |   | en.wi | ikipe |       | .gov/ |       |       |       |       |
@@ -4156,7 +4341,7 @@ For unknown or unspecified or mixed
 |   | ](htt | ://en |       | ://ww |       |       |       | Māori |
 |   | ps:// | .wiki |       | w.loc |       |       |       | []{#a |
 |   | en.wi | pedia |       | .gov/ |       |       |       | nchor |
-|   | kiped | .org/ |       | stand |       |       |       | -138} |
+|   | kiped | .org/ |       | stand |       |       |       | -130} |
 |   | ia.or | wiki/ |       | ards/ |       |       |       |       |
 |   | g/wik | Māori |       | iso63 |       |       |       |       |
 |   | i/Aus | _lang |       | 9-2/p |       |       |       |       |
@@ -4175,7 +4360,7 @@ For unknown or unspecified or mixed
 |   | s://e | /en.w |       | w.loc |       |       |       | rāṭhī |
 |   | n.wik | ikipe |       | .gov/ |       |       |       | []{#a |
 |   | ipedi | dia.o |       | stand |       |       |       | nchor |
-|   | a.org | rg/wi |       | ards/ |       |       |       | -139} |
+|   | a.org | rg/wi |       | ards/ |       |       |       | -131} |
 |   | /wiki | ki/Ma |       | iso63 |       |       |       |       |
 |   | /Indo | rathi |       | 9-2/p |       |       |       |       |
 |   | -Euro | _lang |       | hp/la |       |       |       |       |
@@ -4188,7 +4373,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Au   | [Mars | Kajin | [*    | *mah* | *mah* | *mah* | []{#a |
 |   | stron | halle | M̧ajeļ | mh*]( |       |       |       | nchor |
-|   | esian | se](h |       | https |       |       |       | -140} |
+|   | esian | se](h |       | https |       |       |       | -132} |
 |   | ](htt | ttps: |       | ://ww |       |       |       |       |
 |   | ps:// | //en. |       | w.loc |       |       |       |       |
 |   | en.wi | wikip |       | .gov/ |       |       |       |       |
@@ -4209,7 +4394,7 @@ For unknown or unspecified or mixed
 |   | (http | lian] | хэл   | https |       |       | [2](h | guage |
 |   | s://e | (http |       | ://ww |       |       | ttps: | []{#a |
 |   | n.wik | s://e |       | w.loc |       |       | //en. | nchor |
-|   | ipedi | n.wik |       | .gov/ |       |       | wikip | -141} |
+|   | ipedi | n.wik |       | .gov/ |       |       | wikip | -133} |
 |   | a.org | ipedi |       | stand |       |       | edia. |       |
 |   | /wiki | a.org |       | ards/ |       |       | org/w |       |
 |   | /Mong | /wiki |       | iso63 |       |       | iki/I |       |
@@ -4229,7 +4414,7 @@ For unknown or unspecified or mixed
 |   | ps:// | .wiki |       | w.loc |       |       |       | uruan |
 |   | en.wi | pedia |       | .gov/ |       |       |       | []{#a |
 |   | kiped | .org/ |       | stand |       |       |       | nchor |
-|   | ia.or | wiki/ |       | ards/ |       |       |       | -142} |
+|   | ia.or | wiki/ |       | ards/ |       |       |       | -134} |
 |   | g/wik | Nauru |       | iso63 |       |       |       |       |
 |   | i/Aus | _lang |       | 9-2/p |       |       |       |       |
 |   | trone | uage) |       | hp/la |       |       |       |       |
@@ -4242,7 +4427,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [De   | [     | Diné  | [*    | *nav* | *nav* | *nav* | []{#a |
 |   | né--Y | Navaj | b     | nv*]( |       |       |       | nchor |
-|   | enise | o](ht | izaad | https |       |       |       | -143} |
+|   | enise | o](ht | izaad | https |       |       |       | -135} |
 |   | ian]( | tps:/ |       | ://ww |       |       |       |       |
 |   | https | /en.w |       | w.loc |       |       |       |       |
 |   | ://en | ikipe |       | .gov/ |       |       |       |       |
@@ -4267,7 +4452,7 @@ For unknown or unspecified or mixed
 |   | ikipe | en.wi |       | stand |       |       |       | ebele |
 |   | dia.o | kiped |       | ards/ |       |       |       | []{#a |
 |   | rg/wi | ia.or |       | iso63 |       |       |       | nchor |
-|   | ki/Ni | g/wik |       | 9-2/p |       |       |       | -144} |
+|   | ki/Ni | g/wik |       | 9-2/p |       |       |       | -136} |
 |   | ger–C | i/Nor |       | hp/la |       |       |       |       |
 |   | ongo_ | th_Nd |       | ngcod |       |       |       |       |
 |   | langu | ebele |       | es_na |       |       |       |       |
@@ -4281,7 +4466,7 @@ For unknown or unspecified or mixed
 |   | pean] | ttps: |       | https |       |       | [2](h | guage |
 |   | (http | //en. |       | ://ww |       |       | ttps: | []{#a |
 |   | s://e | wikip |       | w.loc |       |       | //en. | nchor |
-|   | n.wik | edia. |       | .gov/ |       |       | wikip | -145} |
+|   | n.wik | edia. |       | .gov/ |       |       | wikip | -137} |
 |   | ipedi | org/w |       | stand |       |       | edia. |       |
 |   | a.org | iki/N |       | ards/ |       |       | org/w |       |
 |   | /wiki | epali |       | iso63 |       |       | iki/I |       |
@@ -4296,7 +4481,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [     | O     | [*    | *ndo* | *ndo* | *ndo* | []{#a |
 |   | iger- | Ndong | wambo | ng*]( |       |       |       | nchor |
-|   | -Cong | a](ht |       | https |       |       |       | -146} |
+|   | -Cong | a](ht |       | https |       |       |       | -138} |
 |   | o](ht | tps:/ |       | ://ww |       |       |       |       |
 |   | tps:/ | /en.w |       | w.loc |       |       |       |       |
 |   | /en.w | ikipe |       | .gov/ |       |       |       |       |
@@ -4322,7 +4507,7 @@ For unknown or unspecified or mixed
 |   | a.org | dia.o |       | ards/ |       |       |       | *nor* |
 |   | /wiki | rg/wi |       | iso63 |       |       |       | []{#a |
 |   | /Indo | ki/Bo |       | 9-2/p |       |       |       | nchor |
-|   | -Euro | kmål) |       | hp/la |       |       |       | -147} |
+|   | -Euro | kmål) |       | hp/la |       |       |       | -139} |
 |   | pean_ |       |       | ngcod |       |       |       |       |
 |   | langu |       |       | es_na |       |       |       |       |
 |   | ages) |       |       | me.ph |       |       |       |       |
@@ -4340,7 +4525,7 @@ For unknown or unspecified or mixed
 |   | a.org | kiped |       | ards/ |       |       |       | *nor* |
 |   | /wiki | ia.or |       | iso63 |       |       |       | []{#a |
 |   | /Indo | g/wik |       | 9-2/p |       |       |       | nchor |
-|   | -Euro | i/Nyn |       | hp/la |       |       |       | -148} |
+|   | -Euro | i/Nyn |       | hp/la |       |       |       | -140} |
 |   | pean_ | orsk) |       | ngcod |       |       |       |       |
 |   | langu |       |       | es_na |       |       |       |       |
 |   | ages) |       |       | me.ph |       |       |       |       |
@@ -4380,7 +4565,7 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | *nno* |
 |   |       |       |       |       |       |       |       | []{#a |
 |   |       |       |       |       |       |       |       | nchor |
-|   |       |       |       |       |       |       |       | -149} |
+|   |       |       |       |       |       |       |       | -141} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Si   | [Si   | ꆈ    | [*    | *iii* | *iii* | *iii* | Sta   |
 |   | no-Ti | chuan | ꌠ꒿  | ii*]( |       |       |       | ndard |
@@ -4400,7 +4585,7 @@ For unknown or unspecified or mixed
 |   |       |       |       | _639_ |       |       |       | uage) |
 |   |       |       |       | 1=ii) |       |       |       | []{#a |
 |   |       |       |       |       |       |       |       | nchor |
-|   |       |       |       |       |       |       |       | -150} |
+|   |       |       |       |       |       |       |       | -142} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [     | isiNd | [*    | *nbl* | *nbl* | *nbl* | also  |
 |   | iger- | South | ebele | nr*]( |       |       |       | known |
@@ -4411,7 +4596,7 @@ For unknown or unspecified or mixed
 |   | ikipe | en.wi |       | stand |       |       |       | ebele |
 |   | dia.o | kiped |       | ards/ |       |       |       | []{#a |
 |   | rg/wi | ia.or |       | iso63 |       |       |       | nchor |
-|   | ki/Ni | g/wik |       | 9-2/p |       |       |       | -151} |
+|   | ki/Ni | g/wik |       | 9-2/p |       |       |       | -143} |
 |   | ger–C | i/Sou |       | hp/la |       |       |       |       |
 |   | ongo_ | th_Nd |       | ngcod |       |       |       |       |
 |   | langu | ebele |       | es_na |       |       |       |       |
@@ -4422,7 +4607,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [O    | occ   | [*    | *oci* | *oci* | *oci* | []{#a |
 |   | -Euro | ccita | itan, | oc*]( |       |       |       | nchor |
-|   | pean] | n](ht | lenga | https |       |       |       | -152} |
+|   | pean] | n](ht | lenga | https |       |       |       | -144} |
 |   | (http | tps:/ | d\'òc | ://ww |       |       |       |       |
 |   | s://e | /en.w |       | w.loc |       |       |       |       |
 |   | n.wik | ikipe |       | .gov/ |       |       |       |       |
@@ -4448,7 +4633,7 @@ For unknown or unspecified or mixed
 |   | org/w | iki/O |       | ards/ |       |       | org/w | jibwe |
 |   | iki/A | jibwa |       | iso63 |       |       | iki/I | []{#a |
 |   | lgonq | _lang |       | 9-2/p |       |       | SO_63 | nchor |
-|   | uian_ | uage) |       | hp/la |       |       | 9_mac | -153} |
+|   | uian_ | uage) |       | hp/la |       |       | 9_mac | -145} |
 |   | langu |       |       | ngcod |       |       | rolan |       |
 |   | ages) |       |       | es_na |       |       | guage |       |
 |   |       |       |       | me.ph |       |       | #oji) |       |
@@ -4486,7 +4671,7 @@ For unknown or unspecified or mixed
 |   |       | urch  |       |       |       |       |       | urch) |
 |   |       | Slavo |       |       |       |       |       | []{#a |
 |   |       | nic]( |       |       |       |       |       | nchor |
-|   |       | https |       |       |       |       |       | -154} |
+|   |       | https |       |       |       |       |       | -146} |
 |   |       | ://en |       |       |       |       |       |       |
 |   |       | .wiki |       |       |       |       |       |       |
 |   |       | pedia |       |       |       |       |       |       |
@@ -4502,7 +4687,7 @@ For unknown or unspecified or mixed
 |   | iatic | https | romoo | https |       |       | [4](h | guage |
 |   | ](htt | ://en |       | ://ww |       |       | ttps: | []{#a |
 |   | ps:// | .wiki |       | w.loc |       |       | //en. | nchor |
-|   | en.wi | pedia |       | .gov/ |       |       | wikip | -155} |
+|   | en.wi | pedia |       | .gov/ |       |       | wikip | -147} |
 |   | kiped | .org/ |       | stand |       |       | edia. |       |
 |   | ia.or | wiki/ |       | ards/ |       |       | org/w |       |
 |   | g/wik | Oromo |       | iso63 |       |       | iki/I |       |
@@ -4524,7 +4709,7 @@ For unknown or unspecified or mixed
 |   | ipedi | .org/ |       | stand |       |       | edia. | Odia  |
 |   | a.org | wiki/ |       | ards/ |       |       | org/w | []{#a |
 |   | /wiki | Oriya |       | iso63 |       |       | iki/I | nchor |
-|   | /Indo | _lang |       | 9-2/p |       |       | SO_63 | -156} |
+|   | /Indo | _lang |       | 9-2/p |       |       | SO_63 | -148} |
 |   | -Euro | uage) |       | hp/la |       |       | 9_mac |       |
 |   | pean_ |       |       | ngcod |       |       | rolan |       |
 |   | langu |       |       | es_na |       |       | guage |       |
@@ -4535,7 +4720,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Osse | ирон  | [*    | *oss* | *oss* | *oss* | []{#a |
 |   | -Euro | tian] | ӕвзаг | os*]( |       |       |       | nchor |
-|   | pean] | (http |       | https |       |       |       | -157} |
+|   | pean] | (http |       | https |       |       |       | -149} |
 |   | (http | s://e |       | ://ww |       |       |       |       |
 |   | s://e | n.wik |       | w.loc |       |       |       |       |
 |   | n.wik | ipedi |       | .gov/ |       |       |       |       |
@@ -4553,7 +4738,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Pu   | ਪੰ    | [*    | *pan* | *pan* | *pan* | []{#a |
 |   | -Euro | njabi | ਜਾਬੀ, | pa*]( |       |       |       | nchor |
-|   | pean] | ](htt | پن    | https |       |       |       | -158} |
+|   | pean] | ](htt | پن    | https |       |       |       | -150} |
 |   | (http | ps:// | جابی‎ | ://ww |       |       |       |       |
 |   | s://e | en.wi |       | w.loc |       |       |       |       |
 |   | n.wik | kiped |       | .gov/ |       |       |       |       |
@@ -4577,7 +4762,7 @@ For unknown or unspecified or mixed
 |   | n.wik | ipedi |       | .gov/ |       |       |       | Pāli  |
 |   | ipedi | a.org |       | stand |       |       |       | []{#a |
 |   | a.org | /wiki |       | ards/ |       |       |       | nchor |
-|   | /wiki | /Pali |       | iso63 |       |       |       | -159} |
+|   | /wiki | /Pali |       | iso63 |       |       |       | -151} |
 |   | /Indo | _lang |       | 9-2/p |       |       |       |       |
 |   | -Euro | uage) |       | hp/la |       |       |       |       |
 |   | pean_ |       |       | ngcod |       |       |       |       |
@@ -4596,7 +4781,7 @@ For unknown or unspecified or mixed
 |   | ipedi | dia.o |       | stand |       |       | edia. | Farsi |
 |   | a.org | rg/wi |       | ards/ |       |       | org/w | []{#a |
 |   | /wiki | ki/Pe |       | iso63 |       |       | iki/I | nchor |
-|   | /Indo | rsian |       | 9-2/p |       |       | SO_63 | -160} |
+|   | /Indo | rsian |       | 9-2/p |       |       | SO_63 | -152} |
 |   | -Euro | _lang |       | hp/la |       |       | 9_mac |       |
 |   | pean_ | uage) |       | ngcod |       |       | rolan |       |
 |   | langu |       |       | es_na |       |       | guage |       |
@@ -4607,7 +4792,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Poli | język | [*    | *pol* | *pol* | *pol* | []{#a |
 |   | -Euro | sh](h | po    | pl*]( |       |       |       | nchor |
-|   | pean] | ttps: | lski, | https |       |       |       | -161} |
+|   | pean] | ttps: | lski, | https |       |       |       | -153} |
 |   | (http | //en. | p     | ://ww |       |       |       |       |
 |   | s://e | wikip | olszc | w.loc |       |       |       |       |
 |   | n.wik | edia. | zyzna | .gov/ |       |       |       |       |
@@ -4628,7 +4813,7 @@ For unknown or unspecified or mixed
 |   | pean] | o](ht |       | https |       |       | [3](h | guage |
 |   | (http | tps:/ |       | ://ww |       |       | ttps: | []{#a |
 |   | s://e | /en.w |       | w.loc |       |       | //en. | nchor |
-|   | n.wik | ikipe |       | .gov/ |       |       | wikip | -162} |
+|   | n.wik | ikipe |       | .gov/ |       |       | wikip | -154} |
 |   | ipedi | dia.o |       | stand |       |       | edia. |       |
 |   | a.org | rg/wi |       | ards/ |       |       | org/w |       |
 |   | /wiki | ki/Pa |       | iso63 |       |       | iki/I |       |
@@ -4643,7 +4828,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Po   | Port  | [*    | *por* | *por* | *por* | []{#a |
 |   | -Euro | rtugu | uguês | pt*]( |       |       |       | nchor |
-|   | pean] | ese]( |       | https |       |       |       | -163} |
+|   | pean] | ese]( |       | https |       |       |       | -155} |
 |   | (http | https |       | ://ww |       |       |       |       |
 |   | s://e | ://en |       | w.loc |       |       |       |       |
 |   | n.wik | .wiki |       | .gov/ |       |       |       |       |
@@ -4664,7 +4849,7 @@ For unknown or unspecified or mixed
 |   | (http | a](ht | K     | https |       |       | 43](h | guage |
 |   | s://e | tps:/ | ichwa | ://ww |       |       | ttps: | []{#a |
 |   | n.wik | /en.w |       | w.loc |       |       | //en. | nchor |
-|   | ipedi | ikipe |       | .gov/ |       |       | wikip | -164} |
+|   | ipedi | ikipe |       | .gov/ |       |       | wikip | -156} |
 |   | a.org | dia.o |       | stand |       |       | edia. |       |
 |   | /wiki | rg/wi |       | ards/ |       |       | org/w |       |
 |   | /Quec | ki/Qu |       | iso63 |       |       | iki/I |       |
@@ -4679,7 +4864,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [R    | Ruma  | [*    | *roh* | *roh* | *roh* | []{#a |
 |   | -Euro | omans | ntsch | rm*]( |       |       |       | nchor |
-|   | pean] | h](ht | Gri   | https |       |       |       | -165} |
+|   | pean] | h](ht | Gri   | https |       |       |       | -157} |
 |   | (http | tps:/ | schun | ://ww |       |       |       |       |
 |   | s://e | /en.w |       | w.loc |       |       |       |       |
 |   | n.wik | ikipe |       | .gov/ |       |       |       |       |
@@ -4702,7 +4887,7 @@ For unknown or unspecified or mixed
 |   | tps:/ | .wiki |       | w.loc |       |       |       | rundi |
 |   | /en.w | pedia |       | .gov/ |       |       |       | []{#a |
 |   | ikipe | .org/ |       | stand |       |       |       | nchor |
-|   | dia.o | wiki/ |       | ards/ |       |       |       | -166} |
+|   | dia.o | wiki/ |       | ards/ |       |       |       | -158} |
 |   | rg/wi | Rundi |       | iso63 |       |       |       |       |
 |   | ki/Ni | _lang |       | 9-2/p |       |       |       |       |
 |   | ger–C | uage) |       | hp/la |       |       |       |       |
@@ -4804,11 +4989,11 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | alid. |
 |   |       |       |       |       |       |       |       | []{#a |
 |   |       |       |       |       |       |       |       | nchor |
-|   |       |       |       |       |       |       |       | -167} |
+|   |       |       |       |       |       |       |       | -159} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [R    | ру    | [*    | *rus* | *rus* | *rus* | []{#a |
 |   | -Euro | ussia | сский | ru*]( |       |       |       | nchor |
-|   | pean] | n](ht |       | https |       |       |       | -168} |
+|   | pean] | n](ht |       | https |       |       |       | -160} |
 |   | (http | tps:/ |       | ://ww |       |       |       |       |
 |   | s://e | /en.w |       | w.loc |       |       |       |       |
 |   | n.wik | ikipe |       | .gov/ |       |       |       |       |
@@ -4828,7 +5013,7 @@ For unknown or unspecified or mixed
 |   | -Euro | krit] | ृतम्, | sa*]( |       |       |       | cient |
 |   | pean] | (http | 𑌸𑌂𑌸𑍍  | https |       |       |       | []{#a |
 |   | (http | s://e | 𑌕𑍃𑌤𑌮𑍍 | ://ww |       |       |       | nchor |
-|   | s://e | n.wik |       | w.loc |       |       |       | -169} |
+|   | s://e | n.wik |       | w.loc |       |       |       | -161} |
 |   | n.wik | ipedi |       | .gov/ |       |       |       |       |
 |   | ipedi | a.org |       | stand |       |       |       |       |
 |   | a.org | /wiki |       | ards/ |       |       |       |       |
@@ -4847,7 +5032,7 @@ For unknown or unspecified or mixed
 |   | pean] | nian] |       | https |       |       | [4](h | guage |
 |   | (http | (http |       | ://ww |       |       | ttps: | []{#a |
 |   | s://e | s://e |       | w.loc |       |       | //en. | nchor |
-|   | n.wik | n.wik |       | .gov/ |       |       | wikip | -170} |
+|   | n.wik | n.wik |       | .gov/ |       |       | wikip | -162} |
 |   | ipedi | ipedi |       | stand |       |       | edia. |       |
 |   | a.org | a.org |       | ards/ |       |       | org/w |       |
 |   | /wiki | /wiki |       | iso63 |       |       | iki/I |       |
@@ -4862,7 +5047,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Sind | सि    | [*    | *snd* | *snd* | *snd* | []{#a |
 |   | -Euro | hi](h | न्धी, | sd*]( |       |       |       | nchor |
-|   | pean] | ttps: | سنڌي، | https |       |       |       | -171} |
+|   | pean] | ttps: | سنڌي، | https |       |       |       | -163} |
 |   | (http | //en. | س     | ://ww |       |       |       |       |
 |   | s://e | wikip | ندھی‎ | w.loc |       |       |       |       |
 |   | n.wik | edia. |       | .gov/ |       |       |       |       |
@@ -4880,7 +5065,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [Nor  | Davvi | [*    | *sme* | *sme* | *sme* | []{#a |
 |   | Urali | thern | sámeg | se*]( |       |       |       | nchor |
-|   | c](ht | Sami] | iella | https |       |       |       | -172} |
+|   | c](ht | Sami] | iella | https |       |       |       | -164} |
 |   | tps:/ | (http |       | ://ww |       |       |       |       |
 |   | /en.w | s://e |       | w.loc |       |       |       |       |
 |   | ikipe | n.wik |       | .gov/ |       |       |       |       |
@@ -4898,7 +5083,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Au   | [Samo | g     | [*    | *smo* | *smo* | *smo* | []{#a |
 |   | stron | an](h | agana | sm*]( |       |       |       | nchor |
-|   | esian | ttps: | fa\'a | https |       |       |       | -173} |
+|   | esian | ttps: | fa\'a | https |       |       |       | -165} |
 |   | ](htt | //en. | Samoa | ://ww |       |       |       |       |
 |   | ps:// | wikip |       | w.loc |       |       |       |       |
 |   | en.wi | edia. |       | .gov/ |       |       |       |       |
@@ -4916,7 +5101,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [Sa   | yângâ | [*    | *sag* | *sag* | *sag* | []{#a |
 |   | Creol | ngo]( | tî    | sg*]( |       |       |       | nchor |
-|   | e](ht | https | sängö | https |       |       |       | -174} |
+|   | e](ht | https | sängö | https |       |       |       | -166} |
 |   | tps:/ | ://en |       | ://ww |       |       |       |       |
 |   | /en.w | .wiki |       | w.loc |       |       |       |       |
 |   | ikipe | pedia |       | .gov/ |       |       |       |       |
@@ -4949,7 +5134,7 @@ For unknown or unspecified or mixed
 |   |       |       |       | p?iso |       |       |       | scc*[ |
 |   |       |       |       | _639_ |       |       |       | ]{#an |
 |   |       |       |       | 1=sr) |       |       |       | chor- |
-|   |       |       |       |       |       |       |       | 175}[ |
+|   |       |       |       |       |       |       |       | 167}[ |
 |   |       |       |       |       |       |       |       | \[2\] |
 |   |       |       |       |       |       |       |       | ](htt |
 |   |       |       |       |       |       |       |       | ps:// |
@@ -4969,11 +5154,11 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | es-2) |
 |   |       |       |       |       |       |       |       | []{#a |
 |   |       |       |       |       |       |       |       | nchor |
-|   |       |       |       |       |       |       |       | -176} |
+|   |       |       |       |       |       |       |       | -168} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [     | Gài   | [*    | *gla* | *gla* | *gla* | []{#a |
 |   | -Euro | Gaeli | dhlig | gd*]( |       |       |       | nchor |
-|   | pean] | c](ht |       | https |       |       |       | -177} |
+|   | pean] | c](ht |       | https |       |       |       | -169} |
 |   | (http | tps:/ |       | ://ww |       |       |       |       |
 |   | s://e | /en.w |       | w.loc |       |       |       |       |
 |   | n.wik | ikipe |       | .gov/ |       |       |       |       |
@@ -4991,7 +5176,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [Sh   | chi   | [*    | *sna* | *sna* | *sna* | []{#a |
 |   | iger- | ona]( | Shona | sn*]( |       |       |       | nchor |
-|   | -Cong | https |       | https |       |       |       | -178} |
+|   | -Cong | https |       | https |       |       |       | -170} |
 |   | o](ht | ://en |       | ://ww |       |       |       |       |
 |   | tps:/ | .wiki |       | w.loc |       |       |       |       |
 |   | /en.w | pedia |       | .gov/ |       |       |       |       |
@@ -5009,7 +5194,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Si   | සිංහල | [*    | *sin* | *sin* | *sin* | []{#a |
 |   | -Euro | nhala |       | si*]( |       |       |       | nchor |
-|   | pean] | ](htt |       | https |       |       |       | -179} |
+|   | pean] | ](htt |       | https |       |       |       | -171} |
 |   | (http | ps:// |       | ://ww |       |       |       |       |
 |   | s://e | en.wi |       | w.loc |       |       |       |       |
 |   | n.wik | kiped |       | .gov/ |       |       |       |       |
@@ -5027,7 +5212,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Slov | S     | [*    | *slk* | ***s  | *slk* | []{#a |
 |   | -Euro | ak](h | loven | sk*]( |       | lo*** |       | nchor |
-|   | pean] | ttps: | čina, | https |       |       |       | -180} |
+|   | pean] | ttps: | čina, | https |       |       |       | -172} |
 |   | (http | //en. | Slov  | ://ww |       |       |       |       |
 |   | s://e | wikip | enský | w.loc |       |       |       |       |
 |   | n.wik | edia. | jazyk | .gov/ |       |       |       |       |
@@ -5050,7 +5235,7 @@ For unknown or unspecified or mixed
 |   | s://e | /en.w | S     | w.loc |       |       |       | ovene |
 |   | n.wik | ikipe | loven | .gov/ |       |       |       | []{#a |
 |   | ipedi | dia.o | ščina | stand |       |       |       | nchor |
-|   | a.org | rg/wi |       | ards/ |       |       |       | -181} |
+|   | a.org | rg/wi |       | ards/ |       |       |       | -173} |
 |   | /wiki | ki/Sl |       | iso63 |       |       |       |       |
 |   | /Indo | ovene |       | 9-2/p |       |       |       |       |
 |   | -Euro | _lang |       | hp/la |       |       |       |       |
@@ -5063,7 +5248,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Af   | [Soma | S     | [*    | *som* | *som* | *som* | []{#a |
 |   | ro-As | li](h | oomaa | so*]( |       |       |       | nchor |
-|   | iatic | ttps: | liga, | https |       |       |       | -182} |
+|   | iatic | ttps: | liga, | https |       |       |       | -174} |
 |   | ](htt | //en. | af    | ://ww |       |       |       |       |
 |   | ps:// | wikip | Soo   | w.loc |       |       |       |       |
 |   | en.wi | edia. | maali | .gov/ |       |       |       |       |
@@ -5081,7 +5266,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [Sou  | Se    | [*    | *sot* | *sot* | *sot* | []{#a |
 |   | iger- | thern | sotho | st*]( |       |       |       | nchor |
-|   | -Cong | So    |       | https |       |       |       | -183} |
+|   | -Cong | So    |       | https |       |       |       | -175} |
 |   | o](ht | tho]( |       | ://ww |       |       |       |       |
 |   | tps:/ | https |       | w.loc |       |       |       |       |
 |   | /en.w | ://en |       | .gov/ |       |       |       |       |
@@ -5099,7 +5284,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Sp   | Es    | [*    | *spa* | *spa* | *spa* | []{#a |
 |   | -Euro | anish | pañol | es*]( |       |       |       | nchor |
-|   | pean] | ](htt |       | https |       |       |       | -184} |
+|   | pean] | ](htt |       | https |       |       |       | -176} |
 |   | (http | ps:// |       | ://ww |       |       |       |       |
 |   | s://e | en.wi |       | w.loc |       |       |       |       |
 |   | n.wik | kiped |       | .gov/ |       |       |       |       |
@@ -5117,7 +5302,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Au   | [     | Basa  | [*    | *sun* | *sun* | *sun* | []{#a |
 |   | stron | Sunda | Sunda | su*]( |       |       |       | nchor |
-|   | esian | nese] |       | https |       |       |       | -185} |
+|   | esian | nese] |       | https |       |       |       | -177} |
 |   | ](htt | (http |       | ://ww |       |       |       |       |
 |   | ps:// | s://e |       | w.loc |       |       |       |       |
 |   | en.wi | n.wik |       | .gov/ |       |       |       |       |
@@ -5138,7 +5323,7 @@ For unknown or unspecified or mixed
 |   | -Cong | i](ht |       | https |       |       | [2](h | guage |
 |   | o](ht | tps:/ |       | ://ww |       |       | ttps: | []{#a |
 |   | tps:/ | /en.w |       | w.loc |       |       | //en. | nchor |
-|   | /en.w | ikipe |       | .gov/ |       |       | wikip | -186} |
+|   | /en.w | ikipe |       | .gov/ |       |       | wikip | -178} |
 |   | ikipe | dia.o |       | stand |       |       | edia. |       |
 |   | dia.o | rg/wi |       | ards/ |       |       | org/w |       |
 |   | rg/wi | ki/Sw |       | iso63 |       |       | iki/I |       |
@@ -5157,7 +5342,7 @@ For unknown or unspecified or mixed
 |   | o](ht | ://en |       | ://ww |       |       |       | Swazi |
 |   | tps:/ | .wiki |       | w.loc |       |       |       | []{#a |
 |   | /en.w | pedia |       | .gov/ |       |       |       | nchor |
-|   | ikipe | .org/ |       | stand |       |       |       | -187} |
+|   | ikipe | .org/ |       | stand |       |       |       | -179} |
 |   | dia.o | wiki/ |       | ards/ |       |       |       |       |
 |   | rg/wi | Swati |       | iso63 |       |       |       |       |
 |   | ki/Ni | _lang |       | 9-2/p |       |       |       |       |
@@ -5171,7 +5356,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [S    | Sv    | [*    | *swe* | *swe* | *swe* | []{#a |
 |   | -Euro | wedis | enska | sv*]( |       |       |       | nchor |
-|   | pean] | h](ht |       | https |       |       |       | -188} |
+|   | pean] | h](ht |       | https |       |       |       | -180} |
 |   | (http | tps:/ |       | ://ww |       |       |       |       |
 |   | s://e | /en.w |       | w.loc |       |       |       |       |
 |   | n.wik | ikipe |       | .gov/ |       |       |       |       |
@@ -5189,7 +5374,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [D    | [Ta   | தமிழ் | [*    | *tam* | *tam* | *tam* | []{#a |
 |   | ravid | mil]( |       | ta*]( |       |       |       | nchor |
-|   | ian]( | https |       | https |       |       |       | -189} |
+|   | ian]( | https |       | https |       |       |       | -181} |
 |   | https | ://en |       | ://ww |       |       |       |       |
 |   | ://en | .wiki |       | w.loc |       |       |       |       |
 |   | .wiki | pedia |       | .gov/ |       |       |       |       |
@@ -5207,7 +5392,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [D    | [Telu | త     | [*    | *tel* | *tel* | *tel* | []{#a |
 |   | ravid | gu](h | ెలుగు | te*]( |       |       |       | nchor |
-|   | ian]( | ttps: |       | https |       |       |       | -190} |
+|   | ian]( | ttps: |       | https |       |       |       | -182} |
 |   | https | //en. |       | ://ww |       |       |       |       |
 |   | ://en | wikip |       | w.loc |       |       |       |       |
 |   | .wiki | edia. |       | .gov/ |       |       |       |       |
@@ -5225,7 +5410,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [Ta   | то    | [*    | *tgk* | *tgk* | *tgk* | []{#a |
 |   | -Euro | jik]( | ҷикӣ, | tg*]( |       |       |       | nchor |
-|   | pean] | https | *toç  | https |       |       |       | -191} |
+|   | pean] | https | *toç  | https |       |       |       | -183} |
 |   | (http | ://en | ikī*, | ://ww |       |       |       |       |
 |   | s://e | .wiki | تا    | w.loc |       |       |       |       |
 |   | n.wik | pedia | جیکی‎ | .gov/ |       |       |       |       |
@@ -5243,7 +5428,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Ta   | [     | ไทย   | [*    | *tha* | *tha* | *tha* | []{#a |
 |   | i--Ka | Thai] |       | th*]( |       |       |       | nchor |
-|   | dai]( | (http |       | https |       |       |       | -192} |
+|   | dai]( | (http |       | https |       |       |       | -184} |
 |   | https | s://e |       | ://ww |       |       |       |       |
 |   | ://en | n.wik |       | w.loc |       |       |       |       |
 |   | .wiki | ipedi |       | .gov/ |       |       |       |       |
@@ -5261,7 +5446,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Af   | [Tig  | ትግርኛ  | [*    | *tir* | *tir* | *tir* | []{#a |
 |   | ro-As | rinya |       | ti*]( |       |       |       | nchor |
-|   | iatic | ](htt |       | https |       |       |       | -193} |
+|   | iatic | ](htt |       | https |       |       |       | -185} |
 |   | ](htt | ps:// |       | ://ww |       |       |       |       |
 |   | ps:// | en.wi |       | w.loc |       |       |       |       |
 |   | en.wi | kiped |       | .gov/ |       |       |       |       |
@@ -5286,7 +5471,7 @@ For unknown or unspecified or mixed
 |   | kiped | dia.o |       | stand |       |       |       | betan |
 |   | ia.or | rg/wi |       | ards/ |       |       |       | []{#a |
 |   | g/wik | ki/St |       | iso63 |       |       |       | nchor |
-|   | i/Sin | andar |       | 9-2/p |       |       |       | -194} |
+|   | i/Sin | andar |       | 9-2/p |       |       |       | -186} |
 |   | o-Tib | d_Tib |       | hp/la |       |       |       |       |
 |   | etan_ | etan) |       | ngcod |       |       |       |       |
 |   | langu |       |       | es_na |       |       |       |       |
@@ -5297,7 +5482,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [T    | Tür   | [*    | *tuk* | *tuk* | *tuk* | []{#a |
 |   | Turki | urkme | kmen, | tk*]( |       |       |       | nchor |
-|   | c](ht | n](ht | Тү    | https |       |       |       | -195} |
+|   | c](ht | n](ht | Тү    | https |       |       |       | -187} |
 |   | tps:/ | tps:/ | ркмен | ://ww |       |       |       |       |
 |   | /en.w | /en.w |       | w.loc |       |       |       |       |
 |   | ikipe | ikipe |       | .gov/ |       |       |       |       |
@@ -5334,11 +5519,11 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | *fil* |
 |   |       |       |       |       |       |       |       | []{#a |
 |   |       |       |       |       |       |       |       | nchor |
-|   |       |       |       |       |       |       |       | -196} |
+|   |       |       |       |       |       |       |       | -188} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [Tswa | Set   | [*    | *tsn* | *tsn* | *tsn* | []{#a |
 |   | iger- | na](h | swana | tn*]( |       |       |       | nchor |
-|   | -Cong | ttps: |       | https |       |       |       | -197} |
+|   | -Cong | ttps: |       | https |       |       |       | -189} |
 |   | o](ht | //en. |       | ://ww |       |       |       |       |
 |   | tps:/ | wikip |       | w.loc |       |       |       |       |
 |   | /en.w | edia. |       | .gov/ |       |       |       |       |
@@ -5361,7 +5546,7 @@ For unknown or unspecified or mixed
 |   | ps:// | wikip |       | w.loc |       |       |       | ongan |
 |   | en.wi | edia. |       | .gov/ |       |       |       | []{#a |
 |   | kiped | org/w |       | stand |       |       |       | nchor |
-|   | ia.or | iki/T |       | ards/ |       |       |       | -198} |
+|   | ia.or | iki/T |       | ards/ |       |       |       | -190} |
 |   | g/wik | ongan |       | iso63 |       |       |       |       |
 |   | i/Aus | _lang |       | 9-2/p |       |       |       |       |
 |   | trone | uage) |       | hp/la |       |       |       |       |
@@ -5374,7 +5559,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [T    | T     | [*    | *tur* | *tur* | *tur* | []{#a |
 |   | Turki | urkis | ürkçe | tr*]( |       |       |       | nchor |
-|   | c](ht | h](ht |       | https |       |       |       | -199} |
+|   | c](ht | h](ht |       | https |       |       |       | -191} |
 |   | tps:/ | tps:/ |       | ://ww |       |       |       |       |
 |   | /en.w | /en.w |       | w.loc |       |       |       |       |
 |   | ikipe | ikipe |       | .gov/ |       |       |       |       |
@@ -5392,7 +5577,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [Tson | Xit   | [*    | *tso* | *tso* | *tso* | []{#a |
 |   | iger- | ga](h | songa | ts*]( |       |       |       | nchor |
-|   | -Cong | ttps: |       | https |       |       |       | -200} |
+|   | -Cong | ttps: |       | https |       |       |       | -192} |
 |   | o](ht | //en. |       | ://ww |       |       |       |       |
 |   | tps:/ | wikip |       | w.loc |       |       |       |       |
 |   | /en.w | edia. |       | .gov/ |       |       |       |       |
@@ -5410,7 +5595,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [Ta   | татар | [*    | *tat* | *tat* | *tat* | []{#a |
 |   | Turki | tar]( | теле, | tt*]( |       |       |       | nchor |
-|   | c](ht | https | *     | https |       |       |       | -201} |
+|   | c](ht | https | *     | https |       |       |       | -193} |
 |   | tps:/ | ://en | tatar | ://ww |       |       |       |       |
 |   | /en.w | .wiki | tele* | w.loc |       |       |       |       |
 |   | ikipe | pedia |       | .gov/ |       |       |       |       |
@@ -5436,7 +5621,7 @@ For unknown or unspecified or mixed
 |   | dia.o | /Twi) |       | ards/ |       |       |       | *aka* |
 |   | rg/wi |       |       | iso63 |       |       |       | []{#a |
 |   | ki/Ni |       |       | 9-2/p |       |       |       | nchor |
-|   | ger–C |       |       | hp/la |       |       |       | -202} |
+|   | ger–C |       |       | hp/la |       |       |       | -194} |
 |   | ongo_ |       |       | ngcod |       |       |       |       |
 |   | langu |       |       | es_na |       |       |       |       |
 |   | ages) |       |       | me.ph |       |       |       |       |
@@ -5459,7 +5644,7 @@ For unknown or unspecified or mixed
 |   | langu |       |       | es_na |       |       |       | nesia |
 |   | ages) |       |       | me.ph |       |       |       | )[]{# |
 |   |       |       |       | p?iso |       |       |       | ancho |
-|   |       |       |       | _639_ |       |       |       | r-203 |
+|   |       |       |       | _639_ |       |       |       | r-195 |
 |   |       |       |       | 1=ty) |       |       |       | }[\[3 |
 |   |       |       |       |       |       |       |       | \]](h |
 |   |       |       |       |       |       |       |       | ttps: |
@@ -5477,11 +5662,11 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | te-3) |
 |   |       |       |       |       |       |       |       | []{#a |
 |   |       |       |       |       |       |       |       | nchor |
-|   |       |       |       |       |       |       |       | -204} |
+|   |       |       |       |       |       |       |       | -196} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [     | [     | ئۇيغۇ | [*    | *uig* | *uig* | *uig* | []{#a |
 |   | Turki | Uighu | رچە‎, | ug*]( |       |       |       | nchor |
-|   | c](ht | r](ht | *     | https |       |       |       | -205} |
+|   | c](ht | r](ht | *     | https |       |       |       | -197} |
 |   | tps:/ | tps:/ | Uyghu | ://ww |       |       |       |       |
 |   | /en.w | /en.w | rche* | w.loc |       |       |       |       |
 |   | ikipe | ikipe |       | .gov/ |       |       |       |       |
@@ -5499,7 +5684,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [     | Украї | [*    | *ukr* | *ukr* | *ukr* | []{#a |
 |   | -Euro | Ukrai | нська | uk*]( |       |       |       | nchor |
-|   | pean] | nian] |       | https |       |       |       | -206} |
+|   | pean] | nian] |       | https |       |       |       | -198} |
 |   | (http | (http |       | ://ww |       |       |       |       |
 |   | s://e | s://e |       | w.loc |       |       |       |       |
 |   | n.wik | n.wik |       | .gov/ |       |       |       |       |
@@ -5517,7 +5702,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [U    | اردو  | [*    | *urd* | *urd* | *urd* | []{#a |
 |   | -Euro | rdu]( |       | ur*]( |       |       |       | nchor |
-|   | pean] | https |       | https |       |       |       | -207} |
+|   | pean] | https |       | https |       |       |       | -199} |
 |   | (http | ://en |       | ://ww |       |       |       |       |
 |   | s://e | .wiki |       | w.loc |       |       |       |       |
 |   | n.wik | pedia |       | .gov/ |       |       |       |       |
@@ -5538,7 +5723,7 @@ For unknown or unspecified or mixed
 |   | c](ht | https | Ў     | https |       |       | [2](h | guage |
 |   | tps:/ | ://en | збек, | ://ww |       |       | ttps: | []{#a |
 |   | /en.w | .wiki | أۇ    | w.loc |       |       | //en. | nchor |
-|   | ikipe | pedia | زبېك‎ | .gov/ |       |       | wikip | -208} |
+|   | ikipe | pedia | زبېك‎ | .gov/ |       |       | wikip | -200} |
 |   | dia.o | .org/ |       | stand |       |       | edia. |       |
 |   | rg/wi | wiki/ |       | ards/ |       |       | org/w |       |
 |   | ki/Tu | Uzbek |       | iso63 |       |       | iki/I |       |
@@ -5553,7 +5738,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [Ve   | Tshi  | [*    | *ven* | *ven* | *ven* | []{#a |
 |   | iger- | nda]( | venḓa | ve*]( |       |       |       | nchor |
-|   | -Cong | https |       | https |       |       |       | -209} |
+|   | -Cong | https |       | https |       |       |       | -201} |
 |   | o](ht | ://en |       | ://ww |       |       |       |       |
 |   | tps:/ | .wiki |       | w.loc |       |       |       |       |
 |   | /en.w | pedia |       | .gov/ |       |       |       |       |
@@ -5571,7 +5756,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Aust | [Vi   | Tiếng | [*    | *vie* | *vie* | *vie* | []{#a |
 |   | roasi | etnam | Việt  | vi*]( |       |       |       | nchor |
-|   | atic] | ese]( |       | https |       |       |       | -210} |
+|   | atic] | ese]( |       | https |       |       |       | -202} |
 |   | (http | https |       | ://ww |       |       |       |       |
 |   | s://e | ://en |       | w.loc |       |       |       |       |
 |   | n.wik | .wiki |       | .gov/ |       |       |       |       |
@@ -5592,7 +5777,7 @@ For unknown or unspecified or mixed
 |   | ructe | ](htt |       | https |       |       |       | ucted |
 |   | d](ht | ps:// |       | ://ww |       |       |       | []{#a |
 |   | tps:/ | en.wi |       | w.loc |       |       |       | nchor |
-|   | /en.w | kiped |       | .gov/ |       |       |       | -211} |
+|   | /en.w | kiped |       | .gov/ |       |       |       | -203} |
 |   | ikipe | ia.or |       | stand |       |       |       |       |
 |   | dia.o | g/wik |       | ards/ |       |       |       |       |
 |   | rg/wi | i/Vol |       | iso63 |       |       |       |       |
@@ -5607,7 +5792,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [W    | Walon | [*    | *wln* | *wln* | *wln* | []{#a |
 |   | -Euro | alloo |       | wa*]( |       |       |       | nchor |
-|   | pean] | n](ht |       | https |       |       |       | -212} |
+|   | pean] | n](ht |       | https |       |       |       | -204} |
 |   | (http | tps:/ |       | ://ww |       |       |       |       |
 |   | s://e | /en.w |       | w.loc |       |       |       |       |
 |   | n.wik | ikipe |       | .gov/ |       |       |       |       |
@@ -5625,7 +5810,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [Indo | [We   | Cy    | [*    | *cym* | ***w  | *cym* | []{#a |
 |   | -Euro | lsh]( | mraeg | cy*]( |       | el*** |       | nchor |
-|   | pean] | https |       | https |       |       |       | -213} |
+|   | pean] | https |       | https |       |       |       | -205} |
 |   | (http | ://en |       | ://ww |       |       |       |       |
 |   | s://e | .wiki |       | w.loc |       |       |       |       |
 |   | n.wik | pedia |       | .gov/ |       |       |       |       |
@@ -5643,7 +5828,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [Wo   | W     | [*    | *wol* | *wol* | *wol* | []{#a |
 |   | iger- | lof]( | ollof | wo*]( |       |       |       | nchor |
-|   | -Cong | https |       | https |       |       |       | -214} |
+|   | -Cong | https |       | https |       |       |       | -206} |
 |   | o](ht | ://en |       | ://ww |       |       |       |       |
 |   | tps:/ | .wiki |       | w.loc |       |       |       |       |
 |   | /en.w | pedia |       | .gov/ |       |       |       |       |
@@ -5666,7 +5851,7 @@ For unknown or unspecified or mixed
 |   | s://e | n](ht |       | w.loc |       |       |       | isian |
 |   | n.wik | tps:/ |       | .gov/ |       |       |       | []{#a |
 |   | ipedi | /en.w |       | stand |       |       |       | nchor |
-|   | a.org | ikipe |       | ards/ |       |       |       | -215} |
+|   | a.org | ikipe |       | ards/ |       |       |       | -207} |
 |   | /wiki | dia.o |       | iso63 |       |       |       |       |
 |   | /Indo | rg/wi |       | 9-2/p |       |       |       |       |
 |   | -Euro | ki/We |       | hp/la |       |       |       |       |
@@ -5679,7 +5864,7 @@ For unknown or unspecified or mixed
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [Xh   | isi   | [*    | *xho* | *xho* | *xho* | []{#a |
 |   | iger- | osa]( | Xhosa | xh*]( |       |       |       | nchor |
-|   | -Cong | https |       | https |       |       |       | -216} |
+|   | -Cong | https |       | https |       |       |       | -208} |
 |   | o](ht | ://en |       | ://ww |       |       |       |       |
 |   | tps:/ | .wiki |       | w.loc |       |       |       |       |
 |   | /en.w | pedia |       | .gov/ |       |       |       |       |
@@ -5711,7 +5896,7 @@ For unknown or unspecified or mixed
 |   | ages) |       |       | me.ph |       |       | #yid) | *ji*  |
 |   |       |       |       | p?iso |       |       |       | .[]{# |
 |   |       |       |       | _639_ |       |       |       | ancho |
-|   |       |       |       | 1=yi) |       |       |       | r-217 |
+|   |       |       |       | 1=yi) |       |       |       | r-209 |
 |   |       |       |       |       |       |       |       | }[\[1 |
 |   |       |       |       |       |       |       |       | \]](h |
 |   |       |       |       |       |       |       |       | ttps: |
@@ -5731,11 +5916,11 @@ For unknown or unspecified or mixed
 |   |       |       |       |       |       |       |       | ge-1) |
 |   |       |       |       |       |       |       |       | []{#a |
 |   |       |       |       |       |       |       |       | nchor |
-|   |       |       |       |       |       |       |       | -218} |
+|   |       |       |       |       |       |       |       | -210} |
 +---+-------+-------+-------+-------+-------+-------+-------+-------+
 |   | [N    | [Yoru | Y     | [*    | *yor* | *yor* | *yor* | []{#a |
 |   | iger- | ba](h | orùbá | yo*]( |       |       |       | nchor |
-|   | -Cong | ttps: |       | https |       |       |       | -219} |
+|   | -Cong | ttps: |       | https |       |       |       | -211} |
 |   | o](ht | //en. |       | ://ww |       |       |       |       |
 |   | tps:/ | wikip |       | w.loc |       |       |       |       |
 |   | /en.w | edia. |       | .gov/ |       |       |       |       |
@@ -5756,7 +5941,7 @@ For unknown or unspecified or mixed
 |   | dai]( | g](ht | ueŋƅ, | https |       |       | 16](h | guage |
 |   | https | tps:/ | Saw   | ://ww |       |       | ttps: | []{#a |
 |   | ://en | /en.w | c     | w.loc |       |       | //en. | nchor |
-|   | .wiki | ikipe | uengh | .gov/ |       |       | wikip | -220} |
+|   | .wiki | ikipe | uengh | .gov/ |       |       | wikip | -212} |
 |   | pedia | dia.o |       | stand |       |       | edia. |       |
 |   | .org/ | rg/wi |       | ards/ |       |       | org/w |       |
 |   | wiki/ | ki/Zh |       | iso63 |       |       | iki/I |       |
@@ -5790,7 +5975,7 @@ For unknown or unspecified or mixed
 
 Source: Wikipedia
 
-#### []{#anchor-221}Key
+#### []{#anchor-213}Key
 
 The Key of the record is defined by *KeyField*. The contents of the
 field are parsed as a string. The Key is expected to be unique to the
@@ -5800,7 +5985,7 @@ is best practice to use keys as unique record identifiers across all
 databases. Records with the same Key in different indexes are considered
 the name resource and can be combined using Joins.
 
-#### []{#anchor-222}Category
+#### []{#anchor-214}Category
 
 The category is a natural whole number (internally a 4-byte integer)
 used to identify the record's belonging to a specific set, for example a
@@ -5809,7 +5994,7 @@ subject category. By default it is 0 which denotes "uncategorized".
 During indexing, if so defined, the parser uses the "Category Field" (by
 default "*CategoryField*\") to set the category.
 
-#### []{#anchor-223}Priority
+#### []{#anchor-215}Priority
 
 The priority is a natural whole number (internally a 2-byte integer)
 used to specify the record's priority in a sort.
@@ -5817,14 +6002,14 @@ used to specify the record's priority in a sort.
 During indexing, if so defined, the parser uses the "Priority Field" (by
 default "*PriorityField*\") to set the priority..
 
-# []{#anchor-224}Searching 
+# []{#anchor-216}Searching 
 
 The re-Isearch works with sets. The result of a query is a set called a
 "result set". Result sets may be combined and operations performed upon
 them. The engine supports several query language variants with many
 binary and unary operators.
 
-## []{#anchor-225}Targets
+## []{#anchor-217}Targets
 
 When we search, we search a database (index) also known outside of the
 context of the engine itself as a "target". Targets (search databases)
@@ -5871,11 +6056,82 @@ definition (a collection that includes something that includes something
 that includes itself). **We need to resolve everything into a unique
 list of physical indexes to search.**
 
-Virtual databases are quite powerful and since they are defined by a
-single file and can be created on-demand it allows for extremely
-flexible definitions of searching.
+#### []{#anchor-218}Virtualization/Shards/Clusters
 
-# []{#anchor-226}re-Isearch Query Language 
+Having a "database" or index divided into a number of different
+"indexes" or databases is called a number of things by different
+software packages. Shards or clusters (of shards) is common names. Our
+concept is a little bit different as these combinations of shards and
+clusters can be organized at will into a "database" that is really just
+"virtual". These virtual databases are quite powerful and since they are
+defined by a single file and can be created on-demand it allows for
+extremely flexible definitions of searching.
+
+Here instead of importing the data from one database into another we
+just create a virtual map of databases to search. Search is linear
+across each database. Performance is
+[]{#anchor-219}[]{#anchor-220}[]{#anchor-221}[]{#anchor-222}[]{#anchor-223}[]{#anchor-224}[]{#anchor-225}[]{#anchor-226}[]{#anchor-227}[]{#anchor-228}∑*
+Oi *where Oi is the performance of the ith database---*typically * Oi is
+*O(ln n) where n is the number of unique words in the index. *As one can
+see import (physically importing and merging one database into another)
+provides faster search than virtualization. With two databases db1 and
+db2 with respectively n and m unique words the typical big O performance
+is O(ln(n) + ln(m)).
+
+The overwhelming advantage of virtualization is the speed and ease of
+their creation as they are defined by a single plain text configuration
+file. They can be created on the fly and disposed of at will.
+
+There are two ways: either setting the correct values in a db.ini file
+or by providing a db.vdb file
+
+In an .ini
+
+\[DbInfo\]
+
+Collections=\<List of virtual databases\>
+
+Databases=\<List of physical databases\>
+
+vdb-file=\<Path to file list\> (default: \<database\>.vdb) \# File has 1
+entry per line
+
+A db.vdb file is just a line (one per line) of paths to db.ini files.
+
+#### []{#anchor-229}Using Virtualization to optimize high frequency conjunctions
+
+By moving high frequency search terms to their own index one can
+significantly improve performance on these queries. A store, for
+example, might have a number of departments: electronics, clothing,
+food. Moving each department to its own index can improve performance
+when searching for items in a specific department.
+
+This can also work with more complex queries such as conjuctions of high
+frequency terms. Many of these expensive as they comparatively low
+number of result records but a high number of intermediate sets.
+Imagine, for instance, a collection of records describing motorcars,
+electronics and tools. Television here is probably a high frequency term
+just as Toyota but the only records about both concern the small number
+discussing the camera display assembly, for example Part Number:
+****8679562020**** which is listed as "CAMERA ASSEMBLY, TELEVISION, SIDE
+RIGHT". Instead of keeping these in a the main index one can move all
+the records into their own index, say one containing all of each
+motorcar brand's records around electronics. Since we know, apriori,
+that all the documents in a Toyota electronics index are, for example,
+about Toyota we need only search for the term(s) relevant to the search
+in the domain electronics. Using the virtual feature on can, at will,
+extend the search by selecting brands.
+
+Keep in mind that while these smaller indexes provide better performance
+on queries within them searching spanning a large number of indexes
+increases costs. Looking for the term "apple" across a whole department
+store is much cheaper in a single unified index then searching through,
+following our example, the clothing (beyond a number of apple motives
+and companies with "apple" in name, the computer company Apple even had
+a line of Apple branded clothing at one time), food and electronic
+indexes.
+
+# []{#anchor-230}re-Isearch Query Language 
 
 The result of a query is a result set. The most primitive set is the set
 of records that contain a single term (word or phrase). The engine
@@ -5886,14 +6142,14 @@ in the record.
 
 At the core is RPN and Infix notations:
 
-#### []{#anchor-227}Infix Notation
+#### []{#anchor-231}Infix Notation
 
 \
 Infix notation is the common arithmetic and logical formula notation, in
 which operators are written infix-style between the operands they act on
 (e.g. 2 + 2).
 
-#### []{#anchor-228}RPN Notation
+#### []{#anchor-232}RPN Notation
 
 \
 Reverse Polish notation (RPN), also known as postfix notation, was
@@ -5939,7 +6195,7 @@ to a fragment) *4)* so called **smart** plain language queries* 5)* C++
 supported languages (Go, Guile, Java, Lua, MzScheme, Ocaml, Octave,
 Perl, PHP, R. Ruby. Scilab. Tcl/Tk).
 
-#### []{#anchor-229}Relevant Feedback
+#### []{#anchor-233}Relevant Feedback
 
 The idea behind relevance feedback is to take the results that are
 initially returned from a given query, to gather user feedback, and to
@@ -5965,7 +6221,7 @@ This method has proven quite powerful in a number of use case scenarios
 such as transcript search of videos (processed by speech-to-text) for
 finding "similar to".
 
-#### []{#anchor-230}Smart Queries
+#### []{#anchor-234}Smart Queries
 
 One of the overriding motivations for "smart queries" is to counter the
 typical problem with full-text information search and retrieval systems:
@@ -6008,7 +6264,7 @@ Example: Searching in the collected works of Shakespeare:
     out, Lucetta! that would be ill-favour\'d" in \`The Two Gentlemen of
     Verona\'. The confirmed query is: *"out out"*.
 
-#### []{#anchor-231}Expressions
+#### []{#anchor-235}Expressions
 
 While „Smart" searches is fantastic for many typical use cases (and why
 we developed it), power users tend to want to perform more precise
@@ -6075,7 +6331,7 @@ precision comparison. A date query for 2001 matches, for example,
 or even 19x as a numerical field all values \> 19, e.g. 20, 21, 22, 23
 etc. **
 
-## []{#anchor-232}Term and field paths support "Glob" matching
+## []{#anchor-236}Term and field paths support "Glob" matching
 
 We support left (with some limitations in terms) and right (without
 limitations) truncated search as well as a combination of \* and ? for
@@ -6103,7 +6359,7 @@ for
 
 * *Example:* PLAY\\ACT\\SCENE\\SPEECH\\LINE*
 
-# []{#anchor-233}Query Operators (re-Isearch Language)
+# []{#anchor-237}Query Operators (re-Isearch Language)
 
 The re-Isearch engine has been designed to have an extremely rich and
 expressive logical collection of operators. Some operators can, however,
@@ -6111,7 +6367,7 @@ be quite expensive. The complement, for example, of a set with a single
 result in a large dataset is large. Search time is directly related to
 the time to build the result set.
 
-## []{#anchor-234}Binary Operators
+## []{#anchor-238}Binary Operators
 
   ------------------------------ --------------------------
   Polymorphic Binary Operators   
@@ -6175,7 +6431,10 @@ augmentation or by performing some operations to create a new set.
   JOINR                                                                                          Join right, a set containing those of the left PLUS those on the right with common keys
   ---------------------------------------------------------------------------------------------- -----------------------------------------------------------------------------------------
 
-## []{#anchor-235}Unary Operators
+See: [\#2.2.1.2.Differences to Graph Databases
+(Joins)\|outline](#2.2.1.2.Differences to Graph Databases (Joins)|outline)
+
+## []{#anchor-239}Unary Operators
 
 +------------------------------+-----+------------------------------+
 | Operator                     | Sym | Description                  |
@@ -6250,7 +6509,7 @@ augmentation or by performing some operations to create a new set.
 |                              |     | \"ReverseDate\", etc. )      |
 +------------------------------+-----+------------------------------+
 
-[]{#anchor-236}SortBy:\<ByWhat\>
+[]{#anchor-240}SortBy:\<ByWhat\>
 
 The SORTBY unary operator is used to specify a specific desired sort of
 the result set upon which it applies. It is used to sort (ByWhat
@@ -6290,7 +6549,7 @@ more importance (or less). There are also methods to cluster or shift
 position in results ranking with hits (matches) that are closer to one
 another („magnitism").
 
-## []{#anchor-237}RPN vs Infix
+## []{#anchor-241}RPN vs Infix
 
 Internally all expressions are converted into a RPN (Reverse Polish
 Notation) and placed on stacks.
@@ -6333,7 +6592,7 @@ explicitly select to use these partial results.
 
 #### 
 
-## []{#anchor-238}Personalized Thesauri
+## []{#anchor-242}Personalized Thesauri
 
 re-Isearch provides a flexible model for the support of personalized
 thesauri. They are hooked into the internal query structure (a push
@@ -6341,7 +6600,7 @@ stack of terms and their associated attribute structures) as OR\'d
 expansion. The expansion is fully independent of the query language
 originally used to write the expression.
 
-#### []{#anchor-239}Format:
+#### []{#anchor-243}Format:
 
 \# Rows of the form:
 
@@ -6374,7 +6633,7 @@ an interface where each use can manage their own collection of
 personalized thesauri. Since the thesauri effect only the query
 structure they have no negative effect on search caching.
 
-#### []{#anchor-240}Examples
+#### []{#anchor-244}Examples
 
 \# Sample synonyms
 
@@ -6391,7 +6650,7 @@ the weight \"2\" on the \"war\" term) is expanded as-if \"war\"
 &&* was entered into the system. Notice that the weights are
 multiplicative.
 
-## []{#anchor-241}Geospatial Search
+## []{#anchor-245}Geospatial Search
 
 Two common types of spatial queries used in mapping are proximity and
 bounding box searches. While \"*proximity searches*\" return all results
@@ -6404,7 +6663,7 @@ Proximity searches don\'t try to be precise since they ignore terrain
 and other factors. This makes them computationally simple as long as the
 distance is relatively small.
 
-[]{#anchor-242}
+[]{#anchor-246}
 
   -------------------- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
   Haversine formula:   R = earth's radius (mean radius = 6,371km) Δlat = lat~2~− lat~1~ Δlong = long~2~− long~1~ a = sin²(Δlat/2) + cos(lat~1~).cos(lat~2~).sin²(Δlong/2) c = 2.atan2(√a, √(1−a)) d = R.c
@@ -6421,17 +6680,17 @@ factor = 4552.15 for statue miles (\* 0.8684 for nautical miles and \*
 1.609344 for km). See:
 <http://www.movable-type.co.uk/scripts/latlong.html>
 
-#### []{#anchor-243}Geospatial Proximity search
+#### []{#anchor-247}Geospatial Proximity search
 
 Fieldname{{Latitude, Longitude}\[operator\]value were operator: is \<,
 \<=, =, \>, \>= value=distance is km (default) with the modifiers N, K,
 M for, resp., nautical miles, km and statue miles.
 
-#### []{#anchor-244}Geospatial Bounding box search
+#### []{#anchor-248}Geospatial Bounding box search
 
 Search for a box is defined by the RECT operator: RECT{N,W,S,E}.
 
-## []{#anchor-245}Hierarchical Search
+## []{#anchor-249}Hierarchical Search
 
 Since many formats (like XML, the underlying model for RSS, Atom and
 CAPS) have an explicit ancestry of nodes and paths we exploit them for
@@ -6536,7 +6795,7 @@ standard DOES NOT specify that it need be\-\-- and for good reason.
 See also: [Presentation Methods and
 Elements](https://web.archive.org/web/20111203034608/http://ibu.de/node/124).
 
-#### []{#anchor-246}Example
+#### []{#anchor-250}Example
 
 Searching the collected works of Shakespeare (using the Isearch command
 line tool) we'd like to know who says "to be or not to be"?
@@ -6607,7 +6866,7 @@ Score File
 
 SCENE I. A room in the castle.
 
-#### []{#anchor-247}Order
+#### []{#anchor-251}Order
 
 \
 Lady Macheth says \"*spot*\" in another speech too..
@@ -6678,7 +6937,7 @@ in the first example is 17 and in the second 30. The guiding force is
 not how the data is represented in an internal model but in how the data
 was provided in the input.
 
-#### []{#anchor-248}Counting containers
+#### []{#anchor-252}Counting containers
 
 \
 We can also count containers using C++ (or one of the language
@@ -6714,7 +6973,7 @@ instance of INGREDIENTS. This is possible since we can check the count
 of the instance of INGREDIENTS and can look at the previous we can count
 also the offset of ITEM.
 
-## []{#anchor-249}Comparison of the re-Isearch language to CQL
+## []{#anchor-253}Comparison of the re-Isearch language to CQL
 
 CQL query consist, like the re-Isearch language, of either a single
 search clause or multiple search clauses connected by boolean operators.
@@ -6728,9 +6987,9 @@ short names to context set identifiers.
   dc.title/fish dc.creator/sanderson OR   dc.title any fish or dc.creator any sanderson
   --------------------------------------- -----------------------------------------------
 
-## []{#anchor-250}Ranking and Normalization
+## []{#anchor-254}Ranking and Normalization
 
-#### []{#anchor-251}Ranking
+#### []{#anchor-255}Ranking
 
 We support many models of sorting result sets:
 
@@ -6746,20 +7005,20 @@ We support many models of sorting result sets:
     chonology). The idea behind \"Newsrank\" is that newer stories are
     more significant than older ones.
 
-#### []{#anchor-252}Score
+#### []{#anchor-256}Score
 
 Score is the product of normalization of hits and there are several
 models.
 
-#### []{#anchor-253}Spatial Ranking
+#### []{#anchor-257}Spatial Ranking
 
 Spatial searches are scored according to the work \"*A spatial overlay
-ranking method for a geospatial search of text objects*\"[^5], Lanfear,
+ranking method for a geospatial search of text objects*\"[^6], Lanfear,
 Kenneth J. & U.S. Geological Survey, 2006, USGS Reston, Va.. The spatial
 overlay score tries to correlate how well an object\'s footprint matches
 the search\'s spatial extent (defined by a bounding box).
 
-#### []{#anchor-254}Normalization
+#### []{#anchor-258}Normalization
 
 The re-Isearch engine supports many models of normalization. These may
 be chosen at search time:
@@ -6823,7 +7082,7 @@ they are "more relevant" any weighting against an average would degrade
 their rank. This results in having "more relevant" items lesser scored.
 
 Part of our work was inspired by AF1. See the paper "Toward Better
-Weighting of Anchors", David Hawking et. al.[^6]
+Weighting of Anchors", David Hawking et. al.[^7]
 
 "Okapi BM25 scoring of anchor text surrogate documents has been shown to
 facilitate effective ranking in navigational search tasks over web data.
@@ -6839,7 +7098,7 @@ term coordination, weighting of proximity/adjacency of query terms,
 separate treatment of individual pieces of incoming anchor text and the
 proportion of anchor text consisting of the query words"
 
-#### []{#anchor-255}Score Bias
+#### []{#anchor-259}Score Bias
 
 Scores can in turn be \"biased\" according to \"priority\" (a per record
 scalar), \"category\" (a per-record predicate) and temporal (date
@@ -6848,7 +7107,7 @@ News (a news analysis site that was operated by BSn until 2011) priority
 was calculated as a value to represent a number of features of the
 information source (such as data quality).
 
-#### []{#anchor-256}Magnetism 
+#### []{#anchor-260}Magnetism 
 
 The re-Isearch engine also features a unique feature called magnetism.
 It allows (set via per-index parameters) to allow items in a result list
@@ -6859,13 +7118,13 @@ Central to the "magnetism" algorithm is the "category" of records. By
 boosting scores (either positively or negatively) on the basis of their
 category results within the same category can be more readily clustered.
 
-# []{#anchor-257}Isearch Command Line Tool
+# []{#anchor-261}Isearch Command Line Tool
 
 The Isearch command line tool is a simple utility to perform some
 searches on an index. It is not a replacement for a proper application
 written in one of the support languages but still has a myriad of uses.
 
-#### []{#anchor-258}Options
+#### []{#anchor-262}Options
 
 As one might expect it has a large number of options:
 
@@ -7096,7 +7355,7 @@ Brief and S for Short.*
 *Additional Special elements: R for Raw, H for Highlight, L for
 location/redirect and M for metadata.*
 
-#### []{#anchor-259}Interactive Shell Mode
+#### []{#anchor-263}Interactive Shell Mode
 
 The -shell flag puts the tool into "shell modus". This provides a kind
 of minimalist interactive search shell.
@@ -7235,7 +7494,7 @@ Hit: As jewels in crystal for some prince to buy;
 
 Enter Query (=), \[un\]set option, range first-last or Select file \#:
 
-#### []{#anchor-260}Shell on Inetd (Internet Service Daemon) 
+#### []{#anchor-264}Shell on Inetd (Internet Service Daemon) 
 
 inetd is a super-server daemon on many Unix systems that provides
 Internet services. For each configured service, it listens for requests
@@ -7284,7 +7543,7 @@ Generally TCP sockets are handled by spawning a separate server to
 handle each connection concurrently. UDP sockets are generally handled
 by a single server instance that handles all packets on that port.
 
-# []{#anchor-261}Presentation Elements and Methods
+# []{#anchor-265}Presentation Elements and Methods
 
 One of the design goals of re-Isearch was to facilitate implementation
 of the ISO 23950 (ANSI/NISO Z39.50) Information Retrieval Protocol
@@ -7295,7 +7554,7 @@ retrieving information.
 \
 ISO 23950 has the concepts of record syntax and record elements.
 
-## []{#anchor-262}Presentation Elements (Metadata)
+## []{#anchor-266}Presentation Elements (Metadata)
 
 \
 Presentation is requested of a record by its element name and its
@@ -7322,7 +7581,7 @@ The elements \"B\" and \"F\" are mandated by the ISO23950/Z39.50
 standard. re-Isearch reserves the 1-letter element space for extensions
 and special derived record elements.
 
-## []{#anchor-263}Ancestors and Descendants
+## []{#anchor-267}Ancestors and Descendants
 
 \
 In re-Isearch one can select the name ancestors (via name or path) for
@@ -7375,7 +7634,7 @@ request *SCENE/PLAY\\ACT\\SCENE\\SPEECH/SPEAKER) (or SCENE/SPEAKER).
 This would yield of list including \"Doctor\" and \"Gentlewoman\"
 alongside the guilt ridden Lady.*
 
-# []{#anchor-264}*Presentation Syntax*
+# []{#anchor-268}*Presentation Syntax*
 
 *In re-Isearch we may distinguish between the format that a record was
 created or stored and the format requested from a search. *
@@ -7391,7 +7650,7 @@ Record Syntaxes
   XML             An XML version of metadata.
   --------------- -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-#### []{#anchor-265}Record Syntax OIDs
+#### []{#anchor-269}Record Syntax OIDs
 
   ------------------------------------ --------------------------------------------------------- ---------------------------------------------------------------------------------------- -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
   Object Identifier                    Name                                                      Usage                                                                                    Reference
@@ -7439,7 +7698,7 @@ with the understanding that that registration will be depricated if and
 when an appropriate mime type is defined by iana, and it will be
 superceded by a subsequent registration in the iana category.
 
-## []{#anchor-266}*Highlighting and hit context*
+## []{#anchor-270}*Highlighting and hit context*
 
 *\
 The engine provides a wide range of highlighting methods inclusive of
@@ -7453,7 +7712,7 @@ provided to select both the context of individual \"hits\" with a record
 but also to calculate an \"optimal\" context based around a measure of
 hit distance metrics.*
 
-# []{#anchor-267}Centroids (Meshes and P2P)
+# []{#anchor-271}Centroids (Meshes and P2P)
 
 The re-Isearch engine is not just about search but about what we have
 called "re-search", a recursive model of search where one searches first
@@ -7545,7 +7804,7 @@ Tragedy of Titus Andronicus\' ( \'Zounds, ye whore! is black so base a
 hue?) and \`The Life and Death of King John\' (Zounds! I was never so
 bethump\'d with words) .
 
-# []{#anchor-268}Scan Service
+# []{#anchor-272}Scan Service
 
 Instead of searching for records or content that meets the demands of
 some query sometimes one might want to search for terms or queries
@@ -7574,7 +7833,7 @@ Venice\' but no where else). Jewel, by contrast, was most frequent in
 The scan facility can be used to develop other search interfaces such as
 facets.
 
-# []{#anchor-269}Facets
+# []{#anchor-273}Facets
 
 **Faceted search** is a popular strategy for *information exploration*
 to assist the searcher
@@ -7634,7 +7893,7 @@ Like Search and Scan, **Faceted Search** its offloaded from the
 application front end (CMS etc.) and provided as services via the
 server.
 
-# []{#anchor-270}Programming Languages
+# []{#anchor-274}Programming Languages
 
 Since the internal representation of a query is a RPN stack and we have
 a number of programming interfaces (C++, Python, Java, PHP, Tcl, etc.)
@@ -7643,7 +7902,7 @@ current we don't have a SQL or SPARQL interface but it should be
 relatively easy for a contributor to write in Python (or one of the
 other languages).
 
-## []{#anchor-271}Python
+## []{#anchor-275}Python
 
 In Python one can build a query like:
 
@@ -7698,11 +7957,11 @@ irset2*
 ****As one can see it is relatively straightforward to build alternative
 query languages to run.****
 
-# []{#anchor-272}*Doctypes*
+# []{#anchor-276}*Doctypes*
 
 *This is an old (historic) map of the doctypes*
 
-![](Pictures/10000201000001F000000294AA58453306B94729.png){width="6.2201in"
+![](Pictures/10000001000001F000000294BCEC5AB7BE05BE1D.png){width="6.2201in"
 height="6.7555in"}
 
 *Some, like script, have been abandoned and instead supplemented by
@@ -7916,7 +8175,7 @@ a number of its parameters are set.**
 
 **
 
-## []{#anchor-273}****AUTODETECT****
+## []{#anchor-277}****AUTODETECT****
 
 **Lets start off the with AUTODETECT type as it's often the go-to
 default. Class Tree:**
@@ -7990,7 +8249,7 @@ doctype. **
 
 **
 
-## []{#anchor-274}*ATOM*
+## []{#anchor-278}*ATOM*
 
 **Supports various **flavors** of the **IETF **Atom 1.0 Syndication
 Forma **(AtomPub)**t. **The** **f**ormat is an XML language used for web
@@ -8022,9 +8281,9 @@ other drafts have not been standardized**
 
 ** ATOM**
 
-[]{#anchor-275}*Example:*
+[]{#anchor-279}*Example:*
 
-[]{#anchor-276}*\<?xml version=\"1.0\" encoding=\"utf-8\"?\>*
+[]{#anchor-280}*\<?xml version=\"1.0\" encoding=\"utf-8\"?\>*
 
 *\<feed xmlns=\"http://www.w3.org/2005/Atom\"\>*
 
@@ -8100,7 +8359,7 @@ participates in this ecosystem increases its overall value." -- **
 
 **\"OASIS Open Data Protocol (OData) TC \| OASIS\". **
 
-## []{#anchor-277}*RSS2*
+## []{#anchor-281}*RSS2*
 
 ** DOCTYPE**
 
@@ -8159,7 +8418,7 @@ author\'s name. RSS formats are specified using a generic XML file.**
 
 **Note: default special extension is \"etag\" field for key.**
 
-## []{#anchor-278}****CAP****
+## []{#anchor-282}****CAP****
 
 **Supports a variant of the OASIS Standard CAP-V1.1, October 2005 **and
 CAP-V1.2, July 2010 **in an RSS2 news feed.**
@@ -8273,7 +8532,7 @@ CAP feeds are typically available via RSS, Atom and ASN.1
 **See:
 **[**http://docs.oasis-open.org/emergency/cap/v1.2/CAP-v1.2.html**](http://docs.oasis-open.org/emergency/cap/v1.2/CAP-v1.2.html)
 
-## []{#anchor-279}****BI******B******COLON****
+## []{#anchor-283}****BI******B******COLON****
 
 **COLONDOC for bibliographies**
 
@@ -8307,7 +8566,7 @@ CAP feeds are typically available via RSS, Atom and ASN.1
 
 **The UniqueID passed in Handle is used for the record key.**
 
-## []{#anchor-280}****B******IB******TEX****
+## []{#anchor-284}****B******IB******TEX****
 
 ***D****OCTYPE***
 
@@ -8522,7 +8781,7 @@ Whois++ services.**
 
 **
 
-## []{#anchor-281}*REFERBIB*
+## []{#anchor-285}*REFERBIB*
 
 **\"REFERBIB\": Refer bibliographic record format (used by several
 systems).**
@@ -8540,7 +8799,7 @@ systems**
 
 **
 
-## []{#anchor-282}*PAPYRUS*
+## []{#anchor-286}*PAPYRUS*
 
 **Class Tree:**
 
@@ -8554,7 +8813,7 @@ systems**
 
 *PAPYRUS*
 
-## []{#anchor-283}*ENDNOTE*
+## []{#anchor-287}*ENDNOTE*
 
 **Class Tree:**
 
@@ -8570,7 +8829,7 @@ systems**
 
 **
 
-## []{#anchor-284}**B**INARY**
+## []{#anchor-288}**B**INARY**
 
 **The BINARY doctype has been designed for the management of multimedia
 files (audio/graphics), CAD drawings and non-textual databases **whose
@@ -8695,7 +8954,7 @@ ZIP **(e.g. .jar files)**.**
 
 **
 
-## []{#anchor-285}*XBINARY*
+## []{#anchor-289}*XBINARY*
 
 **The X**BINARY **doctype is intended for indexing b**inary files.**
 
@@ -8745,7 +9004,7 @@ choice of what XMLish doctype to use for parsing the **,**info.xml"
 **Note: XMLPATHS off sets the BASE class to XML. On set it to GILSXML
 which also handles TYPE= defines (see the documentation).**
 
-## []{#anchor-286}**COLONDOC**
+## []{#anchor-290}**COLONDOC**
 
 **Colon tagged documents are among the most commonly used form of ASCII
 markup. Field names are defined by, you guessed it, \':\'. **
@@ -8775,7 +9034,7 @@ default sep is \':\'.**
 
 **
 
-[]{#anchor-287}**COLONDOC is not really (intended to be) a document type
+[]{#anchor-291}**COLONDOC is not really (intended to be) a document type
 but a parent for this \"major\" class of document formats. The
 **COLONDOC** class has been designed to provide a convenient base class
 for the development of user document types. **
@@ -8825,7 +9084,7 @@ TAG3: \...
 **Although the ****COLONDOC**** format is ill-suited to hierarchical
 data its COLONGRP child is. **
 
-## []{#anchor-288}**COLONGRP**
+## []{#anchor-292}**COLONGRP**
 
 **COLONGRP is a master colondoc doctype that supports some structure
 (sub-tags). If it inspired by, as well as parent of, DIF. **
@@ -8969,7 +9228,7 @@ The MIME type for **Raw Records** is *Application/X-COLONGRP*.
 
 **
 
-## []{#anchor-289}*CSVDOC*
+## []{#anchor-293}*CSVDOC*
 
 **The native CS**V**DOC doctype class is for \"Comma **Separated**
 **Values**\" such as those exported from Claris FileMaker Pro (Merge),
@@ -9178,7 +9437,7 @@ formats that use other field delimiters **such as tab characters and
 semicolons.** A delimiter such as tab that is not present in the field
 data allows simpler format parsing. **See the TSLDOC format.**
 
-## []{#anchor-290}*TSLDOC*
+## []{#anchor-294}*TSLDOC*
 
 **Class Tree:**
 
@@ -9237,7 +9496,7 @@ names.*
 
 *Alternatively in the \"Db.ini\" file \[Doctype\] section*
 
-## []{#anchor-291}*DIF*
+## []{#anchor-295}*DIF*
 
 **Class Tree:**
 
@@ -9259,7 +9518,7 @@ names.*
 
 * DIF*
 
-[]{#anchor-292}**T**he Directory Interchange Format (DIF) is a de-facto
+[]{#anchor-296}**T**he Directory Interchange Format (DIF) is a de-facto
 standard used to create directory entries which describe a group of
 data. Its use is wide spread among US government agencies. A DIF record
 consists of a collection of fields which detail specific information
@@ -9350,7 +9609,7 @@ The MIME type is: *Application/X-DIF*
 
 ## 
 
-## []{#anchor-293}*DVBLINE*
+## []{#anchor-297}*DVBLINE*
 
 *DVBLINE Class Tree:*
 
@@ -9494,7 +9753,7 @@ DVBLine \"tag\" semantics
 
 **The MIME type for Raw is \"*Application/X-DVBLine*\"**
 
-## []{#anchor-294}*EUROMEDIA*
+## []{#anchor-298}*EUROMEDIA*
 
 **EUROMEDIA **is **multinational mediagraphic format **based upon
 COLONGRP originally used **to create and exchange national language
@@ -9582,7 +9841,7 @@ Réseau Canopé**) and *Local_subject_index*.**
 
 **
 
-## []{#anchor-295}*MISMEDIA*
+## []{#anchor-299}*MISMEDIA*
 
 ** DOCTYPE**
 
@@ -9607,7 +9866,7 @@ Réseau Canopé**) and *Local_subject_index*.**
 **MIS (Rheinland-Pfalz) colondoc mediagraphic records. This is an
 enhanced version of DVBLINE.**
 
-## []{#anchor-296}*FILMLINE*
+## []{#anchor-300}*FILMLINE*
 
 * DOCTYPE*
 
@@ -9689,7 +9948,7 @@ Filmline 1.x \"tag\" semantics
 
 The MIME type: **\"Application/X-Filmline\"**
 
-## []{#anchor-297}*MEDLINE*
+## []{#anchor-301}*MEDLINE*
 
 **Medline **(txt)** Document Type**
 
@@ -9893,7 +10152,7 @@ names)**
 
 * {\"ZZ\", \"End-of-Record\"}*
 
-## []{#anchor-298}*RIS*
+## []{#anchor-302}*RIS*
 
 * DOCTYPE*
 
@@ -9941,7 +10200,7 @@ export and import citations in this format. **
 
 *ER - *
 
-## []{#anchor-299}*FIRSTLINE*
+## []{#anchor-303}*FIRSTLINE*
 
 *FIRSTLINE Class Tree:*
 
@@ -9963,7 +10222,7 @@ Brief Record (Headline) it uses the Nth line or sentence as specified.**
 
 * Startline N Specifies which line or sentence to use (default is 1)*
 
-## []{#anchor-300}*FILTER*
+## []{#anchor-304}*FILTER*
 
 **The re-Isearch engine can be extended to support the widest range of
 data inputs through the use of external programs, so called filters.
@@ -10009,7 +10268,7 @@ records**
 **and write to stdout. For output one should also define External/
 filters (see DOCTYPE class)**
 
-## []{#anchor-301}*FILTER2HTML*
+## []{#anchor-305}*FILTER2HTML*
 
 **FILTER2HTML **u**ses an external filter that converts the input file
 into HTML type files. **It **has similar goals** to FILTER where the
@@ -10056,7 +10315,7 @@ class **was** set to pass processing to HTMLMETA.**
 input file and should write their output (HTML) to standard output
 (stdout)**
 
-## []{#anchor-302}*FILTER2MEMO*
+## []{#anchor-306}*FILTER2MEMO*
 
 **FILTER2MEMO **u**ses an external filter that converts the input file
 into MEMO type files. **It **has** similar **goals** to FILTER where the
@@ -10095,7 +10354,7 @@ class **was** set to pass processing to MEMODOC.**
 input file and should write their output (MEMO) to standard output
 (stdout)**
 
-## []{#anchor-303}*FILTER2TEXT*
+## []{#anchor-307}*FILTER2TEXT*
 
 **FILTER2TEXT **u**ses an external filter that converts the input file
 into TEXT (PTEXT) type files. **It **has** similar **goals** to FILTER
@@ -10130,7 +10389,7 @@ where the class **was** set to pass processing to PTEXT.**
 input file and should write their output (PTEXT) to standard output
 (stdout)**
 
-## []{#anchor-304}*FILTER2XML*
+## []{#anchor-308}*FILTER2XML*
 
 **FILTER2XML **u**ses an external filter that converts the input file
 into XML type files. **It **has** similar **goals** to FILTER where the
@@ -10173,7 +10432,7 @@ class **was** set to pass processing to XML.**
 input file and should write their output (XML) to standard output
 (stdout)**
 
-## []{#anchor-305}XFILTER
+## []{#anchor-309}XFILTER
 
 DOCTYPE
 
@@ -10207,7 +10466,7 @@ These are defined in the \"xfilter.ini\" \[General\] or \<Db\>.ini
 Suitable filters must write their output (XML) to standard output
 (stdout)
 
-## []{#anchor-306}**FTP**
+## []{#anchor-310}**FTP**
 
 ** DOCTYPE**
 
@@ -10257,7 +10516,7 @@ Content-type. If not defined the default is
 
 **
 
-## []{#anchor-307}*IAFADOC*
+## []{#anchor-311}*IAFADOC*
 
 *DOCTYPE*
 
@@ -10307,7 +10566,7 @@ and its extreme machine readable simplicity**.**
 
 **
 
-## []{#anchor-308}**HARVEST / SOIF**
+## []{#anchor-312}**HARVEST / SOIF**
 
 **SOIF format files and points to resource.**
 
@@ -10325,9 +10584,9 @@ and its extreme machine readable simplicity**.**
 
 * HARVEST*
 
-## []{#anchor-309}**HARVEST **was ** an integrated set of tools to gather, extract, organize, and search information across the Internet.**
+## []{#anchor-313}**HARVEST **was ** an integrated set of tools to gather, extract, organize, and search information across the Internet.**
 
-## []{#anchor-310}**SOIF**
+## []{#anchor-314}**SOIF**
 
 *The SOIF (Summary Object Interchange Format) Grammar is as follows:*
 
@@ -10429,7 +10688,7 @@ The object\'s type.
 **SOIF is an alternative to IAFA. It, **like IAFA,** has been widely
 replaced by RDF but a number of projects still use it.**
 
-## []{#anchor-311}**ROADS**++**
+## []{#anchor-315}**ROADS**++**
 
 **Extended IAFA documents.**
 
@@ -10458,7 +10717,7 @@ levels.**
 
 **
 
-## []{#anchor-312}**RESOURCE**
+## []{#anchor-316}**RESOURCE**
 
 **
 
@@ -10481,7 +10740,7 @@ metadata record and and a resource record.**
 
 **The following image formats are supported **
 
-#### []{#anchor-313}*GIF*
+#### []{#anchor-317}*GIF*
 
 * DOCTYPE*
 
@@ -10497,7 +10756,7 @@ metadata record and and a resource record.**
 
 * GIF*
 
-#### []{#anchor-314}*JPEG*
+#### []{#anchor-318}*JPEG*
 
 * DOCTYPE*
 
@@ -10513,7 +10772,7 @@ metadata record and and a resource record.**
 
 * JPEG*
 
-#### []{#anchor-315}*PNG*
+#### []{#anchor-319}*PNG*
 
 * DOCTYPE*
 
@@ -10529,7 +10788,7 @@ metadata record and and a resource record.**
 
 * PNG*
 
-#### []{#anchor-316}*TIFF*
+#### []{#anchor-320}*TIFF*
 
 * DOCTYPE*
 
@@ -10545,7 +10804,7 @@ metadata record and and a resource record.**
 
 * TIFF*
 
-## []{#anchor-317}**HTML**
+## []{#anchor-321}**HTML**
 
 **The re-Isearch engine contains a number of doctypes suitable for
 indexing HTML. For general use most projects will use the doctypes
@@ -10574,7 +10833,7 @@ Although the HTML doctype is a subclass of SGMLNORM it does not require
 normalized HTML and handles most all HTML Markup (tag normalized or not)
 and entities, e.g. &Uuml; (Ü), &amp (&), &\#177 (±) etc.
 
-[]{#anchor-318}The doctype was designed to support HTML 0.9, 2.0, 3.0,
+[]{#anchor-322}The doctype was designed to support HTML 0.9, 2.0, 3.0,
 HTML 3.2, W3O\'s Cougar (4.0) as well as *many* vendor extensions,
 kludges and abuses. Most common incorrect uses of HTML markup are also
 correctly handled. It has been tested against a very large random sample
@@ -10587,7 +10846,7 @@ By default it indexes *all* fields that *represent content* (*container
 tags*) in an HTML document. Descriptive markup, such as \<I\>
 ,\<B\>,\<TT\> etc. are ignored.
 
-#### []{#anchor-319}Parser Levels
+#### []{#anchor-323}Parser Levels
 
 The parser knows several levels:
 
@@ -10624,7 +10883,7 @@ The level is specified as a *doctype option* (eg. -o LEVEL=*Level*) or
 via *LEVEL* in the .ini *HTML* section. Either the long name or number
 can be specified.
 
-#### []{#anchor-320}[]{#anchor-321}META
+#### []{#anchor-324}[]{#anchor-325}META
 
 The *META* tag is used to embed metadata in a HTML document. It belong
 in the *HEAD* of the document (since much HTML is non-comformant the
@@ -10728,7 +10987,7 @@ on meta-data, viz. content that HTML has no container for.
 
 See also: META HTTP-EQUIV and NAME equivalences.
 
-#### []{#anchor-322}[]{#anchor-323}BASE
+#### []{#anchor-326}[]{#anchor-327}BASE
 
 The doctype option or environment variable *WWW_ROOT* is used to
 synthesize--- should it *not* have been defined--- the value for \<BASE
@@ -10774,13 +11033,13 @@ An interesting option is to set the *Server* to point to a
 the resource URL can persist beyond, or be de-coupled from, the URL
 structure within a web.
 
-#### []{#anchor-324}[]{#anchor-325}LINK
+#### []{#anchor-328}[]{#anchor-329}LINK
 
 The complex values of LINK are, like META stored. The REV and REL values
 can be used to model external flows to and from the HTML document
 instance.
 
-#### []{#anchor-326}[]{#anchor-327}I18N
+#### []{#anchor-330}[]{#anchor-331}I18N
 
 Support for i18n
 
@@ -10794,14 +11053,14 @@ is not yet available. It is currently in development (it may already be
 available but was not yet ready at the time this handbook section was
 being authored).
 
-[]{#anchor-328}[]{#anchor-329}Notes:
+[]{#anchor-332}[]{#anchor-333}Notes:
 
 The HTML Doctype is NOT a validator and makes many assumptions. It tries
 to guess the intent of some of the HTML kludges in common use. It is,
 none-the-less, advisable to validate HTML pages and to adhere to a
 content model.
 
-## []{#anchor-330}**HTML\-- / **ANTIHTML**:* *
+## []{#anchor-334}**HTML\-- / **ANTIHTML**:* *
 
 * DOCTYPE*
 
@@ -10822,7 +11081,7 @@ title **elements**. **In general the HTMLHEAD or HTMLZERO are the
 preferred document handlers but there are some use cases where HTML\--
 is called for.**
 
-## []{#anchor-331}**HTMLMETA* *
+## []{#anchor-335}**HTMLMETA* *
 
 * DOCTYPE*
 
@@ -10889,7 +11148,7 @@ suitable for export, remote meta-indexing, whois++ (distributed),
 X.500/LDAP or import into another re-Isearch database using the XML or
 GILS document handlers.
 
-## []{#anchor-332}Mark-up Conventions
+## []{#anchor-336}Mark-up Conventions
 
 An HTML file containing the fragement:\
 *\<META NAME=\"AUTHOR\" CONTENT=\"Elmer Fudd\"\>*
@@ -10916,8 +11175,8 @@ The above example would produce SUTRS Presentation fragment:
 
   LOCATION:                                                                                                                                                                                                                                                                                                                                                                                                          **URL to the original HTML (2)**
 
-  []{#anchor-333}1) If document was processed by [sccs-get](https://web.archive.org/web/20061110054418/http://www.bsn.com:8080/cgi-bin/htmlman?sccs-get) to resolve the %**?**% symbols.\                                                                                                                                                                                                                            
-  []{#anchor-334}2) \"The URL to the original HTML\" is derived from the \<BASE \... \> or synthetically derived. For a GILS or other meta-search facility it can point to PURL (Persistant URL) resolver elsewhere, such as gils.org, that, in turn, maps to the resource. The later is of particular relevance for maintaining links to resources for robots and other page gatherers. See HTML BASE processing.   
+  []{#anchor-337}1) If document was processed by [sccs-get](https://web.archive.org/web/20061110054418/http://www.bsn.com:8080/cgi-bin/htmlman?sccs-get) to resolve the %**?**% symbols.\                                                                                                                                                                                                                            
+  []{#anchor-338}2) \"The URL to the original HTML\" is derived from the \<BASE \... \> or synthetically derived. For a GILS or other meta-search facility it can point to PURL (Persistant URL) resolver elsewhere, such as gils.org, that, in turn, maps to the resource. The later is of particular relevance for maintaining links to resources for robots and other page gatherers. See HTML BASE processing.   
   ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ -----------------------------------------------------
 
 The *XML* representation would be:\
@@ -10948,7 +11207,7 @@ words (with handlers) it is considered part of content, eg.\
 \<META NAME=\"AUTHOR\" CONTENT=\"(Fudd)\"\> is read as
 \<AUTHOR\>(Fudd)\</AUTHOR\>. *
 
-#### []{#anchor-335}Specifying Complex Attributes
+#### []{#anchor-339}Specifying Complex Attributes
 
 To specify a *schema* (for container data typing) one includes it in
 *CONTENT* as\
@@ -10991,7 +11250,7 @@ i.  *\<META NAME=\"DATE(ISO)\" CONTENT=\"1996-04-19\>*
 ii. *\<META NAME=\"DATE\" CONTENT=\"(SCHEMA=ISO)1996-04-19\>*
 iii. *\<META NAME=\"DATE\" SCHEME=\"ISO\" CONTENT=\"1996-04-19\>*
 
-#### []{#anchor-336}Marking Up Hierarchical Data
+#### []{#anchor-340}Marking Up Hierarchical Data
 
 To represent heirarchical data the *HTMLMETA framework* uses the \'*.*\'
 (*dot-notation*), as\
@@ -11110,7 +11369,7 @@ Mapping to a heirarchical DTD with *ORGANIZATION*, *STREET-ADDRESS* and
 *implicit and interoperable* search for *ORGANIZATION* which would
 **include** a search of both *CONTACT* and *DISTRIBUTOR*.
 
-## []{#anchor-337}*Real world example*
+## []{#anchor-341}*Real world example*
 
 The following example illustrates the use of [Dublic Core
 Metadata](http://purl.org/metadata/dublin_core_elements) in HTML.
@@ -11204,7 +11463,7 @@ indexed and this might be different from the encoded URL identifier. The
 later is the *more definitive* source and can well have a different
 encoded meta-record (different version).
 
-## []{#anchor-338}Meta Level Grain
+## []{#anchor-342}Meta Level Grain
 
 The HTML presentation, in turn, also contains Metadata and link
 information about the resource record derived from the \<LINK\...\>
@@ -11327,7 +11586,7 @@ mark-up.
 If *\<LINK REL=\"DTD.dc\" \...\>* is not defined then the XML record
 produced would be without the doctype declaration.
 
-#### []{#anchor-339}*XSpace* Meta Content Framework (MCF)
+#### []{#anchor-343}*XSpace* Meta Content Framework (MCF)
 
 In addition the HTML presentation contains a:\
 *\<EMBED SRC=\"URL.mcf\"\>*\
@@ -11343,7 +11602,7 @@ The MIME type for the MCF is: *Content-type: image/vasa*
 Together with a MCFed Web one has the possibility to create a VRML-like
 geometric navigation model. It is easily reproduced from a HyTime model.
 
-## []{#anchor-340}**HTMLHEAD**
+## []{#anchor-344}**HTMLHEAD**
 
 **This is a variant of the HTMLMETA doctype intended for use by spinders
 and crawlers.**
@@ -11373,7 +11632,7 @@ and crawlers.**
 
 ## 
 
-## []{#anchor-341}**HTMLZERO**
+## []{#anchor-345}**HTMLZERO**
 
 **A HTMLHEAD variant **that does not treat \'most\' tagnames as words.**
 
@@ -11403,7 +11662,7 @@ and crawlers.**
 metadata and allows one to use HTML comments to supplement documents
 with searchable but not \'visible\' information.**
 
-## []{#anchor-342}**FILTER2HTML**
+## []{#anchor-346}**FILTER2HTML**
 
 *Class Tree:*
 
@@ -11449,7 +11708,7 @@ HTMLHEAD document handler.**
 path to the (binary) input file and should write their output (HTML) to
 standard output (stdout).**
 
-## []{#anchor-343}**HTMLREMOTE**
+## []{#anchor-347}**HTMLREMOTE**
 
 *Class Tree:*
 
@@ -11487,7 +11746,7 @@ URL to the remote document rather than retrieve the local cached copy.**
 * BASE Specifies the base of the HTML tree (root) This can also be
 specified in the doctype.ini as BASE=dir in the \[General\] section.*
 
-## []{#anchor-344}**MAIL DOCTYPES**
+## []{#anchor-348}**MAIL DOCTYPES**
 
 * Doctype*
 
@@ -11535,7 +11794,7 @@ kinds of mail that arrive in ones mailbox, even mixed with newsfolders.
 Due to this design it is well suited for use as part of an automatic
 list or behind a incoming mail filter.**
 
-#### []{#anchor-345}****MAILFOLDER Message ******Parsing****
+#### []{#anchor-349}****MAILFOLDER Message ******Parsing****
 
 **The MAILFOLDER mail parser understand a number of header tag keywords
 in mails including some non-standard X- elements such as
@@ -11554,7 +11813,7 @@ of the message identifier is guaranteed by the host that generates it
 and not necessarily meaningful to humans. A message identifier pertains
 to exactly one version of a particular message; subsequent revisions to
 the message each receive new message identifiers." -- **IETF RFC5322
-Internet Message Format**[^7]** **
+Internet Message Format**[^8]** **
 
 **
 
@@ -11608,14 +11867,14 @@ be processed into two records: one the mail body and the other the
 attachment. The attachment could then be indexed with an appropriate
 doctype and the mail could have a hyper-reference to said record.**
 
-#### []{#anchor-346}**DIGESTTOC**
+#### []{#anchor-350}**DIGESTTOC**
 
 **Internet Mail Digest (RFC1173, Listserver, Lyris and Mailman) Table of
 Contents**
 
 **
 
-#### []{#anchor-347}**NEWSFOLDER**
+#### []{#anchor-351}**NEWSFOLDER**
 
 **N**ewsfolders parsed by the *MAILFOLDER* document handler are
 \"automaticaly\" set with the *NEWSFOLDER* *DOCTYPE*. This is mainly to
@@ -11626,7 +11885,7 @@ newsreader.**
 
 **
 
-#### []{#anchor-348}**MAILDIGEST**
+#### []{#anchor-352}**MAILDIGEST**
 
 **Internet mail digest file format per RFC 1153. This is the most common
 mail digest format. The *MAILDIGEST* is for single digests only. To
@@ -11639,7 +11898,7 @@ also *MAILFOLDER*.**
 
 **
 
-#### []{#anchor-349}**LISTDIGEST**
+#### []{#anchor-353}**LISTDIGEST**
 
 **Listserver mail digest file format. As with the *MAILDIGEST* doctype
 it is designed for single digests only. The *MAILFOLDER* doctype will
@@ -11651,7 +11910,7 @@ also MAILFOLDER.**
 
 **
 
-#### []{#anchor-350}**IRLIST**
+#### []{#anchor-354}**IRLIST**
 
 **Yet another mail digest format. The MIME type for \"Raw\" records is
 \"Application/X-IRList\". **
@@ -11672,7 +11931,7 @@ created \"on-the-fly\" during the Presentation. See**
 **The MIME type for \"Raw\" records is \"message/rfc822\". See also
 *MAILFOLDER*.**
 
-## []{#anchor-351}**MEMODOC**
+## []{#anchor-355}**MEMODOC**
 
 *MEMODOC Class Tree:*
 
@@ -11728,7 +11987,7 @@ line/sentence/paragraph*
 *AutodetectFieldtypes=Yes\|No // specified if we should guess fieldtypes
 (default:YES).*
 
-## []{#anchor-352}**METADOC* *
+## []{#anchor-356}**METADOC* *
 
 *Class Tree:*
 
@@ -11787,7 +12046,7 @@ horizontal tab character), \\nnn (octal number for character) or xNN
 
 **
 
-## []{#anchor-353}**PANDOC**
+## []{#anchor-357}**PANDOC**
 
 ** DOCTYPE**
 
@@ -11838,7 +12097,7 @@ markdown.**
 **Pandoc understands a number of useful markdown syntax extensions,
 including document metadata (title, author, date); footnotes; tables;
 definition lists; superscript and subscript; strikeout; enhanced ordered
-lists (start number **and numbering style are significant); running
+lists (start number and numbering style are significant); running
 example lists; delimited code blocks with syntax highlighting; smart
 quotes, dashes, and ellipses; markdown inside HTML blocks; and inline
 LaTeX. If strict markdown compatibility is desired, all of these
@@ -11861,7 +12120,7 @@ muse native odt opml org rst t2t textile tikiwiki twiki vimwiki*
 
 **
 
-#### []{#anchor-354}**ODT**
+#### []{#anchor-358}**ODT**
 
 **
 
@@ -11904,7 +12163,7 @@ file from ODT into HTML.**
 
 **
 
-#### []{#anchor-355}**DOCX**
+#### []{#anchor-359}**DOCX**
 
 * DOCTYPE*
 
@@ -11941,7 +12200,7 @@ file from DOCX into HTML.**
 
 *Option: format=\<format\> (default: DOCX)*
 
-#### []{#anchor-356}**LATEX**
+#### []{#anchor-360}**LATEX**
 
 * DOCTYPE*
 
@@ -11978,7 +12237,7 @@ file from LATEX into HTML.**
 
 *Option: format=\<format\> (default: LATEX)*
 
-#### []{#anchor-357}**MAR**K**DOWN**
+#### []{#anchor-361}**MAR**K**DOWN**
 
 * DOCTYPE*
 
@@ -12017,7 +12276,7 @@ input file from MARKDOWN into HTML.**
 
 *Option: format=\<format\> (default: MARKDOWN)*
 
-## []{#anchor-358}**SGML DOCTYPES**
+## []{#anchor-362}**SGML DOCTYPES**
 
 * Doctype (Generic Document Type)*
 
@@ -12045,7 +12304,7 @@ input file from MARKDOWN into HTML.**
 another DOCTYPE called SGMLTAG that is designed for simple SGML-like
 taged documented) but not for SGML or XML documents).**
 
-#### []{#anchor-359}*SGMLNORM*
+#### []{#anchor-363}*SGMLNORM*
 
 Handles SGML-type documents with \"normalized\" tags and entities, viz.
 end-tags and entity replacement.
@@ -12101,7 +12360,7 @@ Project//DTD Play//EN\])*
 
 * * **In the section* \[Catalog\]* the DTDs can be maped as *DTD=useDTD*
 
-[]{#anchor-360}**References:**
+[]{#anchor-364}**References:**
 
 -   C. F. Goldfarb. \`\`The SGML Handbook.\'\' Y. Rubinsky, Ed., Oxford
     University Press, 1990.
@@ -12116,7 +12375,7 @@ Project//DTD Play//EN\])*
     -   [**A Gentle Introduction to
         SGML**](https://tei-c.org/Vault/GL/P3/SG.htm)** **
 
-#### []{#anchor-361}*SGML*
+#### []{#anchor-365}*SGML*
 
 The Standard Generalized Markup Language (SGML; ISO 8879:1986) is a
 standard for defining generalized markup languages for documents.
@@ -12192,7 +12451,7 @@ The default DSSSL specification is \"dsssl_spec\"
 
 *The MIME type (for HTTP applications) is: text/sgml*
 
-#### []{#anchor-362}**XML**
+#### []{#anchor-366}**XML**
 
 The Extensible Markup Language (XML) is a language derived from SGML.
 XML has been designed to retain most of the power of SGML but with a
@@ -12220,7 +12479,7 @@ that are not, and were never intended to be, part of the standard.
 
 ****
 
-[]{#anchor-363}****Note:***** *For the **autodetect** mechanism to work
+[]{#anchor-367}****Note:***** *For the **autodetect** mechanism to work
 correctly one **must** either use the **.xml** (or **.XML**) file name
 extension or specify **\<?XML VERSION=\"**Version**\"?\>** (only the
 **\<?XML** is significant) in the document declaration. Since the XML
@@ -12260,7 +12519,7 @@ type for the **Raw record**. **
 
 **
 
-## []{#anchor-364}**NEWSML**
+## []{#anchor-368}**NEWSML**
 
 **The doctype is designed to handle the new**s**ml XML format from the
 International Press Telecommunications Council (IPTC), an organization
@@ -12315,7 +12574,7 @@ uses for date expires "EndDate";**
 
 **
 
-## []{#anchor-365}**ONELINE**
+## []{#anchor-369}**ONELINE**
 
 *Each line is a record (unfielded)*
 
@@ -12343,7 +12602,7 @@ parse the record and trigger a number of events.**
 * Field=\<program\> \# e.g. F=cat would pipe the record for full element
 presentation to cat*
 
-## []{#anchor-366}**PLAINTEXT**
+## []{#anchor-370}**PLAINTEXT**
 
 * DOCTYPE*
 
@@ -12376,7 +12635,7 @@ http://www.nonmonotonic.net/def/document1**
 
 **
 
-## []{#anchor-367}**PS **(PostScript)**
+## []{#anchor-371}**PS **(PostScript)**
 
 **Postscript Indexing via (external PS to Text) filter**
 
@@ -12431,7 +12690,7 @@ Distiller to convert PS files. Given that PostScript files are generally
 legacy artefacts (replaced by variants of PDF) the functionality of
 **pstotext** tends to be sufficient.**
 
-## []{#anchor-368}**PTEXT**
+## []{#anchor-372}**PTEXT**
 
 **Plaintext with \"Page\", \"Paragraph\", \"Sentence\" and \"Line\"
 fields as well as \"firstParagraph\", \"firstSentence\" and
@@ -12508,7 +12767,7 @@ more than one paragraph.**
 
 **
 
-## []{#anchor-369}**XML**REC**
+## []{#anchor-373}**XML**REC**
 
 **The XML**REC** doctype is a special child of the XML document types
 used to "slice and dice" an XML document with multiple items into, from
@@ -12540,7 +12799,7 @@ item.**
 **In order to slice-and-dice it needs to know what element is used for
 the "cut". It is defined as the RecordSeperator option. When it
 encounters the \<Seperator \...\> it triggers a new record event. The
-entire content from the \< in \<Seperator .. until the \> in
+entire content from the \< in **\<Seperator .. until the \> in
 \</Seperator \> is viewed as a single record. The declaration and
 whatever was before the first instance of **the element is ignored just
 as the content in-between and after the closing last instance of the
@@ -12578,7 +12837,7 @@ identifier for the format. In its NAME.ini configuration file (in the
 usual places) or in the DB.ini under the NAME section one would have the
 preface, tail and record separator defined..
 
-## []{#anchor-370}RDF
+## []{#anchor-374}RDF
 
 RDF-like record format.
 
@@ -12624,7 +12883,7 @@ And the default tail is: *\</rdf:RDF\>*
 
 Both of these can be over-ridden using the options (see XMLREC).
 
-#### []{#anchor-371}RDF example:
+#### []{#anchor-375}RDF example:
 
 \<?xml version=\"1.0\"?\>
 
@@ -12748,7 +13007,7 @@ Another example (here about resource discovery, e.g. like SOIF):
 
 \</rdf:RDF\>
 
-# []{#anchor-372}* *Extending re-Isearch with Doctype Plugins**
+# []{#anchor-376}* *Extending re-Isearch with Doctype Plugins**
 
 **The re-Isearch engine is designed to be extended with both internal
 "built-in" doctypes but also "plugins". **The latter are loadable at
@@ -12765,7 +13024,7 @@ proprietary. **
 
 **
 
-## []{#anchor-373}**Developing a plug-in**
+## []{#anchor-377}**Developing a plug-in**
 
 **Plug-ins are developed in C++ and **are **quite simple in structure.**
 
@@ -13023,9 +13282,9 @@ const;*
 to study some of the built-in doctypes to understand the vast
 possibilities.**
 
-## []{#anchor-374}**Sample Plugins**
+## []{#anchor-378}**Sample Plugins**
 
-#### []{#anchor-375}*EXIF:*
+#### []{#anchor-379}*EXIF:*
 
 **The engine supports a number of image formats. Some types like JPEG
 that contain within their contents metadata can have their metadata
@@ -13071,7 +13330,7 @@ even libraries. All the other plugins are self-contained. **
 **It can be used to index JPEG and TIFF files (as well as other files
 that contain EXIF metadata).**
 
-#### []{#anchor-376}**MSEXCEL: **
+#### []{#anchor-380}**MSEXCEL: **
 
 **M\$ Excel (XLS) Plugin. Uses an external filter to TSLDOC.**
 
@@ -13105,7 +13364,7 @@ Yes)*
 *xls2tsl is based on xls2csv and reads MS-Excel file and puts its
 content as tab, rather than comma, separated data on standard output *
 
-#### []{#anchor-377}**MSRTF:**
+#### []{#anchor-381}**MSRTF:**
 
 *RTF (Rich Text Format) Plugin. Uses an external filter to convert to
 XML.*
@@ -13133,7 +13392,7 @@ written in C **and** converts documents in Rich Text Format (.rtf) to
 HTML, LaTeX, troff macros, and RTF itself. Converting to HTML, it
 supports a number of features of Rich Text Format:**
 
-#### []{#anchor-378}**MSWORD:**
+#### []{#anchor-382}**MSWORD:**
 
 **M\$ Word Plugin. Uses an external filter to convert Word .**doc files
 **(pre-2007) to MEMODOC.**
@@ -13168,7 +13427,7 @@ produces human-readable text on standard output.**
 **NOTE**: ****This is for handling the now obsolete ******pre OOXML
 ******(DOCX)****** MS Word****** format.****
 
-#### []{#anchor-379}**ODT:**
+#### []{#anchor-383}**ODT:**
 
 ** DOCTYPE**
 
@@ -13191,7 +13450,7 @@ format suitable for the **PTEXT **doctype**.**
 
 **
 
-[]{#anchor-380}***Options:***
+[]{#anchor-384}***Options:***
 
 ** * FILTER Specifies the program to use (Default \'odt2txt\')*
 
@@ -13220,7 +13479,7 @@ handled by the ODT builtin doctype.**
 future we hope to have a significantly better solution for ODF. **To
 this aim we are working with members of the OASIS ODF TC.**
 
-#### []{#anchor-381}**USPAT:**
+#### []{#anchor-385}**USPAT:**
 
 **US Patents (Green Book Style) **doctype plugin**.**
 
@@ -13245,9 +13504,9 @@ Patent System (APS) format **used the** Green Boo**k standard.
 with the Patent Application Version 4.4 International Common Element
 (ICE) Document Type Definition (DTD).**
 
-# []{#anchor-382}* *Custom Ranking **and Sorting** Algorithms**
+# []{#anchor-386}* *Custom Ranking **and Sorting** Algorithms**
 
-## []{#anchor-383}**Against a fixed sort **(External)**
+## []{#anchor-387}**Against a fixed sort **(External)**
 
 *\[External Sort\]*
 
@@ -13275,14 +13534,14 @@ offset 1\*sizeof(\_index_id_t) or, given 4-bytes for the size of
 is 1 and at offset 4 its 0 then the sort would be exactly opposite the
 sort if we were to just use the internal indexing order as sort.**
 
-#### []{#anchor-384}**Motivatio**n**
+#### []{#anchor-388}**Motivatio**n**
 
 **Often we have the need (or desire) to have relevant records sorted by
 an external, pre-set, criteria. One of the most famous of these is
 "PageRank" **which according to Google "**works by counting the number
 and quality of links to a page to determine a rough estimate of how
 important the website is. The underlying assumption is that more
-**important websites are likely to receive more links from other
+important websites are likely to receive more links from other
 websites**". As one can see the PageRank can be calculated and
 determined prior to search as the intrinsic sort defined therein is
 independent from the query. **Other well-known ranking are the TrustRank
@@ -13299,14 +13558,14 @@ rankings.**
 
 **
 
-#### []{#anchor-385}**Combine with other record features**
+#### []{#anchor-389}**Combine with other record features**
 
 **One can combine the external sort with priority and magnetism to
 effect a bias **upon** the fixed external sort but to allow **for
 intrinsic, also pre-search, features of records to effect sort across
 all the external sorts.**
 
-## []{#anchor-386}**Programmatic**
+## []{#anchor-390}**Programmatic**
 
 *I*n **the source file "**ranking.c**"** one can define
 *\_\_Private_IRSET_Sort *and* \_\_Private_RSET_Sort *to enable a number
@@ -13385,9 +13644,9 @@ SORTBY:**p**rivate**\<number\> (e.g. private3 → 3)** or via the enums in
 **are put into an individual .so shared library that can be swapped out
 without effecting the engine.**
 
-# []{#anchor-387}*  SRU/W*
+# []{#anchor-391}*  SRU/W*
 
-## []{#anchor-388}**SRU/**CQL**
+## []{#anchor-392}**SRU/**CQL**
 
 **SRU- Search/Retrieve via URL - is a standard XML-based protocol for
 search queries, utilizing CQL - Contextual Query Language - a standard
@@ -13402,7 +13661,7 @@ the SRW SOAP request are mapped to simple HTTP parameters. The response
 to an SRU request is identical to the response to an SRW request, with
 the SOAP wrapper removed.**
 
-## []{#anchor-389}**SRW**
+## []{#anchor-393}**SRW**
 
 **The SRW (Search & Retrieve Web Service) initiative is part of an
 international collaborative effort to develop a standard web-based
@@ -13421,19 +13680,19 @@ recommendation SOAP, which specifies how to wrap an XML message within
 an XML envelope. The SRW specification tries to adhere to the Web
 Services Interoperability recommendations. **
 
-# []{#anchor-390}* *Configuration* *
+# []{#anchor-394}* *Configuration* *
 
-## []{#anchor-391}**Input**
+## []{#anchor-395}**Input**
 
-#### []{#anchor-392}**Map field names**
+#### []{#anchor-396}**Map field names**
 
 **During indexing one can map field names (paths) to another names. This
 allows one to unify names as part of a strategy to map semantically
 aligned fields to syntactically aligned names. **
 
-## []{#anchor-393}**Output**
+## []{#anchor-397}**Output**
 
-#### []{#anchor-394}**Map field names**
+#### []{#anchor-398}**Map field names**
 
 *\[Present \<Language-Code\>\]*
 
@@ -13454,7 +13713,7 @@ names to long and descriptive names in a national langauge.**
 
 **We use standard language codes. **See tables above.**
 
-#### []{#anchor-395}**Convert Formats**
+#### []{#anchor-399}**Convert Formats**
 
 *\[External/\<RecordSyntax OID\>\]*
 
@@ -13578,9 +13837,9 @@ Private *
 * {XMLHighlightRecordSyntax, \"1.2.840.10003.5.1000.34.4.3\"}, //
 Private*
 
-# []{#anchor-396}**System Administration**
+# []{#anchor-400}**System Administration**
 
-## []{#anchor-397}**System wide installation**
+## []{#anchor-401}**System wide installation**
 
 **By default the engine expects its binaries and libraries to be
 installed in either the user accounts "ibadmin" or "asfadmin".
@@ -13597,7 +13856,7 @@ please confirm that you have created either a user \"asfadmin\" (if you
 are running ASF) or \"ibadmin\" **whose HOME directory points to where
 the software has been installed.**
 
-#### []{#anchor-398}**User "*ibadmin*" **(or "asfadmin")**
+#### []{#anchor-402}**User "*ibadmin*" **(or "asfadmin")**
 
 **It is common best practice** t**o **creat**e **an account to run a
 daemon, service, or other system software. Technically, it makes no
@@ -13614,7 +13873,7 @@ ibadmin**
 
 **
 
-#### []{#anchor-399}**Enhanced Security**
+#### []{#anchor-403}**Enhanced Security**
 
 ****Chroot****
 
@@ -13668,7 +13927,7 @@ host to chroot.**
 
 **chroot \$TARGETDIR ln -s /proc/mounts /etc/mtab**
 
-#### []{#anchor-400}**Containers**
+#### []{#anchor-404}**Containers**
 
 **Solaris Zones and Docker Containers. Containers enable developers to
 easily pack, ship, and run any application as a lightweight, portable,
@@ -13680,11 +13939,11 @@ self-sufficient packages which can run virtually anywhere. **
 
 ****TO BE CONTINUED****
 
-# []{#anchor-401}**Engine Tuning**
+# []{#anchor-405}**Engine Tuning**
 
 ****To be written.****
 
-# []{#anchor-402}**C++ API**
+# []{#anchor-406}**C++ API**
 
 Although the re-Isearch engine is written in a subset of C++ one
 generally does not--- except for callbacks and ranking algorithms where
@@ -13808,9 +14067,245 @@ STRING ResolvePathname(const STRING Path) const;
 
 TO BE CONTINUED
 
-## 
+## []{#anchor-407}**IDB Class**
 
-## []{#anchor-403}Compatibility with the XML:DB API paradigm
+**This is the class where we create or open an index. In** its simplist
+creator:**
+
+** IDB(const STRING& DBName. bool SearchOnly = false);**
+
+**
+
+**Example:**
+
+**
+
+**IDB \*pdb = new IDB("/tmp/Web");**
+
+**
+
+**This will open, resp. create if not existing, an index in **/tmp.
+**Class IDB can be used for both indexing and searching.**
+
+**
+
+**If we were just searching and wanted to support also **[**virtual
+databases**](#9.1.1.1.Virtualization/Shards/Clusters|outline)** **we
+instead use the class VIDB. **In its simplist creator:**
+
+** VIDB(const STRING& DBName);**
+
+**
+
+**A number of class instances to manage many of the other files that
+contain information in the database are managed through the IDB class.
+In particular: **
+
+-   **the main index: MainIndex, class INDEX**
+-   **the field data: MainDfdt, class DFDT**
+-   **the doctype registry: DocTypeReg, **class DTREG**
+-   **the options registry: MainRegistry. **Class REGISTRY**
+-   **metadata defaults: MetaDefaults, Class METADATA**
+
+**
+
+**
+
+**
+
+**
+
+## []{#anchor-408}**Result sets**
+
+**The engine has two classes for result sets: RSET and IRSET. IRSET is
+lighter weight and faster. It is what search returns.**
+
+**
+
+**IRSET: At its core is an array of IRESULT objects **and a pointer to
+the IDB class parent.**
+
+** **IRESULT: ** The data in these are **a number of ints, a few double
+ints, date (in tern a few ints), a class of**
+
+** linked objects to hit addresses (each 2 long ints). **
+
+**Operations like AND, OR (all the binary and unary operations),
+**sorting etc.** act on IRSETs. **
+
+**
+
+**RSET: At its core is an array of RESULT objects.**
+
+** **RESULT: The data here **has been resolved to get things like paths,
+dates, etc. and are not tied to the search**
+
+** or database classes.**
+
+**
+
+**When we search **and want to present **we must resolve IRSETs into
+RSETs. Generally we don't resolve the entire IRSET but only the parts we
+immediately want such as for a result page.**
+
+**
+
+**One of the IRSET methods for this is** GetRset(size_t Start, size_t
+End). **It returns a pointer to a ready to use RSET. **The other method
+is Fill(size_t Start, size_t End = 0, RSET \*set = NULL) **
+
+## []{#anchor-409}Joining Result sets
+
+We have two indexes and run searches on each and want to "somehow"
+connect the two using common keys:
+
+In the query language ee support 3 variantions to join two result sets:
+
+  ------- -----------------------------------------------------------------------------------------
+  JOIN    Join, a set containing elements shared (common record keys) between both sets.
+  JOINL   Join left, a set containing those on the right PLUS those on the left with common keys
+  JOINR   Join right, a set containing those of the left PLUS those on the right with common keys
+  ------- -----------------------------------------------------------------------------------------
+
+On the level of the API we have a single method: Join.
+
+OPOBJ \*Join (const OPOBJ& OtherIrset);
+
+OPOBJ \*Join (OPOBJ \*OtherIrset);
+
+case OperatorJoinR:
+
+// Like AND but NOT symetric
+
+{ POPOBJ Op = Op1; Op1 = Op2; Op2 = Op; }
+
+case OperatorJoinL:
+
+// Like AND but NOT symetric
+
+Stack \<\< (Op1-\>Join (\*Op2));
+
+break;
+
+The work for Join is done in the method:
+
+OPOBJ \*atomicIRSET::Join (const OPOBJ& OtherIrset)
+
+We don't support arbitary elements at search time for the key to use for
+joins but use the record keys which were defined (or created) at index
+time as that demands RSETs while the result of a search is, at first,
+IRSETs (which are much faster and lighter weight).
+
+For an example let's look at the following:
+
+**from **index1:**
+
+**\<document\>**
+
+** \<**name\>**\"**Edward Zimmermann\</name\>**
+
+** \<**org\>Nonmonotonic Networks\</org\>**
+
+**\...**
+
+**from **index2:**
+
+**
+
+**\<document\>**
+
+* \<name*\>Nonmonotonic\<**name**/\>**
+
+** \<**field\>machine learning\</field\>**
+
+**...**
+
+**
+
+**
+
+**// **Open the two indexes**
+
+**IDB \*pdb**1** = new IDB ("**Index1"**)**;**
+
+**IDB \*pdb2 = ** new IDB ("**Index2"**);**
+
+**
+
+**L**et's assume **in this example** that** the first index contains
+records about people and the second contains intelligence about
+organizations.**
+
+**
+
+**Now I'm interested in searching for **an "**Edward" that is working in
+an organization is is active in "machine learning".**
+
+**
+
+**Since the second index is about activity we search it for records
+where the field contains "machine learning" (field/"machine learning").
+**
+
+**SQUERY squery("**field/\\"**machine learning**\\"**");**
+
+**RSET \*r**s**2** =** **pdb2→**V**Search(squery); // **Use Vsearch
+which resolves the IRSET into an RSET**
+
+**
+
+**In this result set we use the value of the name field and use that to
+search in index1 as the value for org. Using the field for name will
+give us a result set listing the relevant names.**
+
+**
+
+**size_t found = rs2→GetTotalFound();**
+
+**
+
+**ATTRLIST **atributes;**
+
+**attributes.SetFieldName("org");**
+
+**
+
+**for (size_t i = 0: i \< found: i++) {**
+
+** const RESULT result = rs2→GetEntry(i);**
+
+** STRING value **= **pdb**2**-\>Present (result, "**name"**);**
+
+** **if (!value.IsEmpty()) {**
+
+** **SQUERY q **
+
+** **q.SetLiteralPhrase(value); // We do a **
+
+** q.SetAttributes(attributes);**
+
+** RSET \*rs1 = pdb1→Vsearch(**q**);**
+
+** ...**
+
+** }**
+
+**}**
+
+**
+
+**This approach is not only more flexible and more powerful it is also
+potentially much more performant tha**n** generic foreign key joins as
+the intermediate sets will often be significantly smaller **(average
+**sort** performance is O(n log n) where n is the number of results
+**while the search itself is ** O**(**p **log **m**) **where m is the
+number of unique terms in the index **and p is the number of terms in
+the query** so as n grows it tends to dominate the limiting performance
+).** **
+
+TO BE CONTINUED
+
+## []{#anchor-410}Compatibility with the XML:DB API paradigm
 
   -------------------------------------------------------------------------------------------------- --------------------------------------------------------------------------------------------------------------------------------------
   General Requirements                                                                               
@@ -13819,9 +14314,135 @@ TO BE CONTINUED
   XML-API Interface - The API SHOULD provide a SAX or DOM based representation of XML result sets.   A SAX or DOM based representation of the XML result sets is available via loading the XML representation of the result sets into DOM
   -------------------------------------------------------------------------------------------------- --------------------------------------------------------------------------------------------------------------------------------------
 
-# []{#anchor-404}*Appendium*
+# []{#anchor-411}*Python API*
 
-## []{#anchor-405}Semantic Revelation
+**The Python interface is generated by SWIG and is designed to map to
+the C++ API. The Python module with the bindings is called "IB". **
+
+#### []{#anchor-412}*Loading the Python Module extension*
+
+*import string*
+
+*import sys*
+
+*sys.path.append(\'/opt/nonmonotonic/lib/python%s.%s\' %
+(sys.version_info\[0:2\]))*
+
+*import IB*
+
+**
+
+**Replace **opt/nonmonotonic/lib/ **with wherever the library module is
+installed. This will allow Python to properly load the IB module.**
+
+**
+
+#### []{#anchor-413}*Opening an Index to search to add files*
+
+*junk=\"/opt/nonmonotonic/data/nonmonotonicWEB\";*
+
+*pdb = IDB(junk);*
+
+*print \"This is PyIB version %s/%s\" % (string.split(sys.version)\[0\],
+pdb.GetVersionID());*
+
+*if not pdb.IsDbCompatible():*
+
+* raise ValueError, \"The specified database \'%s\' is not compatible
+with this version. Re-index!\" % \`junk\`*
+
+**
+
+**
+
+**Here we opened the index defined in
+**\"/opt/nonmonotonic/data/nonmonotonicWEB\".**
+
+**Notice we used the IDB class. There is also the VIDB class. It
+supports virtual collections of indexes. IDB is, however, the only class
+that provides indexing services. VIDB can't since it maps to multiple
+indexes and it can't know which index to add to.**
+
+**
+
+#### []{#anchor-414}*Simplistic Search (using VIDB)*
+
+*junk=\"/opt/nonmonotonic/data/nonmonotonicWEB\";*
+
+*query = sys.argv\[1:\] and sys.argv\[1\] or \'chain test OR\'*
+
+**
+
+*pdb = VIDB(junk);*
+
+*if not pdb.IsDbCompatible():*
+
+* raise ValueError, \"The specified database \'%s\' is not compatible
+with this version. Re-index!\" % \`junk\`*
+
+*elements = pdb.GetTotalRecords();*
+
+*print \"Database \", junk, \" has \", elements, \" elements\";*
+
+**
+
+*total = 10;*
+
+*if elements \> 0:*
+
+* rset = pdb.VSearchRpn(query, ByScore, 300, total); \# RPN Query*
+
+* print type(rset);*
+
+* print rset;*
+
+* rset = pdb.VSearchRpn(query, ByScore); \# RPN Query*
+
+* total = rset.GetTotalEntries();*
+
+* print \"Searching for: \", query;*
+
+* print \"Got = \", total, \" Records\"; *
+
+* \# Print the results\....*
+
+* for i in range(1,total+1):*
+
+* result = rset.GetEntry(i);*
+
+* area = pdb.Context(result, \"\_\_\_\", \"\_\_\_\_\") ;*
+
+* datum = result.GetDate();*
+
+* score = result.GetScore();*
+
+* hits = result.GetHitTable();*
+
+* print \"\[\", i , \"\] \", rset.GetScaledScore(score, 100), \" \",
+score, \" \", pdb.Present(result, ELEMENT_Brief);*
+
+* print \"\\tFormat: \", result.GetDoctype();*
+
+* print \"\\tFile:\", result.GetFullFileName(), \" \[\",
+result.GetRecordStart(), \"-\", result.GetRecordEnd(), \"\]\";*
+
+* print \"\\tDate: \", datum.RFCdate();*
+
+* print \"\\tMatch: \", area;*
+
+*pdb = None; \# Delete*
+
+**
+
+**
+
+* *
+
+***TO BE CONTINUED***
+
+# []{#anchor-415}*Appendium*
+
+## []{#anchor-416}Semantic Revelation
 
 The engine has been designed to allow for the implementation of a novel
 remarkably powerful yet simple paradigm of retrieval that we've called
@@ -13868,7 +14489,7 @@ See also: the collaborative works on Multipolar Search: [EXODVS Cross
 Search](https://isea-archives.siggraph.org/art-events/metahaven-exodus-cross-search/)
 Presentation @ ISEA 2008. National Museum of Singapore.
 
-#### []{#anchor-406}Semantic Spheres
+#### []{#anchor-417}Semantic Spheres
 
 The keys to cognitive search is a segmentation of the pool of inputs
 into spheres of communication. We call these semantic spheres. In the
@@ -13916,9 +14537,9 @@ Each segment can have its own
 
 **
 
-## []{#anchor-407}**Comparison Medline (txt), Medline (XML) and RIS**
+## []{#anchor-418}**Comparison Medline (txt), Medline (XML) and RIS**
 
-[]{#anchor-408}
+[]{#anchor-419}
 
   ---------------------------------------------- ------------------ --------------------------------- ------------------
   Field                                          Medline (txt)      Medline (XML)                     RIS
@@ -14021,444 +14642,16 @@ Each segment can have its own
   Year                                           ​                  ​                                 ****PY/Y1****
   ---------------------------------------------- ------------------ --------------------------------- ------------------
 
-## []{#anchor-409}**Comparison **of re-Isearch** to Other Engines**
+**
 
-#### []{#anchor-410}*Lucene*
+[]{#anchor-420}
 
-Lucene is a very popular engine. It is the motor behind ElasticSearch,
-Solr, Neo4j and many other products. To compare Lucene with re-Isearch
-is really to compare potatoes with fish. They have quite different
-histories, design considerations and goals. The following short sketch
-attempts, however, to outline a few points since we\'ve been asked.
-
-1.  Design target
-
-    -   Lucene was designed to be a reasonably flexible fulltext search
-        engine with support for fields. Its a more or less traditional
-        unstructured text search system using an optimized inverted
-        index.
-    -   re-Isearch was designed to be an object (neither text nor data
-        centric) oriented search engine for abstract objects and
-        structural paths (including overlays). Its been designed to try
-        to manage wildly heterogeneous formats and extract also implicit
-        structure. re-Isearch supports XML, SGML and other formats as-if
-        native.
-
-2.  Java
-
-    -   Lucene is typically pure Java. Its 100% written in Java. Its
-        more or less Java thread safe but not completely.
-    -   re-Isearch is written in C++. Java is provided via a SWIG
-        created JNI (Java Native Interface) module. Since re-Isearch is
-        written in C++ and interfaces via SWIG, application development
-        is not limited to Java but Python (perhaps the most popular
-        choice and by far the best developed re-Isearch interface), Tcl,
-        Ruby and a number of other languages.
-    -   Lucene needs Java to run (although there are a few forks
-        rewriting the algorithms and structures into other languages).
-        Java is, in our educated opinion, a fine language for developing
-        many kinds of applications (especially given the availability of
-        Java developing talent) but is less than ideal for database,
-        search and retrieval.
-    -   re-Isearch allows for applications to use its algorithms to be
-        written in Java but does not require the use of Java. Our
-        favorite language for writing applications to use re-Isearch is,
-        in fact, Python and not Java.
-
-3.  Portability
-
-    -   Since Lucene is pure Java its portable to platforms with
-        suitable JVMs. Packages should just run from platform to
-        platform. No need, in theory, for specific binaries beyond the
-        JVM.
-    -   re-Isearch is written in extremely portable C++. It can be
-        targeted to most platforms (Win32, Linux, Solaris, BSD etc. are
-        available) but demands a package for each platform.
-        Applications, of course, written in re-Isearch\'s Java (or other
-        language API) are portable to any platform.
-
-4.  Threads
-
-    -   Lucene is pure Java and with the exception of the query parser
-        and a few other bits its thread and more or less process safe.
-        Some of it is at the cost of S/R (search and retrieval)
-        concurrency: searches are in memory (either in whole or
-        segments) to make them thread robust (and avoid file system and
-        I/O deadlocks) and so don\'t include changes to the index during
-        the lifespan of the class (or segment read).
-
-    -   re-Isearch is designed to handle S/R concurrency. The indexer
-        has been designed to be able to run nearly continuously with
-        search always in-step with the index. Its built using the POSIX
-        threads model. re-Isearch, however, isn\'t 100% \'thread-safe\'
-        in the sense that the programmer can use code indiscriminately
-        from threads. Its been designed with reasonable process safety
-        in mind to allow for robust development of search and retrieval
-        applications. re-Isearch is typically used in Web server
-        environments as a service (via protocols). re-Isearch can be via
-        JNI embedded into application servers such as Tomcat but its not
-        advised--- and especially not on Linux 32-bit systems (due to
-        the design of the 32-bit kernel and how it uses low memory to
-        manage memory mapped pages which together with the size of
-        Tomcat+Apache and the max. address space leaves very little room
-        despite available memory in RAM and swap) highly discouraged.
-        De-coupling search from the application server increases the
-        resilience of the application server to traffic. Java, after
-        all, is about modularization and client-server objects.
-
-        \
-        Do threads make sense for search? See: [Should one
-        ](https://web.archive.org/web/20111119140300/http://www.ibu.de/ThreadsAndSearch#threads)[*run
-        search in
-        threads*](https://web.archive.org/web/20111119140300/http://www.ibu.de/ThreadsAndSearch#threads)?
-        In a nutshell: not really and especially not with lower cost
-        servers built around the x86 architecture and PCIe bus. They
-        have single data ports which limit their input and output to
-        their serial flow through the pipeline. With fast SSDs this is
-        particularly apparent but even with slower harddisks it is
-        noticeable as they are limited to reads within a sector.
-        Wincherster harddrives' relatively small disk buffers favor
-        sector-to-sector serial reads for highest throughput. Disk
-        access will tend to use the cache less and demand more head
-        movements (slower, more heat, more power needed etc.). In
-        comparing queues to concurrent threads the later take more CPU
-        and produce response times not better than the last in a
-        sequential queue--- Search performance, after all, is driven
-        more by memory access speed and I/O latency than by CPU speed.
-
-5.  Searching multiple indexes, JOINs etc.
-
-    -   With lucene you can only search 1 index with a query. There is
-        no means to create virtual indexes.
-    -   re-Isearch supports virtual indexes and index import. One can
-        create on demand virtual collections of indexes and
-        transparently search them with a single query.
-    -   With Lucene there is no means to import and merge multiple
-        indexes into a single index.
-    -   With re-Isearch can also import multiple indexes into a single
-        index.
-    -   re-Isearch supports also JOINs and via the object system these
-        joins can be to RDBMSs.
-
-6.  Permitted document size and speed
-
-    -   Lucene normally indexes only the first 10,000 words of a
-        document. When increasing this default out-of-memory errors can
-        occur. Despite its memory demands it still seems to index quite
-        slow. Its slow since it indexes on a per document basis. Eating
-        a document, spitting out its index and then merging or
-        optimizing into the main index.
-    -   re-Isearch indexes each and every word of a document. It does
-        not matter how many words a document has. The amount of memory
-        an indexing process uses is defined by the configuration and is
-        not related to the size of the documents being indexed, the
-        number or frequency of there terms. The more memory (as long as
-        the system does not start constantly swaping) one gives a
-        process, up to the total size of all the documents indexed, the
-        faster the indexer will run but it can also run in a tiny memory
-        footprint. The minimum memory an index process needs is the size
-        of the largest record (it self-adjusts for this). re-Isearch can
-        typically index, ignoring document structure, significantly
-        faster than one could copy the documents into a tar archive. The
-        more and faster the I/O (memory, disk etc.) the faster the
-        indexing process. Depending upon the document format most of the
-        time to build a database is spent not in the term indexing but
-        in parsing the document structure into records and parsing those
-        records into elements.
-
-7.  Field length
-
-    -   Lucene sets (by default) the max. field length by default to
-        10000 terms. This is to set an upper bound for the amount of
-        memory used for indexing a single document. Since this still can
-        lead to OOM (Out Of Memory)--- especially on 32-bit Linux
-        platforms--- one is often better off reducing it to half that
-        value.
-    -   re-Isearch places no limitation of max. field length. Just as a
-        document can contain an number of terms, a field can contain any
-        number of terms--- and one can have any number of fields as
-        well.
-
-8.  Memory Demands
-
-    -   Lucene (including Java) needs a lot of memory to run. RAM memory
-        consumption is more or less constant at a high level during both
-        indexing and searching activities.
-    -   re-Isearch can be configured to use a specific amount of memory
-        during index. It can also self-configure itself to run in a
-        portion of the free RAM available on the system (determined at
-        indexing start).
-    -   Lucene has a high fixed memory demand for search since segments
-        of indexes are copied into memory.
-    -   re-Isearch has a low fixed memory demand. The amount of memory
-        needed by a search is related to the size of the resulting
-        result. The larger the number of records found and the more hits
-        they have, the larger the memory used. Once the result set is no
-        longer used its disposed of.
-    -   Since Lucene is Java it is dependent upon the Java memory
-        management (garbage collector) to manage system memory. Java
-        tends to \"hog\" memory: normally takes but returns little
-        memory to the operating system.
-    -   re-Isearch uses memory mapping and allocates and deallocates
-        memory to the operating system. The model has been designed to
-        try to run in limited resources and create a minimal impact on
-        total system performance (other programs running).
-
-9.  Exclused terms / Stop words
-
-    -   Lucene normally excludes \"common\" words, so-called \"stop
-        words\", from the index. The general use is to have these stop
-        words also automatically chosen on the basis of their frequency
-        in the index. The default value of 0.4 means that words that are
-        more common than 4 per 1000 words are automatically excluded
-        from the index.
-    -   re-Isearch does not demand but can allow for the use of stop
-        words. re-Isearch supports stop words on a per-language basis
-        (language of document) and allows for distinct lists for use
-        during indexing (exclude from the index) and search (exclude as
-        ordinary term for search). Common practice is to index each and
-        every term and only use stop words, if at all, during search.
-        The term \"war\", for example, might not be too significant in
-        German (\"was\" in English) but means quite something else in
-        English (conflict, name of a 1960s funk band etc.).
-
-10. Term length
-
-    -   Lucene places limits on the lengths of terms
-    -   re-Isearch is designed to handle terms/words of any length.
-
-11. Search Terms/Wild cards/Truncated search terms
-
-    -   Lucene expands wildcards to terms before even searching. Queries
-        are re-written into a more basic form consisting of a set of
-        logically combined TermQuery\'s. The standard limit on the total
-        number of terms in a query is 1024. For example, if the indexed
-        documents contain the terms \"car\" and \"cars\" the query
-        \"ca\*\" will be expanded to \"car OR cars\" before the search
-        takes place.Lucene \"pre-processes\" steps:
-
-        i.  A sorted term enumeration is started from the term
-            alphabetically closest to/after the given prefix (the term
-            characters on the left). This enumerates all terms from all
-            existing fields in the index.
-        ii. For each term, Lucene checks if the term actually starts
-            with the prefix and belongs to the given field. If so the
-            term is added to a BooleanQuery as a TermQuery with OR
-            logic.
-        iii. The process produced a constructed BooleanQuery which
-             contains exactly as many clauses as there were terms
-             matching the prefix.
-
-        For a WildcardQuery, the process is similar in that the term
-        value string containing wildcard(s) is also expanded to all
-        matching terms for the given field and OR-combined using a
-        BooleanQuery.
-
-    -   re-Isearch places no similar limits but allows for wildcards in
-        paths, terms etc. Its really a different model. The query
-        \"\"ca\*\" will search for all the terms that start with \"ca\".
-        If there is a limit defined in the search for time (which may be
-        set to a limit or allowed to be unlimited) or number of records
-        (which can be set to an absolute number, a number as a
-        proportion of the total number of records in the index or
-        unlimited) the search will stop when that mark is passed
-        (default is unlimited number of records).
-
-        i.  re-Isearch does not expand the query into a boolean OR\'d
-            expression but searches directly for the query. This is more
-            direct and allows for query structures to be re-used. With
-            Lucene for each change in an index the Query must be
-            re-parsed (Note: the Lucene query parser is NOT thread
-            safe).
-        ii. re-Isearch supports not just wildcards but full glob (POSIX
-            1003.2, 3.13) including some extensions. These can be
-            applied to the entire search expression including path and
-            term components.
-
-    -   Lucene normally supports only wildcards to the right (prefix
-        queries).
-
-    -   re-Isearch supports both right and left truncation as well as
-        generic glob expressions.
-
-    -   Lucene does not normally allow for wildcards in field names
-
-    -   re-Isearch allows for wildcards (glob expressions) in field
-        names and paths.
-
-    -   Lucene does not support combinations of phrase and wildcard as
-        in the right truncated phrase search \"search optim\"\*
-
-    -   re-Isearch allows for wildcards.
-
-12. Proximity
-
-    -   Lucene does not really support proximity but a concept of
-        \"phrase query slop\": the maximum number of full word \"moves\"
-        required to get all the words next to each other in the proper
-        order. For simple paired expressions like \"dog cat\"\~10 (the
-        \~10 specifies the moves) it comes out as within 10 (or whatever
-        positive integer specified) words.
-    -   re-Isearch has a concept of proximity. Distance, however, is not
-        measured in words but bytes as in the original indexed document.
-        This makes sense since in marked-up documents what\'s a word?
-        re-Isearch also has heuristic concepts of near and can also
-        restrict proximity to within a common field instance.
-
-13.  Normalization
-
-    -   Lucene supports both TD-IDF and BM25 Normalization. BM25 is
-        extremely popular and has done quite well in search comparison
-        testing.
-    -   Re-Isearch does not support BM25. This was a decision---that may
-        be revised---based upon the belief that it is not wholly
-        suitable to the underlying search paradigm. BM25 adjusts the
-        cosine metric with a guesstimate parameters K and a weight b.
-        The weight b applies to a kind of linear weighting of the
-        function according to a result's length with respect to the
-        average result length in a result set. It does not consider the
-        proximity of hits within the record. It only factors the
-        frequency, record length, size of the result set and average
-        size of records therein. Following a query we have a set that
-        includes the hits and their location as well as a pointer to the
-        record it is contained in. We, however, don't yet resolve
-        particular information about the record's length. That
-        information is contained in another data structure. We could
-        look it up but it is an additional cost that seems, at this
-        time, unwarranted. Our own tests using TREC data found Euclidean
-        Normalization to more generally outperform BM11 and BM15---BM25
-        is just a weight factor that mixes these two algorithms.
-
-```{=html}
-<!-- -->
-```
-1.  
-
-```{=html}
-<!-- -->
-```
-1.  Boolean operations
-
-    -   Lucene does not use the pure boolean information retrieval model
-        or support boolean operators but simulates some of the basic
-        user-side functionality for inclusion and exclusion via a modal
-        prefix model. Lucene has two term prefix ops: \"**+**\" (for
-        \"*must* contain\"), \"**-**\" (for \"*must not* contain\").
-        Terms without a prefix are \"*can* contain\". It supports via
-        query parsers an emulation of \"AND\" \"OR\" \"ANDNOT\". The
-        emulation, however, is somewhat quirky and often interprets
-        queries differently than most (other than those familiar with
-        the quirks) would ever expect.
-    -   re-Isearch is overloaded with operators (probably more than most
-        people have ever heard of).
-
-2.  Unary operators
-
-    -   Lucene has effectively no unary operators. The closest to unary
-        operations are term boost (weight) and \"fuzzy\" but they are
-        limited to use as term modifiers.
-    -   re-Isearch has a full-blown set of operators (again from
-        different design considerations) and includes not just a rich
-        set of binary but also unary operators including complement,
-        operators to sort and manipulate sets, boost weight of the
-        expression (according to a number of models) restrict to given
-        fields/paths etc.
-
-3.  Query Languages/Interfaces
-
-    -   Lucene does not per say have a query language since it contains
-        only terms and modifiers (+,-, weight). These may be processed
-        in any order. There are a number of classes to try to convert
-        other languages into Lucene\'s model.
-    -   re-Isearch uses a vector/boolean information retrieval model.
-        Queries are driven by an object oriented automata. These may be
-        created as program objects or parses from any of a number of
-        query languages. At the heart of re-Isearch\'s model is an RPN
-        stack based language and there are a number a number of classes
-        to convert from other query languages into RPN.
-    -   Lucene\'s boolean query class limits the number of clauses (typ.
-        1024). This makes sense since Lucene too limits the number of
-        terms in a query (typ. 1024).
-    -   re-Isearch\'s boolean query class places not limits on the
-        number of clauses, terms, operators etc.
-    -   Lucene is best when not finding records. Since there are no
-        operators and just terms and predicates that apply to them
-        (either weight or modality) they can without worry be easily
-        rearranged. The query: A -B C D +E for instance can be quickly
-        optimized by the constraints \"must have\" E and \"can\'t
-        have B.
-    -   re-Isearch is run by a query automata. It can perform many
-        optimizations but it can\'t just build upon short circuits and
-        programs will need to run their course except in some simple
-        cases such as all terms \"ANDed\".
-
-4.  Does the position of the matches in the text affect the scoring?
-
-    -   In Lucene: No, the position of matches within a field does not
-        affect ranking.
-    -   In re-Isearch: Depends upon the score normalization model
-        selected at search time. The CosineMetric normalization model,
-        for instance, does use the position of the matches in text to
-        affect the scoring. This is all search time and user selectable.
-
-5.  Field differences
-
-    -   Lucene lacks diagnostics. Searching even in a field that does
-        not exist just returns no results but without reason. Since
-        fields are *Case Sensitive* in Lucene this is a frequent source
-        of error.
-
-    -   re-Isearch contains diagnostics.
-
-    -   Lucene\'s fields are *Case Sensitive*. There is, to our
-        knowledge, no way to switch it.
-
-    -   re-Isearch *by default* makes field names and paths *case
-        *in*sensitive* (as the case for SGML, SQL etc). Even through XML
-        is case sensitive (and we were among those that opposed it) we
-        are familiar with no productive XML document types and valid
-        instances with two (or more) siblings differing only in case of
-        their names. While possible in XML
-
-        \<organization\>\<name\>BSn\</name\>\<NAME\>Edward C.
-        Zimmermann\</NAME\>\</organization\>
-
-        its poor design just as there are reasons why domain names and
-        email addresses too are not case dependent.
-
-6.  Structure search
-
-    -   Lucene is a traditional inverted index fulltext engine. Its
-        quite good at handling a limited number of fields but is
-        inappropriate for use with arbitary trees.
-    -   re-Isearch is not based on \"Inverted file indexes\" and uses
-        other algorithms. It has no limits on the length of terms, their
-        frequency and and can support arbitary structures and paths,
-        including overlap.
-    -   The granularity of Lucene (unit of retrieval) is the record as
-        defined at the time of indexing.
-    -   re-Isearch allows for search-time dynamic granularity. The scale
-        of grain (sentence, paragraph, document, chapter, book,
-        collection, source, community, hub, inter-hub bridge, sphere,
-        inter-sphere bridge) is defined by the result of the search and
-        by the query.
-    -   The product of a search in Lucene is a identification for the
-        record. To extract elements one must load the document (parse
-        etc.) into an object model that supports addressing elements.
-    -   re-Isearch has no no need for a "middle layer" of content
-        manipulation code. Instead of getting IDs, fetching documents,
-        parsing them, and navigating the DOMs to find required elements,
-        re-Isearch lets you simply request the elements you need and
-        they are returned directly.
-
-[]{#anchor-411}
-
-## []{#anchor-412}BM25 Normalization
+## []{#anchor-421}BM25 Normalization
 
 BM25 is really just a combination of BM11 and BM15. Where b is selected
 as a constant from the interval \[0,1\]
 
-![](Pictures/10000201000002890000008B429FFA7F11912C1B.png){width="5.5437in"
+![](Pictures/10000001000002890000008BC9F552190C75509A.png){width="5.5437in"
 height="1.1874in"}f~i,j\ ~is the frequency of term within document d~j~
 
 The Value for K~1\ ~and b are empirically chosen. Each document
@@ -14467,7 +14660,7 @@ collection probably needs their own K value.
 Notice: If b = 0 → BM15, if b = 1 → BM11. A popular value for b is 0.75
 given that B11 seems to generally outperform B15.
 
-![](Pictures/10000201000003640000009897EBA1B142CA8A75.png){width="6.4992in"
+![](Pictures/1000000100000364000000983DDF7D548003C0DC.png){width="6.4992in"
 height="1.1382in"}
 
 [^1]: A distributed information server started in 1989 at Thinking
@@ -14481,14 +14674,18 @@ height="1.1382in"}
     of creative productions applying new technologies in art,
     interactivity, and electronic and digital media.
 
-[^3]: By comparison alone a Java runtime requires 128 MB physical RAM to
+[^3]: Java libraries depend, by contrast, upon Java which is itself not
+    free software. The Java Runtime Environment (JRE) use for embedded
+    devices may, for instance, even require a license fee from Oracle.
+
+[^4]: By comparison alone a Java runtime requires 128 MB physical RAM to
     run.
 
-[^4]: In NONMONOTONIC's Munich lab we have a large selection of
+[^5]: In NONMONOTONIC's Munich lab we have a large selection of
     embededed boards from the tiny NodeMCU to NVIDIA's Xavier.
 
-[^5]: <http://pubs.usgs.gov/of/2006/1279/2006-1279.pdf>
+[^6]: <http://pubs.usgs.gov/of/2006/1279/2006-1279.pdf>
 
-[^6]: <https://david-hawking.net/pubs/hawking_sigirposter04.pdf>
+[^7]: <https://david-hawking.net/pubs/hawking_sigirposter04.pdf>
 
-[^7]: <https://datatracker.ietf.org/doc/html/rfc5322>
+[^8]: <https://datatracker.ietf.org/doc/html/rfc5322>
