@@ -1,0 +1,140 @@
+WARC/1.0
+WARC-Type: warcinfo
+Content-Type: application/warc-fields
+WARC-Date: 2022-08-07T12:00:11Z
+WARC-Record-ID: <urn:uuid:b2dee91e-53c0-4f92-8fa8-31fd4c1972ac>
+WARC-Filename: test.warc
+WARC-Block-Digest: sha1:TDL3REAWQQJ3336ECVJ2XYB7B5I4ES5O
+Content-Length: 245
+
+software: Wget/1.19.4 (linux-gnu)
+format: WARC File Format 1.0
+conformsTo: http://bibnum.bnf.fr/WARC/WARC_ISO_28500_version1_latestdraft.pdf
+robots: classic
+wget-arguments: "--warc-file=test" "--no-warc-keep-log" "http://www.exodao.net" 
+
+
+
+WARC/1.0
+WARC-Type: request
+WARC-Target-URI: <http://www.exodao.net/>
+Content-Type: application/http;msgtype=request
+WARC-Date: 2022-08-07T12:00:11Z
+WARC-Record-ID: <urn:uuid:18640a8d-10b2-43cd-9b01-ed04a81dfab7>
+WARC-IP-Address: 93.104.24.52
+WARC-Warcinfo-ID: <urn:uuid:b2dee91e-53c0-4f92-8fa8-31fd4c1972ac>
+WARC-Block-Digest: sha1:II446FV3T4HY3E32CTSB27WK5PETQ3TY
+Content-Length: 141
+
+GET / HTTP/1.1
+User-Agent: Wget/1.19.4 (linux-gnu)
+Accept: */*
+Accept-Encoding: identity
+Host: www.exodao.net
+Connection: Keep-Alive
+
+
+
+WARC/1.0
+WARC-Type: response
+WARC-Record-ID: <urn:uuid:09083474-406d-41be-95ad-b42a1c21b8a6>
+WARC-Warcinfo-ID: <urn:uuid:b2dee91e-53c0-4f92-8fa8-31fd4c1972ac>
+WARC-Concurrent-To: <urn:uuid:18640a8d-10b2-43cd-9b01-ed04a81dfab7>
+WARC-Target-URI: <http://www.exodao.net/>
+WARC-Date: 2022-08-07T12:00:11Z
+WARC-IP-Address: 93.104.24.52
+WARC-Block-Digest: sha1:IHHYYUW3KK7CEEAUOMU7OZAS4232Z3AY
+WARC-Payload-Digest: sha1:XZSIL3DGIYMEKZFCFDM27VTQDI4TBJLR
+Content-Type: application/http;msgtype=response
+Content-Length: 2273
+
+HTTP/1.1 200 OK
+Server: nginx/1.10.3 (Ubuntu)
+Date: Sun, 07 Aug 2022 12:00:08 GMT
+Content-Type: text/html
+Content-Length: 2025
+Last-Modified: Sun, 15 May 2022 18:32:09 GMT
+Connection: keep-alive
+ETag: "62814729-7e9"
+Accept-Ranges: bytes
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>ExoDAO.net</title>
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+	background-color: #101010;
+	color: #ffffff ;
+    }
+    a:link {
+	color: red;
+    }
+    a:visited {
+	color: green;
+    }
+    a:hover {
+	color: hotpink;
+    }
+    a:active {
+	color: blue;
+    }
+    .bottom {
+	margin-bottom: 5cm;
+    }
+</style>
+</head>
+<body>
+<h1>Welcome to the ExoDAO network</h1>
+
+"<em>Since it is very difficult even for experts to evaluate search engines, search engine bias is particularly insidious.</em>"
+
+<p>"<em>Currently, the predominant business model for commercial search engines is advertising. The goals of the advertising business model do not always correspond to providing quality search to users... we expect that advertising funded search engines will be inherently biased towards the advertisers and away from the needs of the consumers... Furthermore, advertising income often provides an incentive to provide poor quality search results.</em>"&mdash; <A HREF="http://infolab.stanford.edu/~backrub/google.html">Sergey Brin and Lawrence Page (1998)</A></p>
+
+<P>
+Then G-d said to Moses, "You shall soon see what I will do to Pharaoh: he shall let them go because of a greater might; indeed, because of a greater might he shall drive them from his land."&mdash; <A HREF="https://www.sefaria.org/Exodus.6.1?ven=The_Contemporary_Torah,_Jewish_Publication_Society,_2006&vhe=Miqra_according_to_the_Masorah&lang=bi&with=Translations&lang2=en">Exodus 5:1:</A>
+</p>
+<p class="bottom">
+<H4>Imprint / Impressum / Mentions Obligatoires:</H4>
+<!-- Yoel A. Zimmermann / Edward C. Zimmermann<br/>
+-->
+E-Mail: exodao.net@gmail.com<br/>
+Website / Publisher / Contact: <A HREF="HTTP://WWW.NONMONOTONIC.NET">nonmonotonic.net</A><br/>
+
+</p>
+  <p style="color:green;">
+This Web (part of the Exodus 3.0 project) is powered by an ultra low powered server emitting less than the equivalent of 1g CO<sub>2</sub>/hour</p>
+</body>
+</html>
+
+
+WARC/1.0
+WARC-Type: metadata
+WARC-Record-ID: <urn:uuid:92a03de8-79de-4969-b187-d51a2a8574ce>
+WARC-Warcinfo-ID: <urn:uuid:b2dee91e-53c0-4f92-8fa8-31fd4c1972ac>
+WARC-Target-URI: <metadata://gnu.org/software/wget/warc/MANIFEST.txt>
+WARC-Date: 2022-08-07T12:00:11Z
+WARC-Block-Digest: sha1:Z3RI6PBOB7UVWJSDSCM2BZECY47APNJK
+Content-Type: text/plain
+Content-Length: 48
+
+<urn:uuid:b2dee91e-53c0-4f92-8fa8-31fd4c1972ac>
+
+
+WARC/1.0
+WARC-Type: resource
+WARC-Record-ID: <urn:uuid:c3ec933e-3d66-46af-9054-2c1d61041225>
+WARC-Warcinfo-ID: <urn:uuid:b2dee91e-53c0-4f92-8fa8-31fd4c1972ac>
+WARC-Concurrent-To: <urn:uuid:92a03de8-79de-4969-b187-d51a2a8574ce>
+WARC-Target-URI: <metadata://gnu.org/software/wget/warc/wget_arguments.txt>
+WARC-Date: 2022-08-07T12:00:11Z
+WARC-Block-Digest: sha1:BYCONFFZIEEXMDJWXXIXF4PZJHDWT5DT
+Content-Type: text/plain
+Content-Length: 65
+
+"--warc-file=test" "--no-warc-keep-log" "http://www.exodao.net" 
+
+

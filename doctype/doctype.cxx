@@ -566,7 +566,7 @@ GPTYPE DOCTYPE::ParseWords(UCHR* DataBuffer, GPTYPE DataLength,
       for (; (Position < DataLength) && (IsWordSep(DataBuffer[Position])); Position++)
 	{
 /*
-	  // Mar 2009.. Added special case for \r (DOSismus)
+	  // Added special case for \r (DOSismus)
 	  if (DataBuffer[Position] == '\r') DataBuffer[Position++] = zapChar;
 */
 

@@ -1,0 +1,1512 @@
+<?xml version="1.0"?>
+    <owl:Ontology rdf:about="https://purl.org/p2p-o/invoice">
+        <owl:imports rdf:resource="https://purl.org/p2p-o/document"/>
+        <owl:imports rdf:resource="https://purl.org/p2p-o/documentline"/>
+        <dc:contributor>Andreas Dengel</dc:contributor>
+        <dc:contributor>Christian Jilek</dc:contributor>
+        <dc:contributor>Heiko Maus</dc:contributor>
+        <dc:contributor>Markus Schröder</dc:contributor>
+        <dc:contributor>Torsten Albers</dc:contributor>
+        <dc:creator>Michael Schulze</dc:creator>
+        <dc:description xml:lang="en">This research work is part of P2P-O, a purchase-to-pay ontology for enabling semantic invoices. This module reuses, among other things, the European Standard EN 16931-1.</dc:description>
+        <dc:title xml:lang="en">Invoice Module of P2P-O</dc:title>
+        <terms:license>https://opensource.org/licenses/MIT</terms:license>
+        <vann:preferredNamespacePrefix>p2p-o-inv</vann:preferredNamespacePrefix>
+        <vann:preferredNamespaceUri>https://purl.org/p2p-o/invoice</vann:preferredNamespaceUri>
+        <rdfs:label xml:lang="en">Invoice Module of P2P-O</rdfs:label>
+    </owl:Ontology>
+    <owl:AnnotationProperty rdf:about="http://www.w3.org/2004/02/skos/core#altLabel"/>
+    
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/document#received"/>
+    
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/document#references"/>
+    
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/document#sent"/>
+    
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/document#wasReceivedBy"/>
+    
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/document#wasSentBy"/>
+    
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#deliverToLocation">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/organization#Identifier"/>
+        <rdfs:comment xml:lang="en">An identifier for the location at which the goods and services are delivered.</rdfs:comment>
+        <rdfs:label xml:lang="en">deliver to location</rdfs:label>
+        <item:seeEN16931-1-2017>BT-71</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#deliverToParty">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/ns/org#FormalOrganization"/>
+        <rdfs:comment xml:lang="en">To which the goods and services are delivered.</rdfs:comment>
+        <rdfs:label xml:lang="en">deliver to party</rdfs:label>
+        <item:seeEN16931-1-2017>BG-13</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-70</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">Shall be used if the Deliver to party is different from the Buyer.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#followsInvoice -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#followsInvoice">
+        <owl:inverseOf rdf:resource="https://purl.org/p2p-o/invoice#precedesCreditNote"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/invoice#E-CreditNote"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:label xml:lang="en">follows invoice</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasAllowanceAmount -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasAllowanceAmount">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/price#AllowanceAmountOfMoney"/>
+        <rdfs:label xml:lang="en">has allowance amount</rdfs:label>
+        <item:seeEN16931-1-2017>BG-20</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BG-27</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-136</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-92</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasAllowanceBaseAmount -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasAllowanceBaseAmount">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/price#AllowanceAmountOfMoney"/>
+        <rdfs:comment xml:lang="en">The base amount that may be used, in conjunction with the allowance percentage, to calculate the allowance amount.</rdfs:comment>
+        <rdfs:label xml:lang="en">has allowance base amount</rdfs:label>
+        <item:seeEN16931-1-2017>BT-137</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-93</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasAttachedDocument -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasAttachedDocument">
+        <owl:inverseOf rdf:resource="https://purl.org/p2p-o/invoice#isAttachedDocumentIn"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/document#SupportingDocument"/>
+        <rdfs:label xml:lang="en">has attached document</rdfs:label>
+        <item:seeEN16931-1-2017>BT-125</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasBankAssignedCreditorIdentifier -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasBankAssignedCreditorIdentifier">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/invoice#DirectDebitAccount"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/organization#Identifier"/>
+        <rdfs:comment xml:lang="en">Unique banking reference identifier of the Payee or Seller assigned by the Payee or Seller bank.</rdfs:comment>
+        <rdfs:label xml:lang="en">has bank assigned creditor identifier</rdfs:label>
+        <item:seeEN16931-1-2017>BG-19</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-90</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">Used in order to pre-notify the Buyer of a SEPA direct debit.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasBuyer -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasBuyer">
+        <owl:inverseOf rdf:resource="https://purl.org/p2p-o/invoice#isBuyerIn"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/ns/org#FormalOrganization"/>
+        <rdfs:label xml:lang="en">has buyer</rdfs:label>
+        <item:seeEN16931-1-2017>BG-7</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasBuyerAddress -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasBuyerAddress">
+        <owl:inverseOf rdf:resource="https://purl.org/p2p-o/invoice#isBuyerAddressOf"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/organization#Address"/>
+        <rdfs:label xml:lang="en">has buyer address</rdfs:label>
+        <item:seeEN16931-1-2017>BG-8</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasChargeAmount -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasChargeAmount">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/price#ChargeAmountOfMoney"/>
+        <rdfs:comment xml:lang="en">The amount of a charge, without VAT.</rdfs:comment>
+        <rdfs:label xml:lang="en">has charge amount</rdfs:label>
+        <item:seeEN16931-1-2017>BG-21</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BG-28</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT--99</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-141</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasChargeBaseAmount -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasChargeBaseAmount">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/price#ChargeAmountOfMoney"/>
+        <rdfs:comment xml:lang="en">The base amount that may be used, in conjunction with the charge percentage, to calculate the charge amount.</rdfs:comment>
+        <rdfs:label xml:lang="en">has charge base amount</rdfs:label>
+        <item:seeEN16931-1-2017>BT-100</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-142</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasDebitedAccountIdentifier -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasDebitedAccountIdentifier">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/invoice#DirectDebitAccount"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/organization#Identifier"/>
+        <rdfs:comment xml:lang="en">The account to be debited by the direct debit.</rdfs:comment>
+        <rdfs:label xml:lang="en">has debited account identifier</rdfs:label>
+        <item:seeEN16931-1-2017>BG-19</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-91</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasDeliveryAddress -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasDeliveryAddress">
+        <owl:inverseOf rdf:resource="https://purl.org/p2p-o/invoice#isDeliveryAddressOf"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/organization#Address"/>
+        <rdfs:label xml:lang="en">has delivery address</rdfs:label>
+        <item:seeEN16931-1-2017>BG-15</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasDirectDebitAccount -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasDirectDebitAccount">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/invoice#DirectDebitAccount"/>
+        <rdfs:label xml:lang="en">has direct debit account</rdfs:label>
+        <item:seeEN16931-1-2017>BG-19</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">May be used to give prior notice in the invoice that payment will be made through a SEPA or other direct debit initiated by the Seller, in accordance with the rules of the SEPA or other direct debit scheme.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasInvoiceLine -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasInvoiceLine">
+        <owl:inverseOf rdf:resource="https://purl.org/p2p-o/invoice#isInvoiceLineOf"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+        <rdfs:label xml:lang="en">has invoice line</rdfs:label>
+        <item:seeEN16931-1-2017>BG-25</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasInvoiceReference -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasInvoiceReference">
+        <rdfs:subPropertyOf rdf:resource="https://purl.org/p2p-o/document#references"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:label xml:lang="en">has invoice reference</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasMandateReferenceIdentifier -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasMandateReferenceIdentifier">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/invoice#DirectDebitAccount"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/organization#Identifier"/>
+        <rdfs:comment xml:lang="en">Unique identifier assigned by the Payee for referencing the direct debit mandate.</rdfs:comment>
+        <rdfs:label xml:lang="en">has mandate reference identifier</rdfs:label>
+        <item:seeEN16931-1-2017>BG-19</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-89</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">Used in order to pre-notify the Buyer of a SEPA direct debit.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasPayee -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasPayee">
+        <owl:inverseOf rdf:resource="https://purl.org/p2p-o/invoice#isPayeeIn"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/ns/org#FormalOrganization"/>
+        <rdfs:comment xml:lang="en">the role that receives the payment.</rdfs:comment>
+        <rdfs:label xml:lang="en">has payee</rdfs:label>
+        <item:seeEN16931-1-2017>BG-10</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-59</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasPaymentAccount -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasPaymentAccount">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/invoice#PaymentAccount"/>
+        <rdfs:comment xml:lang="en">Payment account, at a payment service provider, to which payment should be made.</rdfs:comment>
+        <rdfs:label xml:lang="en">has payment account</rdfs:label>
+        <item:seeEN16931-1-2017>BG-17</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasPaymentAccountIdentifier -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasPaymentAccountIdentifier">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/invoice#PaymentAccount"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/organization#Identifier"/>
+        <rdfs:comment xml:lang="en">A unique identifier of the financial payment account, at a payment service provider, to which payment should be made.</rdfs:comment>
+        <rdfs:label xml:lang="en">has payment account identifier</rdfs:label>
+        <item:seeEN16931-1-2017>BG-17</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-84</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">Such as IBAN (in case of a SEPA payment) or a national account number.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasPaymentCard -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasPaymentCard">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/invoice#PaymentCard"/>
+        <rdfs:comment xml:lang="en">Card used for payment contemporaneous with invoice issuance.</rdfs:comment>
+        <rdfs:label xml:lang="en">has payment card</rdfs:label>
+        <item:seeEN16931-1-2017>BG-18</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">Only used if the Buyer had opted to pay by using a payment card such as a credit or debit card.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasPaymentServiceProvider -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasPaymentServiceProvider">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/invoice#PaymentAccount"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/organization#Identifier"/>
+        <rdfs:comment xml:lang="en">An identifier for the payment service provider where a payment account is located.</rdfs:comment>
+        <rdfs:label xml:lang="en">has payment service provider</rdfs:label>
+        <item:seeEN16931-1-2017>BG-16</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BG-17</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-86</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">payment account is located.
+Such as a BIC or a national clearing code where required. No identification scheme to be used.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasSeller -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasSeller">
+        <owl:inverseOf rdf:resource="https://purl.org/p2p-o/invoice#isSellerIn"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/ns/org#FormalOrganization"/>
+        <rdfs:label xml:lang="en">has seller</rdfs:label>
+        <item:seeEN16931-1-2017>BG-4</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasSellerAddress -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasSellerAddress">
+        <owl:inverseOf rdf:resource="https://purl.org/p2p-o/invoice#isSellerAddressIn"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/organization#Address"/>
+        <rdfs:label xml:lang="en">has seller address</rdfs:label>
+        <item:seeEN16931-1-2017>BG-5</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasSellerTaxRepresentative -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasSellerTaxRepresentative">
+        <owl:inverseOf rdf:resource="https://purl.org/p2p-o/invoice#isSellerTaxRepresentativeIn"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/ns/org#FormalOrganization"/>
+        <rdfs:label xml:lang="en">has seller tax representative</rdfs:label>
+        <item:seeEN16931-1-2017>BG-11</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-62</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasTotalAllowancesAmount -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasTotalAllowancesAmount">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/price#AllowanceAmountOfMoney"/>
+        <rdfs:comment xml:lang="en">Sum of all allowances on document level in the Invoice.</rdfs:comment>
+        <rdfs:label xml:lang="en">has total allowances amount</rdfs:label>
+        <item:seeEN16931-1-2017>BG-22</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-107</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">Allowances on line level are included in the Invoice line net amount which is summed up into the Sum of Invoice line net amount.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasTotalAmountWithVAT -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasTotalAmountWithVAT">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#PurchaseOrder"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/AmountOfMoney"/>
+        <rdfs:comment xml:lang="en">The total amount of the Invoice with VAT.</rdfs:comment>
+        <rdfs:label xml:lang="en">has total amount with VAT</rdfs:label>
+        <item:seeEN16931-1-2017>BG-22</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-112</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">The Invoice total amount with VAT is the Invoice total amount without VAT plus the Invoice total VAT amount.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasTotalAmountWithoutVAT -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasTotalAmountWithoutVAT">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#PurchaseOrder"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/AmountOfMoney"/>
+        <rdfs:comment xml:lang="en">The total amount of the Invoice without VAT.</rdfs:comment>
+        <rdfs:label xml:lang="en">has total amount without VAT</rdfs:label>
+        <item:seeEN16931-1-2017>BG-22</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-109</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">The Invoice total amount without VAT is the Sum of Invoice line net amount minus Sum of allowances on document level plus Sum of charges on document level.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasTotalChargesAmount -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasTotalChargesAmount">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/price#ChargeAmountOfMoney"/>
+        <rdfs:comment xml:lang="en">Sum of all charges on document level in the Invoice.</rdfs:comment>
+        <rdfs:label xml:lang="en">has total charges amount</rdfs:label>
+        <item:seeEN16931-1-2017>BG-22</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-108</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">Charges on line level are included in the Invoice line net amount which is summed up into the Sum of Invoice line net amount.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasTotalDueForPaymentAmount -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasTotalDueForPaymentAmount">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#PurchaseOrder"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/AmountOfMoney"/>
+        <rdfs:comment xml:lang="en">The outstanding amount that is requested to be paid.</rdfs:comment>
+        <rdfs:label xml:lang="en">has total due for payment amount</rdfs:label>
+        <item:seeEN16931-1-2017>BG-22</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-115</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">This amount is the Document total amount with VAT minus the paid amount that has been paid in advance. The amount is zero in case of a fully paid Invoice. The amount may be negative; in that case the Seller owes the amount to the Buyer.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasTotalLineNetAmount -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasTotalLineNetAmount">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#PurchaseOrder"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/AmountOfMoney"/>
+        <rdfs:comment xml:lang="en">Sum of all document line net amounts in the document.</rdfs:comment>
+        <rdfs:label xml:lang="en">has total line net amount</rdfs:label>
+        <item:seeEN16931-1-2017>BG-22</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-106</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasTotalPaidAmount -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasTotalPaidAmount">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/AmountOfMoney"/>
+        <rdfs:comment xml:lang="en">The sum of amounts which have been paid in advance.</rdfs:comment>
+        <rdfs:label xml:lang="en">has total paid amount</rdfs:label>
+        <item:seeEN16931-1-2017>BG-22</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-113</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">This amount is subtracted from the invoice total amount with VAT to calculate the amount due for payment.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasTotalRoundingAmount -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasTotalRoundingAmount">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#PurchaseOrder"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/AmountOfMoney"/>
+        <rdfs:label xml:lang="en">has total rounding amount</rdfs:label>
+        <item:seeEN16931-1-2017>BG-22</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-114</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">The amount to be added to the invoice total to round the amount to be paid.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasTotalVATAmount -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasTotalVATAmount">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/AmountOfMoney"/>
+        <rdfs:comment xml:lang="en">The total VAT amount for the Invoice.</rdfs:comment>
+        <rdfs:label xml:lang="en">has total value added tax amount</rdfs:label>
+        <item:seeEN16931-1-2017>BG-22</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-110</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">The Invoice total VAT amount is the sum of all VAT category tax amounts.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#hasTotalVATAmountInAccountingCurrency -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#hasTotalVATAmountInAccountingCurrency">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/AmountOfMoney"/>
+        <rdfs:comment xml:lang="en">The VAT total amount expressed in the accounting currency accepted or required in the country of the Seller.</rdfs:comment>
+        <rdfs:label xml:lang="en">has total value added tax amount in accounting currency</rdfs:label>
+        <item:seeEN16931-1-2017>BG-22</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-111</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">To be used when the VAT accounting currency (BT-6) differs from the Invoice currency code (BT-5) in accordance with article 230 of Directive 2006/112 / EC on VAT.
+The VAT amount in accounting currency is not used in the calculation of the Invoice totals.</AnnotationVocabulary:usageNote>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#invoiceWasReceivedBy -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#invoiceWasReceivedBy">
+        <rdfs:subPropertyOf rdf:resource="https://purl.org/p2p-o/document#wasReceivedBy"/>
+        <owl:inverseOf rdf:resource="https://purl.org/p2p-o/invoice#receivedInvoice"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/ns/org#FormalOrganization"/>
+        <rdfs:label xml:lang="en">invoice was received by</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#invoiceWasSentBy -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#invoiceWasSentBy">
+        <rdfs:subPropertyOf rdf:resource="https://purl.org/p2p-o/document#wasSentBy"/>
+        <owl:inverseOf rdf:resource="https://purl.org/p2p-o/invoice#sentInvoice"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/ns/org#FormalOrganization"/>
+        <rdfs:label xml:lang="en">invoice was sent by</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#isAttachedDocumentIn -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#isAttachedDocumentIn">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#SupportingDocument"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:label xml:lang="en">is attached document in</rdfs:label>
+        <item:seeEN16931-1-2017>BT-125</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#isBuyerAddressOf -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#isBuyerAddressOf">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/organization#Address"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:label xml:lang="en">is buyer address of</rdfs:label>
+        <item:seeEN16931-1-2017>BG-8</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#isBuyerIn -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#isBuyerIn">
+        <rdfs:domain rdf:resource="http://www.w3.org/ns/org#FormalOrganization"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:label xml:lang="en">is buyer in</rdfs:label>
+        <item:seeEN16931-1-2017>BG-7</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#isDeliveryAddressOf -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#isDeliveryAddressOf">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/organization#Address"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:label xml:lang="en">is delivery address of</rdfs:label>
+        <item:seeEN16931-1-2017>BG-15</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#isInvoiceLineOf -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#isInvoiceLineOf">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:label xml:lang="en">is invoice line of</rdfs:label>
+        <item:seeEN16931-1-2017>BG-25</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#isPayeeIn -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#isPayeeIn">
+        <rdfs:domain rdf:resource="http://www.w3.org/ns/org#FormalOrganization"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:label xml:lang="en">is payee in</rdfs:label>
+        <item:seeEN16931-1-2017>BG-10</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-59</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#isSellerAddressIn -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#isSellerAddressIn">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/organization#Address"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:label xml:lang="en">is seller address in</rdfs:label>
+        <item:seeEN16931-1-2017>BG-5</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#isSellerIn -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#isSellerIn">
+        <rdfs:domain rdf:resource="http://www.w3.org/ns/org#FormalOrganization"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:comment xml:lang="en">links to the seller in an invoice</rdfs:comment>
+        <rdfs:label xml:lang="en">is seller in</rdfs:label>
+        <item:seeEN16931-1-2017>BG-4</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#isSellerTaxRepresentativeIn -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#isSellerTaxRepresentativeIn">
+        <rdfs:domain rdf:resource="http://www.w3.org/ns/org#FormalOrganization"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:label xml:lang="en">is seller tax representative in</rdfs:label>
+        <item:seeEN16931-1-2017>BG-11</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-62</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#precedesCreditNote -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#precedesCreditNote">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#IrreflexiveProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/invoice#E-CreditNote"/>
+        <rdfs:label xml:lang="en">precedes credit note</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#precedingInvoice -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#precedingInvoice">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:comment xml:lang="en">The identification of an Invoice that was previously sent by the Seller.</rdfs:comment>
+        <rdfs:label xml:lang="en">preceding invoice</rdfs:label>
+        <item:seeEN16931-1-2017>BT-25</item:seeEN16931-1-2017>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#receivedInvoice -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#receivedInvoice">
+        <rdfs:subPropertyOf rdf:resource="https://purl.org/p2p-o/document#received"/>
+        <rdfs:domain rdf:resource="http://www.w3.org/ns/org#FormalOrganization"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:label xml:lang="en">received invoice</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#sentInvoice -->
+
+
+    <owl:ObjectProperty rdf:about="https://purl.org/p2p-o/invoice#sentInvoice">
+        <rdfs:subPropertyOf rdf:resource="https://purl.org/p2p-o/document#sent"/>
+        <rdfs:domain rdf:resource="http://www.w3.org/ns/org#FormalOrganization"/>
+        <rdfs:range rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:label xml:lang="en">sent invoice</rdfs:label>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/organization#hasBuyerContactPoint -->
+
+
+    <rdf:Description rdf:about="https://purl.org/p2p-o/organization#hasBuyerContactPoint">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+    </rdf:Description>
+    
+
+
+    <!-- https://purl.org/p2p-o/organization#hasSellerContactPoint -->
+
+
+    <rdf:Description rdf:about="https://purl.org/p2p-o/organization#hasSellerContactPoint">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+    </rdf:Description>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+
+    
+
+
+    <!-- https://purl.org/p2p-o/documentline#lineBuyerAccountingReference -->
+
+
+    <rdf:Description rdf:about="https://purl.org/p2p-o/documentline#lineBuyerAccountingReference">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </rdf:Description>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#actualDeliveryDate -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#actualDeliveryDate">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#dateTime"/>
+        <rdfs:comment xml:lang="en">the date on which the supply of goods or services was made or completed.</rdfs:comment>
+        <rdfs:label xml:lang="en">actual delivery date</rdfs:label>
+        <item:seeEN16931-1-2017>BT-72</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#allowancePercentage -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#allowancePercentage">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">The percentage that may be used, in conjunction with the allowance base amount, to calculate the allowance amount.</rdfs:comment>
+        <rdfs:label xml:lang="en">allowance percentage</rdfs:label>
+        <item:seeEN16931-1-2017>BT-138</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-94</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#allowanceReason -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#allowanceReason">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">The reason for the allowance, expressed as text.</rdfs:comment>
+        <rdfs:label xml:lang="en">allowance reason</rdfs:label>
+        <item:seeEN16931-1-2017>BT-139</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-97</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#allowanceReasonCode -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#allowanceReasonCode">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">The reason for the allowance, expressed as a code.</rdfs:comment>
+        <rdfs:label xml:lang="en">allowance reason code</rdfs:label>
+        <item:seeEN16931-1-2017>BT-140</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-98</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">Use entries of the UNTDID 5189 code list. The Document level allowance reason code and the Document level allowance reason shall indicate the same allowance reason.</AnnotationVocabulary:usageNote>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#businessProcessContextNote -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#businessProcessContextNote">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">Identifies the business process context in which the transaction appears, to enable the Buyer to process the Invoice in an appropriate way. 
+
+To be specified by the Buyer.</rdfs:comment>
+        <rdfs:label xml:lang="en">business process context note</rdfs:label>
+        <item:seeEN16931-1-2017>BT-23</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-24</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#buyerAccountingReference -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#buyerAccountingReference">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">A textual value that specifies where to book the relevant data into the Buyer&apos;s financial accounts.</rdfs:comment>
+        <rdfs:isDefinedBy>EN 16931-1:2017</rdfs:isDefinedBy>
+        <rdfs:label xml:lang="en">buyer accounting reference</rdfs:label>
+        <item:seeEN16931-1-2017>BT-19</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#buyerReference -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#buyerReference">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">An identifier assigned by the Buyer used for internal routing purposes.</rdfs:comment>
+        <rdfs:isDefinedBy>EN 16931-1:2017</rdfs:isDefinedBy>
+        <rdfs:label xml:lang="en">buyer reference</rdfs:label>
+        <rdfs:seeAlso xml:lang="en">EN 16931-1:2017</rdfs:seeAlso>
+        <item:seeEN16931-1-2017>BT-10</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">The identifier is defined by the Buyer (e.g. contact ID, department, office id, project code), but provided by the Seller in the Invoice.</AnnotationVocabulary:usageNote>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#chargePercentage -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#chargePercentage">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">The percentage that may be used, in conjunction with the charge base amount, to calculate the charge amount.</rdfs:comment>
+        <rdfs:label xml:lang="en">charge percentage</rdfs:label>
+        <item:seeEN16931-1-2017>BT-101</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-143</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#chargeReason -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#chargeReason">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">The reason for the charge, expressed as text.</rdfs:comment>
+        <rdfs:label xml:lang="en">charge reason</rdfs:label>
+        <item:seeEN16931-1-2017>BT-104</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-144</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#chargeReasonCode -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#chargeReasonCode">
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">The reason for the charge, expressed as a code.</rdfs:comment>
+        <rdfs:label xml:lang="en">charge reason code</rdfs:label>
+        <item:seeEN16931-1-2017>BT-105</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-145</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">Use entries of the UNTDID 7161 code list. The charge reason code and the charge reason shall indicate the same charge reason.</AnnotationVocabulary:usageNote>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#currency -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#currency">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="https://spec.edmcouncil.org/fibo/ontology/FND/Accounting/CurrencyAmount/AmountOfMoney"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label xml:lang="en">currency</rdfs:label>
+        <item:seeEN16931-1-2017>BT-5</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#dateOfIssue -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#dateOfIssue">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="http://xmlns.com/foaf/0.1/Document"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label xml:lang="en">date of issue</rdfs:label>
+        <item:seeEN16931-1-2017>BT-2</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#deliveryDate -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#deliveryDate">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label xml:lang="en">delivery date</rdfs:label>
+        <item:seeEN16931-1-2017>BT-72</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#invoiceNote -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#invoiceNote">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">A textual note that gives unstructured information that is relevant to the Invoice as a whole.</rdfs:comment>
+        <rdfs:isDefinedBy>EN 16931-1:2017</rdfs:isDefinedBy>
+        <rdfs:label xml:lang="en">invoice note</rdfs:label>
+        <rdfs:seeAlso>EN 16931-1:2017</rdfs:seeAlso>
+        <item:seeEN16931-1-2017>BT-22</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">Such as the reason for any correction or assignment note in case the invoice has been factored</AnnotationVocabulary:usageNote>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#invoiceNoteSubjectCode -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#invoiceNoteSubjectCode">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">The subject of the textual note in BT-22 (https://purl.org/p2p-o/invoice#invoiceNote)</rdfs:comment>
+        <rdfs:isDefinedBy>EN 16931-1:2017</rdfs:isDefinedBy>
+        <rdfs:label xml:lang="en">invoice note subject code</rdfs:label>
+        <rdfs:seeAlso>EN 16931-1:2017</rdfs:seeAlso>
+        <item:seeEN16931-1-2017>BT-21</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">To be chosen from the entries in UNTDID 4451</AnnotationVocabulary:usageNote>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#invoiceNumber -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#invoiceNumber">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">a reference of an invoice (e.g. reference number)</rdfs:comment>
+        <rdfs:label xml:lang="en">invoice number</rdfs:label>
+        <skos:altLabel xml:lang="en">invoice reference</skos:altLabel>
+        <item:seeEN16931-1-2017>BT-1</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#invoiceObjectIdentifier -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#invoiceObjectIdentifier">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">An identifier for an object on which the invoice is based, given by the Seller.</rdfs:comment>
+        <rdfs:label xml:lang="en">invoice object identifier</rdfs:label>
+        <item:seeEN16931-1-2017>BT-18</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#invoicingPeriodEndDate -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#invoicingPeriodEndDate">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">The date when the Invoice period ends</rdfs:comment>
+        <rdfs:label xml:lang="en">invoicing period end date</rdfs:label>
+        <item:seeEN16931-1-2017>BG-14</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BG-26</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-135</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-74</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">The date on which the delivery of goods or services was completed.</AnnotationVocabulary:usageNote>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#invoicingPeriodStartDate -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#invoicingPeriodStartDate">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/document#E-Invoice"/>
+                    <rdf:Description rdf:about="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">The date when the Invoice period starts.</rdfs:comment>
+        <rdfs:label xml:lang="en">invoicing period start date</rdfs:label>
+        <item:seeEN16931-1-2017>BG-14</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BG-26</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-134</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-73</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">The initial date of delivery of goods or services</AnnotationVocabulary:usageNote>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#paymentAccountName -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#paymentAccountName">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/invoice#PaymentAccount"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">The name of the payment account, at a payment service provider, to which payment should be made.</rdfs:comment>
+        <rdfs:label xml:lang="en">payment account name</rdfs:label>
+        <item:seeEN16931-1-2017>BG-17</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-85</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#paymentCardHolderName -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#paymentCardHolderName">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/invoice#PaymentCard"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">The name of the payment card holder.</rdfs:comment>
+        <rdfs:label xml:lang="en">payment card holder name</rdfs:label>
+        <item:seeEN16931-1-2017>BT-88</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#paymentCardPrimaryAccountNumber -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#paymentCardPrimaryAccountNumber">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/invoice#PaymentCard"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">The Primary Account Number (PAN) of the card used for payment.</rdfs:comment>
+        <rdfs:label xml:lang="en">payment card primary account number</rdfs:label>
+        <item:seeEN16931-1-2017>BT-87</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">In accordance with card payments security standards an invoice should never include a full card primary account number. At the moment PCI Security Standards Council has defined that the first 6 digits and last 4 digits are the maximum number of digits to be shown.</AnnotationVocabulary:usageNote>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#paymentDueDate -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#paymentDueDate">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label xml:lang="en">payment due date</rdfs:label>
+        <item:seeEN16931-1-2017>BT-9</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#paymentMean -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#paymentMean">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">The means, expressed as code, for how a payment is expected to be or has been settled.</rdfs:comment>
+        <rdfs:label xml:lang="en">payment means type</rdfs:label>
+        <item:seeEN16931-1-2017>BG-16</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-81</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">Entries from the UNTDID 4461 code list [6] shall be used. Distinction should be made between SEPA and non-SEPA payments, and between credit payments, direct debits, card payments and other instruments.</AnnotationVocabulary:usageNote>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#paymentMeans -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#paymentMeans">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">The means, expressed as text, for how a payment is expected to be or has been settled.</rdfs:comment>
+        <rdfs:label xml:lang="en">payment means</rdfs:label>
+        <item:seeEN16931-1-2017>BG-16</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-82</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">Such as cash, credit transfer, direct debit, credit card, etc.</AnnotationVocabulary:usageNote>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#paymentTerms -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#paymentTerms">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label xml:lang="en">payment terms</rdfs:label>
+        <item:seeEN16931-1-2017>BT-20</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#remittanceInformation -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#remittanceInformation">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">A textual value used to establish a link between the payment and the Invoice, issued by the Seller.</rdfs:comment>
+        <rdfs:isDefinedBy>EN 16931-1:2017</rdfs:isDefinedBy>
+        <rdfs:label xml:lang="en">remittance information</rdfs:label>
+        <rdfs:seeAlso>EN 16931-1:2017</rdfs:seeAlso>
+        <item:seeEN16931-1-2017>BG-16</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-83</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#valueAddedTaxPointDate -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#valueAddedTaxPointDate">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label xml:lang="en">value added tax point date</rdfs:label>
+        <item:seeEN16931-1-2017>BT-7</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#valueAddedTaxPointDateCode -->
+
+
+    <owl:DatatypeProperty rdf:about="https://purl.org/p2p-o/invoice#valueAddedTaxPointDateCode">
+        <rdfs:domain rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:comment xml:lang="en">use UNTDID 2005 for codes</rdfs:comment>
+        <rdfs:label xml:lang="en">value added tax point date code</rdfs:label>
+        <item:seeEN16931-1-2017>BT-8</item:seeEN16931-1-2017>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+
+    
+
+
+    <!-- https://purl.org/p2p-o/document#E-Invoice -->
+
+
+    <owl:Class rdf:about="https://purl.org/p2p-o/document#E-Invoice">
+        <rdfs:subClassOf rdf:resource="http://xmlns.com/foaf/0.1/Document"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="https://purl.org/p2p-o/invoice#hasBuyer"/>
+                <owl:someValuesFrom rdf:resource="http://www.w3.org/ns/org#FormalOrganization"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="https://purl.org/p2p-o/invoice#hasBuyerAddress"/>
+                <owl:someValuesFrom rdf:resource="https://purl.org/p2p-o/organization#Address"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="https://purl.org/p2p-o/invoice#hasInvoiceLine"/>
+                <owl:someValuesFrom rdf:resource="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="https://purl.org/p2p-o/invoice#hasSeller"/>
+                <owl:someValuesFrom rdf:resource="http://www.w3.org/ns/org#FormalOrganization"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="https://purl.org/p2p-o/invoice#hasSellerAddress"/>
+                <owl:someValuesFrom rdf:resource="https://purl.org/p2p-o/organization#Address"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="https://purl.org/p2p-o/invoice#dateOfIssue"/>
+                <owl:someValuesFrom rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- https://purl.org/p2p-o/document#SupportingDocument -->
+
+
+    <owl:Class rdf:about="https://purl.org/p2p-o/document#SupportingDocument"/>
+    
+
+
+    <!-- https://purl.org/p2p-o/documentline#InvoiceLine -->
+
+
+    <owl:Class rdf:about="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#CommercialInvoiceLine -->
+
+
+    <owl:Class rdf:about="https://purl.org/p2p-o/invoice#CommercialInvoiceLine">
+        <rdfs:subClassOf rdf:resource="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+        <owl:disjointWith rdf:resource="https://purl.org/p2p-o/invoice#CreditNoteLine"/>
+        <rdfs:label xml:lang="en">commercial invoice line</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#CreditNoteLine -->
+
+
+    <owl:Class rdf:about="https://purl.org/p2p-o/invoice#CreditNoteLine">
+        <rdfs:subClassOf rdf:resource="https://purl.org/p2p-o/documentline#InvoiceLine"/>
+        <rdfs:label xml:lang="en">credit note line</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#DirectDebitAccount -->
+
+
+    <owl:Class rdf:about="https://purl.org/p2p-o/invoice#DirectDebitAccount">
+        <rdfs:label xml:lang="en">direct debit account</rdfs:label>
+        <item:seeEN16931-1-2017>BG-19</item:seeEN16931-1-2017>
+    </owl:Class>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#E-CommercialInvoice -->
+
+
+    <owl:Class rdf:about="https://purl.org/p2p-o/invoice#E-CommercialInvoice">
+        <rdfs:subClassOf rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <owl:disjointWith rdf:resource="https://purl.org/p2p-o/invoice#E-CreditNote"/>
+        <rdfs:label xml:lang="en">commercial e-invoice</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#E-CreditNote -->
+
+
+    <owl:Class rdf:about="https://purl.org/p2p-o/invoice#E-CreditNote">
+        <rdfs:subClassOf rdf:resource="https://purl.org/p2p-o/document#E-Invoice"/>
+        <rdfs:label xml:lang="en">e-credit-note</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#E-FinalInvoice -->
+
+
+    <owl:Class rdf:about="https://purl.org/p2p-o/invoice#E-FinalInvoice">
+        <rdfs:subClassOf rdf:resource="https://purl.org/p2p-o/invoice#E-CommercialInvoice"/>
+        <owl:disjointWith rdf:resource="https://purl.org/p2p-o/invoice#E-PartialInvoice"/>
+        <rdfs:label xml:lang="en">final e-invoice</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#E-PartialInvoice -->
+
+
+    <owl:Class rdf:about="https://purl.org/p2p-o/invoice#E-PartialInvoice">
+        <rdfs:subClassOf rdf:resource="https://purl.org/p2p-o/invoice#E-CommercialInvoice"/>
+        <rdfs:label xml:lang="en">partial e-invoice</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#E-PrePaymentInvoice -->
+
+
+    <owl:Class rdf:about="https://purl.org/p2p-o/invoice#E-PrePaymentInvoice">
+        <rdfs:subClassOf rdf:resource="https://purl.org/p2p-o/invoice#E-CommercialInvoice"/>
+        <rdfs:label xml:lang="en">pre-payment e-invoice</rdfs:label>
+    </owl:Class>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#PaymentAccount -->
+
+
+    <owl:Class rdf:about="https://purl.org/p2p-o/invoice#PaymentAccount">
+        <rdfs:comment xml:lang="en">Payment account, at a payment service provider, to which payment should be made.</rdfs:comment>
+        <rdfs:label xml:lang="en">payment account</rdfs:label>
+        <item:seeEN16931-1-2017>BG-17</item:seeEN16931-1-2017>
+    </owl:Class>
+    
+
+
+    <!-- https://purl.org/p2p-o/invoice#PaymentCard -->
+
+
+    <owl:Class rdf:about="https://purl.org/p2p-o/invoice#PaymentCard">
+        <rdfs:comment xml:lang="en">Card used for payment contemporaneous with invoice issuance.</rdfs:comment>
+        <rdfs:label xml:lang="en">payment card</rdfs:label>
+        <item:seeEN16931-1-2017>BG-18</item:seeEN16931-1-2017>
+        <AnnotationVocabulary:usageNote xml:lang="en">Only used if the Buyer had opted to pay by using a payment card such as a credit or debit card.</AnnotationVocabulary:usageNote>
+    </owl:Class>
+    
+
+
+    <!-- https://purl.org/p2p-o/organization#Address -->
+
+
+    <owl:Class rdf:about="https://purl.org/p2p-o/organization#Address">
+        <item:seeEN16931-1-2017>BG-12</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BG-15</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-164</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-165</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-64</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-65</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-75</item:seeEN16931-1-2017>
+        <item:seeEN16931-1-2017>BT-76</item:seeEN16931-1-2017>
+    </owl:Class>
+    
+
+
+    <!-- https://purl.org/p2p-o/price#AllowanceAmountOfMoney -->
+
+
+    <owl:Class rdf:about="https://purl.org/p2p-o/price#AllowanceAmountOfMoney"/>
+    
