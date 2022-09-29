@@ -51,7 +51,7 @@ const char *PANDOC::Description(PSTRLIST List) const
 
 const char *PANDOC::GetDefaultFilter() const
 {
-  return "1pandoc";
+  return "pandoc";
 }
 
 
