@@ -26,9 +26,25 @@ But generally:
    $ make plugins
 
 
-To make language bindings:
-   $ cd ../swig
 
+5) Test to see everything went well.
+   $ ../bin/Iindex
+
+it should produce a long list of command line options-- as well as options to get the embdeded help.
+
+   Now let's index something.
+
+  $ ../bin/Iindex -d /tmp/BART ../data/shakespeare.xml
+  Here we read the sample XML collection of the collected works of Shakespeare and write an index to /tmp/BART
+
+   Now search
+  $../bin/Isearch -d /tmp/BART -show to be or not to be
+
+   There are a bunch of options and many tool. Please consult the handbook.
+
+
+NOTE: To make language bindings:
+   $ cd ../swig
 
 
 Windows Platform note:
