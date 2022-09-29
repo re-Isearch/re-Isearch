@@ -1,6 +1,18 @@
 This directory contains the shared libraries for 64-bit x86 Linux (Ubuntu LTS)
 
+To confirm:
+
 <PRE>
+
+$ md5sum *.so.*
+fb6d09c4bf71b07b366e8017df8da12b  libibApps.so.1
+f7f2db3649910f9ec6e4aff4837c9789  libibDoc.so.4.7
+355e666c029eef76c3b4a72d95ebec57  libibIO.so.4.7
+9cb06a6ea968a9282175d8f81f062a87  libibLocal.so.1
+dce6ff8fa08e7f82872c188046e8a824  libibProcess.so.4.7
+64808a449e99bac5e20200d2a09a2873  libibSearch.so.4.7
+3873054ac7b13d770e2b072339cf96eb  libibUtils.so.4.7
+
 
 lrwxrwxrwx  1 edz edz       21 Sep 25 12:38 libibApps.so -> ../lib/libibApps.so.1
 -rwxrwxr-x  1 edz edz   810952 Sep 25 12:38 libibApps.so.1
@@ -14,7 +26,6 @@ lrwxrwxrwx  1 edz edz       26 Aug 17  2021 libibProcess.so -> ../lib/libibProce
 -rwxrwxr-x  1 edz edz    51688 Aug 17  2021 libibProcess.so.4.7
 lrwxrwxrwx  1 edz edz       25 Sep 25 12:38 libibSearch.so -> ../lib/libibSearch.so.4.7
 -rwxrwxr-x  1 edz edz  5801464 Sep 25 12:38 libibSearch.so.4.7
--rw-rw-r--  1 edz edz 13445192 Aug 16  2021 libibSearch.so.profile
 lrwxrwxrwx  1 edz edz       24 Sep 25 12:38 libibUtils.so -> ../lib/libibUtils.so.4.7
 -rwxrwxr-x  1 edz edz  1987320 Sep 25 12:38 libibUtils.so.4.7
 
