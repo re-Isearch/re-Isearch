@@ -1,6 +1,6 @@
 CC_ABI_VERSION=1
-GCC_VERSION=-10
-#GCC_VERSION=
+#GCC_VERSION=-10
+GCC_VERSION=
 #GCC_VERSION=-43
 #GCC_VERSION_X=4.2.1
 ############################################################################
