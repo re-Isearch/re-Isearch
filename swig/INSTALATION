@@ -1,0 +1,14 @@
+The basic steps to make language bindings:
+   $ cd ../swig
+
+Here there is a main make file and it calls the Makefile.<lang> file, e.g. Makeifle.py for Python.
+
+Its main configuraton are to
+  - select the compiler (we use g++ by default)
+  - specify the needed libraries on the platform (the standard values should be suitable for most Linux distros)
+
+We also specify the version. For Python we've selected 2.7 by default but 2.6 or 3.7 or .. should all be fine.
+
+Windows Platform note:
+   We don't support the Windows platform at this time but if the core engine works we expect the bindings to work as well with mininimal effort.
+

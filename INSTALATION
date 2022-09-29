@@ -28,3 +28,11 @@ But generally:
 
 To make language bindings:
    $ cd ../swig
+
+
+
+Windows Platform note:
+   We don't officilly support the Windows platform at this time.
+   That said, everything is there for Windows but have not maintained any testing so may have broken something at one point-- fortunately it should be releative easy to patch is needed and would welcome the contribution.
+
+
