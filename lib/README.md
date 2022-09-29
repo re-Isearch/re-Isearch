@@ -1,5 +1,6 @@
 This directory contains the shared libraries for 64-bit x86 Linux (Ubuntu LTS)
 
+<PRE>
 
 lrwxrwxrwx  1 edz edz       21 Sep 25 12:38 libibApps.so -> ../lib/libibApps.so.1
 -rwxrwxr-x  1 edz edz   810952 Sep 25 12:38 libibApps.so.1
@@ -75,7 +76,7 @@ libibUtils.so:
 	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007f05e0250000)
 	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007f05dfe5f000)
 	/lib64/ld-linux-x86-64.so.2 (0x00007f05e0ec6000)
-
+</PRE>
 
 This project was funded through the NGI0 Discovery Fund, a fund established by NLnet with financial support from the European Commission's Next Generation Internet programme, under the aegis of DG Communications Networks, Content and Technology under grant agreement No 825322.
 
