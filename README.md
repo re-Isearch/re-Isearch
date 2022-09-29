@@ -27,7 +27,7 @@ In the directory bin/ and lib/ are binaries of standalone tools compiled on Ubun
 
 Portions Copyright (c) 1995 CNIDR/MCNC, (c) 1995-2011 BSn/Munich; (c) 2011-2020 NONMONOTONIC Networks; Copyright (c) 2020-22 Edward C. Zimmermann and the re-iSearch project. Is is made available and licensed under the Apache 2.0 license: see LICENSE
 
-The software has a lot of history spanning (as one can see from the above copyright). For the historical last public release: [Isearch](https://github.com/edzimmermann/Isearch-1.14)
+The software has a lot of history (as one can see from the above copyright). For the historical last public release: [Isearch](https://github.com/edzimmermann/Isearch-1.14)
 
 This project was funded through the NGI0 Discovery Fund, a fund established by NLnet with financial support from the European Commission's Next Generation Internet programme, under the aegis of DG Communications Networks, Content and Technology under grant agreement No 825322.
 
