@@ -1,0 +1,30 @@
+The basic steps are:
+
+1) clone the repository.
+   $ git clone https://github.com/re-Isearch/re-Isearch.git
+2) Go into the build/ directory
+   $ cd re-Isearch/build/
+
+   if you have g++/gcc-10 installed and are running Ubuntu x86 64-bit you could just type Make and it should just build. 
+
+But generally:
+3) Edit the Makefile to confirm that the correct version of GCC is specified as well as the desired paths and command line args.
+   The standard build is using g++/gcc-10 
+   You may also use whatever gcc/g++ is installed but since we have typically multiple g++/gcc versions (due to some software requirements) you set it here.
+
+   In the file you will see there are also provisions for other compilers such as the typical CC and cc.
+
+   One sets here a number of compile options and flags for producing debug or production among other things.
+
+   After the ############### End Differences ###################################### 
+   there are a few options that may need tweaking on different platforms.
+
+   $make -j4
+   (or any -j option depending upon hardware)
+
+4) To build the optional plugins
+   $ make plugins
+
+
+To make language bindings:
+   $ cd ../swig
