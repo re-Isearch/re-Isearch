@@ -29,13 +29,19 @@ const char *PANDOC::Description(PSTRLIST List) const
   List->AddEntry ("PANDOC");
   FILTER2HTMLDOC::Description(List);
   if (Help.IsEmpty()) {
-    Help << "Uses the program '" << GetDefaultFilter() << " " << GetArgs() << "'  to convert the input file from ";
+    Help << "Uses the program '" << GetDefaultFilter() << " " << GetArgs() << "' ";
+
+   if (! ExeExists(ResolveBinPath(GetDefaultFilter())))
+     Help << "(program not found) ";
+
+    Help << "to convert the input file from ";
     if (format.IsEmpty())
       Help << "an autodetected format";
     else
       Help << format;
      Help  << " into HTML.\n\nOption: " << format_ini_tag << "=<format>";
     if (format.GetLength()) Help <<  " (default: " << format << ")";
+
     Help << "\n";
   }
 
@@ -45,7 +51,7 @@ const char *PANDOC::Description(PSTRLIST List) const
 
 const char *PANDOC::GetDefaultFilter() const
 {
-  return "pandoc";
+  return "1pandoc";
 }
 
 
