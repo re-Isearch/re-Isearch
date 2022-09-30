@@ -32,8 +32,12 @@ But generally:
    $ ../bin/Iindex
 
 it should produce a long list of command line options-- as well as options to get the embdeded help.
+If it returns a message on of the order of "  error while loading shared libraries: " you need to either define the library load path:
+   LD_LIBRARY_PATH
+   or ldconfig
+   or define an appropriate user account for the installation (see the handbook Admin section).
 
-   Now let's index something.
+   Now that the libraries resolve let's index something.
 
    In the test/data directory are a number of files for testing. We'll index the XMLified collected works of Shakespeare.
 
@@ -41,6 +45,14 @@ it should produce a long list of command line options-- as well as options to ge
   Here we read the sample XML collection of the collected works of Shakespeare and write an index to /tmp/BART
   We let the AUTODETECT handler do its magic and recognize the document both as a kind of XML and a play.
   Notice that in the conf/ directory we have a "play.ini" configuration file.  We read it and do what it suggests-- namely to ignore P and FM tags.
+
+   We might want to know what fields/paths have been parsed:
+
+    $ ../bin/Iutil -d /tmp/BART -vf
+Iutil [Info]: Iutil 4.0a (x86_64 GNU/Linux)
+The following fields are defined in this database: 'ACT' 'EPILOGUE' 'FM' 'GRPDESCR' 'INDUCT' 'LINE' 'P' 'PERSONA' 'PERSONAE' 'PGROUP' 'PLAY' 'PLAYSUBT' 'PLAY\ACT' 'PLAY\ACT\EPILOGUE' 'PLAY\ACT\EPILOGUE\SPEECH' 'PLAY\ACT\EPILOGUE\SPEECH\LINE' 'PLAY\ACT\EPILOGUE\SPEECH\SPEAKER' 'PLAY\ACT\EPILOGUE\STAGEDIR' 'PLAY\ACT\EPILOGUE\SUBTITLE' 'PLAY\ACT\EPILOGUE\TITLE' 'PLAY\ACT\PROLOGUE' 'PLAY\ACT\PROLOGUE\SPEECH' 'PLAY\ACT\PROLOGUE\SPEECH\LINE' 'PLAY\ACT\PROLOGUE\SPEECH\SPEAKER' 'PLAY\ACT\PROLOGUE\SPEECH\STAGEDIR' 'PLAY\ACT\PROLOGUE\SPEECH\SUBHEAD' 'PLAY\ACT\PROLOGUE\STAGEDIR' 'PLAY\ACT\PROLOGUE\TITLE' 'PLAY\ACT\SCENE' 'PLAY\ACT\SCENE\SPEECH' 'PLAY\ACT\SCENE\SPEECH\LINE' 'PLAY\ACT\SCENE\SPEECH\LINE\STAGEDIR' 'PLAY\ACT\SCENE\SPEECH\SPEAKER' 'PLAY\ACT\SCENE\SPEECH\STAGEDIR' 'PLAY\ACT\SCENE\SPEECH\SUBHEAD' 'PLAY\ACT\SCENE\STAGEDIR' 'PLAY\ACT\SCENE\SUBHEAD' 'PLAY\ACT\SCENE\TITLE' 'PLAY\ACT\TITLE' 'PLAY\FM' 'PLAY\FM\P' 'PLAY\INDUCT' 'PLAY\INDUCT\SCENE' 'PLAY\INDUCT\SCENE\SPEECH' 'PLAY\INDUCT\SCENE\SPEECH\LINE' 'PLAY\INDUCT\SCENE\SPEECH\SPEAKER' 'PLAY\INDUCT\SCENE\SPEECH\STAGEDIR' 'PLAY\INDUCT\SCENE\STAGEDIR' 'PLAY\INDUCT\SCENE\TITLE' 'PLAY\INDUCT\SPEECH' 'PLAY\INDUCT\SPEECH\LINE' 'PLAY\INDUCT\SPEECH\SPEAKER' 'PLAY\INDUCT\STAGEDIR' 'PLAY\INDUCT\TITLE' 'PLAY\PERSONAE' 'PLAY\PERSONAE\PERSONA' 'PLAY\PERSONAE\PGROUP' 'PLAY\PERSONAE\PGROUP\GRPDESCR' 'PLAY\PERSONAE\PGROUP\PERSONA' 'PLAY\PERSONAE\TITLE' 'PLAY\PLAYSUBT' 'PLAY\PROLOGUE' 'PLAY\PROLOGUE\SPEECH' 'PLAY\PROLOGUE\SPEECH\LINE' 'PLAY\PROLOGUE\TITLE' 'PLAY\SCNDESCR' 'PLAY\TITLE' 'PLAY\' 'PROLOGUE' 'SCENE' 'SCNDESCR' 'SPEAKER' 'SPEECH' 'STAGEDIR' 'SUBHEAD' 'SUBTITLE' 'TITLE'
+
+
 
    Now search
    Search has a lot of options. We'll use -show to have the tool show us the hit.
