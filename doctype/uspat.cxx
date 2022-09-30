@@ -64,14 +64,14 @@ private:
 	PATO_PATENT* pato_ReadPatent(char* Buffer, int PatentSize)const ;
 	char* pato_Get_TI(PATO_PATENT* Patent, char* S, int SSize)const ;
 	void CleanTextString(PSTRING StringBuffer)const ;
-	PATO_GROUP* pato_FindGroup(PATO_PATENT* Patent, char* Group)const ;
-	PATO_FIELD* pato_FindField(PATO_GROUP* Group, char* Field)const ;
+	PATO_GROUP* pato_FindGroup(PATO_PATENT* Patent, const char* Group)const ;
+	PATO_FIELD* pato_FindField(PATO_GROUP* Group, const char* Field)const ;
 	char* pato_Get_PN(PATO_PATENT* Patent, char* S, int SSize)const ;
 	void pato_DisposePatent(PATO_PATENT* Patent) const;
 	void pato_OutputBuffer(PATO_OUTPUT* Output, PATO_BUFFER* Buffer)const ;
 	void pato_InitBuffer(PATO_BUFFER* Buffer, int Size) const;
 	void pato_FreeBuffer(PATO_BUFFER* Buffer) const;
-	char* pato_GetField(PATO_GROUP* Group, char* Field, char* S) const;
+	char* pato_GetField(PATO_GROUP* Group, const char* Field, char* S) const;
 	//void InsertField(PDFT pdft,char* Field, int Start, int End) const;
 	void AddCommas(char* S1, char* S2) const;
 	void Semi_to_Comma(char* S1) const;
@@ -671,8 +671,7 @@ USPAT::pato_Cleanup(char* s) const
    #
    ###################################################################
    */
-PATO_FIELD* 
-USPAT::pato_FindField(PATO_GROUP* Group, char* Field) const
+PATO_FIELD* USPAT::pato_FindField(PATO_GROUP* Group, const char* Field) const
 {
   PATO_FIELD* P;
   int Found;
@@ -703,7 +702,7 @@ USPAT::pato_FindField(PATO_GROUP* Group, char* Field) const
    ###################################################################
    */
 PATO_GROUP* 
-USPAT::pato_FindGroup(PATO_PATENT* Patent, char* Group) const
+USPAT::pato_FindGroup(PATO_PATENT* Patent, const char* Group) const
 {
   PATO_GROUP* P;
   int Found;
@@ -988,7 +987,7 @@ USPAT::pato_FreeBuffer(PATO_BUFFER* Buffer) const
    ###################################################################
    */
 char* 
-USPAT::pato_GetField(PATO_GROUP* Group, char* Field, char* S) const
+USPAT::pato_GetField(PATO_GROUP* Group, const char* Field, char* S) const
 {
   PATO_FIELD* F;
   
@@ -2136,7 +2135,7 @@ USPAT::pato_HtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
       
       Field = pato_FindField(Group, "OCL");
       if (Field != NULL) {
-	char s[80], t[80], u[80], v[80], w[80];
+	char s[80], t[80], u[80], v[80], w[174];
 	char* p;
 	char* q;
 	int x, y;
@@ -2198,7 +2197,7 @@ USPAT::pato_HtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
       
       Field = pato_FindField(Group, "XCL");
       if (Field != NULL) {
-	char s[80], t[80], u[80], v[80], w[80];
+	char s[80], t[80], u[80], v[80], w[174];
 	char* p;
 	char* q;
 	int x, y;
@@ -2265,7 +2264,7 @@ USPAT::pato_HtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
       
       Field = pato_FindField(Group, "FSC");
       if( Field != NULL ) {
-	char t[80], u[80], v[256], w[80];
+	char t[80], u[80], v[256], w[174];
 	char* p;
 	int x, y;
 	fsc_flag = 1;
@@ -2497,7 +2496,7 @@ USPAT::pato_HtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
 	pato_Write(Output, "<TD WIDTH=25% ALIGN=RIGHT> ");
 	Field=pato_FindField(Group, "OCL");
 	if(Field!=NULL){
-	  char cl[10],scl[10],ex[10],bf[20];
+	  char cl[10],scl[10],ex[10],bf[32];
 	  strcpy(S,Field->Data);
 	  strncpy(cl,S,3);
 	  cl[3]='\0';
@@ -3224,7 +3223,7 @@ USPAT::pato_TextHtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
       
       Field = pato_FindField(Group, "OCL");
       if (Field != NULL) {
-	char s[80], t[80], u[80], v[80], w[80];
+	char s[80], t[80], u[80], v[80], w[175];
 	char* p;
 	char* q;
 	int x, y;
@@ -3283,7 +3282,7 @@ USPAT::pato_TextHtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
       
       Field = pato_FindField(Group, "XCL");
       if (Field != NULL) {
-	char s[80], t[80], u[80], v[80], w[80];
+	char s[80], t[80], u[80], v[80], w[174];
 	char* p;
 	char* q;
 	int x, y;
@@ -3349,7 +3348,7 @@ USPAT::pato_TextHtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
       
       Field = pato_FindField(Group, "FSC");
       if( Field != NULL ) {
-	char t[80], u[80], v[256], w[80];
+	char t[80], u[80], v[256], w[174];
 	char* p;
 	int x, y;
 	fsc_flag = 1;
@@ -3561,7 +3560,7 @@ USPAT::pato_TextHtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
 	
 	Field=pato_FindField(Group, "OCL");
 	if(Field!=NULL){
-	  char cl[10],scl[10],ex[10],bf[20];
+	  char cl[10],scl[10],ex[10],bf[32 /* 20 */];
 	  strcpy(S,Field->Data);
 	  strncpy(cl,S,3);
 	  cl[3]='\0';
@@ -3933,7 +3932,7 @@ USPAT::pato_TextElementSet(PATO_OUTPUT* Output, PATO_PATENT* Patent,
 void 
 USPAT::PatentPath(char* fn, char* path) const
 {
-  char t[256], d1[256], d2[256], d3[256], buf[256];
+  char t[256], d1[256], d2[256], d3[256], buf[766];
   if (fn[2] == 'T') {
     strcpy(path, fn);
   } else {
@@ -4052,7 +4051,7 @@ USPAT::pato_html_AllPA(PATO_OUTPUT* Output, PATO_GROUP* Group) const
 {
   PATO_FIELD* Field;
   char Format[6];
-  char StartCode[20];
+  char StartCode[22];
   char Buffer2[4000];
   int Good;
   int x, y;
