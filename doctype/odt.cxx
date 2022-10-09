@@ -15,7 +15,7 @@ Author:		Edward Zimmermann
 #include "doc_conf.hxx"
 
 static const char default_filter[] = "odt2txt";
-static const char myDescription[] = "\"OASIS Open Document Format Text\" (ODT) Plugin";
+static const char myDescription[] = "\"OASIS Open Document Format Text\" (ODT) Plugin (TEXTDOC)";
 
 
 class IBDOC_ODT : public FILTER2TEXTDOC {

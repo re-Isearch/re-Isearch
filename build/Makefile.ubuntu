@@ -402,6 +402,7 @@ DOC_SRCS = \
 PLUGIN_SRCS = \
 	$(DOCTYPE_DIR)/null.cxx \
 	$(DOCTYPE_DIR)/odt.cxx \
+	$(DOCTYPE_DIR)/odt2.cxx \
 	$(DOCTYPE_DIR)/msword.cxx \
 	$(DOCTYPE_DIR)/msoffice.cxx \
 	$(DOCTYPE_DIR)/msrtf.cxx \
