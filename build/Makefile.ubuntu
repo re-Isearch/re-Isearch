@@ -1,6 +1,6 @@
 CC_ABI_VERSION=1
-#GCC_VERSION=-10
-GCC_VERSION=
+GCC_VERSION=-10
+#GCC_VERSION=
 #GCC_VERSION=-43
 #GCC_VERSION_X=4.2.1
 ############################################################################
@@ -10,8 +10,10 @@ GCC_VERSION=
 # See ../Makefile for compilation instructions.
 #
 .SUFFIXES: $(SUFFIXES) .c .cxx .sob .sob64
-STL_DIR=/opt/SUNWspro/SC4.2/include/CC/stl/
-EXTRA_INC= -I/usr/local/BerkeleyDB.4.4/include 
+
+# BERKELEY_DB_ROOT = /usr/local/BerkeleyDB.4.4/
+
+EXTRA_INC= -I$(BERKELEY_DB_ROOT)/include
 DEFAULT_LIB_INSTALL_PATH="../lib:."
 
 #MALLOC_OBJ = malloc.o
@@ -23,6 +25,17 @@ DB=db-4.3
 # Compiler
 #
 #purify=purify
+
+
+### NOTE the following defines
+## O_BUILD_IB32     build the 32-bit address space version (chunks < 2 GB)
+## O_BUILD_IB64     build the 64-bit address space version (chunks > 2 GB)
+## USE_LIBMAGIC     is used to use the libmagic libs
+## SVR4             a System-V Revision 4 compatible API
+## WWW_SUPPORT      include WWW support 
+## DBSN_EXTENSIONS  read the code (there are 3 levels of extensions!)
+##
+##
 
 
 CC=CC
@@ -60,6 +73,7 @@ MALLOC_OPTIONS= -DINSECURE=1 -DDEFAULT_TRIM_THRESHOLD=16U*1024L*1024L
 #CFLAGS=-Wall -Dfar=
 #DEFINES= -pthread -DSVR4 -DWWW_SUPPORT -D__CSTRING__ -DBSN_EXTENSIONS=2  $(DOPT) $(STANDALONE) -DO_BUILD_IB64=1
 #DEFINES= -DWWW_SUPPORT -D__CSTRING__ -DBSN_EXTENSIONS=2  $(DOPT) $(STANDALONE) -DO_BUILD_IB32=1
+
 DEFINES= -pthread -DUSE_LIBMAGIC -DSVR4 -DWWW_SUPPORT -D__CSTRING__ -DBSN_EXTENSIONS=2  $(DOPT) $(STANDALONE) -DO_BUILD_IB64=1
 
 
@@ -174,6 +188,12 @@ LIB_DIR=../lib
 DOCTYPE_DIR=../doctype
 SRC_DIR=../src
 
+ifdef BERKELEY_DB_ROOT 
+RLDCACHE=$(SRC_DIR)/rldcache.cxx 
+else
+RLDCACHE=
+endif
+
 # 
 # That should be all you need to configure
 #
@@ -265,11 +285,11 @@ BAS_SRCS= \
 
 IO_SRCS = \
         $(SRC_DIR)/io.cxx \
-	$(SRC_DIR)/rldcache.cxx \
         $(SRC_DIR)/protman.cxx \
         $(SRC_DIR)/netbox.cxx \
         $(SRC_DIR)/strbox.cxx \
-        $(SRC_DIR)/treebox.cxx
+        $(SRC_DIR)/treebox.cxx \
+	$(RLDCACHE)
 
 APPS_SRCS= $(SRC_DIR)/iindex_main.cxx $(SRC_DIR)/isearch_main.cxx $(SRC_DIR)/iutil_main.cxx
 
