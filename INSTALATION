@@ -2,6 +2,23 @@ The basic steps are:
 
 1) clone the repository.
    $ git clone https://github.com/re-Isearch/re-Isearch.git
+
+   Prerequisites you need:
+   - libdl    This is used for dynamic loading. It should be part of your core OS
+   - libz     In package zlib. It should be part of your core OS 
+
+
+   Some prerequisites you may want/need:
+   - libmagic (in Package: libmagic-dev )
+   - Berkeley DB (in Package: libdb-dev)
+
+  Use of libdb is currently limied to some caching code that is NOT required by the engine kernel. 
+
+  If you do not have libmagic (and don't want to install or build it). Turn it off. It is controlled by
+  USE_LIBMAGIC 
+  See doctype/autodetect.hxx.
+
+
 2) Go into the build/ directory
    $ cd re-Isearch/build/
 
