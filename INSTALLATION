@@ -44,6 +44,12 @@ But generally:
 4) To build the optional plugins
    $ make plugins
 
+    WARNING: The default install directory for plugins in the Makefile is: 
+    /opt/nonmonotonic/ib/lib/plugins
+    this directory needs to be writable by the user doing the make plugins
+    if you want to have the plugins installed elsewhere please redefine the path
+    and consult the handbook about configuration details.
+
 
 5) Test to see everything went well.
    $ ../bin/Iindex
