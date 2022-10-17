@@ -1,6 +1,7 @@
-This is the respositiory for re-Isearch.
+## This is the respositiory for re-Isearch.
 
-Project re-isearch: a novel multimodal search and retrieval engine using mathematical models and algorithms different from the all-too-common inverted index (popularized by Salton in the 1960s). The design allows it to have, in practice, effectively no limits on the frequency of words, term length, number of fields or complexity of structured data and support even overlap--- where fields or structures cross other's boundaries (common examples are quotes, line/sentences, biblical verse, annotations). Its model enables a completely flexible unit of retrieval and modes of search.
+### Project re-isearch:
+a novel multimodal search and retrieval engine using mathematical models and algorithms different from the all-too-common inverted index (popularized by Salton in the 1960s). The design allows it to have, in practice, effectively no limits on the frequency of words, term length, number of fields or complexity of structured data and support even overlap--- where fields or structures cross other's boundaries (common examples are quotes, line/sentences, biblical verse, annotations). Its model enables a completely flexible unit of retrieval and modes of search.
 
 Featues/Uses
 
@@ -21,12 +22,14 @@ Initial project outcome: a freely available and completely open-source (and mult
 Under [doctypes/](https://github.com/re-Isearch/re-Isearch/tree/master/doctype) one can see the native doctypes supported.
 
 
+## Building, installing, developing
 For information on building, installing, developing and using the system please consult the handbook in [docs/](https://github.com/re-Isearch/re-Isearch/blob/master/docs/re-Isearch-Handbook.pdf).
 
 A basic cheat-sheet is in [INSTALATION](./INSTALATION)
 
 In the directory bin/ and lib/ are binaries of standalone tools compiled on Ubuntu 18.04.2 LTS and targetting Intel Skylake or newer processors. They are included solely to enable fast software evaluations.
 
+## Copyrights, attributions and acknologements
 Portions Copyright (c) 1995 CNIDR/MCNC, (c) 1995-2011 BSn/Munich; (c) 2011-2020 NONMONOTONIC Networks; Copyright (c) 2020-22 Edward C. Zimmermann and the re-iSearch project. Is is made available and licensed under the Apache 2.0 license: see LICENSE
 
 The software has a lot of history (as one can see from the above copyright). For the historical last public release: [Isearch](https://github.com/edzimmermann/Isearch-1.14)
