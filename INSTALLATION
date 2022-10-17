@@ -50,6 +50,12 @@ But generally:
     if you want to have the plugins installed elsewhere please redefine the path
     and consult the handbook about configuration details.
 
+    NOTES about ODT2: plugin
+    The ODT2 plugin is currently experimental. It will eventually replace the ODT doctype (wwhich uses Pandoc).
+    for it to work on needs to 
+    a) install the odf-search shell script in some directory findable by the ODT2 plugin.
+    b) modify the odf-search shell script so that it uses the odf-search.jar (e.g. fully specified path where it is installed)
+
 
 5) Test to see everything went well.
    $ ../bin/Iindex
