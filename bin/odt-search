@@ -1,2 +1,2 @@
 #!/bin/sh
-echo java -jar $(dirname "$0")/odf-search.jar $*
+java -jar $(dirname "$0")/odf-search.jar $*
