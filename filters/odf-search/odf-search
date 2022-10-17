@@ -1,0 +1,2 @@
+#!/bin/sh
+java -jar odf-search.jar $*
