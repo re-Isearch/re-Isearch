@@ -25,7 +25,7 @@ Under [doctypes/](https://github.com/re-Isearch/re-Isearch/tree/master/doctype) 
 ## Building, installing, developing
 For information on building, installing, developing and using the system please consult the handbook in [docs/](https://github.com/re-Isearch/re-Isearch/blob/master/docs/re-Isearch-Handbook.pdf).
 
-A basic cheat-sheet is in [INSTALATION](./INSTALATION)
+A basic cheat-sheet is in [INSTALLATION](./INSTALLATION)
 
 In the directory bin/ and lib/ are binaries of standalone tools compiled on Ubuntu 18.04.2 LTS and targetting Intel Skylake or newer processors. They are included solely to enable fast software evaluations.
 
