@@ -476,6 +476,7 @@ touch-plugins:
 
 
 all: $(MALLOC_OBJ) \
+	dirs \
 	$(PROC_OBJ) \
 	io_lib \
 	$(BAS_OBJ) $(ENG_OBJ) $(DOC_OBJ) $(LIB) Iindex.o Isearch.o Iutil.o Idelete.o \
@@ -484,6 +485,10 @@ all: $(MALLOC_OBJ) \
 	$(BIN_DIR)/Iutil$(LIBX)$(COMPILER) \
 	$(BIN_DIR)/Idelete$(LIBX)$(COMPILER) \
 	$(BIN_DIR)/Iwatch 
+
+
+dirs:
+	mkdir -p ~/.ib/lib/plugins
  
 #$(BIN_DIR)/siscompress $(BIN_DIR)/sisdump $(BIN_DIR)/sisdump32 $(BIN_DIR)/sischeck \
 
@@ -618,7 +623,8 @@ PLUGINOPT=-export-dynamic
 
 .cxx.sob$(LIBX): ../doctype/doctype.hxx ../src/idb.hxx
 	$(CC) $(SHARED) $(CCFLAGS) $(INC) -o $@ $(PLUGINOPT) $< $(LDLIBS)
-	cp $@ /opt/nonmonotonic/ib/lib/plugins
+	-cp $@.sob ~/.ib/lib/plugins
+	-cp $@ /opt/nonmonotonic/ib/lib/plugins
 
 
 exif: ../doctype/exif.cxx ../doctype/doctype.hxx ../src/idb.hxx
