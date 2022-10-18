@@ -139,14 +139,17 @@ static const char *ini_filter_tag = "Filter";
 
 static STRING SetFilter(const STRING& arg, const STRING& Doctype)
 {
-//cerr << Doctype << " setting filter to " << arg << endl;
   if (arg.GetLength() && (arg != "NULL"))
     {
       STRING Filter (ResolveBinPath(arg));
       if (!IsAbsoluteFilePath(Filter))
         {
-	  message_log (LOG_WARN, "%s: %s '%s' must be in $PATH.", Doctype.c_str(),
+	  if (FindExecutable(Filter).IsEmpty())
+	    message_log (LOG_ERROR, "%s: %s '%s' not in $PATH.", Doctype.c_str(),
 		ini_filter_tag, Filter.c_str());
+	  else
+	    message_log (LOG_DEBUG, "%s: External filter set to '%s' (in $PATH)", Doctype.c_str(), Filter.c_str());
+
         }
       else if (!ExeExists(Filter))
         {
