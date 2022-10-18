@@ -2,6 +2,8 @@ This directory contains documentation all around re-Isearch.
 
 The most important work is probably the [handbook](./re-Isearch-Handbook.pdf)
 
+For a quick introduction to the design see the [design document](./re-Isearch-Design.pdf)
+
 
 This project was funded through the NGI0 Discovery Fund, a fund established by NLnet with financial support from the European Commission's Next Generation Internet programme, under the aegis of DG Communications Networks, Content and Technology under grant agreement No 825322.
 
