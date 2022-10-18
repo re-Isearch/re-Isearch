@@ -303,6 +303,7 @@ STRING ResolveConfigPath(const STRING& Filename)
 	  errno = 0;
 	  if (Exists(tmp.form("%s/%s/%s", dir, dot_ib, Filename.c_str())))
 	    return tmp;
+
 #ifndef ENOLINK
 #define ENOLINK ENODEV
 #endif
@@ -330,6 +331,9 @@ STRING ResolveConfigPath(const STRING& Filename)
       }
   } // for()
   /* NOT FOUND */
+
+  message_log(LOG_DEBUG,"Could not resolve %s", Filename.c_str());
+
   tmp.Clear();
   return tmp;
 #endif

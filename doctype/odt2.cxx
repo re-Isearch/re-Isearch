@@ -1,7 +1,7 @@
 /*@@@
 File:		odt2.cxx
-Version:	1.00
-Description:	Class NULL
+Version:	1.01
+Description:	Class ODT2 
 Author:		Edward Zimmermann
 @@@*/
 
@@ -33,6 +33,22 @@ public:
   }
 
    virtual const char *GetDefaultFilter() const { return default_filter;}
+
+
+   // The default headline is from the field HEADLINE
+   virtual void Present (const RESULT& ResultRecord, const STRING& ElementSet,
+                   const STRING& RecordSyntax, PSTRING StringBuffer) const {
+     if (ElementSet.Equals(BRIEF_MAGIC)) {
+       Present (ResultRecord, "TITLE", RecordSyntax, StringBuffer);
+       if (StringBuffer->IsEmpty())
+	 Present (ResultRecord, "SUBJECT", RecordSyntax, StringBuffer);
+       if (StringBuffer->IsEmpty())
+         Present (ResultRecord, "HEADLINE", RecordSyntax, StringBuffer);
+       if (StringBuffer->IsEmpty() && ! GetResourcePath(ResultRecord, StringBuffer))
+	 DOCTYPE::Present (ResultRecord, ElementSet, RecordSyntax, StringBuffer);
+     }
+   }
+
 
    ~IBDOC_ODT2() { }
 private:
