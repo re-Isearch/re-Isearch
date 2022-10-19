@@ -623,7 +623,7 @@ PLUGINOPT=-export-dynamic
 
 .cxx.sob$(LIBX): ../doctype/doctype.hxx ../src/idb.hxx
 	$(CC) $(SHARED) $(CCFLAGS) $(INC) -o $@ $(PLUGINOPT) $< $(LDLIBS)
-	-cp $@ ~/.ib/lib/plugins
+	-cp $@ ~/.ib/plugins
 	-cp $@ /opt/nonmonotonic/ib/lib/plugins
 
 
