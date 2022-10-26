@@ -6,7 +6,6 @@ a novel multimodal search and retrieval engine using mathematical models and alg
 Despite being a new project it has a long and esteemed history reaching back into the 1990s. Previous versions were widely adopted and used in hundreds of public search sites, including many high profile projects such as the U.S. Patent and Trademark Office (USPTO) patent search, the Federal Geographic Data Clearinghouse (FGDC), the NASA Global Change Master Directory, the NASA EOS Guide System, the NASA Catalog Interoperability Project, the astronomical pre-print service based at the Space Telescope Science Institute, The PCT Electronic Gazette at the World Intellectual Property Organization (WIPO), the Australian National Genomic Information Service (ANGIS), the SAGE Project of the Special Collections Department at Emory University, Eco Companion Australasia (an environmental geospatial resources catalog), European Space Organization, the Open Directory Project, numerous governmental portals and ... 
 
 Featues/Uses
-
 * Low-code ETL / "Any-to-Any" architecture
 * No need for a “middle layer” of content manipulation code. Instead of getting URLs from a search engine, fetching documents, parsing them, and navigating the DOMs to find required elements, it lets you simply request the elements you need and they are returned directly.
 * Handles a wide range of document formats (from Atom to XML) including “live” data.
