@@ -6,6 +6,7 @@ a novel multimodal search and retrieval engine using mathematical models and alg
 Featues/Uses
 
     • Low-code ETL / "Any-to-Any" architecture
+   • No need for a “middle layer” of content manipulation code. Instead of getting URLs from a search engine, fetching documents, parsing them, and navigating the DOMs to find required elements, it lets you simply request the elements you need and they are returned directly.
     • Handles a wide range of document formats (from Atom to XML) including “live” data.
     • Powerful Search (Structure, Objects, Spatial) / Relevancy Engine
     • NoSQL Datastore
@@ -14,10 +15,19 @@ Featues/Uses
     • Embeddable in products (comparatively low resource  demands)
     • Customization. 
     • Support Peer-to-Peer and Federated architectures.
+    • Runs on a wide range of hardware and operating systems
     • Freely available under a permissive software license. 
 
 
-Initial project outcome: a freely available and completely open-source (and multiplatform) C++ library, bindings for other languages (such as Python) and some reference sample code using the library in some of these languages.
+Despite its wealth of features it has a comparatively small memory footprint (previous version have run on 32-bit machines with as little as 8 MB physical RAM) making it suitable for appliances. It has also been designed to try to impose a minimal computing impact on the host.
+Rather than run multiple threads and a high CPU workload it’s strategy is to be fast but not at the cost of other processes, heat or increased energy consumption.
+
+
+### This Repository 
+
+This is the main central repository for re-Isearch development.
+
+It contains the engine as a freely available and completely open-source (and multiplatform) C++ library, bindings for other languages (such as Python) and some reference sample code using the library in some of these languages.
 
 Under [doctypes/](https://github.com/re-Isearch/re-Isearch/tree/master/doctype) one can see the native doctypes supported.
 
