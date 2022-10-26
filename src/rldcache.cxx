@@ -22,6 +22,7 @@ Notes:          Converted to C++ class by A. Warnock (warnock@clark.net)
 
 #include "common.hxx"
 
+// Uses Berkeley DB
 # include "db.h"
 
 #undef open

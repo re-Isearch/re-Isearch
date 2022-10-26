@@ -304,6 +304,11 @@ GDT_BOOLEAN RESULT::PresentHit(const FC& Fc, STRING *StringBuffer, STRING *Term,
       GPTYPE       localStart = (start > 44 ? start - 40 : 0);
       GPTYPE       localEnd   = end + 60 + (end-start)/2;
       GPTYPE       peer_end   = RecordEnd;
+ 
+
+ cerr << "STart = " << start <<endl;
+ cerr << "ENd   = " << end << endl;
+ cerr << "RecordEnd = " << RecordEnd << endl;
 
       GDT_BOOLEAN  skipToFirstWord = GDT_TRUE;
 
@@ -320,7 +325,7 @@ GDT_BOOLEAN RESULT::PresentHit(const FC& Fc, STRING *StringBuffer, STRING *Term,
 	     if (TagPtr) *TagPtr = Tag;
 
 	     GPTYPE peer_start = PeerFC.GetFieldStart() - offset;
-	     peer_end   = PeerFC.GetFieldEnd() - offset;
+	     peer_end   = PeerFC.GetFieldEnd() - offset + 1  /***** Added + 1 // 2022 ***/;
 
 	     if (peer_end - peer_start < 200) {
 		// Min
@@ -348,7 +353,9 @@ GDT_BOOLEAN RESULT::PresentHit(const FC& Fc, STRING *StringBuffer, STRING *Term,
 	}
 
       if ((localEnd + RecordStart) > RecordEnd)
+      {
 	localEnd = RecordEnd - RecordStart; // Don't cross boundaries
+      }
 
       if (localEnd <= localStart)
 	{
@@ -359,6 +366,8 @@ GDT_BOOLEAN RESULT::PresentHit(const FC& Fc, STRING *StringBuffer, STRING *Term,
 //    if (Length > BUFSIZ) Length = BUFSIZ;
       STRING strPtr;
 
+
+ cerr << "Want LEGNTH= " << Length << endl;
       if (::GetRecordData(GetFullFileName(), &strPtr, localStart + RecordStart, Length, DoctypePtr) == 0)
 	return GDT_FALSE;
       register unsigned char *ptr = (unsigned char *)(strPtr.c_str());
@@ -450,7 +459,8 @@ GDT_BOOLEAN RESULT::XMLPresentNthHit(size_t N, STRING *StringBuffer, const STRIN
 
              GPTYPE peer_start = PeerFC.GetFieldStart() - offset;
 
-             peer_end   = PeerFC.GetFieldEnd() - offset;
+             peer_end   = PeerFC.GetFieldEnd() - offset + 1 /* 2022 add +1 */;
+
              if (peer_end - peer_start < 200) {
 		// Min
 		if ((peer_end - peer_start) > (end - start + PeerMinimumFieldLength)) {

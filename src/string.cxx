@@ -2205,17 +2205,19 @@ GDT_BOOLEAN STRING::IsNumber() const
   else if (*s == '-' || *s == '+')
     s++; // signed number
 
+
   for (; *s; s++)
     {
       if(hex ? !_ib_isxdigit(*s) : !_ib_isdigit(*s))
 	{
 	  if (*s == '.')
 	    dots++;
-	  else
+	  else if (!isspace(*s) || s[1]) // Don't be tricked by trailing space!
 	    return(GDT_FALSE);
 	}
        else digits++;
     }
+
   return (dots < 2 && digits);
 }
 
@@ -2304,9 +2306,16 @@ GDT_BOOLEAN STRING::IsDateRange() const
   return GDT_FALSE;
 }
 
+
+// Look for RECT{ .. } 
 GDT_BOOLEAN STRING::IsGeoBoundedBox() const
 {
-  return SearchAny("RECT{") != 0; // } 
+  if (Len() < 512) // Max 512 byte long strings!
+    {
+       const STRINGINDEX pos =  SearchAny("RECT{");
+       return (pos != 0 && SearchAny('}', pos + 4) != 0);
+    }
+  return GDT_FALSE;
 }
 
 GDT_BOOLEAN STRING::IsPrint() const
@@ -2999,6 +3008,48 @@ STRINGINDEX STRING::Search (const UCHR Character, const STRINGINDEX Start) const
 {
   return Search((CHR)Character, Start);
 }
+
+
+
+#if 0
+// Search to Max length
+//
+//
+
+STRINGINDEX STRING::Search (const CHR Character, const STRINGINDEX Start, STRINGINDEX Length) const
+{
+  const STRINGINDEX length = Length ? min(Len(), Length) : Len() ;
+  register STRINGINDEX x = Start ? Start - 1 : 0;
+  while (x < length)
+    {
+      if (m_pchData[x++] == Character)
+        return x;
+    }
+  return 0; // NOTFOUND
+
+}
+
+STRINGINDEX STRING::SearchAny (const STRING& OtherString, const STRINGINDEX Start, const STRINGINDEX Length) const
+{
+  const STRINGINDEX olength = OtherString.Len();
+  if (olength == 1)
+    return Search(OtherString[0], Start, Length);
+
+  const STRINGINDEX length = Len();
+  if (olength > 0 && olength <= length)
+    {
+      const char *otherptr = OtherString.m_pchData;
+      const STRINGINDEX  limit = length - olength;
+      const STRINGINDEX bound = min(limit, Length);
+      for (STRINGINDEX x = Start-1; x <= bound; x++)
+        {
+          if (Strnicmp(&m_pchData[x], otherptr, olength) == 0)
+            return (x+1);
+        }
+    }
+  return 0; // NOT FOUND
+}
+#endif
 
 
 STRINGINDEX STRING::SearchAny (const STRING& OtherString, const STRINGINDEX Start) const

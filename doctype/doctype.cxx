@@ -995,6 +995,8 @@ GDT_BOOLEAN DOCTYPE::Headline(const RESULT& ResultRecord, const STRING& RecordSy
 	Present(ResultRecord,  BRIEF_MAGIC, RecordSyntax, StringBuffer);
       else
 	Present (ResultRecord,  BRIEF_MAGIC, StringBuffer);
+
+      // StringBuffer->Pack(); // 2022
       result = StringBuffer->GetLength() != 0;
     }
   return result;
@@ -1310,6 +1312,7 @@ STRING& DOCTYPE::DescriptiveName(const STRING& Language,
 
 void DOCTYPE::Present (const RESULT& ResultRecord, const STRING& ElementSet, STRING *StringBufferPtr) const
 {
+
   StringBufferPtr->Clear();
 
   if (ElementSet == SOURCE_MAGIC)
@@ -1369,6 +1372,8 @@ void DOCTYPE::Present (const RESULT& ResultRecord, const STRING& ElementSet, STR
 	  // Defaults.AddEntry(ElementSet, *StringBufferPtr);
 	}
     }
+
+   // StringBufferPtr->Pack(); // 2022
 }
 
 
@@ -2137,6 +2142,7 @@ void DOCTYPE::Present (const RESULT& ResultRecord, const STRING& ElementSet,
       STRING S;
       Present (ResultRecord, ElementSet, &S);
       S.Pack(); // Headlines should be a single "compact" line
+
       if (S.IsEmpty())
 	{ 
 	  S = ResultRecord.GetFullFileName();
@@ -2187,6 +2193,9 @@ void DOCTYPE::Present (const RESULT& ResultRecord, const STRING& ElementSet,
 	  Present (ResultRecord, ElementSet, StringBufferPtr);
 	}
     }
+
+  StringBufferPtr-> Pack( ); // 2022
+
 }
 
 

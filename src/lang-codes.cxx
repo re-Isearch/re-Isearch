@@ -22,6 +22,9 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 
 #define OCTET char
 
+
+static bool globalUTF8 = false;
+
 extern "C" {
   extern const OCTET _ib_ctype_8859_1[256];
   extern const OCTET _ib_ctype_8859_2[256];
@@ -5006,8 +5009,13 @@ BYTE CHARSET::SetSet (BYTE Id)
     {
       return Which; // Already done
     }
-
-  if (Id <= MAX_CHARSET_ID)
+   if (Id == UTF8)
+     {
+       globalUTF8 = true; // UTF8 is special. It has global application!
+       SetSet(charsets[0].Id); // The 7-bit ASCII is OK
+       return Which = UTF8;
+     }
+   else if (Id <= MAX_CHARSET_ID)
     CharTab = ISO8859[Which = Id];
   else
     Which = 0xFF; // Bogus set
@@ -5094,6 +5102,8 @@ GDT_BOOLEAN SetGlobalCharset (const STRING& Name)
   BYTE set = Charset2Id (Name);
   return SetGlobalCharset ( set );
 }
+
+
 
 static GDT_BOOLEAN _setcharset(BYTE Charset,
 	const OCTET     **ctype,
@@ -5306,6 +5316,34 @@ char *_octet_tolower (char *pString, const bool clean)
   return ++pString;
 }
 
+
+// Multichar to lower
+int   _ib_tolower(const char *ptr)
+{
+  if (globalUTF8) {
+    wchar_t  lwc;
+    // Either we can definintely rule out multichar or find we can't decode
+    // as valid UTF8 then its just an octet.
+    if ((unsigned char)*ptr > 0xc0 && mbstowcs(&lwc, ptr, 1) > 0)
+      return tolower(lwc); // handles wide character to lower
+  }
+  return _ib_tolower(*ptr);
+}
+// Multichar to upper
+int   _ib_toupper(const char *ptr)
+{
+  if (globalUTF8) {
+    wchar_t  lwc;
+    // Either we can definintely rule out multichar or find we can't decode
+    // as valid UTF8 then its just an octet.
+    if ((unsigned char)*ptr > 0xc0 && mbstowcs(&lwc, ptr, 1) > 0)
+      return toupper(lwc); // handles wide character to upper
+  }
+  return _ib_toupper(*ptr);
+}
+
+
+// Lowercases the whole string in place and optionally cleans it..
 char * _utf8_tolower (char *pString, const bool clean)
 {
   if (pString && *pString)

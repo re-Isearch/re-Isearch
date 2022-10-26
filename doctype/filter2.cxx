@@ -234,6 +234,7 @@ void FILTER2MEMODOC::BeforeIndexing()
   DOCTYPE::BeforeIndexing();
   MIME_Type = Getoption(ini_content_type_tag, mime_application_binary);
   Filter = ::SetFilter( Getoption(ini_filter_tag, GetDefaultFilter()) , Doctype);
+
   if (Filter.IsEmpty())
     message_log (LOG_ERROR, "%s: No %s set. Nothing to do?", Doctype.c_str(), ini_filter_tag);
   else if (Filter.Equals(  NulFilter ))
@@ -366,7 +367,7 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord, STRING *Filte
 
   // We write full file path as ordinary string
   start = Fn.WriteFile(fp);
-  start += fwrite("\0\0\n", 1, 3, fp) - 1;
+  start += fwrite("\0\0\n", 1, 3, fp) /* - 1 */;
 
 #if 0
   // Here we want to write some metadata into the .cat file

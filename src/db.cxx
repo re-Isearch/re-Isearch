@@ -5,7 +5,7 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 #include "db.hxx"
 #include <errno.h>
 #include <stdlib.h>
-#include <fstream.h>
+#include <fstream>
 #include <malloc.h>
 #include <unistd.h>
 

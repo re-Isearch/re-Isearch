@@ -390,7 +390,9 @@ STRING FindSharedLibrary(const STRING& Argv0)
 #endif
 }
 
-
+//
+//
+// Look for Argv0 as an executable ....
 //
 STRING FindExecutable(const STRING& Argv0)
 {
@@ -431,7 +433,7 @@ STRING FindExecutable(const STRING& Argv0)
 
  // Linux, BSD
  Dl_info info;
- void *addr = (void *)NULL;
+ void *addr = (void *) FindExecutable ; // NULL;
  // Not const void * since Solaris 10 has it as void *
  if (dladdr(addr, &info))
    {

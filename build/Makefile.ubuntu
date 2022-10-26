@@ -423,6 +423,7 @@ PLUGIN_SRCS = \
 	$(DOCTYPE_DIR)/null.cxx \
 	$(DOCTYPE_DIR)/odt.cxx \
 	$(DOCTYPE_DIR)/odt2.cxx \
+	$(DOCTYPE_DIR)/odt_j.cxx \
 	$(DOCTYPE_DIR)/msword.cxx \
 	$(DOCTYPE_DIR)/msoffice.cxx \
 	$(DOCTYPE_DIR)/msrtf.cxx \
@@ -487,8 +488,10 @@ all: $(MALLOC_OBJ) \
 	$(BIN_DIR)/Iwatch 
 
 
-dirs:
-	mkdir -p ~/.ib/lib/plugins
+dirs: ~/.ib/lib/plugins
+
+~/.ib/lib/plugins:
+	mkdir -p ~/.ib/lib/plugins 
  
 #$(BIN_DIR)/siscompress $(BIN_DIR)/sisdump $(BIN_DIR)/sisdump32 $(BIN_DIR)/sischeck \
 

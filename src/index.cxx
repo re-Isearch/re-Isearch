@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+/* Copyright (c) 2020-22 Project re-Isearch and its contributors: See CONTRIBUTORS.
 It is made available and licensed under the Apache 2.0 license: see LICENSE */
 #pragma ident  "@(#)index.cxx"
 
@@ -202,15 +202,15 @@ extern "C"
 #endif
 #endif
 
-static const STRING Section ("DbSearch");
-static const STRING WaterlimitEntry ("PhraseWaterlimit");
-static const STRING FindConcatEntry ("FindConcatWords");
-static const STRING ForceEntry       ("Force");
-static const STRING ThresholdEntry   ("Threshold");
+static const STRING Section                      ("DbSearch");
+static const STRING WaterlimitEntry              ("PhraseWaterlimit");
+static const STRING FindConcatEntry              ("FindConcatWords");
+static const STRING ForceEntry                   ("Force");
+static const STRING ThresholdEntry               ("Threshold");
 static const STRING DontStoreHitCoordinatesEntry ("Freeform");
-static const STRING PhoneticAlgorithmEntry ("Phonetic");
-static const STRING MaxTimeEntry ("MaxTermSearchTime");
-static const STRING MaxSearchTimeEntry ("MaxSearchTime");
+static const STRING PhoneticAlgorithmEntry       ("Phonetic");
+static const STRING MaxTimeEntry                 ("MaxTermSearchTime");
+static const STRING MaxSearchTimeEntry           ("MaxSearchTime");
 
 
 static const STRING CommonWordsSection ("CommonWords");
@@ -6609,7 +6609,7 @@ long INDEX::Dump (INT Skip, ostream& os, GDT_BOOLEAN OnlyErrors)
         {
           UINT2 magic = (UINT2)getINT2(fpi);
           INT   ver = Version();
-          int   bits = 8 << (ver % 100);
+          int   bits = 8 << ( (ver % 100) + 1); // +1 !
 
 	  if (!OnlyErrors)
 	    {
@@ -6636,7 +6636,7 @@ long INDEX::Dump (INT Skip, ostream& os, GDT_BOOLEAN OnlyErrors)
         {
           int poff = 0;
 	  if (!OnlyErrors)
-	    os << "0x" << setw(6) << setfill('0') << hex << gp << ' ' << dec<< setfill(' ');
+	    os << "0x" << setw( sizeof(GPTYPE) /* was 6  */) << setfill('0') << hex << gp << ' ' << dec<< setfill(' ');
           if ((x = GetIndirectBuffer (gp, Buffer)) > 0)
             {
               if (x > (int)StringCompLength)
@@ -6653,7 +6653,7 @@ long INDEX::Dump (INT Skip, ostream& os, GDT_BOOLEAN OnlyErrors)
                   if (gp < old_gp) // Bad GP sort!
                     {
 		      if (OnlyErrors)
-			os << "0x" << setw(6) << setfill('0') << hex << gp << ' ' << dec<< setfill(' ');
+			os << "0x" << setw( sizeof(GPTYPE) /* was     6  */  ) << setfill('0') << hex << gp << ' ' << dec<< setfill(' ');
                       os << "(*)";
                       poff = 3;
                     }

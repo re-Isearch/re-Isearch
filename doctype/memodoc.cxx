@@ -82,9 +82,13 @@ FIELDTYPE MEMODOC::GuessFieldType(const STRING& FieldName, const STRING& Content
       if (ft.Defined())
 	return ft;
 
-      if (autoFieldTypes)
+      // We only auto detect fields where the content is less than 512 bytes long
+      if (autoFieldTypes && Contents.GetLength() < 512)
 	{
 	  if (Contents.IsGeoBoundedBox())      ft = FIELDTYPE::box;
+	  else if (Contents.IsDate())          ft = FIELDTYPE::date;
+	  else if (Contents.IsDateRange())     ft = FIELDTYPE::daterange;
+
 	  else if (Contents.IsNumberRange())   ft = FIELDTYPE::numericalrange;
 	  else if (Contents.IsNumber())
 	    {
@@ -97,8 +101,6 @@ FIELDTYPE MEMODOC::GuessFieldType(const STRING& FieldName, const STRING& Content
 		}
 	      else ft = FIELDTYPE::numerical;
 	    }
-	  else if (Contents.IsDateRange())     ft = FIELDTYPE::daterange;
-	  else if (Contents.IsDate())          ft = FIELDTYPE::date;
 	  else if (Contents.IsCurrency())      ft = FIELDTYPE::currency;
 	  else if (Contents.IsDotNumber())     ft = FIELDTYPE::dotnumber;
 #if 1
@@ -492,6 +494,7 @@ _,-,+ or = or a line starting with ':'.
 ___
 
 -*/
+
 PCHR * MEMODOC::parse_tags (PCHR b, off_t len)
 {
   PCHR *t;			// array of pointers to first char of tags
@@ -504,7 +507,15 @@ PCHR * MEMODOC::parse_tags (PCHR b, off_t len)
   max_num_tags = TAG_GROW_SIZE;
   t = (PCHR *)tagBuffer.Want (max_num_tags, sizeof(PCHR));
 
-  for (off_t i = 0; i < len - 4; i++)
+
+#if 0
+  // Skip leading \n if it exists?
+  const off_t start = (*b == '\n' ? 1 : 0);
+#else
+  const off_t start = 0;
+#endif
+
+  for (off_t i = start; i < len - 4; i++)
     {
       if (b[i] == '\r' || b[i] == '\v')
  	continue; // Skip over
