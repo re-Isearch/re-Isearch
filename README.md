@@ -5,18 +5,18 @@ a novel multimodal search and retrieval engine using mathematical models and alg
 
 Featues/Uses
 
-    • Low-code ETL / "Any-to-Any" architecture
-   • No need for a “middle layer” of content manipulation code. Instead of getting URLs from a search engine, fetching documents, parsing them, and navigating the DOMs to find required elements, it lets you simply request the elements you need and they are returned directly.
-    • Handles a wide range of document formats (from Atom to XML) including “live” data.
-    • Powerful Search (Structure, Objects, Spatial) / Relevancy Engine
-    • NoSQL Datastore
-    • Useful for Analytics
-    • Useful for Recommendation / Autosuggestion 
-    • Embeddable in products (comparatively low resource  demands)
-    • Customization. 
-    • Support Peer-to-Peer and Federated architectures.
-    • Runs on a wide range of hardware and operating systems
-    • Freely available under a permissive software license. 
+* Low-code ETL / "Any-to-Any" architecture
+* No need for a “middle layer” of content manipulation code. Instead of getting URLs from a search engine, fetching documents, parsing them, and navigating the DOMs to find required elements, it lets you simply request the elements you need and they are returned directly.
+* Handles a wide range of document formats (from Atom to XML) including “live” data.
+* Powerful Search (Structure, Objects, Spatial) / Relevancy Engine
+* NoSQL Datastore
+* Useful for Analytics
+* Useful for Recommendation / Autosuggestion 
+* Embeddable in products (comparatively low resource  demands)
+* Customization. 
+* Support Peer-to-Peer and Federated architectures.
+* Runs on a wide range of hardware and operating systems
+* Freely available under a permissive software license. 
 
 
 Despite its wealth of features it has a comparatively small memory footprint (previous version have run on 32-bit machines with as little as 8 MB physical RAM) making it suitable for appliances. It has also been designed to try to impose a minimal computing impact on the host.
