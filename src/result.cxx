@@ -306,10 +306,6 @@ GDT_BOOLEAN RESULT::PresentHit(const FC& Fc, STRING *StringBuffer, STRING *Term,
       GPTYPE       peer_end   = RecordEnd;
  
 
- cerr << "STart = " << start <<endl;
- cerr << "ENd   = " << end << endl;
- cerr << "RecordEnd = " << RecordEnd << endl;
-
       GDT_BOOLEAN  skipToFirstWord = GDT_TRUE;
 
 #if 1
@@ -367,7 +363,6 @@ GDT_BOOLEAN RESULT::PresentHit(const FC& Fc, STRING *StringBuffer, STRING *Term,
       STRING strPtr;
 
 
- cerr << "Want LEGNTH= " << Length << endl;
       if (::GetRecordData(GetFullFileName(), &strPtr, localStart + RecordStart, Length, DoctypePtr) == 0)
 	return GDT_FALSE;
       register unsigned char *ptr = (unsigned char *)(strPtr.c_str());

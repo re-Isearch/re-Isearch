@@ -1,8 +1,11 @@
 /*@@@
 File:		odt_j.cxx
-Version:	1.01
+Version:	1.02
 Description:	Class ODT Using Java and a ODF jar
 Author:		Edward Zimmermann
+Comments:       Uses a jar build on the ODT Toolkit from Svante Schubert
+                to produce a MEMODOC format file from an ODT.
+
 @@@*/
 
 
@@ -19,6 +22,18 @@ static const char default_jar[] = "odt-search";
 static const char default_java[] = "java";
 static const char myDescription[] = "\"OASIS Open Document Format Text\" (ODT) Plugin (MEMODOC)";
 
+static const char *mime_type = "application/vnd.oasis.opendocument.text";
+
+// Default headlines, searched for content in order
+// NOTE: If your change, change the desc. below #edit
+static const char * const headline_fields[] = {
+  "TITLE",
+  "SUBJECT",
+  "HEADLINE",
+  "DESCRIPTION",
+  NULL
+};
+
 
 class IBDOC_ODT_J : public FILTER2MEMODOC {
 public:
@@ -30,25 +45,22 @@ public:
    }
 
   void SourceMIMEContent(STRING *stringPtr) const {
-    *stringPtr = "application/vnd.oasis.opendocument.text";
+    *stringPtr = mime_type;
   }
 
    virtual const char *GetDefaultFilter() const { return default_filter;}
 
 
-   // The default headline is from the field HEADLINE
+   // The default headline is from the headline_fields list
    virtual void Present (const RESULT& ResultRecord, const STRING& ElementSet,
                    const STRING& RecordSyntax, PSTRING StringBuffer) const {
 
      if (ElementSet.Equals(BRIEF_MAGIC)) {
-       Present (ResultRecord, "TITLE", RecordSyntax, StringBuffer);
-       if (StringBuffer->IsEmpty())
-	 Present (ResultRecord, "SUBJECT", RecordSyntax, StringBuffer);
-       if (StringBuffer->IsEmpty())
-         Present (ResultRecord, "HEADLINE", RecordSyntax, StringBuffer);
-       if (StringBuffer->IsEmpty())
-         Present (ResultRecord, "DESCRIPTION", RecordSyntax, StringBuffer);
 
+       StringBuffer->Clear();
+       for (size_t i=0; StringBuffer->IsEmpty() && headline_fields[i]; i++) {
+	  Present (ResultRecord, headline_fields[i], RecordSyntax, StringBuffer);
+       }
        if (StringBuffer->IsEmpty() && ! GetResourcePath(ResultRecord, StringBuffer))
 	 DOCTYPE::Present (ResultRecord, ElementSet, RecordSyntax, StringBuffer);
      }
@@ -73,6 +85,7 @@ IBDOC_ODT_J::IBDOC_ODT_J(PIDBOBJ DbParent, const STRING& Name) : FILTER2MEMODOC(
   default_filter =  java;
 
 
+  // See MEMODOC .. the body gets mapped to a *-Body so we map it to Content
   if (tagRegistry)
     tagRegistry->ProfileWriteString("Fields", Doctype+"-Body", "Content");
 
@@ -80,6 +93,7 @@ IBDOC_ODT_J::IBDOC_ODT_J(PIDBOBJ DbParent, const STRING& Name) : FILTER2MEMODOC(
   STRING args = GetArgs(); 
   if (!args.IsEmpty()) options << " " << args;
   SetArgs( options ) ;
+  // Following text #edit
   desc.form("\
 %s. Uses an external filter defined in a Java JAR.\nOptions:\n\
    JAVA    Specifies the Java (JVM) to use (Default '%s') \n\
