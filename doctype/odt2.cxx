@@ -46,7 +46,8 @@ public:
          Present (ResultRecord, "HEADLINE", RecordSyntax, StringBuffer);
        if (StringBuffer->IsEmpty() && ! GetResourcePath(ResultRecord, StringBuffer))
 	 DOCTYPE::Present (ResultRecord, ElementSet, RecordSyntax, StringBuffer);
-     }
+     } else DOCTYPE::Present (ResultRecord, ElementSet, RecordSyntax, StringBuffer);
+
    }
 
 
