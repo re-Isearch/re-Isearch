@@ -28,7 +28,7 @@ public:
   PIRSET operator>>(PIRSET& OpPtr);
   void        Reverse();
   void        Clear();
-  GDT_BOOLEAN IsEmpty() const;
+  bool IsEmpty() const;
   ~OPSTACK();
 private:
   void Push(const OPOBJ& Op);

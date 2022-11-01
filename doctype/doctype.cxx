@@ -322,17 +322,17 @@ STRING  DOCTYPE::Httpd_Content_type (const RESULT& ResultRecord, const STRING& M
   return result;
 }
 
-GDT_BOOLEAN DOCTYPE::SetFieldType(const STRING& FieldName, const FIELDTYPE FieldType)
+bool DOCTYPE::SetFieldType(const STRING& FieldName, const FIELDTYPE FieldType)
 {
   if (Db && FieldName.GetLength())
     {
       if (!Db->GetFieldType(FieldName).Ok())
 	{
 	  Db->AddFieldType(FieldName, FieldType); // Was PriorityField,
-	  return GDT_TRUE;
+	  return true;
 	}
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -436,9 +436,9 @@ void DOCTYPE::SelectRegions(const RECORD& Record, FCT* FctPtr)
   *FctPtr = FC(0, Record.GetLength());
 }
 
-GDT_BOOLEAN DOCTYPE::IsStopWord(const UCHR* Word, STRINGINDEX MaxLen) const
+bool DOCTYPE::IsStopWord(const UCHR* Word, STRINGINDEX MaxLen) const
 {
-  return Db ? Db->IsStopWord(Word, MaxLen, WordMaximum) : GDT_FALSE;
+  return Db ? Db->IsStopWord(Word, MaxLen, WordMaximum) : false;
 }
 
 INT DOCTYPE::ReadFile(const STRING& Filename, STRING *StringPtr, off_t Offset, size_t Length) const
@@ -640,7 +640,7 @@ NUMERICOBJ DOCTYPE::ParseNumeric(const STRING& Buffer) const
   return Buffer;
 }
 
-GDT_BOOLEAN DOCTYPE::ParseRange(const STRING& Buffer, const STRING& FieldName,
+bool DOCTYPE::ParseRange(const STRING& Buffer, const STRING& FieldName,
         DOUBLE* fStart, DOUBLE* fEnd) const
 {
   NUMERICALRANGE Range(Buffer);
@@ -648,9 +648,9 @@ GDT_BOOLEAN DOCTYPE::ParseRange(const STRING& Buffer, const STRING& FieldName,
     {
       if (fStart) *fStart = Range.GetStart() ;
       if (fEnd)   *fEnd   = Range.GetEnd();
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 STRING  DOCTYPE::ParseBuffer(const STRING& Buffer) const
@@ -910,7 +910,7 @@ void DOCTYPE::AfterRset (const STRING&)
 
 // Hooks for the field parsers
 INT DOCTYPE::UnifiedNames (const STRING& Tag, PSTRLIST Value,
-	GDT_BOOLEAN Use) const
+	bool Use) const
 {
   INT Total = 0;
 
@@ -937,13 +937,13 @@ INT DOCTYPE::UnifiedNames (const STRING& Tag, PSTRLIST Value,
 }
 
 // Summary, e.g. Meta Description field
-GDT_BOOLEAN DOCTYPE::Summary(const RESULT&, const STRING&, STRING *StringBuffer) const
+bool DOCTYPE::Summary(const RESULT&, const STRING&, STRING *StringBuffer) const
 {
   StringBuffer->Clear();
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN DOCTYPE::Summary(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool DOCTYPE::Summary(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   return Summary(ResultRecord, NulString, StringBuffer);
 }
@@ -969,7 +969,7 @@ REGISTRY *DOCTYPE::GetMetadata(const RECORD& record,
   position.AddEntry("title");
 
   STRING s;
-  if (Headline(result, &s) == GDT_FALSE)
+  if (Headline(result, &s) == false)
     s = "<Untitled>";
   value.AddEntry(s);
   meta->SetData(position, value);
@@ -977,18 +977,18 @@ REGISTRY *DOCTYPE::GetMetadata(const RECORD& record,
   return meta;
 }
 
-GDT_BOOLEAN DOCTYPE::Headline(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool DOCTYPE::Headline(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   return Headline(ResultRecord, NulString, StringBuffer);
 }
 
-GDT_BOOLEAN DOCTYPE::Headline(const RESULT& ResultRecord, const STRING& RecordSyntax,
+bool DOCTYPE::Headline(const RESULT& ResultRecord, const STRING& RecordSyntax,
         STRING *StringBuffer) const
 {
-  GDT_BOOLEAN result = HeadlineFmt.IsEmpty() ? GDT_FALSE :
+  bool result = HeadlineFmt.IsEmpty() ? false :
 	Headline(HeadlineFmt, ResultRecord, RecordSyntax, StringBuffer);
 
-  if (result == GDT_FALSE)
+  if (result == false)
     {
       // Default for headline..
       if (RecordSyntax.GetLength())
@@ -1002,7 +1002,7 @@ GDT_BOOLEAN DOCTYPE::Headline(const RESULT& ResultRecord, const STRING& RecordSy
   return result;
 }
 
-GDT_BOOLEAN DOCTYPE::Headline(const STRING& HeadlineFormat,
+bool DOCTYPE::Headline(const STRING& HeadlineFormat,
 	const RESULT& ResultRecord, const STRING& RecordSyntax, STRING *StringBuffer) const
 {
   const size_t hlen = HeadlineFormat.GetLength();
@@ -1062,50 +1062,50 @@ GDT_BOOLEAN DOCTYPE::Headline(const STRING& HeadlineFormat,
 	    StringBuffer->Cat (Ch);
 	} // for()
      if (StringBuffer->GetLength())
-      return GDT_TRUE;
+      return true;
    }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN DOCTYPE::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool DOCTYPE::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   if (ResultRecord.GetRecordStart() == 0)
     {
       STRING Path = ResultRecord.GetFullFileName();
       if (Path.IsEmpty() || (GetFileSize(Path) - ResultRecord.GetLength() > 3))
 	{
-	  return GDT_FALSE;
+	  return false;
 	}
       Db->_get_resource_path(&Path);
       if (StringBuffer) *StringBuffer = Path;
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
-static GDT_BOOLEAN _valid_URL_method(const char *base, size_t len, GDT_BOOLEAN *d)
+static bool _valid_URL_method(const char *base, size_t len, bool *d)
 {
   const struct {
     const char *method;
     size_t      len;
-    GDT_BOOLEAN dslash;
+    bool dslash;
   } methods[] = {
-    {"ftp",     3, GDT_TRUE},
-    {"urn",     3, GDT_TRUE},
-    {"file",    4, GDT_TRUE},
-    {"http",    4, GDT_TRUE},
-    {"news",    4, GDT_FALSE},
-    {"nntp",    4, GDT_TRUE},
-    {"ldap",    4, GDT_TRUE},
-    {"wais",    4, GDT_TRUE},
-    {"x500",    4, GDT_TRUE},
-    {"https",   5, GDT_TRUE},
-    {"shttp",   5, GDT_TRUE},
-    {"whois",   5, GDT_TRUE},
-    {"gopher",  6, GDT_TRUE},
-    {"z39_50s", 7, GDT_TRUE},
-    {"z39_50r", 7, GDT_TRUE},
-    {"prospero",8, GDT_TRUE}
+    {"ftp",     3, true},
+    {"urn",     3, true},
+    {"file",    4, true},
+    {"http",    4, true},
+    {"news",    4, false},
+    {"nntp",    4, true},
+    {"ldap",    4, true},
+    {"wais",    4, true},
+    {"x500",    4, true},
+    {"https",   5, true},
+    {"shttp",   5, true},
+    {"whois",   5, true},
+    {"gopher",  6, true},
+    {"z39_50s", 7, true},
+    {"z39_50r", 7, true},
+    {"prospero",8, true}
   };
   const size_t  nr_methods = sizeof(methods)/sizeof(methods[0]);
 
@@ -1116,30 +1116,30 @@ static GDT_BOOLEAN _valid_URL_method(const char *base, size_t len, GDT_BOOLEAN *
       if (len == methods[i].len && memcmp(methods[i].method, base, len) == 0)
 	{
 	  if (d) *d = methods[i].dslash;
-	  return GDT_TRUE;
+	  return true;
 	}
     }
-  return GDT_FALSE; // Nope
+  return false; // Nope
 }
 
-GDT_BOOLEAN DOCTYPE::URL(const RESULT& ResultRecord, STRING *StringBuffer,
-	GDT_BOOLEAN OnlyRemote) const
+bool DOCTYPE::URL(const RESULT& ResultRecord, STRING *StringBuffer,
+	bool OnlyRemote) const
 {
   STRING DocumentRoot, Path;
-  GDT_BOOLEAN isMirror = GDT_FALSE;
+  bool isMirror = false;
 
   StringBuffer->Clear(); // Clear the buffer
 
-  if (GetResourcePath(ResultRecord, &Path) == GDT_FALSE)
+  if (GetResourcePath(ResultRecord, &Path) == false)
     {
       message_log (LOG_ERROR, "URL: No Resource Path defined");
-      return GDT_FALSE;
+      return false;
     }
 
-  if (Db == NULL || ((Db->GetHTTP_root(&DocumentRoot, &isMirror) == GDT_FALSE) && OnlyRemote))
+  if (Db == NULL || ((Db->GetHTTP_root(&DocumentRoot, &isMirror) == false) && OnlyRemote))
     {
       //message_log (LOG_DEBUG, "URL: No Document Root (base) defined");
-      return GDT_FALSE;
+      return false;
     }
   const STRINGINDEX root_len = DocumentRoot.GetLength();
 
@@ -1177,7 +1177,7 @@ GDT_BOOLEAN DOCTYPE::URL(const RESULT& ResultRecord, STRING *StringBuffer,
 		      x = 5;
 		    }
  
-		  GDT_BOOLEAN dslash;
+		  bool dslash;
 		  if (x > 3 && _valid_URL_method(Path, x-1, &dslash))
 		    {
 		      if (dslash)
@@ -1200,33 +1200,33 @@ GDT_BOOLEAN DOCTYPE::URL(const RESULT& ResultRecord, STRING *StringBuffer,
 		      if (Path.Right ((size_t)9) == "/_._.html")
 			Path.EraseAfter(Path.GetLength() - 9);
 		      *StringBuffer = Path;
-		      return GDT_TRUE;
+		      return true;
 		    }
 		  if (x > 1)
 		    message_log (LOG_ERROR, "Unknown URL method in mirror tree: %s", Path.EraseAfter(x-1).c_str());
 		  else
 		    message_log (LOG_ERROR, "Bad Mirror layout: %s", Path.c_str());
-		  return GDT_FALSE; // Bad Mirror
+		  return false; // Bad Mirror
 		}
 	      if (!isMirror)
 		{
 		  *StringBuffer << HTTP_Server << Path;
 		  // message_log (LOG_DEBUG, "Returning URL: %s", StringBuffer->c_str());
-		  return GDT_TRUE;
+		  return true;
 		}
 	    }
 	}
       if (OnlyRemote)
-	return GDT_FALSE;
+	return false;
     }
   if (Path.GetLength())
     {
       *StringBuffer << "file://" <<  ExpandFileSpec(Path);
     }
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN DOCTYPE::Full(const RESULT& ResultRecord, const STRING& RecordSyntax, STRING *StringBuffer) const
+bool DOCTYPE::Full(const RESULT& ResultRecord, const STRING& RecordSyntax, STRING *StringBuffer) const
 {
   DocPresent(ResultRecord, FULLTEXT_MAGIC, RecordSyntax, StringBuffer);
   return StringBuffer->GetLength() != 0;
@@ -1234,7 +1234,7 @@ GDT_BOOLEAN DOCTYPE::Full(const RESULT& ResultRecord, const STRING& RecordSyntax
 
 INT DOCTYPE::UnifiedNames (const STRING& Tag, PSTRLIST Value) const
 {
-  return UnifiedNames (Tag, Value, GDT_TRUE);
+  return UnifiedNames (Tag, Value, true);
 }
 
 STRING DOCTYPE::UnifiedName (const STRING& tag) const
@@ -1388,7 +1388,7 @@ void DOCTYPE::SetMetaIgnore(const STRING& Tag)
     }
 }
 
-GDT_BOOLEAN DOCTYPE::IsMetaIgnoreField(const STRING& FieldName, STRING *Ptr) const
+bool DOCTYPE::IsMetaIgnoreField(const STRING& FieldName, STRING *Ptr) const
 {
   STRING Value;
   if (Db)
@@ -1402,10 +1402,10 @@ GDT_BOOLEAN DOCTYPE::IsMetaIgnoreField(const STRING& FieldName, STRING *Ptr) con
     *Ptr = Value;
 
   if (Value.IsEmpty() || (Value ^= Ignore) || Value.GetChr(1) == '+')
-     return GDT_TRUE;               // Ignore this
+     return true;               // Ignore this
   if (IsIgnoreMetaField(Value))
-     return GDT_TRUE;
-  return GDT_FALSE;
+     return true;
+  return false;
 }
 
 
@@ -1457,7 +1457,7 @@ void DOCTYPE::XmlMetaPresent(const RESULT &ResultRecord, const STRING &RecordSyn
     Contents.AddEntry(TheDate.ISOdate());
     Meta.SetData(Position, Contents);
   }
-  if (URL(ResultRecord, &Value, GDT_TRUE)) {
+  if (URL(ResultRecord, &Value, true)) {
     Position.Clear();
     Contents.Clear();
     Position.AddEntry(Doctype);
@@ -1804,13 +1804,13 @@ TITLE=\"re-Isearch Online Documentation\" />\n";
     if (Name.GetLength())
       {
 	StringBuffer->Cat ("\n<META NAME=\"Maintainer.Name\" CONTENT=\"");
-	Charset.HtmlCat(Name, StringBuffer, GDT_FALSE);
+	Charset.HtmlCat(Name, StringBuffer, false);
 	StringBuffer->Cat ("\" />");
       }
     if (Address.GetLength())
       {
 	StringBuffer->Cat ("\n<META NAME=\"Maintainer.Email\" CONTENT=\"");
-	Charset.HtmlCat(Address, StringBuffer, GDT_FALSE);
+	Charset.HtmlCat(Address, StringBuffer, false);
 	StringBuffer->Cat ("\" />");
       }
   }
@@ -1897,7 +1897,7 @@ TITLE=\"re-Isearch Online Documentation\" />\n";
   if (!Value.IsEmpty())
     {
       *StringBuffer << "<TITLE>";
-      HtmlCat(ResultRecord, Value, StringBuffer, GDT_FALSE); // BUGFIX: Convert to HTML
+      HtmlCat(ResultRecord, Value, StringBuffer, false); // BUGFIX: Convert to HTML
       if (ElementSet != FULLTEXT_MAGIC)
 	*StringBuffer << " (" << ElementSet << ")";
       *StringBuffer << "</TITLE>";
@@ -1992,7 +1992,7 @@ void DOCTYPE::DocTail (const RESULT& ResultRecord, const STRING& ElementSet,
 
 const STRING& DOCTYPE::URLencode(const STRING& Str, STRING *Code) const
 {
-  GDT_BOOLEAN quot = GDT_FALSE;
+  bool quot = false;
   static const char HEX[] = "0123456789ABCDEF";
   STRING q;
   for(const UCHR *tp = (const UCHR *)Str; *tp; tp++)
@@ -2056,7 +2056,7 @@ void DOCTYPE::HtmlCat (const RESULT& Result, const CHR ch, STRING *StringBufferP
 }
 
 
-void DOCTYPE::HtmlCat (const RESULT& Result, const STRING& Input, STRING *StringBufferPtr, GDT_BOOLEAN Anchor) const
+void DOCTYPE::HtmlCat (const RESULT& Result, const STRING& Input, STRING *StringBufferPtr, bool Anchor) const
 {
   Result.GetLocale().Charset().HtmlCat(Input, StringBufferPtr, Anchor);
 }
@@ -2067,7 +2067,7 @@ void DOCTYPE::HtmlCat (const RESULT& Result, const STRING& Input, STRING *String
   Result.GetLocale().Charset().HtmlCat(Input, StringBufferPtr);
 }
 
-void DOCTYPE::HtmlCat (const STRING& Input, STRING *StringBufferPtr, GDT_BOOLEAN Anchor) const
+void DOCTYPE::HtmlCat (const STRING& Input, STRING *StringBufferPtr, bool Anchor) const
 {
   Charset.HtmlCat(Input, StringBufferPtr, Anchor);
 }
@@ -2136,7 +2136,7 @@ void DOCTYPE::Present (const RESULT& ResultRecord, const STRING& ElementSet,
       return;
     }
 
-  GDT_BOOLEAN html =  (RecordSyntax == HtmlRecordSyntax);
+  bool html =  (RecordSyntax == HtmlRecordSyntax);
   if (ElementSet == BRIEF_MAGIC)
     {
       STRING S;
@@ -2150,7 +2150,7 @@ void DOCTYPE::Present (const RESULT& ResultRecord, const STRING& ElementSet,
 	    S << " (" << Doctype << ")";
 	}
       if (html)
-	HtmlCat(ResultRecord, S, StringBufferPtr, GDT_FALSE);
+	HtmlCat(ResultRecord, S, StringBufferPtr, false);
       else
 	*StringBufferPtr = S;
     }
@@ -2448,7 +2448,7 @@ REGISTRY* DOCTYPE::GetMetadata(const RESULT& result, const REGISTRY* defaults)
   Present(result, BRIEF_MAGIC, SutrsRecordSyntax, &Title);
   if (s.IsEmpty())
     {
-      URL(result, &Title, GDT_FALSE);
+      URL(result, &Title, false);
     }
   position.AddEntry("locator");
   position.AddEntry("title");
@@ -2488,13 +2488,13 @@ REGISTRY* DOCTYPE::GetMetadata(const RESULT& result, const REGISTRY* defaults)
     if (Name.GetLength())
       {
 	StringBuffer->Cat ("\n<META NAME=\"Maintainer.Name\" CONTENT=\"");
-	Charset.HtmlCat(Name, StringBuffer, GDT_FALSE);
+	Charset.HtmlCat(Name, StringBuffer, false);
 	StringBuffer->Cat ("\" />");
       }
     if (Address.GetLength())
       {
 	StringBuffer->Cat ("\n<META NAME=\"Maintainer.Email\" CONTENT=\"");
-	Charset.HtmlCat(Address, StringBuffer, GDT_FALSE);
+	Charset.HtmlCat(Address, StringBuffer, false);
 	StringBuffer->Cat ("\" />");
       }
   }
@@ -2546,7 +2546,7 @@ DOCTYPE::~DOCTYPE ()
 //
 
 
-GDT_BOOLEAN DOCTYPE::IsSpecialField(const STRING &FieldName) const
+bool DOCTYPE::IsSpecialField(const STRING &FieldName) const
 {
   return (FieldName.GetLength() && (
 	(FieldName ^= DateField) ||
@@ -2619,7 +2619,7 @@ void DOCTYPE::Sort(RSET *Set)
 }
 
 
-GDT_BOOLEAN DOCTYPE::_write_resource_path (const STRING& file,
+bool DOCTYPE::_write_resource_path (const STRING& file,
         const RECORD& Filerecord, STRING *PathFilePath) const
 {
   if (Db)
@@ -2628,12 +2628,12 @@ GDT_BOOLEAN DOCTYPE::_write_resource_path (const STRING& file,
       SourceMIMEContent(&mime);
       return Db->_write_resource_path (file, Filerecord, mime, PathFilePath);
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
-GDT_BOOLEAN DOCTYPE::PluginExists(const STRING& doctype)
+bool DOCTYPE::PluginExists(const STRING& doctype)
 {
-  return Db ? Db->DoctypePluginExists(doctype) : GDT_FALSE;
+  return Db ? Db->DoctypePluginExists(doctype) : false;
 }
 

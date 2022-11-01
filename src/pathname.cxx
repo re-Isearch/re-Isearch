@@ -97,7 +97,7 @@ PATHNAME PATHNAME::RelativizePathname(const STRING& Dir)
 
 
 
-GDT_BOOLEAN  PATHNAME::SetFullFileName (const STRING& newFullPath)
+bool  PATHNAME::SetFullFileName (const STRING& newFullPath)
 {
   Path.Clear();
   File.Clear();
@@ -151,14 +151,14 @@ void PATHNAME::Write(FILE *fp) const
   GetFullFileName().Write(fp);
 }
 
-GDT_BOOLEAN PATHNAME::Read(FILE *fp)
+bool PATHNAME::Read(FILE *fp)
 {
   STRING S;
-  if (S.Read(fp) == GDT_TRUE) {
+  if (S.Read(fp) == true) {
     return SetFullFileName(S);
   }
   Clear();
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -213,7 +213,7 @@ FILE_ID& FILE_ID::operator=(const STRING& nFilename)
   return *this;
 }
 
-GDT_BOOLEAN FILE_ID::operator== (const FILE_ID& OtherId) const
+bool FILE_ID::operator== (const FILE_ID& OtherId) const
 {
   return (inode == OtherId.inode) || (filename == OtherId.filename);
 }

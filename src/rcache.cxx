@@ -2,7 +2,7 @@
 Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
 It is made available and licensed under the Apache 2.0 license: see LICENSE
 */
-#pragma ident  "@(#)rcache.cxx  1.24 02/05/01 00:33:41 BSN"
+#pragma ident  "@(#)rcache.cxx"
 
 #include "gdt.h"
 #include "defs.hxx"
@@ -35,6 +35,7 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 #define DEFCACHE 20
 
 
+
 static const BYTE RCACHE_VERSION = 2;
 
 #define DEBUG 0
@@ -55,8 +56,8 @@ void RCACHE::Init(const PIDBOBJ DbParent, size_t MaxCache)
 #if DEBUG
  cerr << "RCACHE::Init..";
 #endif
-  Changed    = GDT_FALSE;
-  Sorted     = GDT_FALSE;
+  Changed    = false;
+  Sorted     = false;
   Count      = 0;
   Parent     = DbParent;
   MaxEntries = (MaxCache > 65500 || MaxCache <= 0) ? DEFCACHE : MaxCache;
@@ -109,7 +110,7 @@ INT RCACHE::Add(const RCacheObj& RCacheObject)
   } else
     MinPos=Count++;
   Table[MinPos] = RCacheObject;
-  Changed = GDT_TRUE;
+  Changed = true;
 #if DEBUG
   cout<< "Added to cache at "<< MinPos << endl;
 #endif
@@ -161,7 +162,7 @@ void RCACHE::Write (PFILE Fp) const
 }
 
 
-GDT_BOOLEAN RCACHE::Read (PFILE Fp)
+bool RCACHE::Read (PFILE Fp)
 {
   obj_t obj = getObjID(Fp);
   if (obj != objRCACHE)
@@ -194,11 +195,11 @@ GDT_BOOLEAN RCACHE::Read (PFILE Fp)
 	Table[Count].Read(Fp);
       BYTE x = 0;
       ::Read(&x, Fp);
-      Sorted = (x ? GDT_TRUE : GDT_FALSE);
+      Sorted = (x ? true : false);
       return Count != 0;
       }
     }
-  return GDT_FALSE;
+  return false;
 }
 
 void Write(const RCACHE& Cache, PFILE Fp)
@@ -206,9 +207,8 @@ void Write(const RCACHE& Cache, PFILE Fp)
   Cache.Write(Fp);
 }
 
-GDT_BOOLEAN Read(RCACHE * Ptr, PFILE Fp)
+bool Read(RCACHE * Ptr, PFILE Fp)
 {
   return Ptr->Read(Fp);
 }
-
 

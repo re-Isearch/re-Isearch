@@ -20,13 +20,13 @@ class Dictionary : public Object
 public:
   // Construction/Destruction
   Dictionary();
-  Dictionary(size_t initialCapacity);
-  Dictionary(size_t initialCapacity, float loadFactor);
+  Dictionary(size_t Capacity);
+  Dictionary(size_t Capacity, float loadFactor);
   ~Dictionary();
 
   // Adding and deleting items to and from the dictionary
   void		Add(const STRING& name, Object *obj);
-  GDT_BOOLEAN	Remove(const STRING& name);
+  bool	Remove(const STRING& name);
 
   // Searching can be done with the Find() member of the array indexing
   // operator
@@ -34,8 +34,8 @@ public:
   Object	*Find(const STRING& name) const;
   Object	*operator[](const char *name) const   { return Find(name); }
   Object        *operator[](const STRING& name) const { return Find(name); }
-  GDT_BOOLEAN	Exists(const char *name) const;
-  GDT_BOOLEAN   Exists(const STRING& name) const;
+  bool	Exists(const char *name) const;
+  bool   Exists(const STRING& name) const;
 
   // We want to be able to go through all the entries in the
   // dictionary in sequence.  To do this, we have the same

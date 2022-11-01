@@ -98,20 +98,20 @@ STRING RESOURCE::GetFileName() const
   return RemovePath( FullPath );
 }
 
-GDT_BOOLEAN RESOURCE::Ok() const
+bool RESOURCE::Ok() const
 {
   struct stat st_buf;
   if (_IB_stat(FullPath, &st_buf) == 0)
    {
       if (Inode != 0 && Inode != st_buf.st_ino)
-	return GDT_FALSE;
+	return false;
       if ( (Start > 0 && (off_t)Start > st_buf.st_size) ||
 		(End > 0 && Start > End) ||
 		(off_t)End > st_buf.st_size )
-	return GDT_FALSE;
-      return GDT_TRUE;
+	return false;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -128,17 +128,17 @@ void RESOURCE::Write(PFILE fp) const
 }
 
 
-GDT_BOOLEAN RESOURCE::Read(PFILE fp)
+bool RESOURCE::Read(PFILE fp)
 {
   obj_t obj = getObjID (fp);
-  GDT_BOOLEAN res = GDT_TRUE;
+  bool res = true;
 
   Clear();
   if (obj != objRESOURCE)
     {
       // Not a RSET!
       PushBackObjID (obj, fp);
-      return GDT_FALSE;
+      return false;
     }
   res &= ::Read (&FullPath,fp);
   ::Read (&Start,   fp);
@@ -147,18 +147,18 @@ GDT_BOOLEAN RESOURCE::Read(PFILE fp)
   res &= ::Read (&Locale,  fp);
   ::Read (&Inode,   fp);
   res &= ::Read (&MimeType,fp);
-  if (res == GDT_FALSE || Ok() == GDT_FALSE)
+  if (res == false || Ok() == false)
     {
       Clear();
-      return GDT_FALSE;
+      return false;
     }
-  return GDT_TRUE;
+  return true;
 }
 
 
 #if 0
 
-GDT_BOOLEAN RESOURCE::LinkWrite(const STRING& filepath, STRING *path) const
+bool RESOURCE::LinkWrite(const STRING& filepath, STRING *path) const
 {
   STRING urifile = filepath + _DbExt(ExtPath);
   FILE  *fp; 
@@ -168,13 +168,13 @@ GDT_BOOLEAN RESOURCE::LinkWrite(const STRING& filepath, STRING *path) const
     {
       Write(fp);
       fclose(fp);  
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;   
+  return false;   
 }
 
 
-GDT_BOOLEAN RESOURCE::LinkRead(const STRING& filepath, STRING *path) const
+bool RESOURCE::LinkRead(const STRING& filepath, STRING *path) const
 {    
   STRING urifile = filepath + _DbExt(ExtPath);
   FILE  *fp;
@@ -185,9 +185,9 @@ GDT_BOOLEAN RESOURCE::LinkRead(const STRING& filepath, STRING *path) const
     {    
       Read(fp); 
       fclose(fp);
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 #endif

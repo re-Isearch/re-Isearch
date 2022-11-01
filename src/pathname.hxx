@@ -35,11 +35,11 @@ public:
     SetPath(Path); SetFileName(FileName);
   }
 
-  GDT_BOOLEAN IsAbsoluteFilePath() const {
+  bool IsAbsoluteFilePath() const {
     return ::IsAbsoluteFilePath(Path);
   }
 
-  GDT_BOOLEAN Exists() const {
+  bool Exists() const {
     return FileExists(AddTrailingSlash(Path) + File);
   }
 
@@ -68,7 +68,7 @@ public:
   STRING GetFileName() const;
   STRING GetPath() const;
 
-  GDT_BOOLEAN  SetFullFileName (const STRING& newFullPath);
+  bool  SetFullFileName (const STRING& newFullPath);
   STRING GetFullFileName() const;
 
   PATHNAME RelativizePathname(const STRING& Dir);
@@ -84,7 +84,7 @@ public:
   // We read and write as fullpath to be compatible with
   // the other version of this class
   void Write(FILE *fp) const;
-  GDT_BOOLEAN Read(FILE *fp);
+  bool Read(FILE *fp);
 
 // IO Streams
   friend ostream& operator <<(ostream& os, const PATHNAME& str);
@@ -102,19 +102,19 @@ inline void Write (const PATHNAME& Pathname, PFILE Fp)
   Pathname.Write (Fp);
 }
 
-inline GDT_BOOLEAN Read (PATHNAME *PathnamePtr, PFILE Fp)
+inline bool Read (PATHNAME *PathnamePtr, PFILE Fp)
 {
   return PathnamePtr->Read (Fp);
 }
 
 
 //
-inline GDT_BOOLEAN operator==(const PATHNAME& s1, const PATHNAME& s2) { return s1.Compare(s2) == 0; }
-inline GDT_BOOLEAN operator!=(const PATHNAME& s1, const PATHNAME& s2) { return s1.Compare(s2) != 0; }
-inline GDT_BOOLEAN operator<=(const PATHNAME& s1, const PATHNAME& s2) { return s1.Compare(s2) <= 0; }
-inline GDT_BOOLEAN operator>=(const PATHNAME& s1, const PATHNAME& s2) { return s1.Compare(s2) >= 0; }
-inline GDT_BOOLEAN operator< (const PATHNAME& s1, const PATHNAME& s2) { return s1.Compare(s2) < 0; }
-inline GDT_BOOLEAN operator> (const PATHNAME& s1, const PATHNAME& s2) { return s1.Compare(s2) > 0; }
+inline bool operator==(const PATHNAME& s1, const PATHNAME& s2) { return s1.Compare(s2) == 0; }
+inline bool operator!=(const PATHNAME& s1, const PATHNAME& s2) { return s1.Compare(s2) != 0; }
+inline bool operator<=(const PATHNAME& s1, const PATHNAME& s2) { return s1.Compare(s2) <= 0; }
+inline bool operator>=(const PATHNAME& s1, const PATHNAME& s2) { return s1.Compare(s2) >= 0; }
+inline bool operator< (const PATHNAME& s1, const PATHNAME& s2) { return s1.Compare(s2) < 0; }
+inline bool operator> (const PATHNAME& s1, const PATHNAME& s2) { return s1.Compare(s2) > 0; }
 
 /* ALTERNATIVE SELECTION */
 class PATHNAME_B {
@@ -127,9 +127,9 @@ public:
     SetFullFileName(Fullpath);
   }
 
-  GDT_BOOLEAN Exists() const { return FileExists(FullPath); }
+  bool Exists() const { return FileExists(FullPath); }
 
-  GDT_BOOLEAN IsAbsoluteFilePath() const {
+  bool IsAbsoluteFilePath() const {
     return ::IsAbsoluteFilePath(FullPath);
   }
 
@@ -169,7 +169,7 @@ public:
   STRING GetPath() const {
     return RemoveFileName(FullPath);
   }
-  GDT_BOOLEAN SetFullFileName (const STRING& newName) {
+  bool SetFullFileName (const STRING& newName) {
     if (newName != FullPath)
       FullPath = ExpandFileSpec(newName);
     return !FullPath.IsEmpty();
@@ -196,7 +196,7 @@ public:
   void Write(FILE *fp) const {
     FullPath.Write(fp);
   }
-  GDT_BOOLEAN Read(FILE *fp) {
+  bool Read(FILE *fp) {
     return FullPath.Read(fp);
   }
 private:
@@ -214,7 +214,7 @@ public:
   FILE_ID(STRING& Filename);
 
   FILE_ID&    operator=(const STRING& nFilename);
-  GDT_BOOLEAN operator== (const FILE_ID& OtherId) const;
+  bool operator== (const FILE_ID& OtherId) const;
 
   long        Inode() const    { return inode.inode();    }
   long        Device() const   { return inode.device();   }

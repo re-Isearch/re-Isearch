@@ -44,7 +44,7 @@ public:
         STRING bic = sIBAN;
         bic.removeWhiteSpace(); 
         size_t length = iban.Length(); 
-        if (length > 11 || length < 6) return GDT_FALSE; // Need, at least, bank_id and country
+        if (length > 11 || length < 6) return false; // Need, at least, bank_id and country
         bank_id = bic.substr(0,4).ToUpper(); 
         LL = bic.substr(4,2);
         country_code = iso3166Code2Id( LL );
@@ -54,13 +54,13 @@ public:
         return *this;
     }
 
-    GDT_BOOL isTest() const    { return location[1] == '0'; }
-    GDT_BOOL isPassive() const { return location[1] == '1'; }
-    GDT_BOOL isReverse() const { return location[1] == '2'; }
-    GDT_BOOL isPrimaryOffice const { return branch_code[1] == 'X';}
+    bool isTest() const    { return location[1] == '0'; }
+    bool isPassive() const { return location[1] == '1'; }
+    bool isReverse() const { return location[1] == '2'; }
+    bool isPrimaryOffice const { return branch_code[1] == 'X';}
 
 
-    GDT_BOOL Ok() const { return county_code != 0; }
+    bool Ok() const { return county_code != 0; }
 
 }
 
@@ -87,7 +87,7 @@ class IBAN
         ll = 0;
 	// Validate plausible length
         size_t length = iban.Length();
-        if (length > 34 || length < 5) return GDT_FALSE;
+        if (length > 34 || length < 5) return false;
 
         STRING country_code = iban.Substring(0, 2);
 

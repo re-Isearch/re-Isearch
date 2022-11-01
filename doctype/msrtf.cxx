@@ -36,7 +36,7 @@ public:
    void ParseRecords(const RECORD& FileRecord);
    void ParseFields(RECORD *RecordPtr);
 
-   GDT_BOOLEAN GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
+   bool GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
 
    void Present (const RESULT& ResultRecord,
          const STRING& ElementSet, const STRING& RecordSyntax,
@@ -140,7 +140,7 @@ void IBDOC_MSRTF::ParseRecords(const RECORD& FileRecord)
   message_log (LOG_DEBUG, "Key set to '%s'", key.c_str());
 
   Db->ComposeDbFn (&s, DbExtCat);
-  if (MkDir(s, 0, GDT_TRUE) == -1 )
+  if (MkDir(s, 0, true) == -1 )
     {
       message_log (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
       return;
@@ -149,7 +149,7 @@ void IBDOC_MSRTF::ParseRecords(const RECORD& FileRecord)
   // <db_ext>.cat/<Hash>/<Key>
   outfile =  AddTrailingSlash(s);
   outfile.Cat (((long)key.CRC16()) % 1000);
-  if (MkDir(outfile, 0, GDT_TRUE) == -1)
+  if (MkDir(outfile, 0, true) == -1)
     outfile = s; // Can't make it
   AddTrailingSlash(&outfile);
   outfile.Cat (key);
@@ -159,7 +159,7 @@ void IBDOC_MSRTF::ParseRecords(const RECORD& FileRecord)
 
   message_log (LOG_DEBUG, "Output to '%s'", outfile.c_str());
 
-  if (Db->_write_resource_path(outfile, FileRecord, mime_type, &urifile) == GDT_FALSE)
+  if (Db->_write_resource_path(outfile, FileRecord, mime_type, &urifile) == false)
     {
       message_log (LOG_ERRNO, "%s: Could not create '%s'", Doctype.c_str(), urifile.c_str());
       return;
@@ -237,11 +237,11 @@ void IBDOC_MSRTF::ParseFields(RECORD *RecordPtr)
 }
 
 
-GDT_BOOLEAN IBDOC_MSRTF::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool IBDOC_MSRTF::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   if (StringBuffer)
     *StringBuffer = Db->_get_resource_path(ResultRecord.GetFullFileName());
-  return GDT_TRUE;
+  return true;
 }
 
 

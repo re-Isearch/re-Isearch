@@ -21,51 +21,51 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 static struct stat stat_buf;
 
 
-inline GDT_BOOLEAN is_regular()
+inline bool is_regular()
 {
   return (stat_buf.st_mode & S_IFMT) == S_IFREG;
 }
 
-inline GDT_BOOLEAN is_regular(char const * path)
+inline bool is_regular(char const * path)
 {
   return ::stat(path, &stat_buf) != -1 && is_regular();
 }
 
-inline GDT_BOOLEAN is_regular(const STRING& path)
+inline bool is_regular(const STRING& path)
 {
   return is_regular(path.c_str()); 
 }
 
-inline GDT_BOOLEAN is_directory()
+inline bool is_directory()
 {
   return (stat_buf.st_mode & S_IFMT) == S_IFDIR;
 }
 
-inline GDT_BOOLEAN is_directory(char const * path)
+inline bool is_directory(char const * path)
 {
   return ::stat(path, &stat_buf) != -1 && is_directory();
 }
 
-inline GDT_BOOLEAN is_directory(STRING const & path)
+inline bool is_directory(STRING const & path)
 {
   return is_directory(path.c_str());
 }
 
-inline GDT_BOOLEAN is_symbolic_link()
+inline bool is_symbolic_link()
 {
 #ifdef _WIN32
-  return GDT_FALSE;
+  return false;
 #else
   return (stat_buf.st_mode & S_IFLNK) == S_IFLNK;
 #endif
 }
 
-inline GDT_BOOLEAN is_symbolic_link(char const * path)
+inline bool is_symbolic_link(char const * path)
 {
   return ::lstat(path, &stat_buf) != -1 && is_symbolic_link();
 }
 
-inline GDT_BOOLEAN is_symbolic_link(STRING const & path)
+inline bool is_symbolic_link(STRING const & path)
 {
   return is_symbolic_link(path.c_str());
 }
@@ -74,15 +74,15 @@ inline GDT_BOOLEAN is_symbolic_link(STRING const & path)
 // TRUE  := At least one element of list matches name
 // FALSE := No elements in list match name 
 //
-inline GDT_BOOLEAN FnmatchAny (const STRLIST *List, const char *name)
+inline bool FnmatchAny (const STRLIST *List, const char *name)
 {
   for (const STRLIST *lptr = List->Next(); lptr != List; lptr = lptr->Next())
     {
       const char * value  = lptr->Value().c_str();
       if (FNMATCH(value, name) || (value[0] == '.' && value[1] == '\0'))
-	return GDT_TRUE;
+	return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -91,7 +91,7 @@ void do_directory(const STRING& Dir, int (*do_file)(const STRING&),
   const STRLIST *filePatternList,
 	const STRLIST *excludeList,
 	const STRLIST *inclDirList,
-	const STRLIST *excludeDirList, GDT_BOOLEAN recurse, GDT_BOOLEAN follow)
+	const STRLIST *excludeDirList, bool recurse, bool follow)
 {
   static STRSTACK dir_queue;
   static int      recursion;
@@ -171,7 +171,7 @@ void do_directory(const STRING& Dir, int (*do_file)(const STRING&),
 void do_directory(const STRING& dir, int (*do_file)(const STRING&),
   const STRING& filePattern,
 	const STRING& exclude, const STRING& inclDir,
-	const STRING& excludeDir, GDT_BOOLEAN recurse, GDT_BOOLEAN follow)
+	const STRING& excludeDir, bool recurse, bool follow)
 {
   static STRSTACK dir_queue;
   static int      recursion;
@@ -239,7 +239,7 @@ void do_directory( const STRING& dir, int (*do_file)(const STRING&),
   const char *exclude,
   const char *inclDirpattern,
   const char *exclDirpattern,
-  GDT_BOOLEAN recurse, GDT_BOOLEAN follow)
+  bool recurse, bool follow)
 {
 
   return do_directory (dir, do_file, 

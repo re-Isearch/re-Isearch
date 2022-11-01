@@ -12,7 +12,7 @@ public:
   NUMERICOBJ (const STRING& s);
   NUMERICOBJ (NUMBER x) { val = x; }
 
-  GDT_BOOLEAN Ok() const;
+  bool Ok() const;
 
   NUMERICOBJ& operator=(const NUMERICOBJ& newVal) { val = newVal.val; return *this; }
 
@@ -50,18 +50,18 @@ public:
   operator int()    const { return (int)val;  }
   operator long()   const { return (long)val; }
 
-  GDT_BOOLEAN operator== (const NUMERICOBJ& Other) const { return val == Other.val; }
-  GDT_BOOLEAN operator!= (const NUMERICOBJ& Other) const { return val != Other.val; }
-  GDT_BOOLEAN operator>= (const NUMERICOBJ& Other) const { return val >= Other.val; }
-  GDT_BOOLEAN operator<= (const NUMERICOBJ& Other) const { return val <= Other.val; }
-  GDT_BOOLEAN operator>  (const NUMERICOBJ& Other) const { return val >  Other.val; }
-  GDT_BOOLEAN operator<  (const NUMERICOBJ& Other) const { return val <  Other.val; }
+  bool operator== (const NUMERICOBJ& Other) const { return val == Other.val; }
+  bool operator!= (const NUMERICOBJ& Other) const { return val != Other.val; }
+  bool operator>= (const NUMERICOBJ& Other) const { return val >= Other.val; }
+  bool operator<= (const NUMERICOBJ& Other) const { return val <= Other.val; }
+  bool operator>  (const NUMERICOBJ& Other) const { return val >  Other.val; }
+  bool operator<  (const NUMERICOBJ& Other) const { return val <  Other.val; }
 
   void        Write(FILE *Fp) const;
-  GDT_BOOLEAN Read(FILE *Fp);
+  bool Read(FILE *Fp);
 
   friend void Write(const NUMERICOBJ& s, FILE *Fp);
-  friend GDT_BOOLEAN Read(NUMERICOBJ *p, PFILE Fp);
+  friend bool Read(NUMERICOBJ *p, PFILE Fp);
 
   // STD IO Streams
   friend ostream& operator <<(ostream& os, const NUMERICOBJ& val) { return os << (long double) val.val; }
@@ -170,8 +170,8 @@ public:
   NUMERICALRANGE(const STRING& RangeString);
 
   // Setting
-  GDT_BOOLEAN SetRange(const STRING& RangeString);
-  GDT_BOOLEAN SetRange(const NUMERICOBJ& Start, const NUMERICOBJ& End) {
+  bool SetRange(const STRING& RangeString);
+  bool SetRange(const NUMERICOBJ& Start, const NUMERICOBJ& End) {
     d_start = Start;
     d_end   = End;
     return Ok();
@@ -214,23 +214,23 @@ public:
   void  SetStart(const NUMERICOBJ& NewStart) { d_start = NewStart; }
   void  SetEnd(const NUMERICOBJ& NewEnd)  { d_end = NewEnd; }
 
-  GDT_BOOLEAN Ok() const;
-  GDT_BOOLEAN Defined() const;
-  GDT_BOOLEAN Contains(const NUMERICOBJ& Test) const;
-  GDT_BOOLEAN Contains(const NUMERICALRANGE& OtherRange) const;
+  bool Ok() const;
+  bool Defined() const;
+  bool Contains(const NUMERICOBJ& Test) const;
+  bool Contains(const NUMERICALRANGE& OtherRange) const;
 
   void        Clear()  { d_start = 0; d_end = 0; }
 
   // Comparison operators
-  GDT_BOOLEAN operator ==(const NUMERICALRANGE& OtherRange) const;
-  GDT_BOOLEAN operator !=(const NUMERICALRANGE& OtherRange) const;
-  GDT_BOOLEAN operator  >(const NUMERICALRANGE& OtherRange) const;
-  GDT_BOOLEAN operator  <(const NUMERICALRANGE& OtherRange) const;
-  GDT_BOOLEAN operator >=(const NUMERICALRANGE& OtherRange) const;
-  GDT_BOOLEAN operator <=(const NUMERICALRANGE& OtherRange) const;
+  bool operator ==(const NUMERICALRANGE& OtherRange) const;
+  bool operator !=(const NUMERICALRANGE& OtherRange) const;
+  bool operator  >(const NUMERICALRANGE& OtherRange) const;
+  bool operator  <(const NUMERICALRANGE& OtherRange) const;
+  bool operator >=(const NUMERICALRANGE& OtherRange) const;
+  bool operator <=(const NUMERICALRANGE& OtherRange) const;
 
   // I/O
-  GDT_BOOLEAN Read(PFILE Fp);
+  bool Read(PFILE Fp);
   void Write(PFILE Fp) const;
   
   ~NUMERICALRANGE();
@@ -243,7 +243,7 @@ private:
   
 // Common functions....
 inline void Write(const NUMERICALRANGE& Range, FILE *Fp)  { Range.Write(Fp);         }
-inline GDT_BOOLEAN Read(NUMERICALRANGE *Range, FILE *Fp)  { return Range->Read(Fp);  }
+inline bool Read(NUMERICALRANGE *Range, FILE *Fp)  { return Range->Read(Fp);  }
 
 
 class MONETARYOBJ {
@@ -258,10 +258,10 @@ public:
     Fract  = fract;
   }
 */
-  GDT_BOOLEAN Ok() const { return Fract < 50000 ? GDT_TRUE : GDT_FALSE; }
+  bool Ok() const { return Fract < 50000 ? true : false; }
 
-  GDT_BOOLEAN Set(const NUMBER  x);
-  GDT_BOOLEAN Set(const STRING& s);
+  bool Set(const NUMBER  x);
+  bool Set(const STRING& s);
 
   MONETARYOBJ& operator=(const MONETARYOBJ& newVal) {
    Amount = newVal.Amount;
@@ -285,38 +285,38 @@ public:
   operator int()    const { return (int)Amount;  }
   operator long()   const { return (long)Amount; }
 
-  GDT_BOOLEAN  RoundToNearest100th() {
-    if (!Ok()) return GDT_FALSE;
+  bool  RoundToNearest100th() {
+    if (!Ok()) return false;
     // 500 = 1 cent (1/100 of currency unit)
     Fract = (500 * ((Fract+250)/500));
-    return GDT_TRUE;
+    return true;
   }
 
   // Resolves to 0.000002
-  GDT_BOOLEAN operator== (const MONETARYOBJ& Other) const {
+  bool operator== (const MONETARYOBJ& Other) const {
     return Amount == Other.Amount && Fract == Other.Fract;
   }
-  GDT_BOOLEAN operator!= (const MONETARYOBJ& Other) const {
+  bool operator!= (const MONETARYOBJ& Other) const {
     return Amount != Other.Amount && Fract != Other.Fract;
   }
-  GDT_BOOLEAN operator>= (const MONETARYOBJ& Other) const {
+  bool operator>= (const MONETARYOBJ& Other) const {
     return (Amount > Other.Amount || (Amount == Other.Amount && Fract >= Other.Fract));
   }
-  GDT_BOOLEAN operator<= (const MONETARYOBJ& Other) const {
+  bool operator<= (const MONETARYOBJ& Other) const {
     return (Amount < Other.Amount || (Amount == Other.Amount && Fract <= Other.Fract));
   }
-  GDT_BOOLEAN operator>  (const MONETARYOBJ& Other) const {
+  bool operator>  (const MONETARYOBJ& Other) const {
     return (Amount > Other.Amount || (Amount == Other.Amount && Fract > Other.Fract));
   }
-  GDT_BOOLEAN operator<  (const MONETARYOBJ& Other) const {
+  bool operator<  (const MONETARYOBJ& Other) const {
     return (Amount < Other.Amount || (Amount == Other.Amount && Fract < Other.Fract));
   }
 
   void        Write(FILE *Fp) const;
-  GDT_BOOLEAN Read(FILE *Fp);
+  bool Read(FILE *Fp);
 
   friend void Write(const MONETARYOBJ& s, FILE *Fp);
-  friend GDT_BOOLEAN Read(MONETARYOBJ *p, PFILE Fp);
+  friend bool Read(MONETARYOBJ *p, PFILE Fp);
 
   // STD IO Streams
   friend ostream& operator <<(ostream& os, const MONETARYOBJ& val) {

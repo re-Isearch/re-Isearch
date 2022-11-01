@@ -14,15 +14,15 @@ class HTMLREMOTE : public HTMLHEAD {
 public:
   HTMLREMOTE(PIDBOBJ DbParent, const STRING& Name);
   const char *Description(PSTRLIST List) const;
-  GDT_BOOLEAN URL(const RESULT& ResultRecord, PSTRING StringBuffer,
-   GDT_BOOLEAN OnlyRemote = GDT_TRUE) const;
+  bool URL(const RESULT& ResultRecord, PSTRING StringBuffer,
+   bool OnlyRemote = true) const;
   void ParseRecords(const RECORD& FileRecord);
 
   ~HTMLREMOTE();
 
 private:
   STRING DocumentRoot;
-  GDT_BOOLEAN KnownRoot;
+  bool KnownRoot;
 };
 
 typedef HTMLREMOTE* PHTMLREMOTE;

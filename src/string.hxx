@@ -56,7 +56,7 @@ CHR *Copystring(const void *); // Forward declaration
 // ---------------------------------------------------------------------------
 
 /// checks whether the passed in pointer is NULL and if the string is empty
-inline GDT_BOOLEAN IsEmpty(const char *p) { return !p || !*p; }
+inline bool IsEmpty(const char *p) { return !p || !*p; }
 
 /// safe version of strlen() (returns 0 if passed NULL pointer)
 inline size_t Strlen(const char *psz) { return psz ? strlen(psz) : 0; }
@@ -93,9 +93,9 @@ struct STRINGData
   int RefCount() const { return (int)nRefs; }
 
   // empty string has a special ref count so it's never deleted
-  GDT_BOOLEAN  IsConstant()const { return nRefs == -1; }
-  GDT_BOOLEAN  IsShared()  const { return nRefs > 1;   }
-  GDT_BOOLEAN  IsValid()   const { return nRefs != 0;  }
+  bool  IsConstant()const { return nRefs == -1; }
+  bool  IsShared()  const { return nRefs > 1;   }
+  bool  IsValid()   const { return nRefs != 0;  }
 
   // lock/unlock
   void  Lock()   { if ( nRefs >= 0 ) nRefs++;                        }
@@ -145,7 +145,7 @@ public:
   /** @name numeric typecasts */
   //@{
   // Explicit..
-  GDT_BOOLEAN GetBool() const;
+  bool GetBool() const;
   short  GetShort(int base=0) const  { return (short)GetLong(base); }
   int    GetInt(int base=0) const    { return (int)GetLong(base);   }
   long   GetLong(int base=0) const   { return strtol(m_pchData, NULL, base); }
@@ -183,38 +183,38 @@ public:
   size_t Capacity () const  { return GetStringData()->nAllocLength; }
     /// string contains any characters?
   int RefCount() const { return GetStringData()->nRefs; }
-  GDT_BOOLEAN IsEmpty() const { return GetStringData()->nDataLength == 0;  }
+  bool IsEmpty() const { return GetStringData()->nDataLength == 0;  }
 
-  GDT_BOOLEAN operator !() const { return !GetBool(); }
+  bool operator !() const { return !GetBool(); }
 
     /// Clear string (so that its Empty)
   void Clear();
     /// reinitialize string (and free data!)
   void Empty();
     /// Is an ascii value
-  GDT_BOOLEAN IsAscii() const;
+  bool IsAscii() const;
     /// Is Plain Word (no numbers, spaces or ..)
-  GDT_BOOLEAN IsPlainWord() const;
+  bool IsPlainWord() const;
     /// Is a number
-  GDT_BOOLEAN IsNumber() const;
+  bool IsNumber() const;
     /// Is a dot number (xxx.xxx.xxx)
-  GDT_BOOLEAN IsDotNumber() const;
+  bool IsDotNumber() const;
     /// A Range of Numerbers? 
-  GDT_BOOLEAN IsNumberRange() const;
+  bool IsNumberRange() const;
     /// Is a date?
-  GDT_BOOLEAN IsDate() const;
+  bool IsDate() const;
     /// Date Range
-  GDT_BOOLEAN IsDateRange() const;
+  bool IsDateRange() const;
     /// Is it currency?
-  GDT_BOOLEAN IsCurrency() const;
+  bool IsCurrency() const;
     /// Is a Box?
-  GDT_BOOLEAN IsGeoBoundedBox() const;
+  bool IsGeoBoundedBox() const;
     /// Is a word
-  GDT_BOOLEAN IsWord() const;
+  bool IsWord() const;
     /// Is printable
-  GDT_BOOLEAN IsPrint() const;
+  bool IsPrint() const;
    /// Is a file path? (Absolute path or/or file exists)
-  GDT_BOOLEAN IsFilePath() const;
+  bool IsFilePath() const;
   //@}
 
   /** @ Copies */
@@ -283,12 +283,20 @@ public:
     /// explicit conversion to C string (use this with printf()!)
 #endif
     const char* /* const */ c_str() const { return (/* const */ char * /* const */)m_pchData; }
-    const unsigned char * c_ustr() const { return (const unsigned char * const)m_pchData; }
+    const unsigned char *   c_ustr() const { return (const unsigned char * const)m_pchData; }
+    ///
+    const char*             data() const { return (const char *)m_pchData;}
     ///
     const char* GetData() const { return m_pchData; }
     const char* GetData(size_t n) const { return &m_pchData[n]; }
     char      *stealData() { return m_pchData; }
   //@}
+  //
+  //
+ 
+
+  // Sets the string to an ISO date
+  // void setDate(time_t t) { *this = ::ISOdate(t); }
 
   /** @name overloaded assignment */
   //@{
@@ -433,7 +441,7 @@ public:
     @return  TRUE if strings are equal, FALSE otherwise
     @see     Cmp, CmpNoCase
     */
-  GDT_BOOLEAN IsSameAs(const char *psz, GDT_BOOLEAN bCase = GDT_TRUE) const 
+  bool IsSameAs(const char *psz, bool bCase = true) const 
     { return !(bCase ? Cmp(psz) : CmpNoCase(psz)); }
   //@}
   
@@ -457,7 +465,7 @@ public:
   STRING Before(char ch) const;
       /// get all characters after the first occurence of ch
       /// (returns empty string if ch not found)
-  STRING After(char ch, GDT_BOOLEAN Last=GDT_FALSE) const;
+  STRING After(char ch, bool Last=false) const;
       /// get last nCount characters
   STRING Right(size_t nCount) const;
       /// get all characters after the last occurence of ch
@@ -478,11 +486,11 @@ public:
     /** @name case conversion */
     //@{ 
       ///
-  GDT_BOOLEAN IsUpper() const;
+  bool IsUpper() const;
   STRING& MakeUpper();
   STRING& ToUpper() { return MakeUpper(); }
       ///
-  GDT_BOOLEAN IsLower() const;
+  bool IsLower() const;
   STRING& MakeLower();
   STRING& ToLower() { return MakeLower(); }
      ///
@@ -494,7 +502,7 @@ public:
     /** @name trimming/padding whitespace (either side) and truncating */
     //@{
       /// remove spaces from left or from right (default) side
-  STRING& Trim(GDT_BOOLEAN bFromRight = GDT_TRUE);
+  STRING& Trim(bool bFromRight = true);
 
       /// Remove all white space
   STRING& removeWhiteSpace() ;
@@ -506,7 +514,7 @@ public:
   inline STRING XMLCommentStrip(const STRING& ) const;
   STRING& XMLCommentStrip();
      /// add nCount copies chPad in the beginning or at the end (default)
-  STRING& Pad(size_t nCount, char chPad = ' ', GDT_BOOLEAN bFromRight = GDT_TRUE);
+  STRING& Pad(size_t nCount, char chPad = ' ', bool bFromRight = true);
       /// truncate string to given length
   STRING& Truncate(size_t uiLen);
     //@}
@@ -514,7 +522,7 @@ public:
     /** @name searching and replacing */
     //@{
       /// searching (return starting index, or -1 if not found)
-  int Find(char ch, GDT_BOOLEAN bFromEnd = GDT_FALSE) const;   // like strchr/strrchr
+  int Find(char ch, bool bFromEnd = false) const;   // like strchr/strrchr
       /// searching (return starting index, or -1 if not found)
   int Find(const STRING& Sub, size_t Start = 0) const;
   int Find(const char *pszSub, size_t Start = 0) const;
@@ -534,7 +542,7 @@ public:
       @param  bReplaceAll: global replace (default) or only the first occurence
       @return the number of replacements made
       */
-  UINT Replace(const char *szOld, const char *szNew, GDT_BOOLEAN bReplaceAll = GDT_TRUE);
+  UINT Replace(const char *szOld, const char *szNew, bool bReplaceAll = true);
 
   STRINGINDEX FirstWhiteSpace() const;
 
@@ -564,13 +572,13 @@ public:
 
   // Glob
   INT IsWild () const;
-  GDT_BOOLEAN IsPlain() const; // No Wild chars: near opposite of IsWild
-  GDT_BOOLEAN MatchWild(const STRING& OtherString) const;
-  GDT_BOOLEAN MatchWild(const CHR *CString) const;
-  GDT_BOOLEAN Glob(const STRING& OtherString) const;
-  GDT_BOOLEAN Glob(const CHR *CString) const;
-  GDT_BOOLEAN FieldMatch(const STRING& OtherString) const;
-  GDT_BOOLEAN FieldMatch(const CHR *CString) const;
+  bool IsPlain() const; // No Wild chars: near opposite of IsWild
+  bool MatchWild(const STRING& OtherString) const;
+  bool MatchWild(const CHR *CString) const;
+  bool Glob(const STRING& OtherString) const;
+  bool Glob(const CHR *CString) const;
+  bool FieldMatch(const STRING& OtherString) const;
+  bool FieldMatch(const CHR *CString) const;
 
     //@}
   //@}
@@ -641,7 +649,7 @@ public:
   STRING& Remove(size_t pos) { return Truncate(pos); }
   STRING& RemoveLast() { return Truncate(Len() - 1); }
     /// same as IsEmpty
-  GDT_BOOLEAN IsNull() const { return IsEmpty(); }
+  bool IsNull() const { return IsEmpty(); }
   //@}
 
 #ifdef  STD_STRING_COMPATIBILITY
@@ -671,7 +679,7 @@ public:
       /// delete the contents of the string
       void clear() { Empty(); }
       /// returns true if the string is empty
-      GDT_BOOLEAN empty() const { return IsEmpty(); }
+      bool empty() const { return IsEmpty(); }
     //@}
     /** @name lib.string.access */
     //@{
@@ -684,6 +692,8 @@ public:
     //@{
       /** @name append something to the end of this one */
       //@{
+	/// Add to end of string
+         void    push_back(const char ch) { Cat(ch); };
         /// append a string
         STRING& append(const STRING& str) { return (*this) += str; }
         /// append elements str[pos], ..., str[pos+n]
@@ -776,7 +786,7 @@ public:
           size_t find(char ch, size_t nStart = 0) const;
 
 	  // wxWin compatibility
-	  inline GDT_BOOLEAN Contains(const STRING& str) { return (Find(str) != -1); }
+	  inline bool Contains(const STRING& str) { return (Find(str) != -1); }
 
         //@}
         
@@ -870,13 +880,13 @@ public:
   INT Compare (const char *psz, size_t len) const
 	{ return strncmp(c_str(), psz, len); }
   INT Compare(const char *str) const   { return Cmp(str); }
-  GDT_BOOLEAN Equals(const STRING& str) const { return Len() == str.Len() && Cmp(str) == 0;}
-  GDT_BOOLEAN Equals(const char *str) const   { return Cmp(str) == 0;                  }
-  GDT_BOOLEAN Equals(const char val) const    { return Len() <= 1 && *m_pchData == val;}
-  GDT_BOOLEAN Equals(const int val) const     { return val == GetInt();                }
-  GDT_BOOLEAN Equals(const long val) const    { return val == GetLong();               }
-  GDT_BOOLEAN Equals(const float val) const   { return val == GetFloat();              }
-  GDT_BOOLEAN Equals(const double val) const  { return val == GetDouble();             }
+  bool Equals(const STRING& str) const { return Len() == str.Len() && Cmp(str) == 0;}
+  bool Equals(const char *str) const   { return Cmp(str) == 0;                  }
+  bool Equals(const char val) const    { return Len() <= 1 && *m_pchData == val;}
+  bool Equals(const int val) const     { return val == GetInt();                }
+  bool Equals(const long val) const    { return val == GetLong();               }
+  bool Equals(const float val) const   { return val == GetFloat();              }
+  bool Equals(const double val) const  { return val == GetDouble();             }
   // Case independent
   INT CaseCompare(const STRING& str) const { return CmpNoCase(str);};
   INT CaseCompare(const char *str) const   { return CmpNoCase(str);};
@@ -885,18 +895,18 @@ public:
   INT CaseCompare (const char *psz, size_t len) const
 	{ return Strnicmp(c_str(), psz, len); }
 
-  GDT_BOOLEAN CaseEquals(const STRING& str) const { return Len() == Strlen(str) && CmpNoCase(str) == 0;};
-  GDT_BOOLEAN CaseEquals(const char *str) const   { return Len() == Strlen(str) && CmpNoCase(str) == 0;};
-  GDT_BOOLEAN CaseEquals(const char val) const    { return Len() <= 1 && _ib_tolower(val) == _ib_tolower(*m_pchData);};
-  GDT_BOOLEAN CaseEquals(const int val) const     { return val == GetInt();};
-  GDT_BOOLEAN CaseEquals(const long val) const    { return val == GetLong();};
-  GDT_BOOLEAN CaseEquals(const float val) const   { return val == GetFloat();};
-  GDT_BOOLEAN CaseEquals(const double val) const  { return val == GetDouble();};
+  bool CaseEquals(const STRING& str) const { return Len() == Strlen(str) && CmpNoCase(str) == 0;};
+  bool CaseEquals(const char *str) const   { return Len() == Strlen(str) && CmpNoCase(str) == 0;};
+  bool CaseEquals(const char val) const    { return Len() <= 1 && _ib_tolower(val) == _ib_tolower(*m_pchData);};
+  bool CaseEquals(const int val) const     { return val == GetInt();};
+  bool CaseEquals(const long val) const    { return val == GetLong();};
+  bool CaseEquals(const float val) const   { return val == GetFloat();};
+  bool CaseEquals(const double val) const  { return val == GetDouble();};
 
 
   // Does the segment match?
-  GDT_BOOLEAN Matches(const char *buffer) const { return Compare(buffer, Len()) == 0; }
-  GDT_BOOLEAN CaseMatches(const char *buffer) const { return CaseCompare(buffer, Len()) == 0; }
+  bool Matches(const char *buffer) const { return Compare(buffer, Len()) == 0; }
+  bool CaseMatches(const char *buffer) const { return CaseCompare(buffer, Len()) == 0; }
 
 
   STRING  Substring (const size_t Start, const size_t end = 0) const; 
@@ -938,9 +948,9 @@ public:
   STRINGINDEX Fread(const STRING& Filename, size_t Len, off_t Offset=0L);
   STRINGINDEX Fread(PFILE fp, size_t Len);
   STRINGINDEX Fread(FILE *fp, size_t Len, off_t Offset);
-  GDT_BOOLEAN FGet (PFILE FilePointer);
-  GDT_BOOLEAN FGet (PFILE FilePointer, const STRINGINDEX MaxCharacters);
-  GDT_BOOLEAN FGetMultiLine(PFILE FilePointer, const STRINGINDEX MaxCharacters = 65535);
+  bool FGet (PFILE FilePointer);
+  bool FGet (PFILE FilePointer, const STRINGINDEX MaxCharacters);
+  bool FGetMultiLine(PFILE FilePointer, const STRINGINDEX MaxCharacters = 65535);
 
   void Print () const;
   void Print (STRINGINDEX Conline) const;
@@ -954,7 +964,7 @@ public:
 
 // Write and Read FastLoad STRING objects..
   void Write(FILE *fp) const;
-  GDT_BOOLEAN Read(FILE *fp);
+  bool Read(FILE *fp);
 
 // Write out RAW objects for Memory mapping
   int RawWrite(int fd) const; // returns number of bytes written
@@ -991,8 +1001,8 @@ protected:
 
   // functions called before writing to the string: they copy it if there 
   // other references (should be the only owner when writing)
-  GDT_BOOLEAN  CopyBeforeWrite();
-  GDT_BOOLEAN  AllocBeforeWrite(size_t);
+  bool  CopyBeforeWrite();
+  bool  AllocBeforeWrite(size_t);
 
 };
 
@@ -1051,7 +1061,7 @@ public:
     /// number of elements in the array
   UINT  Count() const   { return m_nCount;      }
     /// is it empty?
-  GDT_BOOLEAN  IsEmpty() const { return m_nCount == 0; }
+  bool  IsEmpty() const { return m_nCount == 0; }
   //@}
 
   /** @name items access (range checking is done in debug version) */
@@ -1067,7 +1077,7 @@ public:
   // Compat. with STRLIST (start count with 1)
   STRING  GetEntry(const size_t Index) const
     { return (Index > 0 && Index <=  m_nCount) ? Item(Index-1) : NulString; }
-  GDT_BOOLEAN GetEntry(const size_t Index, STRING* StringEntry) const
+  bool GetEntry(const size_t Index, STRING* StringEntry) const
     { return !(*StringEntry = GetEntry(Index)).IsEmpty(); }
   void SetEntry(const size_t Index, const STRING& src)
     { if (Index > 0) Replace(src, Index-1); }
@@ -1081,7 +1091,7 @@ public:
       @return index of the first item matched or NOT_FOUND
       @see NOT_FOUND
      */
-  int  Index (const char *sz, GDT_BOOLEAN bCase = GDT_TRUE, GDT_BOOLEAN bFromEnd = GDT_FALSE) const;
+  int  Index (const char *sz, bool bCase = true, bool bFromEnd = false) const;
     /// add new element at the end
   void Add   (const STRING& str);
     /// add new element at given position
@@ -1096,10 +1106,10 @@ public:
   //@}
 
   /// sort array elements
-  void Sort(GDT_BOOLEAN bCase = GDT_TRUE, GDT_BOOLEAN bReverse = GDT_FALSE);
-  void Sort(size_t offset, GDT_BOOLEAN bCase = GDT_TRUE, GDT_BOOLEAN bReverse = GDT_FALSE);
-  void UniqueSort(GDT_BOOLEAN bCase = GDT_TRUE, GDT_BOOLEAN bReverse = GDT_FALSE);
-  void UniqueSort(size_t offset, GDT_BOOLEAN bCase = GDT_TRUE, GDT_BOOLEAN bReverse = GDT_FALSE);
+  void Sort(bool bCase = true, bool bReverse = false);
+  void Sort(size_t offset, bool bCase = true, bool bReverse = false);
+  void UniqueSort(bool bCase = true, bool bReverse = false);
+  void UniqueSort(size_t offset, bool bCase = true, bool bReverse = false);
 
 private:
   void    Grow();     // makes array bigger if needed
@@ -1133,51 +1143,51 @@ inline INT CaseCompare(const STRING& s1, const char  * s2, size_t len) { return 
 inline INT CaseCompare(const char *s1, const STRING& s2, size_t len)   { return -s2.CaseCompare(s1, len); }
 inline INT CaseCompare(const char *s1, const char * s2, size_t len)    { return Strnicmp(s1, s2, len);    }
 ///
-inline GDT_BOOLEAN operator==(const STRING& s1, const STRING& s2) { return s1.Equals(s2); }
+inline bool operator==(const STRING& s1, const STRING& s2) { return s1.Equals(s2); }
 ///
-inline GDT_BOOLEAN operator==(const STRING& s1, const char  * s2) { return s1.Equals(s2); }
+inline bool operator==(const STRING& s1, const char  * s2) { return s1.Equals(s2); }
 ///
-inline GDT_BOOLEAN operator==(const char  * s1, const STRING& s2) { return s2.Equals(s1); }
+inline bool operator==(const char  * s1, const STRING& s2) { return s2.Equals(s1); }
 ///
-inline GDT_BOOLEAN operator==(const char  s1, const STRING& s2)   { return s2.Equals(s1); }
+inline bool operator==(const char  s1, const STRING& s2)   { return s2.Equals(s1); }
 ///
-inline GDT_BOOLEAN operator==(const STRING& s1, const char s2)    { return s1.Equals(s2); }
+inline bool operator==(const STRING& s1, const char s2)    { return s1.Equals(s2); }
 ///
-inline GDT_BOOLEAN operator^=(const STRING& s1, const STRING& s2) { return s1.CaseEquals(s2); }
+inline bool operator^=(const STRING& s1, const STRING& s2) { return s1.CaseEquals(s2); }
 ///
-inline GDT_BOOLEAN operator^=(const STRING& s1, const char  * s2) { return s1.CaseEquals(s2); }
+inline bool operator^=(const STRING& s1, const char  * s2) { return s1.CaseEquals(s2); }
 ///
-inline GDT_BOOLEAN operator^=(const char *  s1, const STRING& s2) { return s2.CaseEquals(s1); }
+inline bool operator^=(const char *  s1, const STRING& s2) { return s2.CaseEquals(s1); }
 ///
-inline GDT_BOOLEAN operator!=(const STRING& s1, const STRING& s2) { return !s1.Equals(s2); }
+inline bool operator!=(const STRING& s1, const STRING& s2) { return !s1.Equals(s2); }
 ///
-inline GDT_BOOLEAN operator!=(const STRING& s1, const char  * s2) { return !s1.Equals(s2); }
+inline bool operator!=(const STRING& s1, const char  * s2) { return !s1.Equals(s2); }
 ///
-inline GDT_BOOLEAN operator!=(const char  * s1, const STRING& s2) { return !s2.Equals(s1); }
+inline bool operator!=(const char  * s1, const STRING& s2) { return !s2.Equals(s1); }
 ///
-inline GDT_BOOLEAN operator< (const STRING& s1, const STRING& s2) { return s1.Cmp(s2) <  0; }
+inline bool operator< (const STRING& s1, const STRING& s2) { return s1.Cmp(s2) <  0; }
 ///
-inline GDT_BOOLEAN operator< (const STRING& s1, const char  * s2) { return s1.Cmp(s2) <  0; }
+inline bool operator< (const STRING& s1, const char  * s2) { return s1.Cmp(s2) <  0; }
 ///
-inline GDT_BOOLEAN operator< (const char  * s1, const STRING& s2) { return s2.Cmp(s1) >  0; }
+inline bool operator< (const char  * s1, const STRING& s2) { return s2.Cmp(s1) >  0; }
 ///
-inline GDT_BOOLEAN operator> (const STRING& s1, const STRING& s2) { return s1.Cmp(s2) >  0; }
+inline bool operator> (const STRING& s1, const STRING& s2) { return s1.Cmp(s2) >  0; }
 ///
-inline GDT_BOOLEAN operator> (const STRING& s1, const char  * s2) { return s1.Cmp(s2) >  0; }
+inline bool operator> (const STRING& s1, const char  * s2) { return s1.Cmp(s2) >  0; }
 ///
-inline GDT_BOOLEAN operator> (const char  * s1, const STRING& s2) { return s2.Cmp(s1) <  0; }
+inline bool operator> (const char  * s1, const STRING& s2) { return s2.Cmp(s1) <  0; }
 ///
-inline GDT_BOOLEAN operator<=(const STRING& s1, const STRING& s2) { return s1.Cmp(s2) <= 0; }
+inline bool operator<=(const STRING& s1, const STRING& s2) { return s1.Cmp(s2) <= 0; }
 ///
-inline GDT_BOOLEAN operator<=(const STRING& s1, const char  * s2) { return s1.Cmp(s2) <= 0; }
+inline bool operator<=(const STRING& s1, const char  * s2) { return s1.Cmp(s2) <= 0; }
 ///
-inline GDT_BOOLEAN operator<=(const char  * s1, const STRING& s2) { return s2.Cmp(s1) >= 0; }
+inline bool operator<=(const char  * s1, const STRING& s2) { return s2.Cmp(s1) >= 0; }
 ///
-inline GDT_BOOLEAN operator>=(const STRING& s1, const STRING& s2) { return s1.Cmp(s2) >= 0; }
+inline bool operator>=(const STRING& s1, const STRING& s2) { return s1.Cmp(s2) >= 0; }
 ///
-inline GDT_BOOLEAN operator>=(const STRING& s1, const char  * s2) { return s1.Cmp(s2) >= 0; }
+inline bool operator>=(const STRING& s1, const char  * s2) { return s1.Cmp(s2) >= 0; }
 ///
-inline GDT_BOOLEAN operator>=(const char  * s1, const STRING& s2) { return s2.Cmp(s1) <= 0; }
+inline bool operator>=(const char  * s1, const STRING& s2) { return s2.Cmp(s1) <= 0; }
 
 
 // Handle \n
@@ -1194,7 +1204,7 @@ typedef STRING *PSTRING;
 
 void Write(const STRING& s, PFILE Fp);
 
-GDT_BOOLEAN Read(PSTRING s, PFILE Fp);
+bool Read(PSTRING s, PFILE Fp);
 
 inline STRING XMLCommentStrip(const STRING& Input) { return STRING(Input).XMLCommentStrip(); };
 

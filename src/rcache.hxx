@@ -52,7 +52,7 @@ public:
     return *this;
   }
 
-  GDT_BOOLEAN operator == (const SearchObj& Other) const {
+  bool operator == (const SearchObj& Other) const {
     return ( Relation==Other.Relation &&
         (Threshold==0 || (Other.Threshold<=Threshold && Other.Threshold != 0)) &&
 	DateRange == Other.DateRange &&
@@ -146,16 +146,16 @@ public:
   INT         Add(const RCacheObj& RCacheObject);
   IRSET      *Fetch(INT Location);
   void        Write (FILE *Fp) const;
-  GDT_BOOLEAN Read (FILE *Fp);
-  GDT_BOOLEAN Modified() const { return Changed; }
-  void        SetPersist(GDT_BOOLEAN Use=GDT_TRUE) { Persist = Use;  }
-  GDT_BOOLEAN GetPersist() const                   { return Persist; }
+  bool Read (FILE *Fp);
+  bool Modified() const { return Changed; }
+  void        SetPersist(bool Use=true) { Persist = Use;  }
+  bool GetPersist() const                   { return Persist; }
   ~RCACHE();
 private:
   void Init(const PIDBOBJ DbParent, size_t MaxCache);
-  GDT_BOOLEAN  Changed;
-  GDT_BOOLEAN  Persist;
-  GDT_BOOLEAN  Sorted;
+  bool  Changed;
+  bool  Persist;
+  bool  Sorted;
   size_t       MaxEntries;
   size_t       Count;
   IDBOBJ      *Parent;
@@ -168,6 +168,6 @@ private:
 
 
 void Write(const RCACHE& Cache, PFILE Fp);
-GDT_BOOLEAN Read(RCACHE * Ptr, PFILE Fp);
+bool Read(RCACHE * Ptr, PFILE Fp);
 
 #endif

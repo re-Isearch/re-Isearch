@@ -20,7 +20,7 @@ Author:		Edward C. Zimmermann
 class SLIST {
 public:
   SLIST() { Next = this; } // a circle of one
-  virtual GDT_BOOLEAN IsEmpty() const { return (Next == this); }
+  virtual bool IsEmpty() const { return (Next == this); }
   virtual void Clear();
   virtual void EraseAfter(const size_t Index);
   virtual void Reverse();

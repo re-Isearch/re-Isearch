@@ -327,7 +327,7 @@ PIRSET INDEX::DateSearch(const SRCH_DATE& Key, const STRING& FieldName, INT4 Rel
   iresult.SetAuxCount (1);
   iresult.SetScore (0);
 
-  {GDT_BOOLEAN isDeleted = GDT_FALSE;
+  {bool isDeleted = false;
   SRCH_DATE   rec_date;
   FILE *fp = ffopen(TextFn, "rb");
 
@@ -344,7 +344,7 @@ PIRSET INDEX::DateSearch(const SRCH_DATE& Key, const STRING& FieldName, INT4 Rel
           rec_date = mdtrec.GetDate ();
           isDeleted = mdtrec.GetDeleted ();
         } else {
-          isDeleted = GDT_TRUE;
+          isDeleted = true;
         }
         old_w = w;
       }
@@ -369,7 +369,7 @@ PIRSET INDEX::DateSearch(const SRCH_DATE& Key, const STRING& FieldName, INT4 Rel
 
 //  pirset->SortBy(ByIndex);
 
-  pirset->MergeEntries ( GDT_TRUE );
+  pirset->MergeEntries ( true );
 
   if (Relation == ZRelNE)
     {

@@ -36,7 +36,7 @@ public:
   virtual void ParseRecords(const RECORD& FileRecord);
 
   // Parser hook
-  virtual GDT_BOOLEAN StoreTagComplexAttributes(const char *tag_ptr) const;
+  virtual bool StoreTagComplexAttributes(const char *tag_ptr) const;
 
 
   /* XML is now case dependent */

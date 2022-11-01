@@ -51,19 +51,19 @@ void HTMLREMOTE::ParseRecords(const RECORD& FileRecord)
   DOCTYPE::ParseRecords(FileRecord);
 }
 
-GDT_BOOLEAN HTMLREMOTE::URL(const RESULT& ResultRecord, PSTRING StringBuffer, GDT_BOOLEAN OnlyRemote) const
+bool HTMLREMOTE::URL(const RESULT& ResultRecord, PSTRING StringBuffer, bool OnlyRemote) const
 {
   STRING Path;
   STRINGINDEX root_len = DocumentRoot.GetLength();
 
   StringBuffer->Clear(); // Clear the buffer
   // Get the fullpath of the record
-  if (root_len || OnlyRemote == GDT_FALSE)
+  if (root_len || OnlyRemote == false)
     {
-      if (GetResourcePath(ResultRecord, &Path) == GDT_FALSE)
+      if (GetResourcePath(ResultRecord, &Path) == false)
 	{
 //	  message_log (LOG_DEBUG, "URL: No Resource Path defined");
-	  return GDT_FALSE;
+	  return false;
 	}
     }
   if (root_len)
@@ -78,25 +78,25 @@ GDT_BOOLEAN HTMLREMOTE::URL(const RESULT& ResultRecord, PSTRING StringBuffer, GD
 		  const struct {
 		    const char *method;
 		    size_t      len;
-		    GDT_BOOLEAN dslash;
+		    bool dslash;
 		  } methods[] = {
-			{"ftp",     3, GDT_TRUE},
-			{"urn",     3, GDT_TRUE},
-			{"file",    4, GDT_TRUE},
-			{"http",    4, GDT_TRUE},
-			{"news",    4, GDT_FALSE},
-			{"nntp",    4, GDT_TRUE},
-                        {"ldap",    4, GDT_TRUE},
-			{"wais",    4, GDT_TRUE},
-			{"x500",    4, GDT_TRUE},
-			{"https",   5, GDT_TRUE},
-			{"shttp",   5, GDT_TRUE},
-			{"whois",   5, GDT_TRUE},
-			{"gopher",  6, GDT_TRUE},
-			{"z39_50s", 7, GDT_TRUE},
-			{"z39_50r", 7, GDT_TRUE},
-			{"prospero",8, GDT_TRUE},
-			{NULL, 0, GDT_FALSE}
+			{"ftp",     3, true},
+			{"urn",     3, true},
+			{"file",    4, true},
+			{"http",    4, true},
+			{"news",    4, false},
+			{"nntp",    4, true},
+                        {"ldap",    4, true},
+			{"wais",    4, true},
+			{"x500",    4, true},
+			{"https",   5, true},
+			{"shttp",   5, true},
+			{"whois",   5, true},
+			{"gopher",  6, true},
+			{"z39_50s", 7, true},
+			{"z39_50r", 7, true},
+			{"prospero",8, true},
+			{NULL, 0, false}
 		  };
 #endif
 		  //  http/furball.nonmonotonic.net_80/ --> http://furball.nonmonotonic.net:80/
@@ -110,14 +110,14 @@ GDT_BOOLEAN HTMLREMOTE::URL(const RESULT& ResultRecord, PSTRING StringBuffer, GD
 			  if (Path.Right ((size_t)9) == "/_._.html")
 			    Path.EraseAfter(Path.GetLength() - 9);
 			  *StringBuffer = Path;
-			  return GDT_TRUE;
+			  return true;
 			}
 		    }
-		  return GDT_FALSE; // Bad Mirror
+		  return false; // Bad Mirror
 	  }
     }
   *StringBuffer << "file://" << Path;
-  return GDT_TRUE;
+  return true;
 }
 
 

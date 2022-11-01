@@ -16,23 +16,23 @@ class MERGEUNIT{
 	
  public:
   MERGEUNIT();
-  GDT_BOOLEAN Smallest(PSTRING small);
-  GDT_BOOLEAN Initialize(STRING& FileName,const PINDEX iParent,
+  bool Smallest(PSTRING small);
+  bool Initialize(STRING& FileName,const PINDEX iParent,
 			 FILEMAP *map, size_t IDValue); // true = success
-  GDT_BOOLEAN Empty();				     // true = no more entries
+  bool Empty();				     // true = no more entries
   GPTYPE GetGp(); // returns the GP
   void GetSistring (PSTRING a);
-  GDT_BOOLEAN Flush(FILE *fout, FILE *sout = NULL);
-  GDT_BOOLEAN Load();		// get more items
+  bool Flush(FILE *fout, FILE *sout = NULL);
+  bool Load();		// get more items
   void Write(FILE *fout, FILE *sout = NULL);
-  GDT_BOOLEAN CacheLoad();	// Load Cache From Disk
+  bool CacheLoad();	// Load Cache From Disk
   void SetLoadLimit(INT lim);
   
   ~MERGEUNIT();
   
 private:
-  GDT_BOOLEAN CacheEmpty();
-  GDT_BOOLEAN GetIndirectBuffer(const GPTYPE Gp, PSTRING Buffer); 
+  bool CacheEmpty();
+  bool GetIndirectBuffer(const GPTYPE Gp, PSTRING Buffer); 
   PINDEX Parent;
   FILE *fp;			// file of GP's to read from
   STRING sistring;

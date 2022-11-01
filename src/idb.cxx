@@ -182,66 +182,66 @@ void IDB::GetFieldDefinitionList(STRLIST *StrlistPtr) const
 IDB::IDB()
 {
   Parent = NULL;
-  Initialized = GDT_FALSE;
+  Initialized = false;
 
-  Initialize (NulString, NulString, NulStrlist, GDT_FALSE);
+  Initialize (NulString, NulString, NulStrlist, false);
 }
 
-IDB::IDB( GDT_BOOLEAN SearchOnly)
+IDB::IDB( bool SearchOnly)
 {
   Parent = NULL;
-  Initialized = GDT_FALSE;
+  Initialized = false;
 
   Initialize (NulString, NulStrlist, SearchOnly);
 }
 
-IDB::IDB (const STRING& DBName, GDT_BOOLEAN SearchOnly)
+IDB::IDB (const STRING& DBName, bool SearchOnly)
 {
   Parent = NULL;
-  Initialized = GDT_FALSE;
+  Initialized = false;
 
   Initialize (DBName, NulStrlist, SearchOnly);
 }
 
-IDB::IDB(const STRING& DBName, const STRLIST& NewDocTypeOptions, GDT_BOOLEAN SearchOnly)
+IDB::IDB(const STRING& DBName, const STRLIST& NewDocTypeOptions, bool SearchOnly)
 {
   Parent = NULL;
-  Initialized = GDT_FALSE;
+  Initialized = false;
 
   Initialize (DBName, NewDocTypeOptions, SearchOnly);
 }
 
-IDB::IDB(IDBOBJ *myParent, const STRING& DBName, const STRLIST& NewDocTypeOptions, GDT_BOOLEAN SearchOnly)
+IDB::IDB(IDBOBJ *myParent, const STRING& DBName, const STRLIST& NewDocTypeOptions, bool SearchOnly)
 {
-  Initialized = GDT_FALSE;
+  Initialized = false;
 
   Initialize (myParent, DBName, NewDocTypeOptions, SearchOnly);
 }
 
 
-IDB::IDB (const STRING& NewPathName, const STRING& NewFileName, GDT_BOOLEAN SearchOnly)
+IDB::IDB (const STRING& NewPathName, const STRING& NewFileName, bool SearchOnly)
 {
   Parent = NULL;
-  Initialized = GDT_FALSE;
+  Initialized = false;
 
   Initialize (NewPathName, NewFileName, NulStrlist, SearchOnly);
 }
 
 IDB::IDB (const STRING& NewPathName, const STRING& NewFileName,
-	const STRLIST& NewDocTypeOptions, GDT_BOOLEAN SearchOnly)
+	const STRLIST& NewDocTypeOptions, bool SearchOnly)
 {
   Parent = NULL;
-  Initialized = GDT_FALSE;
+  Initialized = false;
 
   Initialize (NewPathName, NewFileName, NewDocTypeOptions, SearchOnly);
 }
 
-void IDB::Initialize (const STRING& DBName, const STRLIST& NewDocTypeOptions, GDT_BOOLEAN SearchOnly)
+void IDB::Initialize (const STRING& DBName, const STRLIST& NewDocTypeOptions, bool SearchOnly)
 {
   return Initialize(NULL, DBName, NewDocTypeOptions, SearchOnly);
 }
 
-void IDB::Initialize (IDBOBJ *myParent, const STRING& DBName, const STRLIST& NewDocTypeOptions, GDT_BOOLEAN SearchOnly)
+void IDB::Initialize (IDBOBJ *myParent, const STRING& DBName, const STRLIST& NewDocTypeOptions, bool SearchOnly)
 {
   const STRING  fullpath ( ExpandFileSpec(DBName.IsEmpty() ? __IB_DefaultDbName : DBName));
   Initialize (myParent, RemoveFileName(fullpath),  RemovePath (fullpath), NewDocTypeOptions, SearchOnly);
@@ -263,47 +263,47 @@ void IDB::SetWorkingDirectory(const STRING& Dir)
 	  message_log (LOG_DEBUG, "Working Dir = '%s'", WorkingDirEntry.c_str());
 	  MainRegistry->ProfileWriteString(DbInfoSection,  WorkingDirEntry,
 		RemoveTrailingSlash(WorkingDirectory));
-	  DbInfoChanged = GDT_TRUE;
+	  DbInfoChanged = true;
 	}
     }
 }
 
 
-GDT_BOOLEAN IDB::setAutoDeleteExpired(GDT_BOOLEAN val)
+bool IDB::setAutoDeleteExpired(bool val)
 {
   if (val != autoDeleteExpired && MainRegistry)
     {
       MainRegistry->ProfileWriteString(DbInfoSection, autoDeleteExpired, val);
-      DbInfoChanged = GDT_TRUE;
+      DbInfoChanged = true;
       if (val) {
          DeleteExpired(); // We do it now!
       }
     }
-  return GDT_TRUE;
+  return true;
 }
 
 
 
-GDT_BOOLEAN IDB::setUseRelativePaths(GDT_BOOLEAN val)
+bool IDB::setUseRelativePaths(bool val)
 {
   if (val != useRelativePaths && MainRegistry)
     {
       MainRegistry->ProfileWriteString(DbInfoSection, useRelativePathsEntry, val);
-      DbInfoChanged = GDT_TRUE;
+      DbInfoChanged = true;
     }
-  if ((useRelativePaths = val) == GDT_TRUE) return !WorkingDirectory.IsEmpty();
-    return GDT_TRUE;
+  if ((useRelativePaths = val) == true) return !WorkingDirectory.IsEmpty();
+    return true;
 }
 
 void IDB::Initialize (const STRING& NewPathName, const STRING& NewFileName,
-            const STRLIST& NewDocTypeOptions, GDT_BOOLEAN SearchOnly)
+            const STRLIST& NewDocTypeOptions, bool SearchOnly)
 {
  return Initialize(Parent, NewPathName, NewFileName, NewDocTypeOptions, SearchOnly);
 }
 
 
 void IDB::Initialize (IDBOBJ *myParent, const STRING& NewPathName, const STRING& NewFileName,
-	    const STRLIST& NewDocTypeOptions, GDT_BOOLEAN SearchOnly)
+	    const STRLIST& NewDocTypeOptions, bool SearchOnly)
 {
   __Register_IB_Application(); // Make sure we've registered..
 
@@ -313,19 +313,19 @@ void IDB::Initialize (IDBOBJ *myParent, const STRING& NewPathName, const STRING&
 
   Queue1Add = Queue2Add = 0;
 
-  compatible         = GDT_TRUE;
+  compatible         = true;
   errorCode          = 0;
   MetaDefaults       = NULL;
   //DebugSkip          = 0;
-  Override           = GDT_FALSE;
-  DebugMode          = GDT_FALSE;
-  autoDeleteExpired  = GDT_FALSE; // Default is NO to increase performance.
+  Override           = false;
+  DebugMode          = false;
+  autoDeleteExpired  = false; // Default is NO to increase performance.
   TotalRecordsQueued = 0;
 
   ActiveSortIndex    = -1;
   SortIndexFp        = NULL;
 
-  useRelativePaths   = GDT_FALSE;
+  useRelativePaths   = false;
 
   MainIndex          = NULL;
   MainMdt            = NULL;
@@ -337,25 +337,25 @@ void IDB::Initialize (IDBOBJ *myParent, const STRING& NewPathName, const STRING&
   Open(NewPathName, NewFileName, NewDocTypeOptions, SearchOnly); 
 }
 
-GDT_BOOLEAN IDB::Open (const STRING& DBName, GDT_BOOLEAN SearchOnly)
+bool IDB::Open (const STRING& DBName, bool SearchOnly)
 {
   return Open (DBName, NulStrlist, SearchOnly);
 }
 
-GDT_BOOLEAN IDB::Open (const STRING& DBName, const STRLIST& NewDocTypeOptions, GDT_BOOLEAN SearchOnly)
+bool IDB::Open (const STRING& DBName, const STRLIST& NewDocTypeOptions, bool SearchOnly)
 {
   const STRING  fullpath ( ExpandFileSpec(DBName.IsEmpty() ? __IB_DefaultDbName : DBName));
   return Open (RemoveFileName(fullpath),  RemovePath (fullpath), NewDocTypeOptions, SearchOnly);
 }
 
 
-GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
-            const STRLIST& NewDocTypeOptions, GDT_BOOLEAN SearchOnly)
+bool IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
+            const STRLIST& NewDocTypeOptions, bool SearchOnly)
 {
   if (MainIndex || MainMdt || MainMdt || MainRegistry || DocTypeReg || MetaDefaults)
     {
       message_log (LOG_ERROR, "IDB \"%s\" not closed. Close before open \"%s\".", DbFileStem.c_str(), NewFileName.c_str());
-      return GDT_FALSE;
+      return false;
     }
   SetGlobalCharset();
   message_log (LOG_DEBUG, "Initial charset #%d", (int)((BYTE)GetGlobalCharset()));
@@ -406,7 +406,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
 #endif
 
   // Load DbInfo file
-  DbInfoChanged = GDT_FALSE;
+  DbInfoChanged = false;
 
   try {
     MainRegistry = new REGISTRY (RegistrationTitle);
@@ -416,7 +416,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
   if (MainRegistry == NULL)
     {
       message_log (LOG_PANIC, "Can't allocate REGISTRY");
-      return GDT_FALSE; // Can't continue;
+      return false; // Can't continue;
     }
 
   int    have_db_ini = 0;
@@ -485,7 +485,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
 	    }
         }
    }
-  else if ( SearchOnly == GDT_TRUE && (DbFileName != __IB_DefaultDbName))
+  else if ( SearchOnly == true && (DbFileName != __IB_DefaultDbName))
    message_log (LOG_INFO, "Empty initialization files (Default and DB specific)??");
 
   if (!SetLocale ((const char *)NULL))
@@ -497,7 +497,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
     MainRegistry->ProfileGetString(DbInfoSection, IndexBitsEntry, 8*sizeof(GPTYPE), &index_bits);
     if (index_bits != 8*sizeof(GPTYPE))
       {
-	compatible = GDT_FALSE;
+	compatible = false;
 	SetErrorCode(-8*(int)sizeof(GPTYPE));
       }
   }
@@ -575,7 +575,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
     AddTrailingSlash(&HTpath);
 
   // Get the Root directory of the HT Tree
-  isMirror = GDT_FALSE;
+  isMirror = false;
   if (DocTypeOptions.GetValue ("WWW_ROOT", &HTDocumentRoot) == 0)
     {
       if (DocTypeOptions.GetValue ("HTTP_PATH", &HTDocumentRoot) == 0)
@@ -584,7 +584,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
 	    {
 	      if (DocTypeOptions.GetValue ("MIRROR_ROOT", &HTDocumentRoot))
 		{
-		  isMirror = GDT_TRUE;
+		  isMirror = true;
 		}
 	    }
 	}
@@ -604,14 +604,14 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
   if (s.GetLength())
     {
       HTDocumentRoot = s;
-      isMirror = GDT_TRUE;
+      isMirror = true;
     }
   else
     {
       MainRegistry->ProfileGetString("HTTP", "Pages", NulString, &s);
       if (s.GetLength())
 	{
-	  isMirror = GDT_FALSE;
+	  isMirror = false;
 	  HTDocumentRoot = s;
 	}
     }
@@ -677,7 +677,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
   }
   if (MainIndex != NULL)
     {
-      if (MainIndex->CheckIntegrity() == GDT_FALSE)
+      if (MainIndex->CheckIntegrity() == false)
 	message_log (LOG_PANIC, "Index '%s' is corrupt. Search may be impaired.", DbFileStem.c_str()) ;
 
       INT Clip = 0;
@@ -694,13 +694,13 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
       else if ((Clip = MainIndex->GetMaxRecordsAdvice()) != 0 && !SearchOnly)
 	{
 	  MainRegistry->ProfileWriteString(DbInfoSection, SearchTooManyEntry, Clip);
-	  DbInfoChanged = GDT_TRUE;
+	  DbInfoChanged = true;
 	}
     }
   else
     {
       message_log (LOG_PANIC, "Failed to create INDEX instance!");
-      return GDT_FALSE;
+      return false;
     }
 
 
@@ -716,7 +716,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
   if (MainMdt == NULL)
     {
       message_log (LOG_PANIC, "Failed to create MainMdt!");
-      return GDT_FALSE;
+      return false;
     }
 
   // Create DFD
@@ -728,7 +728,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
   if (MainDfdt == NULL)
     {
       message_log (LOG_PANIC, "Failed to create MainDfdt!");
-      return GDT_FALSE;
+      return false;
     }
 
   // Setup FieldTypes
@@ -778,7 +778,7 @@ GDT_BOOLEAN IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
        message_log (LOG_INFO, "autoDeleteExpired: deleted %d records.", deleted);
   }
 
-  return GDT_TRUE;
+  return true;
 }
 
 
@@ -818,7 +818,7 @@ static int UnlinkFileOrDir(const STRING& Path)
   return -1;
 }
 
-GDT_BOOLEAN IDB::KillCache(GDT_BOOLEAN Complete) const
+bool IDB::KillCache(bool Complete) const
 {
   if (!CacheDir.IsEmpty())
     {
@@ -836,7 +836,7 @@ GDT_BOOLEAN IDB::KillCache(GDT_BOOLEAN Complete) const
 
 	  message_log (LOG_INFO, "Persistant Cache: Removing '%s' files and '%s' dirs under %s",
 		Hpattern.c_str(), Fpattern.c_str(), CacheDir.c_str());
-	  ::do_directory(CacheDir, UnlinkFileOrDir, &list, NULL, NULL, NULL, GDT_TRUE, Complete);
+	  ::do_directory(CacheDir, UnlinkFileOrDir, &list, NULL, NULL, NULL, true, Complete);
 	  if (Complete)
 	    {
 	      ::remove(CacheReadMeFile);
@@ -846,10 +846,10 @@ GDT_BOOLEAN IDB::KillCache(GDT_BOOLEAN Complete) const
 		
 	}
     }
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN IDB::FillHeadlineCache(const STRING& RecordSyntax)
+bool IDB::FillHeadlineCache(const STRING& RecordSyntax)
 {
   if (!CacheDir.IsEmpty() && MainMdt)
     {
@@ -873,12 +873,12 @@ GDT_BOOLEAN IDB::FillHeadlineCache(const STRING& RecordSyntax)
 	}
       return Total != 0;
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN IDB::SetCacheDir(const STRING& Dir)
+bool IDB::SetCacheDir(const STRING& Dir)
 {
-  GDT_BOOLEAN Ok = GDT_FALSE;
+  bool Ok = false;
   STRING      newCacheDir;
 
   message_log (LOG_DEBUG, "SetCacheDir('%s')", Dir.c_str());
@@ -895,7 +895,7 @@ GDT_BOOLEAN IDB::SetCacheDir(const STRING& Dir)
 	      if (0 == stat(newCacheDir.c_str(), &st_buf) && !S_ISDIR(st_buf.st_mode))
 		message_log (LOG_ERROR, "'%s' is a file. Can't use for present cache!", newCacheDir.c_str());
 	      else
-		Ok = GDT_TRUE;
+		Ok = true;
 	    }
 	  else
 	    message_log(LOG_WARN, "'%s' specified for base of present cache is not a directory", Dir.c_str());
@@ -909,7 +909,7 @@ GDT_BOOLEAN IDB::SetCacheDir(const STRING& Dir)
       if (newCacheDir != CacheDir && MainRegistry)
         {
 	  MainRegistry->ProfileWriteString(DbInfoSection, CacheDirEntry, Dir);
-	  DbInfoChanged = GDT_TRUE;
+	  DbInfoChanged = true;
 	  if (!CacheDir.IsEmpty())
 	    {
 	      message_log (LOG_DEBUG, "Moving %s to %s", CacheDir.c_str(), newCacheDir.c_str());
@@ -917,7 +917,7 @@ GDT_BOOLEAN IDB::SetCacheDir(const STRING& Dir)
 		{
 		  message_log (LOG_ERRNO, "Could not move cache dir from %s to %s",
 			CacheDir.c_str(), newCacheDir.c_str());
-		  KillCache(GDT_TRUE);
+		  KillCache(true);
 		}
 	    }
 	  FlushMainRegistry(); // Write it out
@@ -953,25 +953,25 @@ GDT_BOOLEAN IDB::SetCacheDir(const STRING& Dir)
 }
 
 
-GDT_BOOLEAN IDB::SetDateRange(const DATERANGE& DateRange)
+bool IDB::SetDateRange(const DATERANGE& DateRange)
 {
-  return MainIndex ? MainIndex->SetDateRange(DateRange) : GDT_FALSE;
+  return MainIndex ? MainIndex->SetDateRange(DateRange) : false;
 }
 
-GDT_BOOLEAN IDB::SetDateRange(const SRCH_DATE& From, const SRCH_DATE& To)
+bool IDB::SetDateRange(const SRCH_DATE& From, const SRCH_DATE& To)
 {
   DATERANGE DateRange (From, To);
 
   return SetDateRange(DateRange);
 }
 
-GDT_BOOLEAN IDB::GetDateRange(DATERANGE *DateRange) const
+bool IDB::GetDateRange(DATERANGE *DateRange) const
 {
-  return MainIndex ? MainIndex->GetDateRange(DateRange) : GDT_FALSE;
+  return MainIndex ? MainIndex->GetDateRange(DateRange) : false;
 }
 
 
-GDT_BOOLEAN IDB::GetHTTP_server(PSTRING path) const
+bool IDB::GetHTTP_server(PSTRING path) const
 {
   if (path)
     {
@@ -980,14 +980,14 @@ GDT_BOOLEAN IDB::GetHTTP_server(PSTRING path) const
   return HTpath.GetLength() != 0;
 }
 
-GDT_BOOLEAN IDB::GetHTTP_root(PSTRING path, GDT_BOOLEAN *Mirror) const
+bool IDB::GetHTTP_root(PSTRING path, bool *Mirror) const
 {
   if (path)    *path = HTDocumentRoot;
   if (Mirror)  *Mirror = isMirror;
   return HTDocumentRoot.GetLength() != 0;
 }
 
-GDT_BOOLEAN IDB::SetLocale (const LOCALE& Locale)
+bool IDB::SetLocale (const LOCALE& Locale)
 {
   if (GlobalLocale != Locale)
     {
@@ -999,7 +999,7 @@ GDT_BOOLEAN IDB::SetLocale (const LOCALE& Locale)
   return (INT)GlobalLocale != 0;
 }
 
-GDT_BOOLEAN IDB::SetLocale (const CHR *Locale)
+bool IDB::SetLocale (const CHR *Locale)
 {
   STRING LocaleName;
   if (Locale == NULL || *Locale == '\000')
@@ -1032,7 +1032,7 @@ void IDB::SetStoplist(const STRING& Filename)
     MainIndex->SetStoplist(Filename);
 }
 
-GDT_BOOLEAN IDB::KeyLookup (const STRING& Key, PRESULT ResultBuffer) const
+bool IDB::KeyLookup (const STRING& Key, PRESULT ResultBuffer) const
 {
   size_t res = MainMdt->LookupByKey (Key);
   if (res && ResultBuffer)
@@ -1153,7 +1153,7 @@ static inline off_t OnDiskFcSearch(const FC& Fc, FILE *Fp)
     if ( -1 == fseek(Fp, p*sizeof(FC), SEEK_SET)) {
       message_log (LOG_ERRNO, message, "Seek", p);
       cmp = 1; // Seek Error
-    } else if (fc.Read (Fp) == GDT_FALSE) {
+    } else if (fc.Read (Fp) == false) {
       message_log (LOG_ERRNO, message, "Read", p);
       cmp = 0;  // Read Error (pretend match)
     } else
@@ -1188,7 +1188,7 @@ static inline off_t OnDiskFcZoneSearch(const FC& HitFc, FILE *Fp)
     if ( -1 == fseek(Fp, p*sizeof(FC), SEEK_SET)) {
       message_log (LOG_ERRNO, message, "Seek", p);
       return 0;
-    } else if (fc.Read (Fp) == GDT_FALSE) {
+    } else if (fc.Read (Fp) == false) {
       message_log (LOG_ERRNO, message, "Read", p);
       return 0;
     } 
@@ -1206,21 +1206,21 @@ static inline off_t OnDiskFcZoneSearch(const FC& HitFc, FILE *Fp)
 }
 
 
-GDT_BOOLEAN IDB::GetRecordDfdt (const STRING& Key, DFDT *DfdtBuffer)
+bool IDB::GetRecordDfdt (const STRING& Key, DFDT *DfdtBuffer)
 {
   DfdtBuffer->Clear();
 
   const size_t TotalEntries = MainDfdt->GetTotalEntries ();
   if (TotalEntries == 0)
     {
-      return GDT_TRUE; // Has nothing, have nothing
+      return true; // Has nothing, have nothing
     }
 
   MDTREC Mdtrec;
   if (!MainMdt->GetMdtRecord (Key, &Mdtrec))
     {
       message_log (LOG_DEBUG, "GetRecordDfdt: Record %s not in MDT!", Key.c_str());
-      return GDT_FALSE;
+      return false;
     }
 
   const GPTYPE GpStart = Mdtrec.GetGlobalFileStart () +
@@ -1284,7 +1284,7 @@ GDT_BOOLEAN IDB::GetRecordDfdt (const STRING& Key, DFDT *DfdtBuffer)
   delete[]Table;
 
   if (DebugMode) message_log (LOG_DEBUG, "Document contains %u fields", (unsigned)count);
-  return GDT_TRUE;
+  return true;
 }
 
 static inline off_t OnDiskFcSubZoneSearch(const FC& HitFc, FILE *Fp)
@@ -1299,7 +1299,7 @@ static inline off_t OnDiskFcSubZoneSearch(const FC& HitFc, FILE *Fp)
     if ( -1 == fseek(Fp, p*sizeof(FC), SEEK_SET)) {
       message_log (LOG_ERRNO, message, "Seek", p);
       return 0;
-    } else if (fc.Read (Fp) == GDT_FALSE) {
+    } else if (fc.Read (Fp) == false) {
       message_log (LOG_ERRNO, message, "Read", p);
       return 0;
     } 
@@ -1552,7 +1552,7 @@ size_t IDB::GetDescendentsContent (const FC HitFc, FILE *Fp, STRLIST *StrlistPtr
   return count;
 }
 
-GDT_BOOLEAN IDB::ValidNodeName(const STRING& nodeName) const
+bool IDB::ValidNodeName(const STRING& nodeName) const
 {
   STRING       NodeName (nodeName);
   STRINGINDEX  i = NodeName.SearchReverse( __AncestorDescendantSeperator );
@@ -1579,7 +1579,7 @@ GDT_BOOLEAN IDB::ValidNodeName(const STRING& nodeName) const
 	  if (ch != 0)
 	     NodeName << ch << ChildNodeName;
 	  else
-	     return GDT_FALSE;
+	     return false;
        }
     }
   return (MainDfdt->GetFileNumber (NodeName) != 0);
@@ -1791,7 +1791,7 @@ FC IDB::GetPeerFc (const GPTYPE& HitGp, STRING *NodeNamePtr)
   size_t       looks = 0;
   size_t       PeerCount = 0;
   size_t       fieldNameCount = 0;
-  GDT_BOOLEAN  haveCount = GDT_FALSE;
+  bool  haveCount = false;
 
   // We cache lastPeerField to speed up a bit
   if (lastPeerField <1 || lastPeerField > TotalEntries)
@@ -1816,7 +1816,7 @@ FC IDB::GetPeerFc (const GPTYPE& HitGp, STRING *NodeNamePtr)
       DfdtGetFileName (fieldname, &Fn);
 
       if ((fieldNameCount = fieldname.Count()) > 0 && PeerCount == 0)
-        haveCount = GDT_TRUE;
+        haveCount = true;
       else if (haveCount && fieldNameCount == 0)
         continue;
       else if (PeerCount && !fieldname.Contains(PeerFieldName))
@@ -1872,12 +1872,12 @@ FC IDB::GetPeerFc (const FC& HitFc, STRING *NodeNamePtr)
 {
   const size_t TotalEntries = MainDfdt->GetTotalEntries ();
   FC           PeerFC = HitFc;
-  GDT_BOOLEAN  firstTime = GDT_TRUE;
+  bool  firstTime = true;
   STRING       PeerFieldName;
   size_t       looks = 0;
   size_t       PeerCount = 0;
   size_t       fieldNameCount = 0;
-  GDT_BOOLEAN  haveCount = GDT_FALSE;
+  bool  haveCount = false;
 
   if (lastPeerField <1 || lastPeerField > TotalEntries)
     if ((lastPeerField = TotalEntries/3) < 1) lastPeerField = 1;
@@ -1902,7 +1902,7 @@ FC IDB::GetPeerFc (const FC& HitFc, STRING *NodeNamePtr)
       DfdtGetFileName (fieldname, &Fn);
 
       if ((fieldNameCount = fieldname.Count()) > 0 && PeerCount == 0)
-	haveCount = GDT_TRUE;
+	haveCount = true;
       else if (haveCount && fieldNameCount == 0)
 	continue;
       else if (PeerCount && !fieldname.Contains(PeerFieldName))
@@ -1935,7 +1935,7 @@ FC IDB::GetPeerFc (const FC& HitFc, STRING *NodeNamePtr)
 
 	      if (firstTime || (PeerFC.Contains(Fc2) && Fc2.Contains(HitFc)))
 		{
-		  firstTime = GDT_FALSE;
+		  firstTime = false;
 		  if ((PeerFC != Fc2) || (fieldname.GetLength() > PeerFieldName.GetLength()) )
 		     {
 		       lastPeerField = x;
@@ -1971,7 +1971,7 @@ int IDB::GetNodeList (const FC& HitFc, TREENODELIST *NodeList)
 {
   const size_t TotalEntries = MainDfdt->GetTotalEntries ();
   FC           PeerFC = HitFc;
-  GDT_BOOLEAN  found = GDT_FALSE;
+  bool  found = false;
   STRING       PeerFieldName;
   int          count = 0;
 
@@ -2021,7 +2021,7 @@ int IDB::GetNodeList (const FC& HitFc, TREENODELIST *NodeList)
 		Fc2.Read (Fp);
 	      if (!found || (PeerFC.Contains(Fc2) && Fc2.Contains(HitFc)))
 		{
-		  found  = GDT_TRUE;
+		  found  = true;
 		  PeerFC = Fc2;
 		  PeerFieldName = fieldname;
 		}
@@ -2041,7 +2041,7 @@ int IDB::GetNodeList (const FC& HitFc, TREENODELIST *NodeList)
       if (found)
 	{
 	  NodeList->AddEntry( TREENODE(PeerFC, PeerFieldName) );
-	  found = GDT_FALSE;
+	  found = false;
 	  count++;
 	}
     }				// for()
@@ -2056,7 +2056,7 @@ NODETREE IDB::GetNodeTree (const FC& HitFc)
 {
   const size_t TotalEntries = MainDfdt->GetTotalEntries ();
   FC           PeerFC = HitFc;
-  GDT_BOOLEAN  found = GDT_FALSE;
+  bool  found = false;
   STRING       PeerFieldName;
   int          count = 0;
   NODETREE     Tree;
@@ -2105,7 +2105,7 @@ NODETREE IDB::GetNodeTree (const FC& HitFc)
 		Fc2.Read (Fp);
 	      if (!found || (PeerFC.Contains(Fc2) && Fc2.Contains(HitFc)))
 		{
-		  found  = GDT_TRUE;
+		  found  = true;
 		  PeerFC = Fc2;
 		  PeerFieldName = fieldname;
 		}
@@ -2126,7 +2126,7 @@ NODETREE IDB::GetNodeTree (const FC& HitFc)
 	{
 	  message_log (LOG_DEBUG, "Add Node %s", PeerFieldName.c_str());
 	  Tree.AddEntry( TREENODE(PeerFC, PeerFieldName) );
-	  found = GDT_FALSE;
+	  found = false;
 	  count++;
 	}
     }				// for()
@@ -2168,7 +2168,7 @@ void  IDB::SetDefaultPriorityFactor(DOUBLE x)
   if (x != PriorityFactor)
     {
       MainRegistry->ProfileWriteString(RankingSection, PriorityFactorEntry, x);
-      DbInfoChanged = GDT_TRUE;
+      DbInfoChanged = true;
     }
 }
 
@@ -2177,7 +2177,7 @@ void  IDB::SetDefaultDbSearchCutoff(size_t x)
   if (x != GetDbSearchCutoff())
     {
       MainRegistry->ProfileWriteString(DbInfoSection, SearchCutoffEntry, x);
-      DbInfoChanged = GDT_TRUE;
+      DbInfoChanged = true;
     }
 }
 
@@ -2195,13 +2195,13 @@ void IDB::SetMirrorBaseDirectory(const STRING& Mirror)
 	  if (val.GetLength())
 	    MainRegistry->ProfileWriteString("HTTP", "Pages", NulString);
 	  HTDocumentRoot = Mirror;
-	  DbInfoChanged = GDT_TRUE;
+	  DbInfoChanged = true;
 	}
       if (!isMirror)
-	isMirror = GDT_TRUE;
+	isMirror = true;
     }
   else if (isMirror)
-    isMirror = GDT_FALSE;
+    isMirror = false;
 }
 
 void IDB::SetHTTPServer(const STRING& Server)
@@ -2211,7 +2211,7 @@ void IDB::SetHTTPServer(const STRING& Server)
       if (!(HTpath = Server).IsEmpty())
 	AddTrailingSlash(&HTpath);
       MainRegistry->ProfileWriteString("HTTP", "Server", HTpath);
-      DbInfoChanged = GDT_TRUE;
+      DbInfoChanged = true;
     }
 }
 
@@ -2223,7 +2223,7 @@ void IDB::SetHTTPPages(const STRING& Pages)
         AddTrailingSlash(&HTDocumentRoot);
       MainRegistry->ProfileWriteString("HTTP", "Pages", HTDocumentRoot);
       MainRegistry->ProfileWriteString("Mirror", "Root", NulString);
-      DbInfoChanged = GDT_TRUE;
+      DbInfoChanged = true;
     }
 }
 
@@ -2233,7 +2233,7 @@ void IDB::SetSegment(const STRING& newName, int newNumber)
     {
       SegmentName = newName;
       MainRegistry->ProfileWriteString(DbInfoSection, SegmentNameEntry, newName);
-      DbInfoChanged = GDT_TRUE;
+      DbInfoChanged = true;
     }
   if (newNumber >= 0)
     SegmentNumber = newNumber;
@@ -2247,7 +2247,7 @@ void IDB::SetTitle(const STRING& NewTitle)
     {
       Title = NewTitle;
       MainRegistry->ProfileWriteString(DbInfoSection, TitleEntry, NewTitle);
-      DbInfoChanged = GDT_TRUE;
+      DbInfoChanged = true;
     }
 }
 
@@ -2257,7 +2257,7 @@ void IDB::SetComments(const STRING& NewComments)
     {
       Comments = NewComments;
       MainRegistry->ProfileWriteString(DbInfoSection, CommentsEntry, NewComments);
-      DbInfoChanged = GDT_TRUE;
+      DbInfoChanged = true;
     }
 }
 
@@ -2267,7 +2267,7 @@ void IDB::SetCopyright(const STRING& NewCopyright)
     {
       Copyright = NewCopyright;
       MainRegistry->ProfileWriteString(DbInfoSection, CopyrightEntry, NewCopyright);
-      DbInfoChanged = GDT_TRUE;
+      DbInfoChanged = true;
     }
 }
 
@@ -2276,12 +2276,12 @@ void IDB::SetMaintainer(const STRING& NewName, const STRING& NewAddress)
   if (MaintainerName != NewName)
     {
       MainRegistry->ProfileWriteString(DbInfoSection, MaintainerNameEntry,  MaintainerName = NewName);
-      DbInfoChanged = GDT_TRUE;
+      DbInfoChanged = true;
     }
   if (MaintainerMail != NewAddress)
     {
       MainRegistry->ProfileWriteString(DbInfoSection, MaintainerMailEntry, MaintainerMail = NewAddress);
-      DbInfoChanged = GDT_TRUE;
+      DbInfoChanged = true;
     }
 }
 
@@ -2339,11 +2339,11 @@ PDOCTYPE IDB::GetDocTypePtr (const DOCTYPE_ID& DocType) const
   return DoctypePtr;
 }
 
-GDT_BOOLEAN IDB::ValidateDocType(const STRING& DocType) const
+bool IDB::ValidateDocType(const STRING& DocType) const
 {
   return DocTypeReg->ValidateDocType(DocType);
 }
-GDT_BOOLEAN IDB::ValidateDocType(const DOCTYPE_ID& Id) const
+bool IDB::ValidateDocType(const DOCTYPE_ID& Id) const
 {
   return DocTypeReg->ValidateDocType(Id);
 }
@@ -2401,7 +2401,7 @@ int IDB::BitVersion() const
 }
 
 
-GDT_BOOLEAN IDB::IsDbCompatible() const
+bool IDB::IsDbCompatible() const
 {
 //  cerr << "compatible = " << (int)compatible << endl;
 //  cerr << "MainIndex = " << (long)MainIndex << endl;
@@ -2412,13 +2412,13 @@ GDT_BOOLEAN IDB::IsDbCompatible() const
 }
 
 
-GDT_BOOLEAN IDB::IsEmpty() const
+bool IDB::IsEmpty() const
 {
   if (MainIndex && MainIndex->IsEmpty())
-    return GDT_TRUE;
+    return true;
   if (MainMdt && MainMdt->IsEmpty())
-    return GDT_TRUE;
-  return GDT_FALSE;
+    return true;
+  return false;
 }
 
 off_t IDB::GetTotalWords() const
@@ -2443,7 +2443,7 @@ size_t IDB::GetTotalDocumentsDeleted() const
 }
 
 // Set Memory in bytes
-void IDB::SetIndexingMemory (const size_t MemorySize, GDT_BOOLEAN Force)
+void IDB::SetIndexingMemory (const size_t MemorySize, bool Force)
 {
   const rlim_t totalMemory        = _IB_GetTotalMemory();
   const rlim_t freeMemory         = _IB_GetFreeMemory();
@@ -2555,7 +2555,7 @@ void IDB::SetIndexingMemory (const size_t MemorySize, GDT_BOOLEAN Force)
 
 /* void IDB::GenerateKeys() { MainMdt->GenerateKeys(); } */
 
-void IDB::SetDebugMode (GDT_BOOLEAN OnOff)
+void IDB::SetDebugMode (bool OnOff)
 {
   DebugMode = OnOff;
   if (MainIndex)
@@ -2736,17 +2736,17 @@ void IDB::EndRsetPresent (const STRING& RecordSyntax)
     }
 }
 
-GDT_BOOLEAN IDB::DfdtGetFileName (const STRING& Fieldname, STRING *StringBuffer) // const
+bool IDB::DfdtGetFileName (const STRING& Fieldname, STRING *StringBuffer) // const
 {
   return DfdtGetFileName(Fieldname, FIELDTYPE::text, StringBuffer);
 }
 
-GDT_BOOLEAN IDB::DfdtGetFileName (const DFD& dfd, STRING *StringBuffer)
+bool IDB::DfdtGetFileName (const DFD& dfd, STRING *StringBuffer)
 {
   return DfdtGetFileName(dfd.GetFieldName(), dfd.GetFieldType(), StringBuffer);
 }
 
-GDT_BOOLEAN IDB::DfdtGetFileName (const STRING& FieldName, const FIELDTYPE& FieldType,
+bool IDB::DfdtGetFileName (const STRING& FieldName, const FIELDTYPE& FieldType,
 	STRING *StringBuffer)
 {
   STRING name, typ, path;
@@ -2756,7 +2756,7 @@ GDT_BOOLEAN IDB::DfdtGetFileName (const STRING& FieldName, const FIELDTYPE& Fiel
     {
       if (StringBuffer)
 	StringBuffer->Clear();
-      return GDT_FALSE; // No Field...
+      return false; // No Field...
     }
 
   if (!FieldType.IsText())
@@ -2773,15 +2773,15 @@ GDT_BOOLEAN IDB::DfdtGetFileName (const STRING& FieldName, const FIELDTYPE& Fiel
       INT filenumber;
 
       if ((filenumber = MainDfdt->GetFileNumber (FieldName)) == 0)
-	return GDT_FALSE; // Nope..
+	return false; // Nope..
       FileNames.AddEntry(name,  path  = ComposeDbFn(filenumber) + typ );
     }
   if (StringBuffer) *StringBuffer = path;
-  return GDT_TRUE;
+  return true;
 }
 
 
-GDT_BOOLEAN IDB::GetFieldData (const RESULT &ResultRecord, const FC& Fc,
+bool IDB::GetFieldData (const RESULT &ResultRecord, const FC& Fc,
         STRING * StringBuffer, const DOCTYPE *DoctypePtr)
 {
   STRING   data;
@@ -2798,7 +2798,7 @@ GDT_BOOLEAN IDB::GetFieldData (const RESULT &ResultRecord, const FC& Fc,
   if ((fpd = ffopen(path, "rb")) == NULL)
     {
       message_log (LOG_DEBUG, "IDB::GetFieldData: Could not open '%s'.", path.c_str());
-      return GDT_FALSE;
+      return false;
     }
 
   GPTYPE Start   = Fc.GetFieldStart();
@@ -2808,7 +2808,7 @@ GDT_BOOLEAN IDB::GetFieldData (const RESULT &ResultRecord, const FC& Fc,
 
 //cerr << "Read " << res << " ---> " << data << endl;
   
-// GDT_BOOLEAN res = (ReadIndirect(fpd, StringBuffer, Start,  End - Start + 1, DoctypePtr) != 0);
+// bool res = (ReadIndirect(fpd, StringBuffer, Start,  End - Start + 1, DoctypePtr) != 0);
   ffclose(fpd);
 
   if (StringBuffer) *StringBuffer = data.Strip(STRING::both);
@@ -2834,17 +2834,17 @@ GDT_BOOLEAN IDB::GetFieldData (const RESULT &ResultRecord, const FC& Fc,
 // Present those Field3 in String list..
 
 // TODO: Rewrite to use common FC read code!
-GDT_BOOLEAN IDB::GetFieldData (const RESULT &ResultRecord, const STRING& ESet,
+bool IDB::GetFieldData (const RESULT &ResultRecord, const STRING& ESet,
 	PSTRLIST StrlistBuffer, const DOCTYPE *DoctypePtr)
 {
 //cerr << "HERE I AM(2)" << endl;
 
   if (StrlistBuffer == NULL)
-    return GDT_FALSE;
+    return false;
 
   StrlistBuffer->Clear();
   if (ESet.IsEmpty())
-    return GDT_FALSE;
+    return false;
 
   int    start = 0;
   int    end = 0;
@@ -2964,7 +2964,7 @@ GDT_BOOLEAN IDB::GetFieldData (const RESULT &ResultRecord, const STRING& ESet,
 	    }
 	  ffclose (fp); // was ffclose(fp);
 //cerr << "@@@@@@ Done" << endl;
-	  return GDT_TRUE;
+	  return true;
 	}
       else
 	message_log (LOG_ERRNO, "Could not open %s (%s)", DfFileName.c_str(), FieldName.c_str());
@@ -2973,12 +2973,12 @@ GDT_BOOLEAN IDB::GetFieldData (const RESULT &ResultRecord, const STRING& ESet,
     {
       message_log (LOG_DEBUG, "Field %s not available", FieldName.c_str());
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
 
-GDT_BOOLEAN IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, STRING* Buffer)
+bool IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, STRING* Buffer)
 {
   FIELDTYPE ft = GetFieldType(FieldName);
 
@@ -2989,7 +2989,7 @@ GDT_BOOLEAN IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, STRING
       if (IDB::GetFieldData(FieldFC, FieldName, &date))
         {
           *Buffer = date.ISOdate();
-          return GDT_TRUE;
+          return true;
         }
     }
   else if (ft.IsNumerical() || ft.IsComputed())
@@ -2998,19 +2998,19 @@ GDT_BOOLEAN IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, STRING
       if (IDB::GetFieldData(FieldFC, FieldName, &fVal))
         {
           *Buffer = fVal;
-          return GDT_TRUE;
+          return true;
         }
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
 // edz: Support for indexing into the Field Data list.
-GDT_BOOLEAN IDB::GetFieldData (const RESULT& ResultRecord, const STRING& FieldName,
+bool IDB::GetFieldData (const RESULT& ResultRecord, const STRING& FieldName,
   PSTRING StringBuffer, const DOCTYPE *DoctypePtr)
 {
   if (StringBuffer == NULL)
-    return GDT_FALSE;
+    return false;
 
   FIELDTYPE ft = GetFieldType(FieldName);
 
@@ -3021,7 +3021,7 @@ GDT_BOOLEAN IDB::GetFieldData (const RESULT& ResultRecord, const STRING& FieldNa
       if (IDB::GetFieldData(ResultRecord, FieldName, &date))
 	{
 	  *StringBuffer = date.ISOdate();
-	  return GDT_TRUE;
+	  return true;
 	}
     }
   else if (ft.IsNumerical() || ft.IsComputed())
@@ -3031,7 +3031,7 @@ GDT_BOOLEAN IDB::GetFieldData (const RESULT& ResultRecord, const STRING& FieldNa
       if (IDB::GetFieldData(ResultRecord, FieldName, &fVal))
 	{
 	  *StringBuffer = fVal;
-	  return GDT_TRUE;
+	  return true;
 	}
     }
   
@@ -3045,25 +3045,25 @@ GDT_BOOLEAN IDB::GetFieldData (const RESULT& ResultRecord, const STRING& FieldNa
 	  if (!StrlistBuffer.IsEmpty())
 	    {
 	      StrlistBuffer.Join(glue, StringBuffer);
-	      return GDT_TRUE;
+	      return true;
 	    }
 	}
     }
   else
     StringBuffer->Clear();
-  return GDT_FALSE;
+  return false;
 }
 
 // edz: Support for indexing into the Field Data list.
-GDT_BOOLEAN IDB::GetFieldData (const RESULT& ResultRecord, const STRING& FieldName,
+bool IDB::GetFieldData (const RESULT& ResultRecord, const STRING& FieldName,
   const FIELDTYPE& FileType, STRING *StringBuffer, const DOCTYPE *DoctypePtr)
 {
-  return GDT_FALSE;
+  return false;
 }
 
 
 
-GDT_BOOLEAN IDB::GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+bool IDB::GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
   DOUBLE* Buffer)
 {
   MDTREC      MdtRecord;
@@ -3077,10 +3077,10 @@ GDT_BOOLEAN IDB::GetFieldData(const RESULT& ResultRecord, const STRING& FieldNam
 
       return GetFieldData( FC(GpStart, GpEnd), FieldName, Buffer);
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN IDB::GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+bool IDB::GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
   SRCH_DATE* Buffer)
 {
   MDTREC      MdtRecord;
@@ -3094,7 +3094,7 @@ GDT_BOOLEAN IDB::GetFieldData(const RESULT& ResultRecord, const STRING& FieldNam
 
       return GetFieldData (FC(GpStart, GpEnd), FieldName, Buffer);
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -3110,7 +3110,7 @@ STRING IDB::XmlMetaPresent(const RESULT &ResultRecord) const
 
 #if 1
 
-GDT_BOOLEAN IDB::GetFieldData(GPTYPE gp, DOUBLE* Buffer)
+bool IDB::GetFieldData(GPTYPE gp, DOUBLE* Buffer)
 {
   STRING      FieldName;
   FC          HitFc ( GetPeerFc (gp, &FieldName) );
@@ -3119,7 +3119,7 @@ GDT_BOOLEAN IDB::GetFieldData(GPTYPE gp, DOUBLE* Buffer)
 }
 
 
-GDT_BOOLEAN IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, DOUBLE* Buffer)
+bool IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, DOUBLE* Buffer)
 {
   STRING      DfFileName;
 
@@ -3128,7 +3128,7 @@ GDT_BOOLEAN IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, DOUBLE
     {
       // Not a numerical field
       if (Buffer) *Buffer = 0;
-      return GDT_FALSE;
+      return false;
     }
 
   // Start is the smallest index in the table
@@ -3149,16 +3149,16 @@ GDT_BOOLEAN IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, DOUBLE
       if (FieldFC.Contains(start))
 	{
 	  if (Buffer) *Buffer = List.GetNumericValue(0); 
-	  return GDT_TRUE;
+	  return true;
 	}
        message_log (LOG_PANIC, "Could not find %s data for '%s' %s",
 		"numerical", FieldName.c_str(), (const char *)((STRING)FieldFC));
     }
-  return GDT_FALSE; 
+  return false; 
 }
 
 
-GDT_BOOLEAN IDB::GetFieldData(GPTYPE gp, SRCH_DATE* Buffer)
+bool IDB::GetFieldData(GPTYPE gp, SRCH_DATE* Buffer)
 {
   STRING      FieldName;
 
@@ -3167,7 +3167,7 @@ GDT_BOOLEAN IDB::GetFieldData(GPTYPE gp, SRCH_DATE* Buffer)
 
 
 
-GDT_BOOLEAN IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, SRCH_DATE* Buffer)
+bool IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, SRCH_DATE* Buffer)
 {
   SearchState Status;
   DATELIST    List;
@@ -3179,7 +3179,7 @@ GDT_BOOLEAN IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, SRCH_D
     {
       // Not a numerical field
       if (Buffer) *Buffer = 0;
-      return GDT_FALSE;
+      return false;
     }
 
   // Start is the smallest index in the table
@@ -3197,17 +3197,17 @@ GDT_BOOLEAN IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, SRCH_D
       if (FieldFC.Contains(start))
 	{
 	  if (Buffer) *Buffer = List.GetValue(0); 
-	  return GDT_TRUE;
+	  return true;
 	}
 //cerr << "PANIC: Could not find " << FieldName << "DATA for" << FieldFC <<  endl;
        message_log (LOG_PANIC, "Could not find %s data for '%s' %s",
 		"date", FieldName.c_str(), (const char *)((STRING)FieldFC));
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
-GDT_BOOLEAN IDB::GetFieldData(GPTYPE gp, STRING* Buffer)
+bool IDB::GetFieldData(GPTYPE gp, STRING* Buffer)
 {
   STRING      FieldName;
   FC FieldFC  (GetPeerFc (gp, &FieldName));
@@ -3219,7 +3219,7 @@ GDT_BOOLEAN IDB::GetFieldData(GPTYPE gp, STRING* Buffer)
       if (GetFieldData(FieldFC, FieldName, &fVal))
 	{
 	  if (Buffer) *Buffer = fVal;
-	  return GDT_TRUE;
+	  return true;
 	}
     }
 
@@ -3229,10 +3229,10 @@ GDT_BOOLEAN IDB::GetFieldData(GPTYPE gp, STRING* Buffer)
       if (GetFieldData(FieldFC, FieldName, &date))
         {
           if (Buffer) *Buffer = date.ISOdate();
-          return GDT_TRUE;
+          return true;
         }
     }
-  return GDT_FALSE;
+  return false;
 
     
 }
@@ -3286,7 +3286,7 @@ STRING IDB::GetPeerContentXMLFragement(const FC& HitFc)
 //
 // Writes the Headline to the cache
 //
-GDT_BOOLEAN IDB::CacheHeadline(GPTYPE MdtIndex, const STRING& Headline,
+bool IDB::CacheHeadline(GPTYPE MdtIndex, const STRING& Headline,
 	const STRING& RecordSyntax) const
 {
 #if NEW_HEADLINE_CACHE_CODE 
@@ -3314,12 +3314,12 @@ GDT_BOOLEAN IDB::CacheHeadline(GPTYPE MdtIndex, const STRING& Headline,
 	  else
 	    message_log (LOG_ERRNO, "Could not store Headline cache address");
 	  close(fd);
-	  return GDT_TRUE;
+	  return true;
 	}
       message_log (LOG_ERRNO, "Could not write to headline cache %s", RecordSyntax.c_str());
     }
   else message_log (LOG_ERRNO, "Could not write to headline cache %s", RecordSyntax.c_str());
-  return GDT_FALSE;
+  return false;
 #else
   STRING s;
   int res = -1;
@@ -3394,7 +3394,7 @@ STRING IDB::LookupHeadlineCache(GPTYPE MdtIndex, const STRING& RecordSyntax) con
 #endif
 }
 
-GDT_BOOLEAN IDB::Headline(const RESULT& ResultRecord, const STRING& RecordSyntax,
+bool IDB::Headline(const RESULT& ResultRecord, const STRING& RecordSyntax,
 	PSTRING StringBuffer) const
 {
   if (RecordSyntax.IsEmpty())
@@ -3405,7 +3405,7 @@ GDT_BOOLEAN IDB::Headline(const RESULT& ResultRecord, const STRING& RecordSyntax
     {
       *StringBuffer = LookupHeadlineCache(ResultRecord.GetMdtIndex(), RecordSyntax);
       if (!StringBuffer->IsEmpty())
-	return GDT_TRUE;
+	return true;
     }
   PDOCTYPE DocTypePtr = GetDocTypePtr ( ResultRecord.GetDocumentType () );
   if (DocTypePtr)
@@ -3415,16 +3415,16 @@ GDT_BOOLEAN IDB::Headline(const RESULT& ResultRecord, const STRING& RecordSyntax
 	{
 	  if (!CacheDir.IsEmpty())
 	    CacheHeadline(ResultRecord.GetMdtIndex(), *StringBuffer, RecordSyntax);
-	  return GDT_TRUE;
+	  return true;
 	}
     }
 //cerr << "No Doctype pointer.. Failed" << endl;
   StringBuffer->Clear();
-  return GDT_FALSE;
+  return false;
 }
 
 // Show Headline ("B")..
-GDT_BOOLEAN IDB::Headline(const RESULT& ResultRecord, PSTRING StringBuffer) const
+bool IDB::Headline(const RESULT& ResultRecord, PSTRING StringBuffer) const
 {
 #if 1
   return Headline(ResultRecord, SutrsRecordSyntax, StringBuffer);
@@ -3433,13 +3433,13 @@ GDT_BOOLEAN IDB::Headline(const RESULT& ResultRecord, PSTRING StringBuffer) cons
   PDOCTYPE DocTypePtr = GetDocTypePtr ( ResultRecord.GetDocumentType () );
   if (DocTypePtr)
     return DocTypePtr->Headline (ResultRecord, StringBuffer);
-  return GDT_FALSE;
+  return false;
 #endif
 }
 
 
 // Context Match
-GDT_BOOLEAN IDB::Context(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
+bool IDB::Context(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
 	const STRING& Before, const STRING& After, STRING *TagName) const
 {
   return (&ResultRecord)->PresentBestContextHit(Line, Term, Before, After,
@@ -3447,7 +3447,7 @@ GDT_BOOLEAN IDB::Context(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
 }
 
 
-GDT_BOOLEAN IDB::XMLContext(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
+bool IDB::XMLContext(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
         const STRING& Tag) const
 {
   return (&ResultRecord)->XMLPresentFirstHit(Line, Tag, Term,
@@ -3456,24 +3456,24 @@ GDT_BOOLEAN IDB::XMLContext(const RESULT& ResultRecord, PSTRING Line, PSTRING Te
 
 
 // Record Summary (if available)
-GDT_BOOLEAN IDB::Summary(const RESULT& ResultRecord,
+bool IDB::Summary(const RESULT& ResultRecord,
   const STRING& RecordSyntax, PSTRING StringBuffer) const
 {
   PDOCTYPE DocTypePtr = GetDocTypePtr ( ResultRecord.GetDocumentType () );
   if (DocTypePtr)
     return DocTypePtr->Summary (ResultRecord, RecordSyntax, StringBuffer);
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN IDB::URL(const RESULT& ResultRecord, PSTRING StringBuffer,
-   GDT_BOOLEAN OnlyRemote) const
+bool IDB::URL(const RESULT& ResultRecord, PSTRING StringBuffer,
+   bool OnlyRemote) const
 {
   PDOCTYPE DocTypePtr = GetDocTypePtr ( ResultRecord.GetDocumentType () );
   if (DocTypePtr)
     {
       return DocTypePtr->URL (ResultRecord, StringBuffer, OnlyRemote);
     }
-  return GDT_FALSE;
+  return false;
 }
 
 void IDB::HighlightedRecord(const RESULT& ResultRecord,
@@ -3509,7 +3509,7 @@ void IDB::DocPresent (const RESULT& ResultRecord, const STRING& ElementSet,
     }
   if (ESet == LOCATION_MAGIC)
     {
-      if (URL(ResultRecord, &Cache, GDT_TRUE))
+      if (URL(ResultRecord, &Cache, true))
 	{
 	  // Redirect (this is also for proxy)
           StringBuffer->form("Status-Code: 302\nServer: NONMONOTONIC IB %s\nLocation: %s\r\n\r\n",
@@ -3740,15 +3740,15 @@ STRING IDB::GetVersionID () const
 //
 #define BOUNDARY '#'
 
-GDT_BOOLEAN IDB::AddRecord (const RECORD& NewRecord)
+bool IDB::AddRecord (const RECORD& NewRecord)
 {
   if (Parent && (NewRecord.GetSegment() != SegmentNumber))
     return Parent->AddRecord(NewRecord);
 
-  if (DbFileStem.IsEmpty()) return GDT_FALSE;
+  if (DbFileStem.IsEmpty()) return false;
 
 
-  GDT_BOOLEAN Result = GDT_FALSE;
+  bool Result = false;
   const STRING FileName ( NewRecord.GetFullFileName() );
   const off_t fileLength = GetFileSize(FileName);
   UINT4       End        = NewRecord.GetRecordEnd();
@@ -3779,7 +3779,7 @@ GDT_BOOLEAN IDB::AddRecord (const RECORD& NewRecord)
 	    message_log (LOG_ERRNO, "I/O Error appending to Indexing Queue \"%s\"!", IndexingQueueFn.c_str());
 	  } else {
 	    Queue1Add++;
-	    Result = GDT_TRUE;
+	    Result = true;
 	  }
 	  IDB::ffclose (fp);
 	} else
@@ -3803,7 +3803,7 @@ void IDB::SetMaximumRecordSize(INT value)
     {
       MainRegistry->ProfileWriteString(DbInfoSection, MaximumRecordSizeEntry, 
 	MaximumRecordSize);
-      DbInfoChanged = GDT_TRUE;
+      DbInfoChanged = true;
     }
 }
 
@@ -3846,9 +3846,9 @@ void IDB::DocTypeAddRecord (const RECORD& NewRecord)
   const STRING IndexingQueueFn( ComposeDbFn (DbExtIndexQueue2) );
 
   if (IndexingMemory == 0)
-    SetIndexingMemory (0, GDT_FALSE); // Set Memory
+    SetIndexingMemory (0, false); // Set Memory
 
-  GDT_BOOLEAN Ok = GDT_FALSE;
+  bool Ok = false;
   if ((fp = IDB::ffopen (IndexingQueueFn, "ab")) != NULL)
     {
       lockfd(fileno (fp), 0);
@@ -3875,14 +3875,14 @@ void IDB::DocTypeAddRecord (const RECORD& NewRecord)
 	      // Write it...
 	      Write ((BYTE)BOUNDARY, fp);
 	      record.Write (fp);
-	      Ok = GDT_TRUE;
+	      Ok = true;
 	    }
         }
       else if ((off_t)End - (off_t)Start > 2)
 	{
 	  Write ((BYTE)BOUNDARY, fp);
 	  NewRecord.Write (fp);
-	  Ok = GDT_TRUE;
+	  Ok = true;
 	}
 
       unlockfd(fileno (fp));
@@ -3919,7 +3919,7 @@ void IDB::DocTypeAddRecord (const RECORD& NewRecord)
 //
 //
 
-GDT_BOOLEAN IDB::Index (GDT_BOOLEAN newIndex)
+bool IDB::Index (bool newIndex)
 {
   STRING IqFnBak =  ComposeDbFn(_DbExt( ExtLAST ));
   if (FileExists(IqFnBak))
@@ -3939,7 +3939,7 @@ GDT_BOOLEAN IDB::Index (GDT_BOOLEAN newIndex)
 
   if (newIndex) 
     {
-      int bitChange = (compatible == GDT_FALSE);
+      int bitChange = (compatible == false);
 
       if (MainMdt == NULL)
 	message_log (LOG_ERROR, "Index with Nil MainMdt?");
@@ -3950,15 +3950,15 @@ GDT_BOOLEAN IDB::Index (GDT_BOOLEAN newIndex)
 	  if (FileExists(IqFn)) // Move
 	    if (RenameFile(IqFn, IqFnBak) == -1)
 	      message_log (LOG_ERROR|LOG_ERRNO, "Could not rename '%s' to '%s'", IqFn.c_str(), IqFnBak.c_str()); 
-	  if (KillAll() == GDT_FALSE)
-	    return GDT_FALSE;
+	  if (KillAll() == false)
+	    return false;
 	  if (FileExists(IqFnBak) && !FileExists(IqFn))
 	    if (RenameFile(IqFnBak, IqFn) == -1)
 	      message_log (LOG_ERROR|LOG_ERRNO, "Could not re-install '%s' to '%s'", IqFnBak.c_str(), IqFn.c_str());
 	}
       else if (bitChange)
 	{
-	  compatible = GDT_TRUE;
+	  compatible = true;
 	}
       if (bitChange)
 	message_log (LOG_INFO, "Indexing with %u-bits", (unsigned)( 8*sizeof(GPTYPE)));
@@ -3967,14 +3967,14 @@ GDT_BOOLEAN IDB::Index (GDT_BOOLEAN newIndex)
     {
       if (!compatible)
 	SetErrorCode(-8*(int)sizeof(GPTYPE));
-      return GDT_FALSE;
+      return false;
     }
-  if (Index1() == GDT_FALSE)
-    return GDT_FALSE;
+  if (Index1() == false)
+    return false;
   return Index2();
 }
 
-GDT_BOOLEAN IDB::Index1()
+bool IDB::Index1()
 {
 #if _NO_LOCKS
 #else
@@ -3982,13 +3982,13 @@ GDT_BOOLEAN IDB::Index1()
   if ((Lock(DbFileStem, L_WRITE) & L_WRITE) != L_WRITE)
     {
       message_log (LOG_NOTICE|LOG_ERROR, "Can't set lock for \"%s\".", (const char *)DbFileName);
-      return GDT_FALSE;
+      return false;
     }
 #endif
 
   IndexingStatus (IndexingStatusParsingFiles, 0, 0);
 
-  GDT_BOOLEAN setGlobalDoctype = GlobalDoctype.IsDefined() ? GDT_FALSE : GDT_TRUE;
+  bool setGlobalDoctype = GlobalDoctype.IsDefined() ? false : true;
 
   if (!setGlobalDoctype)
     BeforeIndexing ();
@@ -4011,7 +4011,7 @@ GDT_BOOLEAN IDB::Index1()
 	   // Read a record from file queue
 	  int errs = 0;
 	  do {
-	    if (Record.Read (fp) == GDT_TRUE) {
+	    if (Record.Read (fp) == true) {
 	      errs = 0;
 	      break;
 	    }
@@ -4031,7 +4031,7 @@ GDT_BOOLEAN IDB::Index1()
 		{
 		  SetGlobalDoctype (Doctype);
 		  BeforeIndexing();
-		  setGlobalDoctype = GDT_FALSE;
+		  setGlobalDoctype = false;
 		}
 	    }
 //cerr << "ParseRecords loop in IDB" << endl;
@@ -4058,15 +4058,15 @@ GDT_BOOLEAN IDB::Index1()
   if (UnLock(DbFileStem, L_WRITE) != L_WRITE)
     message_log (LOG_NOTICE|LOG_ERROR, "Can't reset lock for \"%s\".", (const char *)DbFileName);
 #endif
-  return GDT_TRUE;
+  return true;
 }
 
 
-GDT_BOOLEAN IDB::Index2()
+bool IDB::Index2()
 {
 #if _NO_LOCKS
 #else
-  GDT_BOOLEAN readlocked = GDT_FALSE;
+  bool readlocked = false;
   if (MainMdt->GetTotalEntries() == 0)
     readlocked = ( (Lock(DbFileStem, L_READ|L_WRITE) & L_READ) != 0);
   else
@@ -4081,7 +4081,7 @@ GDT_BOOLEAN IDB::Index2()
   if (DebugMode) message_log(LOG_INFO, "Pass(2) Queue contains %lu records. Total Records Queued = %lu",
 	Queue2Add, TotalRecordsQueued);
 
-  GDT_BOOLEAN result;
+  bool result;
   FILE       *fp;
 
   ffdispose(IqFn); // Don't want a cache, make sure closed
@@ -4106,7 +4106,7 @@ GDT_BOOLEAN IDB::Index2()
       if (MainIndex == NULL)
 	{
 	  message_log (LOG_PANIC, "MainIndex got lost in core space!?");
-	  result = GDT_FALSE;
+	  result = false;
 	}
       else
 	result = MainIndex->AddRecordList (fp);
@@ -4123,7 +4123,7 @@ GDT_BOOLEAN IDB::Index2()
   else
     {
       message_log (LOG_NOTICE, "No records, nothing to do!");
-      result = GDT_FALSE;
+      result = false;
     }
   TotalRecordsQueued = 0;
   MainFpt.CloseAll ();
@@ -4150,9 +4150,9 @@ void IDB::ParseRecords(RECORD& FileRecord)
 {
   if (DebugMode) message_log (LOG_DEBUG, "IDB::ParseRecords");
 
-  GDT_BOOLEAN needDate         = !FileRecord.GetDate().Ok();
-  GDT_BOOLEAN needDateCreated  = !FileRecord.GetDateCreated().Ok();
-  GDT_BOOLEAN needDateModified = !FileRecord.GetDateModified().Ok();
+  bool needDate         = !FileRecord.GetDate().Ok();
+  bool needDateCreated  = !FileRecord.GetDateCreated().Ok();
+  bool needDateModified = !FileRecord.GetDateModified().Ok();
 
   if (needDate || needDateCreated || needDateModified)
     {
@@ -4204,7 +4204,7 @@ void IDB::ParseFields (RECORD *Record)
       DOCTYPE *DocTypePtr = GetDocTypePtr ( Record->GetDocumentType () );
       if (DocTypePtr)
 	{
-	  Record->SetBadRecord(GDT_FALSE);
+	  Record->SetBadRecord(false);
 	  DocTypePtr->ParseFields (Record);
 #if 0
 	  if (__afterParseFieldsCallBack)
@@ -4212,7 +4212,7 @@ void IDB::ParseFields (RECORD *Record)
 #endif
 	}
       else message_log (LOG_PANIC, "Can't get Document Class pointer for %s",
-		Record->GetDocumentType().ClassName(GDT_TRUE).c_str());
+		Record->GetDocumentType().ClassName(true).c_str());
     }
 }
 
@@ -4272,10 +4272,10 @@ GPTYPE IDB::ParseWords(const DOCTYPE_ID& Doctype, UCHR* DataBuffer,
 }
 
 
-GDT_BOOLEAN IDB::IsSystemFile (const STRING& FileName)
+bool IDB::IsSystemFile (const STRING& FileName)
 {
 #ifndef _WIN32
-  if (FileName == "core") return GDT_TRUE ;
+  if (FileName == "core") return true ;
 #endif
   // Does the bases match?
   const STRINGINDEX pos = FileName.SearchReverse('.') - 1;
@@ -4284,14 +4284,14 @@ GDT_BOOLEAN IDB::IsSystemFile (const STRING& FileName)
       // Now really check...
       if (FileName.Compare(DbFileStem, pos))
 	{
-	  return GDT_FALSE;
+	  return false;
 	}
       const char *tcp = FileName.c_str() + pos;
        // Try to see if its a field table..
       // FCTs have 3 character extensions all digits
       if (_ib_isdigit(tcp[1]) && _ib_isdigit(tcp[2]) && _ib_isdigit(tcp[3]) && tcp[4] == '\0')
 	{
-	  return GDT_TRUE;
+	  return true;
 	}
 
       // Try all extensions..
@@ -4299,35 +4299,35 @@ GDT_BOOLEAN IDB::IsSystemFile (const STRING& FileName)
 
 #ifndef _WIN32
       // Don't want core dumps
-      if (ext.Equals(".core")) return GDT_TRUE;
+      if (ext.Equals(".core")) return true;
 #endif
 
       for (int x = (int)ExtFIRST; x <= (int)ExtLAST; x++)
 	{
 	  if (ext.Equals(_DbExt((DbExtensions)x)))
-	    return GDT_TRUE;
+	    return true;
 	}
       // A index related file?
       if (MainIndex && MainIndex->IsSystemFile(FileName))
-	return GDT_TRUE;
+	return true;
       // DFDT related file?
       if (MainDfdt &&  MainDfdt->IsSystemFile(FileName))
-	return GDT_TRUE;
+	return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN IDB::MergeIndexFiles()
+bool IDB::MergeIndexFiles()
 {
-  return MainIndex ? MainIndex->MergeIndexFiles() : GDT_FALSE;
+  return MainIndex ? MainIndex->MergeIndexFiles() : false;
 }
 
-GDT_BOOLEAN IDB::CollapseIndexFiles()
+bool IDB::CollapseIndexFiles()
 {
-  return MainIndex ? MainIndex->CollapseIndexFiles() : GDT_FALSE;
+  return MainIndex ? MainIndex->CollapseIndexFiles() : false;
 }
 
-GDT_BOOLEAN IDB::KillAll ()
+bool IDB::KillAll ()
 {
   SetErrorCode(0);
 #if _NO_LOCKS
@@ -4338,7 +4338,7 @@ GDT_BOOLEAN IDB::KillAll ()
     {
       SetErrorCode(29);
 //    message_log(LOG_NOTICE|LOG_INFO, "Database is locked by another process");
-      return GDT_FALSE; // Sorry, locked...
+      return false; // Sorry, locked...
     }
 #endif
   MainFpt.CloseAll (); // Close All files
@@ -4471,7 +4471,7 @@ GDT_BOOLEAN IDB::KillAll ()
 	  }
       }
   }
-  KillCache(GDT_FALSE);
+  KillCache(false);
 
 #ifndef _WIN32
   sync(); // Sync file system! (added edz Thu Sep  4 13:40:17 MET DST 1997) 
@@ -4481,7 +4481,7 @@ GDT_BOOLEAN IDB::KillAll ()
 
   // Re-init objects
 
-  compatible = GDT_TRUE;
+  compatible = true;
 
   // Index
   MainIndex = new INDEX (this, ComposeDbFn (DbExtIndex) );
@@ -4533,8 +4533,8 @@ GDT_BOOLEAN IDB::KillAll ()
   if (autoDeleteExpired)
     MainRegistry->ProfileWriteString(DbInfoSection, autoDeleteExpiredEntry, autoDeleteExpired);
 
-  DbInfoChanged = GDT_FALSE;
-  return GDT_TRUE;
+  DbInfoChanged = false;
+  return true;
 }
 
 void IDB::SetDocumentInfo (const INT Index, const RECORD& Record)
@@ -4543,7 +4543,7 @@ void IDB::SetDocumentInfo (const INT Index, const RECORD& Record)
   if (MainMdt->GetEntry (Index, &Mdtrec))
     {
       if (Record.IsBadRecord())
-	Mdtrec.SetDeleted ( GDT_TRUE ); 
+	Mdtrec.SetDeleted ( true ); 
       Mdtrec.SetDate( Record.GetDate() );
       Mdtrec.SetDateCreated ( Record.GetDateCreated() );
       Mdtrec.SetDateModified ( Record.GetDateModified() );
@@ -4565,7 +4565,7 @@ void IDB::SetDocumentInfo (const INT Index, const RECORD& Record)
   MainMdt->SetEntry (Index, Mdtrec);
 }
 
-GDT_BOOLEAN IDB::GetDocumentInfo (const INT Index, RECORD *RecordBuffer) const
+bool IDB::GetDocumentInfo (const INT Index, RECORD *RecordBuffer) const
 {
   MDTREC Mdtrec;
   if (MainMdt && MainMdt->GetEntry (Index, &Mdtrec))
@@ -4584,44 +4584,44 @@ GDT_BOOLEAN IDB::GetDocumentInfo (const INT Index, RECORD *RecordBuffer) const
 	  RecordBuffer->SetLocale (Mdtrec.GetLocale());
 	  // Here needs to go a call to a function that builds the DFT.
 	}
-      return GDT_TRUE;
+      return true;
     }
   if (RecordBuffer)
     RecordBuffer->Clear();
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN IDB::GetDocumentDeleted (const INT Index) const
+bool IDB::GetDocumentDeleted (const INT Index) const
 {
   return MainMdt->IsDeleted(Index);
 }
 
-GDT_BOOLEAN IDB::DeleteByIndex (const INT Index)
+bool IDB::DeleteByIndex (const INT Index)
 {
   return MainMdt->Delete(Index);
 }
 
-GDT_BOOLEAN IDB::UndeleteByIndex (const INT Index)
+bool IDB::UndeleteByIndex (const INT Index)
 {
   return MainMdt->UnDelete(Index);
 }
 
 
 
-GDT_BOOLEAN IDB::DeleteByKey (const STRING& Key)
+bool IDB::DeleteByKey (const STRING& Key)
 {
   const size_t x = MainMdt->LookupByKey (Key);
   if (x)
     return DeleteByIndex(x);
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN IDB::UndeleteByKey (const STRING& Key)
+bool IDB::UndeleteByKey (const STRING& Key)
 {
   const size_t x = MainMdt->LookupByKey (Key);
   if (x)
     return UndeleteByIndex(x);
-  return GDT_FALSE;
+  return false;
 }
 
 void IDB::MdtSetUniqueKey(RECORD *NewRecord, const STRING& Key)
@@ -4643,7 +4643,7 @@ void IDB::SetGlobalDoctype (const DOCTYPE_ID& NewGlobalDocType)
     {
       MainRegistry->ProfileWriteString(DbInfoSection, DocTypeEntry, NewGlobalDocType.Get());
       GlobalDoctype = NewGlobalDocType;
-      DbInfoChanged = GDT_TRUE;
+      DbInfoChanged = true;
     }
 }
 
@@ -4672,7 +4672,7 @@ void IDB::GetGlobalDocType (PSTRING StringBuffer) const
 void IDB::SetServerName(const STRING& ServerName)
 {
   MainRegistry->ProfileWriteString(DbInfoSection, "IP-Name", ServerName);
-  DbInfoChanged = GDT_TRUE;
+  DbInfoChanged = true;
 }
 
 // Return hostname[:port]
@@ -4720,7 +4720,7 @@ void IDB::SetGlobalStoplist (const STRING& NewStoplist)
     {
       StoplistFileName = NewStoplist;
       MainRegistry->ProfileWriteString(DbInfoSection, StoplistEntry, NewStoplist);
-      DbInfoChanged = GDT_TRUE;  
+      DbInfoChanged = true;  
       SetStoplist(StoplistFileName);
     }
 } 
@@ -4862,12 +4862,12 @@ IDB::~IDB ()
   Close();
 }
 
-GDT_BOOLEAN IDB::Close()
+bool IDB::Close()
 {
 //cerr << "** IDB Close " << endl;
 
   if (DbFileStem.IsEmpty() && MainRegistry == NULL && MainIndex == NULL && DocTypeReg == NULL)
-    return GDT_FALSE; // Already closed
+    return false; // Already closed
 
 //cerr << "Close " << DbFileStem << endl;
  
@@ -5003,7 +5003,7 @@ GDT_BOOLEAN IDB::Close()
   UnLock(DbFileStem, L_WRITE); // Unlock
 
 //cerr << "** CLOSED" << endl;
-  return GDT_TRUE;
+  return true;
 }
 
 INT IDB::GetVolume(PSTRING StrBufferPtr) const
@@ -5260,7 +5260,7 @@ FCT IDB::GetFieldFCT (const MDTREC& mdtrec, const STRING& FieldName)
 // [External Sort]
 // 1=filename path
 
-GDT_BOOLEAN IDB::BeforeSortIndex(int Which)
+bool IDB::BeforeSortIndex(int Which)
 {
   if (Which != ActiveSortIndex)
     {
@@ -5299,19 +5299,19 @@ GDT_BOOLEAN IDB::BeforeSortIndex(int Which)
   return (SortIndexFp != NULL);
 }
 
-GDT_BOOLEAN IDB::AfterSortIndex(int Which)
+bool IDB::AfterSortIndex(int Which)
 {
   if (Which == ActiveSortIndex || Which <= 0)
     {
       if (SortIndexFp) ffclose(SortIndexFp); // Close
       SortIndexFp = NULL;
       ActiveSortIndex = -1; // Bye Bye
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN IDB::SetSortIndexes(int Which, atomicIRSET *Irset)
+bool IDB::SetSortIndexes(int Which, atomicIRSET *Irset)
 {
   // Aren't a child of VIDB? Then we need/should handle it all..
   if (Parent == NULL)
@@ -5323,7 +5323,7 @@ GDT_BOOLEAN IDB::SetSortIndexes(int Which, atomicIRSET *Irset)
 	Irset->SetSortIndex(i, GetSortIndex(Which,  Irset->GetIndex(i)));
 
       AfterSortIndex(Which);
-      return GDT_TRUE;
+      return true;
     }
  else // Father knows best
     return Parent->SetSortIndexes(Which, Irset);
@@ -5348,7 +5348,7 @@ STRING IDB::XMLHitTable(const RESULT& Result)
   MDTREC mdtrec;
   const char *endl = "\n";
 
-  if ( MainMdt == NULL || MainMdt->GetEntry (Result.GetMdtIndex(), &mdtrec) == GDT_FALSE)
+  if ( MainMdt == NULL || MainMdt->GetEntry (Result.GetMdtIndex(), &mdtrec) == false)
     {
       message_log (LOG_ERROR, "IDB::XMLHitTable Can't resolve record!");
       return NulString;
@@ -5365,9 +5365,9 @@ STRING IDB::XMLHitTable(const RESULT& Result)
       STRING        Tag;
       STRING        lastTag;
       FC            lastPeerFC;
-      GDT_BOOLEAN   fulltext = GDT_FALSE;
+      bool   fulltext = false;
 
-      GDT_BOOLEAN firstTime = GDT_TRUE;
+      bool firstTime = true;
       XML << "<HITS UNITS=\"characters\" NUMBER=\"" << z << "\">" << endl;
       for (const FCLIST* ptr = hitList->Next(); ptr != hitList; ptr = ptr->Next())
         {
@@ -5381,13 +5381,13 @@ STRING IDB::XMLHitTable(const RESULT& Result)
 		  if (! firstTime)
 		    XML << ( lastTag.GetLength() ? "  </CONTAINER>" : "  </FULLTEXT>" ) << endl;
 		  else
-		    firstTime = GDT_FALSE;
+		    firstTime = false;
 		  if (Tag.GetLength())
 		    {
 			FIELDTYPE ft = GetFieldType(Tag);
 			STRING    value;
 
-			fulltext = GDT_FALSE;
+			fulltext = false;
 			XML << "  <CONTAINER NAME=\"" << Tag
 				<< "\" TYPE=\"" << ft.c_str()
 				<< "\" FC=\"(" << PeerFC.GetFieldStart() << ","
@@ -5399,7 +5399,7 @@ STRING IDB::XMLHitTable(const RESULT& Result)
 		  else
 		    {
 		      XML << "  <FULLTEXT>" << endl;
-		      fulltext = GDT_TRUE;
+		      fulltext = true;
 		    }
 		  lastPeerFC = PeerFC;
 		  lastTag    = Tag;
@@ -5442,7 +5442,7 @@ PIRSET IDB::SearchSmart(const QUERY& Query, const STRING& DefaultField, SQUERY *
 
   STRING QueryString;
 
-  if (nQuery.isPlainQuery(&QueryString) == GDT_FALSE)
+  if (nQuery.isPlainQuery(&QueryString) == false)
     {
       if (SqueryPtr) *SqueryPtr = Query.GetSQUERY(); // 17 Dec 2007
       return Search(nQuery);
@@ -5469,7 +5469,7 @@ PIRSET IDB::SearchSmart(const QUERY& Query, const STRING& DefaultField, SQUERY *
     }
   if (pIrset == NULL)
     {
-      GDT_BOOLEAN res;
+      bool res;
       STRING      field (DefaultField);
       // Search as Peer
       if (field.Trim(STRING::both).IsEmpty())

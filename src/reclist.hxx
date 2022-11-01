@@ -18,7 +18,7 @@ public:
   RECLIST();
 
   void AddEntry(const RECORD& RecordEntry);
-  GDT_BOOLEAN GetEntry(const size_t Index, PRECORD RecordEntry) const;
+  bool GetEntry(const size_t Index, PRECORD RecordEntry) const;
 
   const RECORD operator[](size_t n) const { return Table[n]; }
   RECORD& operator[](size_t n)            { return Table[n]; }
@@ -28,7 +28,7 @@ public:
   void Resize(const size_t Entries);
   size_t GetTotalEntries() const;
   void Write(PFILE Fp) const;
-  GDT_BOOLEAN Read(PFILE Fp);
+  bool Read(PFILE Fp);
   ~RECLIST();
 private:
   PRECORD Table;
@@ -43,7 +43,7 @@ inline void Write(const RECLIST& Reclist, PFILE Fp)
   Reclist.Write(Fp);
 }
 
-inline GDT_BOOLEAN Read(PRECLIST ReclistPtr, PFILE Fp)
+inline bool Read(PRECLIST ReclistPtr, PFILE Fp)
 {
   return ReclistPtr->Read(Fp);
 }

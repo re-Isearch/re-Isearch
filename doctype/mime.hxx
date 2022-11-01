@@ -17,11 +17,11 @@ public:
   STRING Summary() const  { return summary;     }
 
 
-  GDT_BOOLEAN Doctype(PSTRING StringBufferPtr);
-  GDT_BOOLEAN Author(PSTRING StringBufferPtr);
-  GDT_BOOLEAN MimeType(PSTRING StringBufferPtr);
-  GDT_BOOLEAN FormatDesc(PSTRING StringBufferPtr);
-  GDT_BOOLEAN Summary(PSTRING StringBufferPtr);
+  bool Doctype(PSTRING StringBufferPtr);
+  bool Author(PSTRING StringBufferPtr);
+  bool MimeType(PSTRING StringBufferPtr);
+  bool FormatDesc(PSTRING StringBufferPtr);
+  bool Summary(PSTRING StringBufferPtr);
 
   ~FILETYP ();
 private:

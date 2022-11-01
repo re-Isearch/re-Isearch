@@ -2,12 +2,18 @@
 Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
 It is made available and licensed under the Apache 2.0 license: see LICENSE
 */
+#define __RECORDSYNTAX
+#include <stdlib.h>
+#include "common.hxx"
+#include "string.hxx"
 #include "dictionary.hxx"
 #include "recordsyntax.hxx"
 
 #pragma ident  "%Z%%Y%%M%  %I% %G% %U% BSN"
 
-static struct {
+
+using namespace Syntax;
+static const struct {
   RecordSyntax_t     syntax;
   const char        *oid;
 } RecordSyntaxes[] = {
@@ -89,17 +95,17 @@ static struct {
 
 
 
-class RecordSyntax : public Object
+class RecordSyntaxDict : public Object
 {
 public:
-  RecordSyntax() {
+  RecordSyntaxDict() {
     trans = new Dictionary();
     for (size_t i = 0; i < SIZEOF(RecordSyntaxes); i++)
       {
-        trans->Add(STRING(RecordSyntaxes[i].oid), (Object *)((unsigned)RecordSyntaxes[i].syntax);
+        trans->Add(RecordSyntaxes[i].oid, (Object *)(RecordSyntaxes[i].syntax) );
       }
   };
-  ~RecordSyntax() {
+  ~RecordSyntaxDict() {
     trans->Release();
     delete trans;
   };
@@ -109,7 +115,7 @@ private:
   Dictionary    *trans;
 };
 
-static RecordSyntax InternalOID;
+static RecordSyntaxDict InternalOID;
 
 
 RecordSyntax_t RecordSyntaxID(const STRING& String)
@@ -126,22 +132,36 @@ RecordSyntax_t RecordSyntaxID(const STRING& String)
   return (r == 0 ? DefaultRecordSyntax : (RecordSyntax_t)(long)(r));
 }
 
+
+bool   RegisteredRecordSyntaxID(int Id)
+{
+  return (Id > 0 || Id < SIZEOF(RecordSyntaxes));
+}
+
 const char    *ID2RecordSyntax(RecordSyntax_t Id)
 {
   int pos = (int)Id;
-  if (pos > 0 || pos < SIZEOF(RecordSyntaxes))
-    return RecordSyntaxes[pos-1].oid;
+  if (RegisteredRecordSyntaxID(pos))
+    return RecordSyntaxes[pos].oid;
   return "Unregistered Syntax";
 }
 
-#ifdef MAIN_STUB
-main(int argc, char **argv)
+const char *RecordSyntaxCannonical(const STRING& String,  RecordSyntax_t Default)
 {
-  char *oid = argv[1] ? argv[1] : "HTML";
+  RecordSyntax_t syntax = RecordSyntaxID(String);
+  if (syntax == DefaultRecordSyntax) syntax = Default;
+  return ID2RecordSyntax (syntax);
+}
+
+
+
+#ifdef MAIN_STUB
+int main(int argc, char **argv)
+{
+  const char *oid = argv[1] ? argv[1] : "HTML";
   int   id  = (int)RecordSyntaxID(oid);
 
   printf("%s = %d, %s\n", oid, id, ID2RecordSyntax((RecordSyntax_t)id));
 }
-
 
 #endif

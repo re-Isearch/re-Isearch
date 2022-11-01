@@ -14,7 +14,7 @@ Description:	Class VLIST - Doubly Linked Circular List Base Class
 class VLIST {
 public:
   VLIST();
-  virtual GDT_BOOLEAN IsEmpty() const;
+  virtual bool IsEmpty() const;
   virtual void   Clear();
   virtual void   Empty() { Clear(); };
   virtual void   EraseAfter(const size_t Index);

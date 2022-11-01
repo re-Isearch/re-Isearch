@@ -131,7 +131,7 @@ Present (const RESULT& ResultRecord, const STRING& ElementSet, const STRING& Rec
 	      else if (x)
 		S.Cat ("...");
 	      if (RecordSyntax == HtmlRecordSyntax)
-		HtmlCat(S, StringBuffer, GDT_FALSE);
+		HtmlCat(S, StringBuffer, false);
 	      else
 		StringBuffer->Cat(S);
 	    }
@@ -179,10 +179,10 @@ Present (const RESULT& ResultRecord, const STRING& ElementSet, const STRING& Rec
 	  if (title.GetLength())
 	    {
 	      StringBuffer->Cat ("\" TITLE=\"");
-	      HtmlCat(title, StringBuffer, GDT_FALSE);
+	      HtmlCat(title, StringBuffer, false);
 	    }
 	  StringBuffer->Cat ("\">");
-	  HtmlCat(Value, StringBuffer, GDT_FALSE);
+	  HtmlCat(Value, StringBuffer, false);
 	  StringBuffer->Cat("</A>");
 	}
     }

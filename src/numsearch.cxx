@@ -84,7 +84,7 @@ void INDEX::SortNumericFieldData()
     FieldType = DfdRecord.GetFieldType();
     if (FieldType.IsText())
       continue;
-    if (Parent->DfdtGetFileName(DfdRecord,&Fn) == GDT_FALSE)
+    if (Parent->DfdtGetFileName(DfdRecord,&Fn) == false)
       {
         message_log (LOG_ERROR, "Could not find %s [%s] in DFD", DfdRecord.GetFieldName().c_str(), FieldType.c_str());
         continue; // ERROR
@@ -98,8 +98,8 @@ void INDEX::SortNumericFieldData()
 
     message_log (LOG_INFO, "Creating %s [%s]", DfdRecord.GetFieldName().c_str(), FieldType.c_str());
 
-//  GDT_BOOLEAN    IsNumeric() const { return Type == numerical || Type == computed || Type == currency || Type == dotnumber; }
-//  GDT_BOOLEAN    IsNumerical() const{ return Type == numerical || Type == ttl; }
+//  bool    IsNumeric() const { return Type == numerical || Type == computed || Type == currency || Type == dotnumber; }
+//  bool    IsNumerical() const{ return Type == numerical || Type == ttl; }
 
     if (FieldType.IsNumerical() || FieldType.IsComputed() || FieldType.IsPhonetic() ||
 		FieldType.IsHash() || FieldType.IsCaseHash() || FieldType.IsPrivHash() ||
@@ -139,7 +139,7 @@ void INDEX::SortNumericFieldData()
   return;
 }
 
-PIRSET INDEX::HashSearch(const STRING& Contents, const STRING& FieldName, INT4 Relation, GDT_BOOLEAN useCase)
+PIRSET INDEX::HashSearch(const STRING& Contents, const STRING& FieldName, INT4 Relation, bool useCase)
 {
   const NUMERICOBJ  fKey = useCase ? encodeCaseHash(Contents) : encodeHash(Contents);
   message_log (LOG_DEBUG, "Numeric search Hash(\"%s\")->%F", Contents.c_str(), (double)fKey);
@@ -576,7 +576,7 @@ PIRSET INDEX::NumericSearch(const NUMBER fKey, const STRING& FieldName, INT4 Rel
   iresult.SetScore (0);
 
 
-  {GDT_BOOLEAN isDeleted = GDT_FALSE;
+  {bool isDeleted = false;
   SRCH_DATE   rec_date;
   FILE *fp = ffopen(TextFn, "rb");
 
@@ -598,7 +598,7 @@ PIRSET INDEX::NumericSearch(const NUMBER fKey, const STRING& FieldName, INT4 Rel
           rec_date = mdtrec.GetDate ();
           isDeleted = mdtrec.GetDeleted ();
         } else {
-          isDeleted = GDT_TRUE;
+          isDeleted = true;
         }
         old_w = w;
       }
@@ -623,7 +623,7 @@ PIRSET INDEX::NumericSearch(const NUMBER fKey, const STRING& FieldName, INT4 Rel
 
 //  pirset->SortBy(ByIndex);
 
-  pirset->MergeEntries ( GDT_TRUE );
+  pirset->MergeEntries ( true );
 
 #if DEBUG
   cerr << "Got " << pirset->GetTotalEntries() << " entries" << endl;

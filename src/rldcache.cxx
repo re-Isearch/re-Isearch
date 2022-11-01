@@ -22,6 +22,12 @@ Notes:          Converted to C++ class by A. Warnock (warnock@clark.net)
 
 #include "common.hxx"
 
+
+#ifdef NO_RLDCACHE
+
+#pragma message "This version is without RLDCACHE (NO_RLDCACHE is set"
+
+#else
 // Uses Berkeley DB
 # include "db.h"
 
@@ -30,12 +36,21 @@ Notes:          Converted to C++ class by A. Warnock (warnock@clark.net)
 
 #include "rldcache.hxx"
 
-char GTime[256];
-FILE *rldcache_log;
-int GPid;
 
-#define RLDCACHE_LOGFILE "/tmp/rldcache.log"
+static const char file_template[] ="rldcacheXXXXXX";
 
+
+#define RLDCACHE_DEBUG 0
+
+#if RLDCACHE_DEBUG
+static FILE *rldcache_log;
+static int GPid;
+static const char *logfile = "/tmp/rldcache.log";
+#endif
+
+
+// Use RFC date/time format (alternative is ISOdate )
+#define DATE_STRING ::RFCdate(0)
 
 /*
 
@@ -65,7 +80,7 @@ RLDCACHE::RLDCACHE()
   TTL=0;
   dbp = NULL;
   CacheState=NO_CACHE;
-  CreateInit(STRING().form("/tmp/rldcache_%ld.db", (long)getpid() ), GDT_FALSE);
+  CreateInit(STRING().form("/tmp/rldcache_%ld.db", (long)getpid() ), false);
 }
 
 
@@ -74,11 +89,11 @@ RLDCACHE::RLDCACHE(const STRING& NewPath)
   TTL=0;
   dbp=NULL;
   CacheState=NO_CACHE;
-  CreateInit(NewPath, GDT_FALSE);
+  CreateInit(NewPath, false);
 }
 
 
-RLDCACHE::RLDCACHE(const STRING& NewPath, GDT_BOOLEAN ForceNew) 
+RLDCACHE::RLDCACHE(const STRING& NewPath, bool ForceNew) 
 {
   TTL=0;
   dbp=NULL;
@@ -94,7 +109,7 @@ Pre:	Path is the location of the file cache.
 Notes:	Looks in directory Path for a file named rldcache.dat and reads
 	current cache information.
 */
-void RLDCACHE::CreateInit(const STRING& NewPath, GDT_BOOLEAN ForceNew)
+void RLDCACHE::CreateInit(const STRING& NewPath, bool ForceNew)
 {
   struct stat Stats;
   INT         read_write;
@@ -113,7 +128,9 @@ void RLDCACHE::CreateInit(const STRING& NewPath, GDT_BOOLEAN ForceNew)
   // Build the class path variable  
   DataFile= NewPath;
 
-#if 0
+  // cerr << "DATAFILE = " << DataFile << endl;
+
+#if 1
   if ((ret = db_create(&dbp, NULL, 0)) != 0)
     {
       // Not created - bail out
@@ -140,7 +157,7 @@ void RLDCACHE::CreateInit(const STRING& NewPath, GDT_BOOLEAN ForceNew)
       message_log (LOG_ERRNO, "RLDCACHE::CreateInit '%s' not a regular file?", DataFile.c_str());
       return;
     } 
-#ifdef RLDCACHE_DEBUG
+#if RLDCACHE_DEBUG
 cerr << "Open old.." << endl;
 #endif
 
@@ -149,7 +166,7 @@ cerr << "Open old.." << endl;
     read_write = 0; // DBM does not need any special flags
     CacheState = CacheOpen(read_write);
     if (CacheState != OPEN_WRITE) {
-#ifdef RLDCACHE_DEBUG
+#if RLDCACHE_DEBUG
 cerr << "Readonly?" << endl;
 #endif
       // Maybe it belongs to someone else - see if we can open
@@ -163,13 +180,12 @@ cerr << "Readonly?" << endl;
     } 
   }
 
-#ifdef RLDCACHE_DEBUG
+#if RLDCACHE_DEBUG
   cerr << "Debug..." << endl;
   GPid = getpid();
-  rldcache_log = fopen(RLDCACHE_LOGFILE, "a");
-  strbox_TheTime(GTime);
-  fprintf(rldcache_log, "%s %i *********** New Process [%i] *********\n",
-	  strbox_TheTime(),GPid, GPid);
+  rldcache_log = fopen(logfile, "a");
+  if (rldcache_log) fprintf(rldcache_log, "%s %i *********** New Process [%i] *********\n", DATE_STRING,   GPid, GPid);
+  else message_log (LOG_ERROR, "Could not open log file %s", logfile);
 #endif
   //  CacheClose();
   return;
@@ -181,7 +197,7 @@ RLD_State RLDCACHE::CacheOpen(INT read_write)
   INT mode=0664;
   INT ret;
 
-#ifdef RLDCACHE_DEBUG
+#if RLDCACHE_DEBUG
 cerr << "CacheOpen.." << endl;
 #endif
 
@@ -199,7 +215,7 @@ cerr << "CacheOpen.." << endl;
 
   // If the database is closed, just open it as requested
   if ((CacheState == CLOSED) || (CacheState == NO_CACHE)) {
-#ifdef RLDCACHE_DEBUG
+#if RLDCACHE_DEBUG
 cerr << "Open.. " << endl;
 #endif
     if (
@@ -217,7 +233,7 @@ cerr << "Open.. " << endl;
 			 0664)) != 0
 #endif
 					) {
-#ifdef RLDCACHE_DEBUG
+#if RLDCACHE_DEBUG
 cerr << "Nope!" << endl;
 #endif
 #if !NOCODE_XX
@@ -228,14 +244,14 @@ cerr << "Nope!" << endl;
       return CacheState;
     }
   } 
-#ifdef RLDCACHE_DEBUG
+#if RLDCACHE_DEBUG
 cerr << "Got it!" << endl;
 #endif
   CacheState = OPEN_WRITE;
 
   if (read_write == OPEN_READ) {
     CacheState = OPEN_READ;
-#ifdef RLDCACHE_DEBUG
+#if RLDCACHE_DEBUG
     cerr << "Cache opened readonly" << endl;
 #endif
     return CacheState;
@@ -274,12 +290,13 @@ void RLDCACHE::Delete()
     return;
   if (!DataFile.IsEmpty())
     {
+      message_log (LOG_DEBUG, "Removing BDB %s", DataFile.c_str());
       DeleteFiles(0L);
       CacheClose();
       unlink(DataFile);
     }
-#ifdef RLDCACHE_DEBUG
-  fclose(rldcache_log);
+#if RLDCACHE_DEBUG
+  if (rldcache_log) fclose(rldcache_log);
 #endif
   return;
 }
@@ -314,19 +331,18 @@ BYTE* RLDCACHE::GetFile(const STRING& File, INT Start, INT Count, size_t *Len, t
 
   if (!InCache) {
 
-#ifdef RLDCACHE_DEBUG
+#if RLDCACHE_DEBUG
 cerr << File << " Not in Cache" << endl;
 #endif
 
-#ifdef RLDCACHE_DEBUG
-    strbox_TheTime(GTime);
-    fprintf(rldcache_log, "%s %i Checking in/out [%s]\n", GTime, GPid, File);
+#if RLDCACHE_DEBUG
+    if (rldcache_log) fprintf(rldcache_log, "%s %i Checking in/out [%s]\n", DATE_STRING, GPid, File.c_str());
 #endif
 
     State = NEW_ENTRY;
 
   } else {
-#ifdef RLDCACHE_DEBUG
+#if RLDCACHE_DEBUG
 cerr << "Get " << File << " from Cache" << endl;
 #endif
     // Has the TTL expired?
@@ -339,17 +355,15 @@ cerr << "Get " << File << " from Cache" << endl;
       if((CurTime - NewEntry->_TimeStamp) > ttl) {
 	// Yes, document has expired.  Get a fresh copy
 
-#ifdef RLDCACHE_DEBUG
-	strbox_TheTime(GTime);
-	fprintf(rldcache_log, "%s %i Refreshing [%s]\n", GTime, GPid, File);
+#if RLDCACHE_DEBUG
+	if (rldcache_log) fprintf(rldcache_log, "%s %i Refreshing [%s]\n", DATE_STRING, GPid, File.c_str());
 #endif
 
 	State = UPDATE_ENTRY;
       } else {
 
-#ifdef RLDCACHE_DEBUG
-	strbox_TheTime(GTime);
-	fprintf(rldcache_log, "%s %i Checking out [%s]\n", GTime, GPid, File);
+#if RLDCACHE_DEBUG
+	if (rldcache_log) fprintf(rldcache_log, "%s %i Checking out [%s]\n", DATE_STRING, GPid, File.c_str());
 #endif
 	
 	State = CORRECT_ENTRY;
@@ -362,14 +376,16 @@ cerr << "Get " << File << " from Cache" << endl;
     RLDENTRY Entry;
 #if 0
     int fd = mkstemp("rldcacheXXXXXX");
-
 #else
-    char     scratch[ L_tmpnam+1];
-    char    *TmpName = tmpnam( scratch );
+    char     scratch[ sizeof(file_template) + 1];
+
+    strcpy(scratch, file_template);
+    char *TmpName = mktemp (scratch);
     if ((fp = fopen(TmpName, "w")) == NULL) {
       message_log (LOG_ERRNO, "RLDCACHE::GetFile: Can''t open '%s'", TmpName);
       return NULL;
     }
+    message_log (LOG_DEBUG, "Using %s for rldcache", TmpName);
 #endif
     // Retrieve the file by URL and stuff in into the file TmpName
     if ((err=ResolveURL(File,fp, Len)) <= 0) {
@@ -395,12 +411,12 @@ cerr << "Get " << File << " from Cache" << endl;
     }
   }
   // Requested file is in the cache now
-#ifdef RLDCACHE_DEBUG
+#if RLDCACHE_DEBUG
 cerr << "File in the cache now.." << endl;
 #endif
 
-#ifdef RLDCACHE_DEBUG
-  rldentry_Print(NewEntry, stdout);
+#if RLDCACHE_DEBUG
+  NewEntry->Print (stdout);
 #endif
 
   buf = new BYTE[NewEntry->_Length];
@@ -434,7 +450,7 @@ cerr << "File in the cache now.." << endl;
 //Pre:	Name is a URL or local file name
 PRLDENTRY RLDCACHE::GetEntryByName(const STRING& Name)
 {
-/*
+#if 0
   RLDENTRY *Entry =  new RLDENTRY;
   INT       err;
   datum     dbm_key, return_data;
@@ -471,13 +487,13 @@ PRLDENTRY RLDCACHE::GetEntryByName(const STRING& Name)
     
     return Entry;
   }
-*/
+#endif
   return NULL_RLDENTRY;
 }
 
 
 //Pre:	Name is a URL or local file name
-GDT_BOOLEAN RLDCACHE::EntryExists(const STRING& Name)
+bool RLDCACHE::EntryExists(const STRING& Name)
 {
 /*
   RLDENTRY *Entry;
@@ -491,7 +507,7 @@ GDT_BOOLEAN RLDCACHE::EntryExists(const STRING& Name)
 
   if (CacheState == CLOSED) {
     message_log (LOG_ERRNO, "RLDCACHE::EntryExists: %s", DataFile.c_str());
-    return GDT_FALSE;
+    return false;
   }
 
   pkey = Name;
@@ -500,11 +516,11 @@ GDT_BOOLEAN RLDCACHE::EntryExists(const STRING& Name)
   ret = gdbm_exists(dbf, dbm_key);
 
   if (ret==1)
-    return GDT_TRUE;
+    return true;
   else
-    return GDT_FALSE;
+    return false;
 */
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -856,3 +872,4 @@ RLDENTRY::~RLDENTRY()
 {
 }
 
+#endif

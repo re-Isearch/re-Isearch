@@ -22,12 +22,16 @@ Description:   Command-line utility for Isearch databases
 #endif
 #include "registry.hxx"
 
+
+#include "io.hxx"
+
 extern "C" {
   int _Iutil_main(int argc, char **argv);
 };
 
 int _Iutil_main(int argc, char **argv)
 {
+
 #ifdef __GNUG__
   // cout is a performance disaster in libg++ unless we do this.
   ios::sync_with_stdio (0);
@@ -157,7 +161,7 @@ int _Iutil_main(int argc, char **argv)
 
   if (argv0 == NULL) argv0 = (char *)"Iutil";
 
-   __Register_IB_Application(argv0,  stderr, GDT_FALSE);
+   __Register_IB_Application(argv0,  stderr, false);
 #define DEF_LOG (LOG_PANIC|LOG_FATAL|LOG_ERROR|LOG_ERRNO|LOG_WARN|LOG_NOTICE|LOG_INFO)
   log_init(DEF_LOG, argv[0], stderr);
   while (x < argc) {
@@ -468,6 +472,17 @@ int _Iutil_main(int argc, char **argv)
     }
     x++;
   }
+
+
+
+ //IO remote("http://www.bsn.com/");
+ //char buff[1026];
+ //int result = remote.read(buff, 1024, 1);
+ //cerr << ">" << result << endl;
+ //IO remote2("http://www.bsn.com/");
+
+
+
   message_log (LOG_INFO, "Iutil %s (%s)", __IB_Version, __HostPlatform);
   if (DBName.IsEmpty()) {
     DBName = __IB_DefaultDbName;
@@ -601,7 +616,7 @@ int _Iutil_main(int argc, char **argv)
       if (expired)
 	cout << expired << " records were expired and marked as deleted." << endl;
   }
-  if (AutoDelete != -1) pdb-> setAutoDeleteExpired( AutoDelete ? GDT_TRUE : GDT_FALSE);
+  if (AutoDelete != -1) pdb-> setAutoDeleteExpired( AutoDelete ? true : false);
 
   if (ViewInfo) {
     if (RecordID.IsEmpty()) {
@@ -676,7 +691,7 @@ int _Iutil_main(int argc, char **argv)
   }
   if (Synonyms) {
     THESAURUS MyThesaurus;
-    if (MyThesaurus.Compile(SynonymFileName, DBName, GDT_TRUE))
+    if (MyThesaurus.Compile(SynonymFileName, DBName, true))
       message_log (LOG_INFO, "Thesaurus '%s' compiled.", SynonymFileName.c_str());
     else
       message_log (LOG_ERROR, "Compile of thesaurus '%s' failed.", SynonymFileName.c_str());
@@ -758,7 +773,7 @@ int _Iutil_main(int argc, char **argv)
 	  } else {
 	    NewPath = s;
 	  }
-	  Record.SetPath(NewPath.Trim(GDT_TRUE));
+	  Record.SetPath(NewPath.Trim(true));
 	  OldPath += "=";
 	  OldPath += NewPath;
 	  PathList.AddEntry(OldPath);
@@ -782,7 +797,7 @@ int _Iutil_main(int argc, char **argv)
       RootDir = pdb->GetWorkingDirectory();
 
     if (!IsRootDirectory(RootDir)) {
-      pdb->setUseRelativePaths(GDT_TRUE);
+      pdb->setUseRelativePaths(true);
       message_log (LOG_INFO, "Relativizing around '%s' (%d records)", RootDir.c_str(), y);
       for (INT x = 1; x <= y; x++) {
         pdb->GetDocumentInfo(x, &Record);

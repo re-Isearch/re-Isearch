@@ -46,30 +46,30 @@ static const STRING DatabaseListFileEntry ("vdb-file");
 //
 
 #define Init() { MainDfdt = NULL; c_dbcount = 0; c_dblist = NULL; c_irsetlist = NULL; c_rsetlist = NULL;\
-	 MainRegistry = NULL; Opened = GDT_FALSE; c_inconsistent_doctypes = GDT_FALSE; }
+	 MainRegistry = NULL; Opened = false; c_inconsistent_doctypes = false; }
 
 
 VIDB::VIDB()
 {
   Init();
-// Open (NulString, NulStrlist, GDT_TRUE);
+// Open (NulString, NulStrlist, true);
 }
 
 VIDB::VIDB(const STRING& DBName)
 {
   Init();
-  Open (DBName, NulStrlist, GDT_TRUE);
+  Open (DBName, NulStrlist, true);
 }
 
 
 VIDB::VIDB(const STRING& DBName, REGISTRY *Registry)
 {
   Init();
-  Open (DBName, NulStrlist, GDT_TRUE);
+  Open (DBName, NulStrlist, true);
 }
 
 
-VIDB::VIDB(const STRING& DBName, GDT_BOOLEAN Searching)
+VIDB::VIDB(const STRING& DBName, bool Searching)
 {
   Init();
   Open (DBName, NulStrlist, Searching);
@@ -79,11 +79,11 @@ VIDB::VIDB(const STRING& DBName, GDT_BOOLEAN Searching)
 VIDB::VIDB(const STRING& DBName, const STRLIST& NewDocTypeOptions)
 {
   Init();
-  Open (DBName, NewDocTypeOptions, GDT_TRUE);
+  Open (DBName, NewDocTypeOptions, true);
 }
 
 
-VIDB::VIDB(const STRING& DBName, const STRLIST& NewDocTypeOptions, const GDT_BOOLEAN Searching)
+VIDB::VIDB(const STRING& DBName, const STRLIST& NewDocTypeOptions, const bool Searching)
 {
   Init();
   Open (DBName, NewDocTypeOptions, Searching);
@@ -93,12 +93,12 @@ VIDB::VIDB (const STRING& NewPathName, const STRING& NewFileName,
       const STRLIST& NewDocTypeOptions)
 {
   Init();
-  Open (NewPathName, NewFileName, NewDocTypeOptions, GDT_TRUE);
+  Open (NewPathName, NewFileName, NewDocTypeOptions, true);
 }
 
 
 VIDB::VIDB (const STRING& NewPathName, const STRING& NewFileName,
-      const STRLIST& NewDocTypeOptions, const GDT_BOOLEAN Searching)
+      const STRLIST& NewDocTypeOptions, const bool Searching)
 {
   Init();
   Open (NewPathName, NewFileName, NewDocTypeOptions, Searching);
@@ -110,11 +110,11 @@ VIDB::VIDB (const STRING& NewPathName, const STRING& NewFileName,
 VIDB::VIDB (const STRING& NewPathName, const STRING& NewFileName)
 {
   Init();
-  Open (NewPathName, NewFileName, NulStrlist, GDT_TRUE);
+  Open (NewPathName, NewFileName, NulStrlist, true);
 }
 
 VIDB::VIDB (const STRING& NewPathName, const STRING& NewFileName,
-	GDT_BOOLEAN Searching)
+	bool Searching)
 {
   Init();
   Open (NewPathName, NewFileName, NulStrlist, Searching);
@@ -134,8 +134,8 @@ VIDB::VIDB (const STRING& NewPathName, const STRING& NewFileName,
 // Each database MUST be indexed with the same doctype or this will
 // fail! -- @@@ edz@nonmonotonic.com: Not sure of that!
 //
-GDT_BOOLEAN VIDB::Open (const STRING& DBname, const STRLIST& NewDocTypeOptions,
-	const GDT_BOOLEAN SearchOnly)
+bool VIDB::Open (const STRING& DBname, const STRLIST& NewDocTypeOptions,
+	const bool SearchOnly)
 {
   message_log (LOG_DEBUG, "VIDB::Open('%s',..,%d)", DBname.c_str(), SearchOnly);
   size_t t = DBname.Search("<");
@@ -191,7 +191,7 @@ static STRLIST& CollectDBs(STRLIST *FilenameList, const STRING& Path)
       message_log(LOG_DEBUG, "Opening '%s'", ini.c_str());
       if ((Fp = fopen(ini, "r")) != NULL) {
 	REGISTRY        Registry("VirtualIsearch");
-	GDT_BOOLEAN     loaded = Registry.Read(Fp);
+	bool     loaded = Registry.Read(Fp);
 	fclose(Fp);
 	if (!loaded)
 	  continue;
@@ -271,23 +271,23 @@ static size_t ReadFromFile(const STRING& vdb, STRLIST *FilenameListPtr, int dept
   return DatabaseCount;
 }
 
-GDT_BOOLEAN VIDB::Open (const STRING& NewPathName, const STRING& NewFileName,
-	const STRLIST& NewDocTypeOptions, const GDT_BOOLEAN SearchOnly)
+bool VIDB::Open (const STRING& NewPathName, const STRING& NewFileName,
+	const STRLIST& NewDocTypeOptions, const bool SearchOnly)
 {
   return Open(NewPathName, NewFileName, NewDocTypeOptions, SearchOnly, NulString);
 }
 
 
-GDT_BOOLEAN VIDB::Open(const STRING& NewPathName, const STRING& NewFileName,
-            const STRLIST& NewDocTypeOptions, const GDT_BOOLEAN SearchOnly, const STRING& XMLBuffer)
+bool VIDB::Open(const STRING& NewPathName, const STRING& NewFileName,
+            const STRLIST& NewDocTypeOptions, const bool SearchOnly, const STRING& XMLBuffer)
 {
   if (Opened)
     {
-      if (Close() == GDT_FALSE)
-	return GDT_FALSE;
+      if (Close() == false)
+	return false;
     }
 
-  Opened = GDT_TRUE;
+  Opened = true;
 
   message_log (LOG_DEBUG, "Initializing virtual DB \"%s%s\" ",  NewPathName.c_str(), NewFileName.c_str());
 
@@ -401,7 +401,7 @@ A virtual database may contain a MAX. of %u databases!", DatabaseCount, VolIndex
   //
   // Load each database
   //
-  c_inconsistent_doctypes = GDT_FALSE;
+  c_inconsistent_doctypes = false;
   c_dbcount = 0;
   MainDfdt = NULL;
 
@@ -411,11 +411,16 @@ A virtual database may contain a MAX. of %u databases!", DatabaseCount, VolIndex
 	continue;
       const STRING Fn = IsAbsoluteFilePath(p->Value()) ? p->Value() : DbPathName + p->Value();
 
+ #ifdef __EXCEPTIONS
       try {
 	c_dblist[c_dbcount] = new IDB (this, Fn, NewDocTypeOptions, SearchOnly);
       } catch (...) {
 	c_dblist[c_dbcount] = NULL;
       }
+#else
+      c_dblist[c_dbcount] = new IDB (this, Fn, NewDocTypeOptions, SearchOnly);
+#endif
+
       if (c_dblist[c_dbcount] == NULL)
 	{
 	  message_log (LOG_WARN, "Could not open database \"%s\"", Fn.c_str());
@@ -469,7 +474,7 @@ A virtual database may contain a MAX. of %u databases!", DatabaseCount, VolIndex
 
 #if 1 /* DEBUG CODE?? */
   // I think we always want at least one DB? (11 March 2004) edz@nonmonotonic.com
-  if (c_dbcount == 0 && SearchOnly == GDT_FALSE)
+  if (c_dbcount == 0 && SearchOnly == false)
     {
       c_dblist[c_dbcount++] = new IDB (DbPathName+DbFileName, NewDocTypeOptions, SearchOnly);
     }
@@ -501,11 +506,11 @@ A virtual database may contain a MAX. of %u databases!", DatabaseCount, VolIndex
 	DbComments = c_dblist[0]->GetComments();
     }
 
-  return GDT_TRUE;
+  return true;
 }
 
 // 1st Queue
-GDT_BOOLEAN  VIDB::AddRecord(const RECORD& newRecord)
+bool  VIDB::AddRecord(const RECORD& newRecord)
 {
   int Segment = newRecord.GetSegment();
   if ((size_t)Segment > c_dbcount || Segment < 0)
@@ -525,9 +530,9 @@ void  VIDB::DocTypeAddRecord(const RECORD& newRecord)
     }
 }
 
-GDT_BOOLEAN  VIDB::Index(GDT_BOOLEAN newIndex)
+bool  VIDB::Index(bool newIndex)
 {
-  GDT_BOOLEAN result = GDT_TRUE;
+  bool result = true;
 
   for (size_t i=0; i< c_dbcount; i++)
     if (c_index[i]) result &= c_dblist[i]->Index(newIndex);
@@ -536,14 +541,14 @@ GDT_BOOLEAN  VIDB::Index(GDT_BOOLEAN newIndex)
 }
 
 
-void VIDB::SetFindConcatWords(GDT_BOOLEAN Set)
+void VIDB::SetFindConcatWords(bool Set)
 {
   for (size_t i=0; i<c_dbcount; i++)
     c_dblist[i]->SetFindConcatWords(Set);
 }
-GDT_BOOLEAN VIDB::GetFindConcatWords() const
+bool VIDB::GetFindConcatWords() const
 {
-  GDT_BOOLEAN set = GDT_FALSE;
+  bool set = false;
   for (size_t i=0; i<c_dbcount && !set; i++)
     set = (set || c_dblist[i]->GetFindConcatWords()); 
   return set;
@@ -571,26 +576,26 @@ enum DbState VIDB::GetDbState() const
   return DbState;
 }
 
-GDT_BOOLEAN VIDB::SetDateRange(const DATERANGE& DateRange)
+bool VIDB::SetDateRange(const DATERANGE& DateRange)
 {
-  GDT_BOOLEAN res = GDT_TRUE;
+  bool res = true;
   for (size_t i = 0; i < c_dbcount; i++)
     res =  res && c_dblist[i]->SetDateRange(DateRange);
   return res;
 }
 
-GDT_BOOLEAN VIDB::SetDateRange(const SRCH_DATE& From, const SRCH_DATE& To)
+bool VIDB::SetDateRange(const SRCH_DATE& From, const SRCH_DATE& To)
 {
-  GDT_BOOLEAN res = GDT_TRUE;
+  bool res = true;
   for (size_t i = 0; i < c_dbcount; i++)
     res = res && c_dblist[i]->SetDateRange(From, To);
   return res;
 }
 
-GDT_BOOLEAN VIDB::GetDateRange(DATERANGE *DateRange) const
+bool VIDB::GetDateRange(DATERANGE *DateRange) const
 {
   if (c_dbcount) return c_dblist[0]->GetDateRange(DateRange);
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -616,7 +621,7 @@ STRING VIDB::Description() const
        delete pdb;
     }
 #else
-  result << (c_dbcount > 0 ? c_dblist[0]->Description() : IDB(GDT_TRUE).Description());
+  result << (c_dbcount > 0 ? c_dblist[0]->Description() : IDB(true).Description());
 #endif
   result << "\n\n";
 
@@ -662,11 +667,11 @@ const char *VIDB::ErrorMessage(const INT Idx) const
   return "DB Index out of range";
 }
 
-GDT_BOOLEAN VIDB::Close()
+bool VIDB::Close()
 {
   if (MainDfdt == NULL && MainRegistry == NULL && c_dbcount > 0)
     {
-      return Opened == GDT_FALSE;
+      return Opened == false;
     }
 
   if (MainDfdt)
@@ -702,8 +707,8 @@ GDT_BOOLEAN VIDB::Close()
       delete MainRegistry;
       MainRegistry = NULL;
     }
-  Opened = GDT_FALSE;
-  return GDT_TRUE;
+  Opened = false;
+  return true;
 }
 
 
@@ -729,7 +734,7 @@ void VIDB::GetGlobalDocType (PSTRING StringBuffer) const
 //
 // Set debugging mode for all databases
 //
-void VIDB::SetDebugMode (GDT_BOOLEAN OnOff)
+void VIDB::SetDebugMode (bool OnOff)
 {
   for (size_t i = 0; i < c_dbcount; i++)
     c_dblist[i]->SetDebugMode (OnOff);
@@ -749,35 +754,35 @@ IDBOBJ *VIDB::GetIDB(size_t idx) const
 //
 // Check each database for compatibility problems
 //
-GDT_BOOLEAN VIDB::IsDbCompatible () const
+bool VIDB::IsDbCompatible () const
 {
   //
   // See the Open() method for info on this
   //
 #if 0
   if (c_inconsistent_doctypes)
-    return GDT_FALSE;
+    return false;
 #endif
 
   for (size_t i = 0; i < c_dbcount; i++)
     {
-      if (c_dblist[i]->IsDbCompatible () == GDT_FALSE)
+      if (c_dblist[i]->IsDbCompatible () == false)
 	{
-	  return GDT_FALSE;
+	  return false;
 	}
     }
-  return GDT_TRUE;
+  return true;
 }
 
 
-GDT_BOOLEAN VIDB::IsEmpty() const
+bool VIDB::IsEmpty() const
 {
   for (size_t i = 0; i < c_dbcount; i++)
     {
       if (!c_dblist[i]->IsEmpty ())
-	return GDT_FALSE;
+	return false;
     }
-  return GDT_TRUE;
+  return true;
 }
 
 
@@ -838,13 +843,13 @@ FCACHE *VIDB::GetFieldCache(INT Idx)
 
 //
 //
-GDT_BOOLEAN VIDB::GetDocumentInfo (const INT Idx, const INT Index, PRECORD RecordBuffer) const
+bool VIDB::GetDocumentInfo (const INT Idx, const INT Index, PRECORD RecordBuffer) const
 {
   if (Idx == 0) 
     return GetDocumentInfo (Index, RecordBuffer); 
   else if (Idx > 0 && (size_t)Idx <= c_dbcount)
     return c_dblist[Idx-1]->GetDocumentInfo (Index, RecordBuffer);
-  return GDT_FALSE;
+  return false;
 }
 
 PDOCTYPE VIDB::GetDocTypePtr(const DOCTYPE_ID& DocType) const
@@ -855,9 +860,9 @@ PDOCTYPE VIDB::GetDocTypePtr(const DOCTYPE_ID& DocType) const
 
 //
 //
-GDT_BOOLEAN VIDB::GetDocumentInfo (const INT Index, PRECORD RecordBuffer) const
+bool VIDB::GetDocumentInfo (const INT Index, PRECORD RecordBuffer) const
 {
-  GDT_BOOLEAN res = GDT_FALSE;
+  bool res = false;
   INT RealIndex = Index;
 
   for (size_t i = 0; i < c_dbcount; i++)
@@ -953,7 +958,7 @@ size_t VIDB::GetTotalDocumentsDeleted() const
 }
 
 
-GDT_BOOLEAN VIDB::SetLocale (const CHR *LocaleName) const
+bool VIDB::SetLocale (const CHR *LocaleName) const
 {
   if (LocaleName && *LocaleName)
     {
@@ -979,9 +984,9 @@ GDT_BOOLEAN VIDB::SetLocale (const CHR *LocaleName) const
       if (!SetGlobalCharset(myLocale.GetCharsetId()))
 	message_log(LOG_ERROR, "Could set set character set '%s'", myLocale.GetCharsetName());
       else
-	return GDT_TRUE;
+	return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 size_t VIDB::Scan(SCANLIST *ListPtr, const STRING& Field, const size_t Position, const INT TotalTermsRequested) const
@@ -1104,7 +1109,7 @@ size_t VIDB::ScanGlob(PSTRLIST ListPtr, const STRING& Field, const STRING& Term,
 
 // Scan for field contents according to a search
 size_t VIDB::ScanSearch(SCANLIST *ListPtr, const QUERY& SearchQuery, const STRING& Fieldname,
-         size_t MaxRecordsThreshold, GDT_BOOLEAN Cat)
+         size_t MaxRecordsThreshold, bool Cat)
 {
   if (ListPtr)
     {
@@ -1245,22 +1250,22 @@ PRSET VIDB::VSearch (const QUERY& Query)
   // Search each database
   //
   register size_t i;
-  GDT_BOOLEAN QueryError = GDT_TRUE;
+  bool QueryError = true;
 
-  GDT_BOOLEAN Not_Seen = GDT_TRUE;
+  bool Not_Seen = true;
   int         hit_set  = 0;
 
   for (i = 0; i < c_dbcount; i++)
     {
       if ((c_irsetlist[i] = c_dblist[i]->Search (SearchQuery)) != NULL)
 	{
-	  QueryError = GDT_FALSE;
+	  QueryError = false;
 	  if (Not_Seen)
 	    {
 	      if (c_irsetlist[i]->GetTotalEntries () > 0)
 		{
 		  hit_set = i + 1;
-		  Not_Seen = GDT_FALSE;
+		  Not_Seen = false;
 		}
 	      else // No hits
 		{
@@ -1445,10 +1450,10 @@ PIRSET VIDB::Search(const QUERY& Query, VIDB_STATS *Stats)
   // Search each database
   //
   register size_t i;
-  GDT_BOOLEAN QueryError = GDT_TRUE;
+  bool QueryError = true;
   size_t TotalEntries = 0; 
 
-  GDT_BOOLEAN Not_Seen = GDT_TRUE;
+  bool Not_Seen = true;
   int         hit_set  = 0;
   int         smallest_hit_set_idx = -1;
   size_t      smallest_hit_set_hits = 0;
@@ -1490,13 +1495,13 @@ PIRSET VIDB::Search(const QUERY& Query, VIDB_STATS *Stats)
 	      smallest_hit_set_idx  = (int)i;
 	    }
 
-	  QueryError = GDT_FALSE;
+	  QueryError = false;
 	  if (Not_Seen)
 	    {
 	      if (hits > 0)
 		{
 		  hit_set = i + 1;
-		  Not_Seen = GDT_FALSE;
+		  Not_Seen = false;
 		}
 	    }
 	  else if (hit_set > 0 && hits > 0)
@@ -1622,9 +1627,9 @@ const STRLIST& VIDB::GetAllDocTypes ()
 }
 
 // Only need to call this in one idb 
-GDT_BOOLEAN VIDB::ValidateDocType(const STRING& DocType) const
+bool VIDB::ValidateDocType(const STRING& DocType) const
 {
-  return c_dbcount ? c_dblist[0]->ValidateDocType(DocType) : GDT_FALSE;
+  return c_dbcount ? c_dblist[0]->ValidateDocType(DocType) : false;
 }
 
 
@@ -1751,10 +1756,10 @@ void VIDB::SetStoplist(const STRING& Filename)
   StoplistFileName = Filename;
 }
 
-GDT_BOOLEAN VIDB::IsStopWord (const STRING& Word) const
+bool VIDB::IsStopWord (const STRING& Word) const
 {
 #if 1
-  return c_dbcount ? c_dblist[0]->IsStopWord(Word) : GDT_FALSE;
+  return c_dbcount ? c_dblist[0]->IsStopWord(Word) : false;
 #else
 //cerr << "VIDB::IsStopWord..." << endl;
   if (StoplistFileName.GetLength())
@@ -1855,19 +1860,19 @@ IRSET *VIDB::AfterSearching  (IRSET* IrsetPtr)
 }
 
 
-GDT_BOOLEAN VIDB::KillAll()
+bool VIDB::KillAll()
 {
-  GDT_BOOLEAN result = GDT_TRUE;
+  bool result = true;
   for (size_t i=0; i < c_dbcount; i++)
     result &= c_dblist[i]->KillAll();
   return result;
 }
 
-GDT_BOOLEAN VIDB::KillAll(size_t idx)
+bool VIDB::KillAll(size_t idx)
 {
   if (idx>=0 && idx < c_dbcount)
     return c_dblist[idx]->KillAll();
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -1896,7 +1901,7 @@ void VIDB::EndRsetPresent (const STRING& RecordSyntax)
 }
 
 
-GDT_BOOLEAN VIDB::GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+bool VIDB::GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
 	PSTRING StringBuffer, const DOCTYPE *DoctypePtr)
 {
   RESULT Result;
@@ -1904,10 +1909,10 @@ GDT_BOOLEAN VIDB::GetFieldData(const RESULT& ResultRecord, const STRING& FieldNa
   if (i)
     return c_dblist[i-1]->GetFieldData (Result, FieldName, StringBuffer, DoctypePtr);
   StringBuffer->Clear();
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN VIDB::GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+bool VIDB::GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
 	PSTRLIST StrlistBuffer, const DOCTYPE *DoctypePtr)
 {
   RESULT Result;
@@ -1915,12 +1920,12 @@ GDT_BOOLEAN VIDB::GetFieldData(const RESULT& ResultRecord, const STRING& FieldNa
   if (i)
     return c_dblist[i-1]->GetFieldData (Result, FieldName, StrlistBuffer, DoctypePtr);
   StrlistBuffer->Clear();
-  return GDT_FALSE;
+  return false;
 }
 
 
 // Show Headline ("B")..
-GDT_BOOLEAN VIDB::Headline(const RESULT& ResultRecord, const STRING& RecordSyntax,
+bool VIDB::Headline(const RESULT& ResultRecord, const STRING& RecordSyntax,
 	PSTRING StringBuffer) const
 {
   if (RecordSyntax.IsEmpty())
@@ -1931,39 +1936,39 @@ GDT_BOOLEAN VIDB::Headline(const RESULT& ResultRecord, const STRING& RecordSynta
   if (i)
     return c_dblist[i-1]->Headline (Result, RecordSyntax, StringBuffer);
   StringBuffer->Clear();
-  return GDT_FALSE;
+  return false;
 }
 
 // Show Headline ("B")..
-GDT_BOOLEAN VIDB::Headline(const RESULT& ResultRecord, PSTRING StringBuffer) const
+bool VIDB::Headline(const RESULT& ResultRecord, PSTRING StringBuffer) const
 {
   RESULT Result;
   const size_t i = VirtualSet (ResultRecord, &Result);
   if (i)
     return c_dblist[i-1]->Headline (Result, StringBuffer);
   StringBuffer->Clear();
-  return GDT_FALSE;
+  return false;
 }
 
 // Context Match
-GDT_BOOLEAN VIDB::Context(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
+bool VIDB::Context(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
 	const STRING& Before, const STRING& After) const
 {
   RESULT Result;
   const size_t i = VirtualSet (ResultRecord, &Result);
   if (i)
     return c_dblist[i-1]->Context (Result, Line, Term, Before, After);
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN VIDB::NthContext(size_t N, const RESULT& ResultRecord, PSTRING Line, STRING *Term,
+bool VIDB::NthContext(size_t N, const RESULT& ResultRecord, PSTRING Line, STRING *Term,
         const STRING& Before, const STRING& After) const
 {
   RESULT Result;
   const size_t i = VirtualSet (ResultRecord, &Result);
   if (i)
     return c_dblist[i-1]->NthContext (N, Result, Line, Term, Before, After);
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -1976,36 +1981,36 @@ STRING VIDB::XMLHitTable(const RESULT& ResultRecord)
   return STRING("<XML>\n") + ResultRecord.XMLHitTable() + "</XML>\n";
 }
 
-GDT_BOOLEAN VIDB::XMLContext(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
+bool VIDB::XMLContext(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
         const STRING& Tag) const
 {
   RESULT Result;
   const size_t i = VirtualSet (ResultRecord, &Result);
   if (i)
     return c_dblist[i-1]->XMLContext (Result, Line, Term, Tag);
-  return GDT_FALSE;
+  return false;
 }
 
 
-GDT_BOOLEAN VIDB::Summary(const RESULT& ResultRecord,
+bool VIDB::Summary(const RESULT& ResultRecord,
 	const STRING& RecordSyntax, PSTRING StringBuffer) const
 {
   RESULT Result;
   const size_t i = VirtualSet (ResultRecord, &Result);
   if (i)
     return c_dblist[i-1]->Summary (Result, RecordSyntax, StringBuffer);
-  return GDT_FALSE;
+  return false;
 }
 
 // Return URL to Source Document
-GDT_BOOLEAN VIDB::URL(const RESULT& ResultRecord, PSTRING StringBuffer,
-        GDT_BOOLEAN OnlyRemote) const
+bool VIDB::URL(const RESULT& ResultRecord, PSTRING StringBuffer,
+        bool OnlyRemote) const
 {
   RESULT Result;
   const size_t i = VirtualSet (ResultRecord, &Result);
   if (i)
     return c_dblist[i-1]->URL (Result, StringBuffer, OnlyRemote);
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -2096,17 +2101,17 @@ void VIDB::DocPresent (const RESULT& ResultRecord, const STRING& ElementSet,
 }
 
 // These keys are Vol@Key
-GDT_BOOLEAN VIDB::KeyLookup (const STRING& Key, PRESULT ResultBuffer) const
+bool VIDB::KeyLookup (const STRING& Key, PRESULT ResultBuffer) const
 {
   STRING NewKey;
   const size_t i = VirtualSet (Key, &NewKey);
   if (i)
     {
-      GDT_BOOLEAN res = c_dblist[i-1]->KeyLookup (NewKey, ResultBuffer);
+      bool res = c_dblist[i-1]->KeyLookup (NewKey, ResultBuffer);
       if (ResultBuffer) ResultBuffer->SetVirtualIndex(i);
       return res;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -2256,16 +2261,16 @@ STRING VIDB::GetDbFileStem(const RESULT& ResultRecord, PSTRING StringBuffer) con
   return *StringBuffer = GetDbFileStem(ResultRecord);
 }
 
-GDT_BOOLEAN VIDB::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer)
+bool VIDB::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer)
 {
   STRING NewKey;
   const size_t i = VirtualSet (Key, &NewKey);
   if (i)
     return c_dblist[i-1]->GetRecordDfdt (NewKey, DfdtBuffer);
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN VIDB::GetRecordDfdt (const RESULT& Result, PDFDT DfdtBuffer)
+bool VIDB::GetRecordDfdt (const RESULT& Result, PDFDT DfdtBuffer)
 {
   if (c_dbcount == 1)
     return c_dblist[0]->GetRecordDfdt (Result, DfdtBuffer);
@@ -2365,7 +2370,7 @@ size_t VIDB::GetAncestorContent (RESULT& ResultRecord, const STRING& NodeName, S
 
 // Saving sessions
 
-GDT_BOOLEAN SessionSave(const STRING& fn,
+bool SessionSave(const STRING& fn,
    PRSET prset, PVIDB pdb, 
    const STRING& formated_query,
    const STRLIST& RelevantURLS,
@@ -2381,12 +2386,12 @@ GDT_BOOLEAN SessionSave(const STRING& fn,
       squery.Write (Fp);
       range.Write(Fp);
       fclose (Fp);
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN SessionRead(const STRING& fn,
+bool SessionRead(const STRING& fn,
   PRSET prset, PVIDB *pdb,
   PSTRING formated_query, PSTRLIST RelevantURLS,
   PSQUERY squery, DATERANGE *range )
@@ -2404,17 +2409,17 @@ GDT_BOOLEAN SessionRead(const STRING& fn,
       range->Read(Fp);
       fclose (Fp);
       *pdb = new VIDB (fullpath);
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN VIDB::SetSortIndexes(int Which, atomicIRSET *Irset)
+bool VIDB::SetSortIndexes(int Which, atomicIRSET *Irset)
 {
   const size_t TotalEntries = Irset->GetTotalEntries();
   INDEX_ID     index_id;
   int          db_id;
-  GDT_BOOLEAN  res = GDT_TRUE;
+  bool  res = true;
   for (size_t i=1; i<=TotalEntries; i++)
     {
       index_id = Irset->GetIndex(i);
@@ -2492,7 +2497,7 @@ PIRSET VIDB::SearchSmart(const SQUERY& Squery, const STRING& DefaultField,
 
   STRING QueryString;
 
-  if (Squery.isPlainQuery(&QueryString) == GDT_FALSE)
+  if (Squery.isPlainQuery(&QueryString) == false)
     {
       if (SqueryPtr) *SqueryPtr = Squery; 
       return Search(Squery, Sort, Method);
@@ -2522,7 +2527,7 @@ PIRSET VIDB::SearchSmart(const SQUERY& Squery, const STRING& DefaultField,
     }
   if (pIrset == NULL)
     {
-      GDT_BOOLEAN res;
+      bool res;
       STRING      field (DefaultField);
       // Search as Peer
       if (field.Trim(STRING::both).IsEmpty())
@@ -2569,10 +2574,10 @@ PIRSET VIDB::FileSearch(const STRING& FileSpec)
   // Search each database
   //
   register size_t i;
-  GDT_BOOLEAN QueryError = GDT_TRUE;
+  bool QueryError = true;
   size_t TotalEntries = 0; 
 
-  GDT_BOOLEAN Not_Seen = GDT_TRUE;
+  bool Not_Seen = true;
   int         hit_set  = 0;
   int         smallest_hit_set_idx = -1;
   size_t      smallest_hit_set_hits = 0;
@@ -2590,13 +2595,13 @@ PIRSET VIDB::FileSearch(const STRING& FileSpec)
 	      smallest_hit_set_idx  = (int)i;
 	    }
 
-	  QueryError = GDT_FALSE;
+	  QueryError = false;
 	  if (Not_Seen)
 	    {
 	      if (hits > 0)
 		{
 		  hit_set = i + 1;
-		  Not_Seen = GDT_FALSE;
+		  Not_Seen = false;
 		}
 	    }
 	  else if (hit_set > 0 && hits > 0)

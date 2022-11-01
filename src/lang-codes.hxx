@@ -49,7 +49,7 @@ public:
   CHARSET(const STRING& Name);
   CHARSET(BYTE Id);
 
-  GDT_BOOLEAN Ok() const { return Which != 0xFF; }
+  bool Ok() const { return Which != 0xFF; }
 
   BYTE SetSet ();
   BYTE SetSet (const CHARSET& Other);
@@ -68,9 +68,9 @@ public:
   operator int () const        { return Which; }
 
   const STRING& HtmlCat (const CHR ch, STRING *StringBufferPtr) const;
-  const STRING& HtmlCat (const STRING& Input, GDT_BOOLEAN Anchor=GDT_TRUE) const;
+  const STRING& HtmlCat (const STRING& Input, bool Anchor=true) const;
   const STRING& HtmlCat (const STRING& Input, STRING *StringBufferPtr) const;
-  const STRING& HtmlCat (const STRING& Input, STRING *StringBufferPtr, GDT_BOOLEAN Anchor) const;
+  const STRING& HtmlCat (const STRING& Input, STRING *StringBufferPtr, bool Anchor) const;
 
   STRING  ToLower(const STRING& String) const;
   STRING  ToUpper(const STRING& String) const;
@@ -112,7 +112,7 @@ public:
   UINT2  UCS(CHR Ch) const     { return CharTab[(UCHR)Ch];}
   UINT2  UCS(UCHR Ch) const    { return CharTab[Ch];      }
 
-  GDT_BOOLEAN Read(FILE *Fp);
+  bool Read(FILE *Fp);
   void        Write(FILE *Fp) const;
 
   // These two are special purpose utility functions
@@ -137,33 +137,33 @@ private:
 };
 
 // Inlines
-inline GDT_BOOLEAN operator==(const CHARSET& s1, const CHARSET& s2)
+inline bool operator==(const CHARSET& s1, const CHARSET& s2)
   { return (int)s1 == (int)s2; }
-inline GDT_BOOLEAN operator==(const CHARSET& s1, const STRING& name)
+inline bool operator==(const CHARSET& s1, const STRING& name)
   { return (int)s1 == (int)(Charset2Id(name)); }
-inline GDT_BOOLEAN operator==(const STRING& name, const CHARSET& s1)
+inline bool operator==(const STRING& name, const CHARSET& s1)
   { return (int)s1 == (int)(Charset2Id(name)); }
-inline GDT_BOOLEAN operator==(const CHARSET& s1, const char *name)
+inline bool operator==(const CHARSET& s1, const char *name)
   { return (int)s1 == (int)(Charset2Id(name)); }
-inline GDT_BOOLEAN operator==(const char *name, const CHARSET& s1)
+inline bool operator==(const char *name, const CHARSET& s1)
   { return (int)s1 == (int)(Charset2Id(name)); }
-inline GDT_BOOLEAN operator==(const CHARSET& s1, BYTE Id)
+inline bool operator==(const CHARSET& s1, BYTE Id)
   { return (int)s1 == (int)Id; }
-inline GDT_BOOLEAN operator==(BYTE Id, const CHARSET& s1)
+inline bool operator==(BYTE Id, const CHARSET& s1)
   { return (int)s1 == (int)Id; }
-inline GDT_BOOLEAN operator!=(const CHARSET& s1, const CHARSET& s2)
+inline bool operator!=(const CHARSET& s1, const CHARSET& s2)
   { return (int)s1 != (int)s2; }
-inline GDT_BOOLEAN operator!=(const CHARSET& s1, const STRING& name)
+inline bool operator!=(const CHARSET& s1, const STRING& name)
   { return (int)s1 != (int)(Charset2Id(name)); }
-inline GDT_BOOLEAN operator!=(const STRING& name, const CHARSET& s1)
+inline bool operator!=(const STRING& name, const CHARSET& s1)
   { return (int)s1 != (int)(Charset2Id(name)); }
-inline GDT_BOOLEAN operator!=(const CHARSET& s1, const char *name)
+inline bool operator!=(const CHARSET& s1, const char *name)
   { return (int)s1 != (int)(Charset2Id(name)); }
-inline GDT_BOOLEAN operator!=(const char *name, const CHARSET& s1)
+inline bool operator!=(const char *name, const CHARSET& s1)
   { return (int)s1 != (int)(Charset2Id(name)); }
-inline GDT_BOOLEAN operator!=(const CHARSET& s1, BYTE Id)
+inline bool operator!=(const CHARSET& s1, BYTE Id)
   { return (int)s1 != (int)Id; }
-inline GDT_BOOLEAN operator!=(BYTE Id, const CHARSET& s1)
+inline bool operator!=(BYTE Id, const CHARSET& s1)
   { return (int)s1 != (int)Id; }
 
 // Classification
@@ -213,7 +213,7 @@ public:
   LANGUAGE& operator=(int Id);
   LANGUAGE& operator=(const char *name);
 
-  GDT_BOOLEAN Read(FILE *Fp);
+  bool Read(FILE *Fp);
   void        Write(FILE *Fp) const;
 
   ~LANGUAGE();
@@ -222,33 +222,33 @@ private:
 };
 
 // Language Comparison inlines...
-inline GDT_BOOLEAN operator==(const LANGUAGE& s1, const LANGUAGE& s2)
+inline bool operator==(const LANGUAGE& s1, const LANGUAGE& s2)
   { return (int)s1 == (int)s2; }
-inline GDT_BOOLEAN operator==(const LANGUAGE& s1, const STRING& name)
+inline bool operator==(const LANGUAGE& s1, const STRING& name)
   { return (int)s1 == (int)(LangX2Id(name)); }
-inline GDT_BOOLEAN operator==(const STRING& name, const LANGUAGE& s1)
+inline bool operator==(const STRING& name, const LANGUAGE& s1)
   { return (int)s1 == (int)(LangX2Id(name)); }
-inline GDT_BOOLEAN operator==(const LANGUAGE& s1, const char *name)
+inline bool operator==(const LANGUAGE& s1, const char *name)
   { return (int)s1 == (int)(LangX2Id(name)); }
-inline GDT_BOOLEAN operator==(const char *name, const LANGUAGE& s1)
+inline bool operator==(const char *name, const LANGUAGE& s1)
   { return (int)s1 == (int)(LangX2Id(name)); }
-inline GDT_BOOLEAN operator==(const LANGUAGE& s1, SHORT Id)
+inline bool operator==(const LANGUAGE& s1, SHORT Id)
   { return (int)s1 == (int)Id; }
-inline GDT_BOOLEAN operator==(SHORT Id, const LANGUAGE& s1)
+inline bool operator==(SHORT Id, const LANGUAGE& s1)
   { return (int)s1 == (int)Id; }
-inline GDT_BOOLEAN operator!=(const LANGUAGE& s1, const LANGUAGE& s2)
+inline bool operator!=(const LANGUAGE& s1, const LANGUAGE& s2)
   { return (int)s1 != (int)s2; }
-inline GDT_BOOLEAN operator!=(const LANGUAGE& s1, const STRING& name)
+inline bool operator!=(const LANGUAGE& s1, const STRING& name)
   { return (int)s1 != (int)(LangX2Id(name)); }
-inline GDT_BOOLEAN operator!=(const STRING& name, const LANGUAGE& s1)
+inline bool operator!=(const STRING& name, const LANGUAGE& s1)
   { return (int)s1 != (int)(LangX2Id(name)); }
-inline GDT_BOOLEAN operator!=(const LANGUAGE& s1, const char *name)
+inline bool operator!=(const LANGUAGE& s1, const char *name)
   { return (int)s1 != (int)(LangX2Id(name)); }
-inline GDT_BOOLEAN operator!=(const char *name, const LANGUAGE& s1)
+inline bool operator!=(const char *name, const LANGUAGE& s1)
   { return (int)s1 != (int)(LangX2Id(name)); }
-inline GDT_BOOLEAN operator!=(const LANGUAGE& s1, SHORT Id)
+inline bool operator!=(const LANGUAGE& s1, SHORT Id)
   { return (int)s1 != (int)Id; }
-inline GDT_BOOLEAN operator!=(BYTE Id, const LANGUAGE& s1)
+inline bool operator!=(BYTE Id, const LANGUAGE& s1)
   { return (int)s1 != (int)Id; }
 
 
@@ -281,7 +281,7 @@ public:
   BYTE        GetCharsetId() const;
   INT         GetLanguageId() const;
 
-  GDT_BOOLEAN Ok() const { return Which != 0; };
+  bool Ok() const { return Which != 0; };
 
   CHARSET  Charset() const;
   LANGUAGE Language() const;
@@ -293,10 +293,10 @@ public:
   operator LANGUAGE () const { return Language();   }
   operator INT () const      { return Id();         }
 
-  GDT_BOOLEAN operator==(const LOCALE& Other) const { return Which == Other.Which; }
-  GDT_BOOLEAN operator!=(const LOCALE& Other) const { return Which != Other.Which; }
+  bool operator==(const LOCALE& Other) const { return Which == Other.Which; }
+  bool operator!=(const LOCALE& Other) const { return Which != Other.Which; }
 
-  GDT_BOOLEAN Read(FILE *Fp);
+  bool Read(FILE *Fp);
   void        Write(FILE *Fp) const;
 
   ~LOCALE();
@@ -305,15 +305,15 @@ private:
 };
 
 void       Write(const LOCALE& Locale, PFILE Fp);
-GDT_BOOLEAN Read(LOCALE *LocalePtr, PFILE Fp);
+bool Read(LOCALE *LocalePtr, PFILE Fp);
 
 extern LOCALE GlobalLocale; 
 
 void        SetGlobalLocale(const LOCALE& NewLocale);
 
 #ifndef _C_LANGUAGE
-GDT_BOOLEAN SetGlobalCharset (const STRING& Name);
-GDT_BOOLEAN SetGlobalCharset (BYTE Charset = 0xFF);
+bool SetGlobalCharset (const STRING& Name);
+bool SetGlobalCharset (BYTE Charset = 0xFF);
 BYTE        GetGlobalCharset (STRING *StringBuffer = NULL);
 #endif
 

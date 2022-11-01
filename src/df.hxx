@@ -32,7 +32,7 @@ public:
   void        AddFct(const FCLIST *Ptr)    { Fct.AddEntry(Ptr);    }
   void        AddFct(const FCT& fct)       { Fct.AddEntry(fct);    }
 
-  GDT_BOOLEAN Ok() const { return ! (FieldName.IsEmpty() || Fct.IsEmpty() ) ; }
+  bool Ok() const { return ! (FieldName.IsEmpty() || Fct.IsEmpty() ) ; }
 
   operator    STRING() const          { return FieldName; }
   operator    FCT() const             { return Fct;       }
@@ -41,7 +41,7 @@ public:
   const FCLIST* GetFcListPtr () const { return Fct; }
 
   void        Write(PFILE fp) const;
-  GDT_BOOLEAN Read(PFILE fp);
+  bool Read(PFILE fp);
 
  ~DF();
 private:
@@ -55,7 +55,7 @@ inline void Write(const DF& Df, PFILE Fp)
   Df.Write(Fp);
 }
 
-inline GDT_BOOLEAN Read(DF *DfPtr, PFILE Fp)
+inline bool Read(DF *DfPtr, PFILE Fp)
 {
   return DfPtr->Read(Fp);
 }

@@ -62,32 +62,32 @@ public:
 
 
 
-  GDT_BOOLEAN WriteFieldData(const RECORD& Record, const GPTYPE GpOffset);
+  bool WriteFieldData(const RECORD& Record, const GPTYPE GpOffset);
 
-  GDT_BOOLEAN AddRecordList(PFILE RecordListFp);
+  bool AddRecordList(PFILE RecordListFp);
 
-  GDT_BOOLEAN ValidateInField(const GPTYPE HitGp, const STRING& FieldName) const;
-  GDT_BOOLEAN ValidateInField (const GPTYPE HitGp, FILE *Fp,  const size_t Total) const;
-  GDT_BOOLEAN ValidateInField (const GPTYPE HitGp, const GPTYPE *Buffer, const size_t Total) const;
+  bool ValidateInField(const GPTYPE HitGp, const STRING& FieldName) const;
+  bool ValidateInField (const GPTYPE HitGp, FILE *Fp,  const size_t Total) const;
+  bool ValidateInField (const GPTYPE HitGp, const GPTYPE *Buffer, const size_t Total) const;
 
-  GDT_BOOLEAN ValidateInField(const FC& HitFc, const STRING& FieldName) const;
-  GDT_BOOLEAN ValidateInField (const FC& HitFc, FILE *Fp,  const size_t Total) const;
+  bool ValidateInField(const FC& HitFc, const STRING& FieldName) const;
+  bool ValidateInField (const FC& HitFc, FILE *Fp,  const size_t Total) const;
 
   FCACHE      *GetFieldCache() { return FieldCache; }
 
-  GDT_BOOLEAN Ok() const { return OK && Version() != -1; }
+  bool Ok() const { return OK && Version() != -1; }
 
-  GDT_BOOLEAN IsEmpty() const;
+  bool IsEmpty() const;
   off_t GetTotalWords() const;
   off_t GetTotalUniqueWords() const;
 
-  GDT_BOOLEAN SetStoplist(const LOCALE& Locale);
-  GDT_BOOLEAN SetStoplist(const STRING& LanguageOrFilename);
+  bool SetStoplist(const LOCALE& Locale);
+  bool SetStoplist(const STRING& LanguageOrFilename);
 
-  GDT_BOOLEAN IsStopWord(const char *FieldName, const UCHR *WordStart, STRINGINDEX WordMaximum, INT Limit = 0) const;
-  GDT_BOOLEAN IsStopWord(const UCHR *WordStart, STRINGINDEX WordMaximum, INT Limit = 0) const;
-  GDT_BOOLEAN IsStopWord(const STRING& FieldName, const STRING& Word) const;
-  GDT_BOOLEAN IsStopWord(const STRING& Word) const;
+  bool IsStopWord(const char *FieldName, const UCHR *WordStart, STRINGINDEX WordMaximum, INT Limit = 0) const;
+  bool IsStopWord(const UCHR *WordStart, STRINGINDEX WordMaximum, INT Limit = 0) const;
+  bool IsStopWord(const STRING& FieldName, const STRING& Word) const;
+  bool IsStopWord(const STRING& Word) const;
 
   size_t Scan(PSTRLIST List, const STRING& Field,
 	const size_t Offset = 0, const INT TotalTermsRequested = -1, const size_t Start = 0) const;
@@ -100,28 +100,28 @@ public:
 
   size_t Scan(SCANLIST *List, const STRING& Field,
 	const size_t Offset = 0, const INT TotalTermsRequested = -1,
-	const size_t Start = 0, GDT_BOOLEAN Cat = GDT_FALSE, size_t Sis_id = 0) const;
+	const size_t Start = 0, bool Cat = false, size_t Sis_id = 0) const;
   size_t Scan(SCANLIST *ListPtr, const STRING& Fieldname, const STRING& Term,
-	const INT TotalTermsRequested = -1, GDT_BOOLEAN Cat = GDT_FALSE, size_t Sis_id=0) const;
+	const INT TotalTermsRequested = -1, bool Cat = false, size_t Sis_id=0) const;
   size_t ScanLR(SCANLIST *ListPtr, const STRING& Fieldname,
 	const STRING& Term, const size_t Position = 0,
-	const INT TotalTermsRequested = -1, GDT_BOOLEAN Cat = GDT_FALSE, size_t Sis_id=0) const;
+	const INT TotalTermsRequested = -1, bool Cat = false, size_t Sis_id=0) const;
   size_t ScanGlob(SCANLIST *ListPtr, const STRING& Fieldname,
 	const STRING& Pattern, const size_t Position = 0,
-	const INT TotalTermsRequested = -1, GDT_BOOLEAN Cat = GDT_FALSE, size_t Sis_id=0) const;
+	const INT TotalTermsRequested = -1, bool Cat = false, size_t Sis_id=0) const;
 
   size_t ScanSoundex(SCANLIST *ListPtr, const STRING& Fieldname, const STRING& Pattern,
 	const size_t HashLen = 6,
-        const size_t Position = 0, const INT TotalTermsRequested = -1, GDT_BOOLEAN Cat = GDT_FALSE,
+        const size_t Position = 0, const INT TotalTermsRequested = -1, bool Cat = false,
 	size_t Sis_id = 0) const;
 
   size_t ScanMetaphone(SCANLIST *ListPtr, const STRING& Fieldname, const STRING& Pattern,
-	const size_t Position = 0, const INT TotalTermsRequested = -1, GDT_BOOLEAN Cat = GDT_FALSE,
+	const size_t Position = 0, const INT TotalTermsRequested = -1, bool Cat = false,
 	size_t Sis_id = 0) const;
 
   // Scan for field contents according to a search
   size_t ScanSearch(SCANLIST *ListPtr, const QUERY& Query, const STRING& Fieldname, 
-	 size_t MaxRecordsThreshold = 0, GDT_BOOLEAN Cat = GDT_FALSE);
+	 size_t MaxRecordsThreshold = 0, bool Cat = false);
   SCANLIST ScanSearch(const QUERY& Query, const STRING& Fieldname, size_t MaxRecordsThreshold = 0);
 
   // Type Specific Scans
@@ -139,15 +139,15 @@ public:
   size_t GPolyScan(STRLIST *Strlist, const STRING& FieldName, size_t Start = 0,
 	INT TotalRequested = -1);
 
-  GDT_BOOLEAN SetDateRange(const DATERANGE& Range);
-  GDT_BOOLEAN GetDateRange(DATERANGE *Range = NULL) const;
+  bool SetDateRange(const DATERANGE& Range);
+  bool GetDateRange(DATERANGE *Range = NULL) const;
 
   //size_t TermFrequency(const STRING& Term, const STRING& Fieldname = NulString) const;
 
   PIRSET Search(const QUERY& SearchQuery);
   PIRSET NumericSearch(const NUMBER fKey, const STRING& FieldName, INT4 Relation = ZRelEQ);
   PIRSET MonetarySearch(const MONETARYOBJ& Price, const STRING& FieldName, INT4 Relation = ZRelEQ);
-  PIRSET HashSearch(const STRING& Contents, const STRING& FieldName, INT4 Relation = ZRelEQ, GDT_BOOLEAN useCase = GDT_TRUE);
+  PIRSET HashSearch(const STRING& Contents, const STRING& FieldName, INT4 Relation = ZRelEQ, bool useCase = true);
   PIRSET LexiHashSearch(const STRING& Term, const STRING& FieldName, INT4 Relation = ZRelEQ);
 
   PIRSET FileSearch(const STRING& FileSpecification);
@@ -176,51 +176,51 @@ public:
   PIRSET DoDateSearch(const STRING& QueryTerm, const STRING& FieldName, 
                       INT4 Relation, INT4 Structure);
   PIRSET DoDateSearch(const STRING& QueryTerm, const STRING& FieldName, 
-                      INT4 Relation, INT4 Structure, GDT_BOOLEAN Strict);
+                      INT4 Relation, INT4 Structure, bool Strict);
   PIRSET DateRangeSearch(const STRING& QueryTerm, const STRING& FieldName, 
-                         INT4 Relation, GDT_BOOLEAN Strict);
+                         INT4 Relation, bool Strict);
   PIRSET SingleDateSearch(const STRING& QueryTerm, const STRING& FieldName, 
-                          INT4 Relation, GDT_BOOLEAN Strict);
+                          INT4 Relation, bool Strict);
   PIRSET SingleDateSearchBefore(const SRCH_DATE& QueryDate, 
                                 const STRING& FieldName, 
                                 IntBlock FindBlock,
-                                GDT_BOOLEAN EndpointFlag);
+                                bool EndpointFlag);
   PIRSET YSearchBefore(const SRCH_DATE& DateY, const STRING& FieldName,
-                       IntBlock FindBlock, GDT_BOOLEAN EndpointFlag);
+                       IntBlock FindBlock, bool EndpointFlag);
   PIRSET YMSearchBefore(const SRCH_DATE& DateYM, const STRING& FieldName,
-                        IntBlock FindBlock, GDT_BOOLEAN EndpointFlag);
+                        IntBlock FindBlock, bool EndpointFlag);
   PIRSET YMDSearchBefore(const SRCH_DATE& QueryDate, const STRING& FieldName,
-                         IntBlock FindBlock, GDT_BOOLEAN EndpointFlag);
+                         IntBlock FindBlock, bool EndpointFlag);
   PIRSET SingleDateSearchAfter(const SRCH_DATE& QueryDate, 
                                const STRING& FieldName, 
                                IntBlock FindBlock,
-                               GDT_BOOLEAN EndpointFlag);
+                               bool EndpointFlag);
   PIRSET YMDSearchAfter(const SRCH_DATE& DateYMD, const STRING& FieldName,
-                        IntBlock FindBlock, GDT_BOOLEAN EndpointFlag);
+                        IntBlock FindBlock, bool EndpointFlag);
   PIRSET YMSearchAfter(const SRCH_DATE& DateYM, const STRING& FieldName,
-                       IntBlock FindBlock, GDT_BOOLEAN EndpointFlag);
+                       IntBlock FindBlock, bool EndpointFlag);
   PIRSET YSearchAfter(const SRCH_DATE& DateY, const STRING& FieldName,
-                      IntBlock FindBlock, GDT_BOOLEAN EndpointFlag);
+                      IntBlock FindBlock, bool EndpointFlag);
   PIRSET DateRangeSearchContains(const DATERANGE& QueryDate, 
                                  const STRING& FieldName,
                                  IntBlock FindBlock,
-                                 GDT_BOOLEAN EndpointFlag);
+                                 bool EndpointFlag);
   // This searches indexes of intervals
   IRSET* DateSearch(const DOUBLE fKey, const STRING& FieldName, 
                         INT4 Relation, IntBlock FindBlock);
 
 
  PIRSET MetaphoneSearch(const STRING& SearchTerm, const STRING& FieldName,
-        GDT_BOOLEAN UseCase = GDT_FALSE);
+        bool UseCase = false);
   PIRSET SoundexSearch(const STRING& SearchTerm, const STRING& FieldName,
-	GDT_BOOLEAN UseCase = GDT_FALSE);
+	bool UseCase = false);
   PIRSET GlobSearch(const STRING& SearchTerm, const STRING& FieldName,
-	GDT_BOOLEAN UseCase = GDT_FALSE);
+	bool UseCase = false);
   PIRSET TermSearch(const STRING& SearchTerm, const STRING& FieldName,
 	enum MATCH Typ=Unspecified);
 
-  GDT_BOOLEAN IsSystemFile(const STRING& FileName) const;
-  GDT_BOOLEAN IsWrongEndian() const; // Swap of not?
+  bool IsSystemFile(const STRING& FileName) const;
+  bool IsWrongEndian() const; // Swap of not?
   INT Version() const; // Index Version
 
   INT Cleanup();
@@ -230,19 +230,19 @@ public:
 
   void SortNumericFieldData();
 
-  GDT_BOOLEAN KillAll ();
+  bool KillAll ();
 
-  long Dump(INT Skip, ostream& os = cout, GDT_BOOLEAN OnlyErrors=GDT_FALSE);
+  long Dump(INT Skip, ostream& os = cout, bool OnlyErrors=false);
   void Dump(ostream& os = cout);
   long CheckIndex(ostream& os = cout) {
-    return Dump(0, os, GDT_TRUE);
+    return Dump(0, os, true);
   }
   long CheckIndex(INT Skip, ostream& os = cout) {
-    return Dump(Skip, os, GDT_TRUE);
+    return Dump(Skip, os, true);
   }
 
-  GDT_BOOLEAN CreateCentroid();
-  GDT_BOOLEAN WriteCentroid(FILE *fp);
+  bool CreateCentroid();
+  bool WriteCentroid(FILE *fp);
 
   PFILE ffopen(const STRING& FileName, const CHR* Type) const;
   INT  ffclose (PFILE FilePointer) const;
@@ -250,8 +250,8 @@ public:
   void SetDocTypePtr(const PDOCTYPE NewDocTypePtr);
   PDOCTYPE GetDocTypePtr() const;
 
-  void SetDebugMode(GDT_BOOLEAN OnOff) { DebugMode = OnOff; }
-  GDT_BOOLEAN GetDebugMode() const { return DebugMode; };
+  void SetDebugMode(bool OnOff) { DebugMode = OnOff; }
+  bool GetDebugMode() const { return DebugMode; };
 
   // Profile
   STRING ProfileGetString(const STRING& Section, const STRING& Entry,
@@ -275,8 +275,8 @@ public:
   INT GpFread(GPTYPE *Ptr, size_t NumElements, FILE* Stream) const;
   INT GpFread(GPTYPE *Ptr, size_t NumElements, off_t Position, FILE *Stream) const;
 
-  GDT_BOOLEAN MergeIndexFiles();
-  GDT_BOOLEAN CollapseIndexFiles();
+  bool MergeIndexFiles();
+  bool CollapseIndexFiles();
 
   INT SisWrite(const STRING Str, FILE *dp);
 
@@ -294,26 +294,26 @@ public:
   GPTYPE getIndexingTotalBytesCount () const { return IndexingTotalBytesCount;}
   GPTYPE getIndexingTotalWordsCount () const { return IndexingTotalWordsCount;}
 
-  void SetFindConcatWords(GDT_BOOLEAN Set=GDT_TRUE) { findConcatWords = Set; }
-  GDT_BOOLEAN GetFindConcatWords() const { return findConcatWords; }
+  void SetFindConcatWords(bool Set=true) { findConcatWords = Set; }
+  bool GetFindConcatWords() const { return findConcatWords; }
 
-  GDT_BOOLEAN CheckIntegrity() const;
+  bool CheckIntegrity() const;
 
 private:
   void  CPU_ResourcesExhausted (); // Exception
 
-  long TermFreq(const STRING& Word, GDT_BOOLEAN Truncate=GDT_FALSE);
-  GDT_BOOLEAN IsSpecialTerm(const UCHR *Term) const;
+  long TermFreq(const STRING& Word, bool Truncate=false);
+  bool IsSpecialTerm(const UCHR *Term) const;
   // These two are *very* private 
-  INT find(INT Index, const STRING& Word, GDT_BOOLEAN Truncate, off_t *start,
-	GDT_BOOLEAN *overflow);
+  INT find(INT Index, const STRING& Word, bool Truncate, off_t *start,
+	bool *overflow);
   INT find(const STRING& SisFn, const INT Slot, const STRING& Word,
-	GDT_BOOLEAN Truncate, off_t *start, GDT_BOOLEAN *overflow);
+	bool Truncate, off_t *start, bool *overflow);
 
-  int findIt(MMAP *MemoryMap, const UCHR *Term, size_t TermLength, GDT_BOOLEAN Truncate,
-	off_t *start, GDT_BOOLEAN *overflow);
-  int findIt(GDT_BOOLEAN Truncate, const STRING& Index,
-	const UCHR *Term, size_t TermLength, off_t *start, GDT_BOOLEAN *overflow);
+  int findIt(MMAP *MemoryMap, const UCHR *Term, size_t TermLength, bool Truncate,
+	off_t *start, bool *overflow);
+  int findIt(bool Truncate, const STRING& Index,
+	const UCHR *Term, size_t TermLength, off_t *start, bool *overflow);
 
   GPTYPE * const GpPtr(size_t SubIndex, GPTYPE Position) const;
   GPTYPE GpOf(GPTYPE *Ptr, size_t Index) const;
@@ -330,15 +330,15 @@ private:
 	GPTYPE MemoryDataLength, PGPTYPE MemoryIndex,
 	GPTYPE MemoryIndexLength);
 
-  GDT_BOOLEAN FlushIndexFiles(PUCHR MemoryData, 
+  bool FlushIndexFiles(PUCHR MemoryData, 
 	PGPTYPE NewMemoryIndex, GPTYPE MemoryIndexLength,
 	GPTYPE GlobalStart);
 
-  GDT_BOOLEAN SetIndexNum(INT Num);
+  bool SetIndexNum(INT Num);
   INT         GetIndexNum() const;
 
-  size_t      _scanAddEntry(SCANLIST *, BUFFER *, size_t, GDT_BOOLEAN, FILE *, const char *,
-	const char *, const size_t = 0, GDT_BOOLEAN = GDT_FALSE) const;
+  size_t      _scanAddEntry(SCANLIST *, BUFFER *, size_t, bool, FILE *, const char *,
+	const char *, const size_t = 0, bool = false) const;
 
   void        DumpPersistantCache();
 
@@ -354,10 +354,10 @@ private:
   size_t      ClippingThreshold;
   size_t      TooManyRecordsThreshold;
   clock_t     MaxCPU_ticks, MaxQueryCPU_ticks;
-  GDT_BOOLEAN DebugMode;
-  GDT_BOOLEAN findConcatWords;
-  GDT_BOOLEAN forceConcatWords;
-  GDT_BOOLEAN storeHitCoordinates; // Everything fulltext (no coordinates, no proximity?)
+  bool DebugMode;
+  bool findConcatWords;
+  bool forceConcatWords;
+  bool storeHitCoordinates; // Everything fulltext (no coordinates, no proximity?)
 
   int         CommonWordsThreshold;
   int         PhraseWaterlimit;
@@ -375,8 +375,8 @@ private:
   PIDBOBJ     Parent;
   PMDT        MemoryMdt;
   UINT2       IndexMagic;
-  GDT_BOOLEAN wrongEndian;
-  GDT_BOOLEAN useSoundex;
+  bool wrongEndian;
+  bool useSoundex;
   INT         IndexNum; // count of indexes to merge
 
   // Volatile and active stuff
@@ -400,10 +400,10 @@ private:
   volatile GPTYPE IndexingWordsTruncated;
   volatile GPTYPE IndexingWordsLongestLength;
 
-  volatile GDT_BOOLEAN ActiveIndexing;
+  volatile bool ActiveIndexing;
 
   // Set at start to indicate things are OK 
-  GDT_BOOLEAN OK;
+  bool OK;
 };
 
 typedef INDEX* PINDEX;

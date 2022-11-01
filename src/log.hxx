@@ -32,15 +32,15 @@ const int iLOG_ALL  =0xffff;
 # define LOG_ANY        (iLOG_ALL & (~ iLOG_ERRNO))
 #endif
 
-GDT_BOOLEAN set_syslog(const char *name);
-GDT_BOOLEAN set_syslog(const int Ch);
+bool set_syslog(const char *name);
+bool set_syslog(const int Ch);
 
-GDT_BOOLEAN  log_init (FILE *fp);
-GDT_BOOLEAN  log_init (const char *prefix, const char *name=0);
-GDT_BOOLEAN  log_init (const char *prefix, FILE *fp);
-GDT_BOOLEAN  log_init (int level, FILE *fp);
-GDT_BOOLEAN  log_init (int level, const char *prefix, FILE *fp);
-GDT_BOOLEAN  log_init (int level, const char *prefix=0, const char *name=0);
+bool  log_init (FILE *fp);
+bool  log_init (const char *prefix, const char *name=0);
+bool  log_init (const char *prefix, FILE *fp);
+bool  log_init (int level, FILE *fp);
+bool  log_init (int level, const char *prefix, FILE *fp);
+bool  log_init (int level, const char *prefix=0, const char *name=0);
 
 void  message_log (int level, const char *fmt, ...);
 void  log_message(int level, const char *string);
@@ -55,6 +55,6 @@ int   log_mask_str (const char *str);
 
 #define _IB_DEBUG  if (_ib_debug) message_log
 
-extern GDT_BOOLEAN _ib_debug;
+extern bool _ib_debug;
 
 #endif		/* _LOG_HXX */

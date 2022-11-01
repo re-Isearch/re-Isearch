@@ -52,16 +52,16 @@ public:
 
   // Comparison operators
 #if 0
-  GDT_BOOLEAN operator ==(const SRCH_DATE& OtherDate) const {
+  bool operator ==(const SRCH_DATE& OtherDate) const {
 	return Equals(OtherDate);};
-  GDT_BOOLEAN operator !=(const SRCH_DATE& OtherDate) const {
+  bool operator !=(const SRCH_DATE& OtherDate) const {
 	return !Equals(OtherDate);};
-  GDT_BOOLEAN operator >(const SRCH_DATE& OtherDate) const {
+  bool operator >(const SRCH_DATE& OtherDate) const {
 	return IsAfter(OtherDate);};
-  GDT_BOOLEAN operator <(const SRCH_DATE& OtherDate) const {
+  bool operator <(const SRCH_DATE& OtherDate) const {
 	return IsBefore(OtherDate);};
-  GDT_BOOLEAN operator >=(const SRCH_DATE& OtherDate) const;
-  GDT_BOOLEAN operator <=(const SRCH_DATE& OtherDate) const;
+  bool operator >=(const SRCH_DATE& OtherDate) const;
+  bool operator <=(const SRCH_DATE& OtherDate) const;
 #endif
   friend int operator <  (const SRCH_DATE &dt1, const SRCH_DATE &dt2);
   friend int operator <= (const SRCH_DATE &dt1, const SRCH_DATE &dt2);
@@ -105,40 +105,40 @@ public:
   DOUBLE         GetValue() const;
   DOUBLE         GetWholeDayValue() const; // to day 
 
-  GDT_BOOLEAN IsYearDate() const;
-  GDT_BOOLEAN IsMonthDate() const;
-  GDT_BOOLEAN IsDayDate() const;
-  GDT_BOOLEAN IsBogusDate() const;
-  GDT_BOOLEAN IsValidDate() const;
-  GDT_BOOLEAN IsLeapYear() const;
+  bool IsYearDate() const;
+  bool IsMonthDate() const;
+  bool IsDayDate() const;
+  bool IsBogusDate() const;
+  bool IsValidDate() const;
+  bool IsLeapYear() const;
 
-  GDT_BOOLEAN Ok() const { return IsValidDate();}
+  bool Ok() const { return IsValidDate();}
 
   void        Clear()    { d_date = d_rest = 0;}
-  GDT_BOOLEAN IsNotSet() const { return d_date == 0; }
+  bool IsNotSet() const { return d_date == 0; }
 
-  GDT_BOOLEAN TrimToMonth();
-  GDT_BOOLEAN TrimToYear();
+  bool TrimToMonth();
+  bool TrimToYear();
 
-  GDT_BOOLEAN SetToYearStart();	// To 1 Jan
-  GDT_BOOLEAN SetToYearEnd();	// To 31 Dec
-  GDT_BOOLEAN SetToMonthStart();// To 1 XXX
-  GDT_BOOLEAN SetToMonthEnd();	// To ? XXX (depends on month)
-  GDT_BOOLEAN SetToDayStart();  // To 00:00:00
-  GDT_BOOLEAN SetToDayEnd();    // To 23:59:59
+  bool SetToYearStart();	// To 1 Jan
+  bool SetToYearEnd();	// To 31 Dec
+  bool SetToMonthStart();// To 1 XXX
+  bool SetToMonthEnd();	// To ? XXX (depends on month)
+  bool SetToDayStart();  // To 00:00:00
+  bool SetToDayEnd();    // To 23:59:59
 
-  GDT_BOOLEAN PromoteToMonthStart();
-  GDT_BOOLEAN PromoteToMonthEnd();
-  GDT_BOOLEAN PromoteToDayStart();
-  GDT_BOOLEAN PromoteToDayEnd();
+  bool PromoteToMonthStart();
+  bool PromoteToMonthEnd();
+  bool PromoteToDayStart();
+  bool PromoteToDayEnd();
 
   void        GetTodaysDate();
   void        SetNow();
 
   // Set Year, Month, Day
-  GDT_BOOLEAN SetYear(int nYear);   // YYYY
-  GDT_BOOLEAN SetMonth(int nMonth); // MM
-  GDT_BOOLEAN SetDay(int nDay);     // DD
+  bool SetYear(int nYear);   // YYYY
+  bool SetMonth(int nMonth); // MM
+  bool SetDay(int nDay);     // DD
 
   // Get Year, Month, Day
   int         Year() const;  // Year of date YYYY
@@ -156,13 +156,13 @@ public:
   long        GetJulianDate() const; // days since 1/1/4713 B.C.
   long        GetTimeSeconds() const; // Seconds of Time since Midnight
 
-  GDT_BOOLEAN SetTimeOfFile(int fd);
-  GDT_BOOLEAN SetTimeOfFile(FILE *fp);
-  GDT_BOOLEAN SetTimeOfFile(const STRING& Pathname);
+  bool SetTimeOfFile(int fd);
+  bool SetTimeOfFile(FILE *fp);
+  bool SetTimeOfFile(const STRING& Pathname);
 
-  GDT_BOOLEAN SetTimeOfFileCreation(int fd);
-  GDT_BOOLEAN SetTimeOfFileCreation(FILE *fp);
-  GDT_BOOLEAN SetTimeOfFileCreation(const STRING& Pathname);
+  bool SetTimeOfFileCreation(int fd);
+  bool SetTimeOfFileCreation(FILE *fp);
+  bool SetTimeOfFileCreation(const STRING& Pathname);
 
   SRCH_DATE& GetTimeOfFile(int fd)
      { SetTimeOfFile(fd); return *this;       };
@@ -179,31 +179,31 @@ public:
      { SetTimeOfFileCreation(Pathname); return *this; };
 
 
-  GDT_BOOLEAN Set(const SRCH_DATE& OtherDate);
-  GDT_BOOLEAN Set(const DOUBLE DoubleVal);
-  GDT_BOOLEAN Set(const int Val) { return Set((long)Val);}
-  GDT_BOOLEAN Set(const long LongVal);
-  GDT_BOOLEAN Set(const CHR *CStringVal);
-  GDT_BOOLEAN Set(const STRING& StringVal);
-  GDT_BOOLEAN Set(struct tm *time_str);
-  GDT_BOOLEAN Set(const time_t *time = NULL);
-  GDT_BOOLEAN Set(FILE *Fp) { return SetTimeOfFile(Fp); }
+  bool Set(const SRCH_DATE& OtherDate);
+  bool Set(const DOUBLE DoubleVal);
+  bool Set(const int Val) { return Set((long)Val);}
+  bool Set(const long LongVal);
+  bool Set(const CHR *CStringVal);
+  bool Set(const STRING& StringVal);
+  bool Set(struct tm *time_str);
+  bool Set(const time_t *time = NULL);
+  bool Set(FILE *Fp) { return SetTimeOfFile(Fp); }
 #ifdef WIN32
-  GDT_BOOLEAN Set(const SYSTEMTIME *SystemTime);
+  bool Set(const SYSTEMTIME *SystemTime);
 #endif
-  GDT_BOOLEAN Set(int year, int mon, int day, int hour, int min, int sec);
-  GDT_BOOLEAN SetTime(int hour, int min, int sec);
-  GDT_BOOLEAN SetTime(DOUBLE Fraction);
-  GDT_BOOLEAN SetDate(int year, int mon, int day);
-  GDT_BOOLEAN SetDayOfYear(int Day);
-  GDT_BOOLEAN SetDayOfYear(int year, int Day);
-  GDT_BOOLEAN SetWeekOfYear(int Week, int Day=1);
-  GDT_BOOLEAN SetWeekOfYear(int Year, int Week, int Day);
+  bool Set(int year, int mon, int day, int hour, int min, int sec);
+  bool SetTime(int hour, int min, int sec);
+  bool SetTime(DOUBLE Fraction);
+  bool SetDate(int year, int mon, int day);
+  bool SetDayOfYear(int Day);
+  bool SetDayOfYear(int year, int Day);
+  bool SetWeekOfYear(int Week, int Day=1);
+  bool SetWeekOfYear(int Year, int Week, int Day);
   
-  GDT_BOOLEAN IsBefore(const SRCH_DATE& OtherDate) const;
-  GDT_BOOLEAN Equals(const SRCH_DATE& OtherDate) const;
-  GDT_BOOLEAN IsDuring(const SRCH_DATE& OtherDate) const;
-  GDT_BOOLEAN IsAfter(const SRCH_DATE& OtherDate) const;
+  bool IsBefore(const SRCH_DATE& OtherDate) const;
+  bool Equals(const SRCH_DATE& OtherDate) const;
+  bool IsDuring(const SRCH_DATE& OtherDate) const;
+  bool IsAfter(const SRCH_DATE& OtherDate) const;
 
   time_t MkTime() const;
   time_t MkTime(const SRCH_DATE& Date) const;
@@ -223,15 +223,15 @@ public:
   friend ostream &operator << (ostream &os, const SRCH_DATE &dt); // ISOdate
   friend STRING  &operator << (STRING &String, const SRCH_DATE &dt); // ISOdate
 
-  GDT_BOOLEAN getdate(const char *string, struct tm *tm);
+  bool getdate(const char *string, struct tm *tm);
 
-  GDT_BOOLEAN Strftime(const char *format, PSTRING StringBuffer) const;
-  GDT_BOOLEAN RFC(PSTRING StringBuffer) const;
-  GDT_BOOLEAN ISO(PSTRING StringBuffer) const;
-  GDT_BOOLEAN ANSI(PSTRING StringBuffer) const;
-  GDT_BOOLEAN Locale(PSTRING StringBuffer) const;
+  bool Strftime(const char *format, PSTRING StringBuffer) const;
+  bool RFC(PSTRING StringBuffer) const;
+  bool ISO(PSTRING StringBuffer) const;
+  bool ANSI(PSTRING StringBuffer) const;
+  bool Locale(PSTRING StringBuffer) const;
 
-  GDT_BOOLEAN Read(PFILE Fp);
+  bool Read(PFILE Fp);
   void Write(PFILE Fp) const;
 
   ~SRCH_DATE();
@@ -247,15 +247,15 @@ public:
   friend INT Compare(const SRCH_DATE& Date1, const SRCH_DATE& Date2);
 private:
   // Methods
-  GDT_BOOLEAN ParseTm(struct tm *time_str) const;
-  GDT_BOOLEAN ParseTm(struct tm *time_str, const SRCH_DATE& time,
-	GDT_BOOLEAN Validate = GDT_FALSE) const;
+  bool ParseTm(struct tm *time_str) const;
+  bool ParseTm(struct tm *time_str, const SRCH_DATE& time,
+	bool Validate = false) const;
   void        SetPrecision();
   void        SetPrecision(enum Date_Precision prec);
   enum Date_Precision GetPrecision() const;
   void        SetTime(UINT4 Time);
   UINT4       GetTime() const;
-  GDT_BOOLEAN date_parse(const char *str);
+  bool date_parse(const char *str);
   Date_Match  DateCompare(const SRCH_DATE& OtherDate) const;
 
   // Data
@@ -298,30 +298,30 @@ public:
   void  SetStart(const SRCH_DATE& NewStart) { d_start = NewStart; }
   void  SetEnd(const SRCH_DATE& NewEnd)  { d_end = NewEnd; }
 
-  GDT_BOOLEAN Ok() const;
-  GDT_BOOLEAN Defined() const;
-  GDT_BOOLEAN Contains(const SRCH_DATE& TestDate) const;
-  GDT_BOOLEAN Contains(const DATERANGE& OtherRange) const;
+  bool Ok() const;
+  bool Defined() const;
+  bool Contains(const SRCH_DATE& TestDate) const;
+  bool Contains(const DATERANGE& OtherRange) const;
 
   void        Clear()  { d_start.Clear(); d_end.Clear(); }
 
   // Comparison operators
-  GDT_BOOLEAN operator ==(const DATERANGE& OtherRange) const;
-  GDT_BOOLEAN operator !=(const DATERANGE& OtherRange) const;
-  GDT_BOOLEAN operator  >(const DATERANGE& OtherRange) const;
-  GDT_BOOLEAN operator  <(const DATERANGE& OtherRange) const;
-  GDT_BOOLEAN operator >=(const DATERANGE& OtherRange) const;
-  GDT_BOOLEAN operator <=(const DATERANGE& OtherRange) const;
+  bool operator ==(const DATERANGE& OtherRange) const;
+  bool operator !=(const DATERANGE& OtherRange) const;
+  bool operator  >(const DATERANGE& OtherRange) const;
+  bool operator  <(const DATERANGE& OtherRange) const;
+  bool operator >=(const DATERANGE& OtherRange) const;
+  bool operator <=(const DATERANGE& OtherRange) const;
 
   // Formating...
-  GDT_BOOLEAN ISO(STRING *String) const;
-  GDT_BOOLEAN ISO(STRING *From, STRING *To) const;
-  GDT_BOOLEAN RFC(STRING *From, STRING *To) const;
-  GDT_BOOLEAN Locale(STRING *From, STRING *To) const;
-  GDT_BOOLEAN Strftime(const char *fmt, STRING *From, STRING *To) const;
+  bool ISO(STRING *String) const;
+  bool ISO(STRING *From, STRING *To) const;
+  bool RFC(STRING *From, STRING *To) const;
+  bool Locale(STRING *From, STRING *To) const;
+  bool Strftime(const char *fmt, STRING *From, STRING *To) const;
 
   // I/O
-  GDT_BOOLEAN Read(PFILE Fp);
+  bool Read(PFILE Fp);
   void Write(PFILE Fp) const;
 
   ~DATERANGE();
@@ -334,9 +334,9 @@ private:
 
 // Common functions....
 inline void Write(const SRCH_DATE& date, FILE *Fp)  { date.Write(Fp);         }
-inline GDT_BOOLEAN Read(SRCH_DATE *date, FILE *Fp)  { return date->Read(Fp);  }
+inline bool Read(SRCH_DATE *date, FILE *Fp)  { return date->Read(Fp);  }
 inline void Write(const DATERANGE& range, FILE *Fp) { range.Write(Fp);        }
-inline GDT_BOOLEAN Read(DATERANGE *range, FILE *Fp) { return range->Read(Fp); }
+inline bool Read(DATERANGE *range, FILE *Fp) { return range->Read(Fp); }
 
 
 #endif

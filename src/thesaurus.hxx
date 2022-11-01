@@ -118,14 +118,14 @@ class THESAURUS {
 public:
   THESAURUS();
   THESAURUS(const STRING& Path);
-  THESAURUS(const STRING& SourceFileName, const STRING& Path, GDT_BOOLEAN Force);
+  THESAURUS(const STRING& SourceFileName, const STRING& Path, bool Force);
 
-  GDT_BOOLEAN Compile(const STRING& Source, const STRING& Target, GDT_BOOLEAN Force=GDT_FALSE);
+  bool Compile(const STRING& Source, const STRING& Target, bool Force=false);
 
   void   SetFileName(const STRING& Fn) { BaseFileName = Fn;   }
   STRING GetFileName()                 { return BaseFileName; }
 
-  GDT_BOOLEAN Ok() const { return Parents.GetCount() > 0 || Children.GetCount() > 0;}
+  bool Ok() const { return Parents.GetCount() > 0 || Children.GetCount() > 0;}
 
   void   GetChildren(const STRING& ParentTerm, STRLIST* Children);
   void   GetParent(const STRING& ChildTerm, STRING* TheParent);
@@ -139,8 +139,8 @@ private:
   void        GetIndirectString(FILE *fp, const TH_OFF_T ptr, STRING* term);
   void        LoadParents();
   void        LoadChildren();
-  GDT_BOOLEAN MatchParent(const STRING& ParentTerm, TH_OFF_T *ptr);
-  GDT_BOOLEAN MatchChild(const STRING& Term, TH_OFF_T *ptr);
+  bool MatchParent(const STRING& ParentTerm, TH_OFF_T *ptr);
+  bool MatchChild(const STRING& Term, TH_OFF_T *ptr);
 
   TH_PARENT_LIST Parents;
   TH_ENTRY_LIST  Children;

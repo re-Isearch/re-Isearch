@@ -133,20 +133,20 @@ static INT SortCmpGP(const void* x, const void* y)
 }
 
 
-GDT_BOOLEAN NUMERICLIST::Expand(size_t Entries)
+bool NUMERICLIST::Expand(size_t Entries)
 {
   if (Entries < MaxEntries)
-    return GDT_TRUE;
+    return true;
   return Resize(Entries +  (50*Ncoords));
 }
 
 
-GDT_BOOLEAN NUMERICLIST::Resize(size_t Entries)
+bool NUMERICLIST::Resize(size_t Entries)
 {
   if (Entries == 0)
     {
       Empty();
-      return GDT_TRUE;
+      return true;
     }
 
   NUMERICFLD *temp;
@@ -156,7 +156,7 @@ GDT_BOOLEAN NUMERICLIST::Resize(size_t Entries)
   } catch(...) {
     message_log (LOG_PANIC|LOG_ERRNO, "Could not allocate numerical list (%ld)",
 	(long)Entries);
-    return GDT_FALSE;
+    return false;
   }
   size_t      CopyCount;
 
@@ -173,7 +173,7 @@ GDT_BOOLEAN NUMERICLIST::Resize(size_t Entries)
 
   table=temp;
   MaxEntries=Entries;
-  return GDT_TRUE;
+  return true;
 }
 
 
@@ -967,7 +967,7 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End)
       nRecs++;
       if(++Count==MaxEntries)
 	{
-	  if (Expand() == GDT_FALSE)
+	  if (Expand() == false)
 	    break;
 	}
     }
@@ -1064,7 +1064,7 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End, NumBlock Offset)
 
 	nRecs++;
 	if(++Count == MaxEntries)
-	  if (Expand() == GDT_FALSE)
+	  if (Expand() == false)
 	    break;
       }
     }
@@ -1195,18 +1195,16 @@ FILE *NUMERICLIST::OpenForAppend(const STRING& Fn)
   if (oFp == NULL)
     {
       // Fall into scatch (we might not have writing permission
-      char     scratch[ L_tmpnam+1];
-      char    *TempName = tmpnam( scratch ); 
+      STRING tmp = GetTempFilename(Fn, true) ;
 
-      message_log (LOG_WARN, "Could not create '%s', trying tmp '%s'", TmpName.c_str(),
-	TempName);
-      if ((oFp = fopen(TempName, "wb")) == NULL)
+      message_log (LOG_WARN, "Could not create '%s', trying tmp '%s'", TmpName.c_str(), tmp.c_str());
+      if ((oFp = tmp.fopen("wb")) == NULL)
 	{
 	  message_log (LOG_ERRNO, "Can't create a temporary numlist '%s'", Fn.c_str());
 	  fclose(Fp);
 	  return NULL;
 	}
-      TmpName = TempName; // Set it
+      TmpName = tmp; // Set it
     }
 
   // Copy over

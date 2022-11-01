@@ -21,11 +21,11 @@ public:
   void SourceMIMEContent(const RESULT& Record, PSTRING StringPtr) const;
   const char *Description(PSTRLIST List) const;
 
-  GDT_BOOLEAN Summary(const RESULT& ResultRecord,
+  bool Summary(const RESULT& ResultRecord,
         const STRING& RecordSyntax, PSTRING StringBuffer) const;
 
-  GDT_BOOLEAN URL(const RESULT& ResultRecord, PSTRING StringBuffer,
-        GDT_BOOLEAN OnlyRemote) const;
+  bool URL(const RESULT& ResultRecord, PSTRING StringBuffer,
+        bool OnlyRemote) const;
 
   void LoadFieldTable();
 

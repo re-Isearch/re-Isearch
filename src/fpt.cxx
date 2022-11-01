@@ -94,8 +94,8 @@ INT FPT::ffclose(const STRING& Filename)
     {
       FILE *Fp;
       FPREC Fprec = Table[z - 1];
-      GDT_BOOLEAN  Opened = Fprec.GetOpened ();
-      if (Opened != GDT_TRUE)
+      bool  Opened = Fprec.GetOpened ();
+      if (Opened != true)
 	{
           pThreadLocker Lock(&mutex, "FPT::ffclose");
 	  if (Table[z-1].GetFilePointer()) _global_opens_count--;
@@ -108,16 +108,16 @@ INT FPT::ffclose(const STRING& Filename)
   return -1;
 }
 
-GDT_BOOLEAN FPT::hasOpenHandle(const STRING& Filename) const
+bool FPT::hasOpenHandle(const STRING& Filename) const
 {
   size_t z  = Lookup(Filename);
   if (z)
     {
       FILE *Fp;
       if ((Fp = Table[--z].GetFilePointer ()) != NULL)
-	return GDT_TRUE;
+	return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -301,7 +301,7 @@ PFILE FPT::ffopen (const STRING& FileName, const CHR* Type)
       FPREC Fprec = Table[z - 1];
       const STRING Fn ( Fprec.GetFileName () );
       const STRING Om ( Fprec.GetOpenMode () );
-      GDT_BOOLEAN  Opened = Fprec.GetOpened ();
+      bool  Opened = Fprec.GetOpened ();
 
       if ((Fp = Fprec.GetFilePointer ()) == NULL) {
 	message_log (LOG_ERROR, "Stream cache of '%s' is bonked! Contact bugs@nonmonotonic.com", FileName.c_str());

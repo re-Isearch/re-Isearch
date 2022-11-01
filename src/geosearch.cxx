@@ -333,7 +333,7 @@ IRSET* INDEX::BoundingRectangle(NUMBER NorthBC, NUMBER SouthBC, NUMBER WestBC, N
   // query.
   
   
-  GDT_BOOLEAN DateLineIntersection=GDT_FALSE;
+  bool DateLineIntersection=false;
   
   // Unified Bounding box field names
   LoadBoundingBoxFieldNames();
@@ -398,14 +398,14 @@ IRSET* INDEX::BoundingRectangle(NUMBER NorthBC, NUMBER SouthBC, NUMBER WestBC, N
   // Northernmost longitudinal boundary:
   
   if (WestBC > EastBC)	// we cross the DateLine
-    DateLineIntersection=GDT_TRUE;
+    DateLineIntersection=true;
   else
-    DateLineIntersection=GDT_FALSE;
+    DateLineIntersection=false;
  
 
   IRSET *NorthLongitude; 
  
-  if (DateLineIntersection == GDT_TRUE) {
+  if (DateLineIntersection == true) {
 
     IRSET *WestDateLineNL =Interval(WestBC, 180.0, NorthBC, NorthBC);
     IRSET *EastDateLineNL =Interval(-180.0, EastBC, NorthBC, NorthBC);
@@ -426,14 +426,14 @@ IRSET* INDEX::BoundingRectangle(NUMBER NorthBC, NUMBER SouthBC, NUMBER WestBC, N
   // Southernmost longitudinal boundary:
   
   if (WestBC > EastBC)	// we cross the DateLine
-    DateLineIntersection=GDT_TRUE;
+    DateLineIntersection=true;
   else
-    DateLineIntersection=GDT_FALSE;
+    DateLineIntersection=false;
  
 
   IRSET *SouthLongitude;
  
-  if (DateLineIntersection == GDT_TRUE) {
+  if (DateLineIntersection == true) {
     IRSET *WestDateLineSL =Interval(WestBC, 180.0, SouthBC, SouthBC);
     IRSET *EastDateLineSL =Interval(-180.0, EastBC, SouthBC, SouthBC);
 

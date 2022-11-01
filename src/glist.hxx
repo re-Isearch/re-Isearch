@@ -52,17 +52,17 @@ typedef IPOSITION *PIPOSITION;
 class GLIST {
 public:
   GLIST();
-  GDT_BOOLEAN IsEmpty();
+  bool IsEmpty();
   IPOSITION* First();
   IPOSITION* Last();
   IPOSITION* Next(IPOSITION *c);
   IPOSITION* Prev(IPOSITION *c);
-  GDT_BOOLEAN InsertBefore(IPOSITION *c, IATOM *a, int Type);
-  GDT_BOOLEAN InsertAfter(IPOSITION *c, IATOM *a, int Type);
-  GDT_BOOLEAN InsertBefore(IPOSITION *c, IATOM *a);
-  GDT_BOOLEAN InsertAfter(IPOSITION *c, IATOM *a);
+  bool InsertBefore(IPOSITION *c, IATOM *a, int Type);
+  bool InsertAfter(IPOSITION *c, IATOM *a, int Type);
+  bool InsertBefore(IPOSITION *c, IATOM *a);
+  bool InsertAfter(IPOSITION *c, IATOM *a);
   IATOM* Retrieve(IPOSITION *c);
-  GDT_BOOLEAN Update(IPOSITION *c, IATOM *a);
+  bool Update(IPOSITION *c, IATOM *a);
   INT GetLength() const;
   INT DataType(IPOSITION *c);
   void Delete(IPOSITION *c);

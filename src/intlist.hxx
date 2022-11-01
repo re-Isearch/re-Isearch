@@ -43,13 +43,13 @@ private:
   INT          Relation;   // what relation generated StartIndex, EndIndex
   STRING       FileName;   // the file which attributes/numeric data are in
   INT          Ncoords;    // Number of values in an entry
-  GDT_BOOLEAN  Truncate;
+  bool  Truncate;
     
   //  These are called internally by Find
   //  SearchState  MemFind(DOUBLE Key, INT4 Relation, 
-  //		       GDT_BOOLEAN ByStart, INT4 *Index);
+  //		       bool ByStart, INT4 *Index);
   //  SearchState  DiskFind(STRING Fn, DOUBLE Key, INT4 Relation, 
-  //			GDT_BOOLEAN ByStart, INT4 *Index);
+  //			bool ByStart, INT4 *Index);
   SearchState  MemFind(DOUBLE Key, INT4 Relation, 
 		       IntBlock FindBlock, INT4 *Index);
   SearchState  DiskFind(STRING Fn, DOUBLE Key, INT4 Relation, 
@@ -72,7 +72,7 @@ public:
   void   Clear();
   void   Empty();
 
-  void   SetTruncatedSearch(GDT_BOOLEAN State=GDT_TRUE) {
+  void   SetTruncatedSearch(bool State=true) {
     Truncate = State;
   }
 

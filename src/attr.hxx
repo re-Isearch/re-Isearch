@@ -33,7 +33,7 @@ public:
   INT GetAttrValue() const                      { return AttrValue.GetInt(); }
 
   void Write(PFILE Fp) const;
-  GDT_BOOLEAN Read(PFILE Fp);
+  bool Read(PFILE Fp);
   ~ATTR();
 private:
   STRING SetId;
@@ -48,7 +48,7 @@ inline void Write(const ATTR& Attr, FILE *Fp)
 {
   Attr.Write(Fp);
 }
-inline GDT_BOOLEAN Read(PATTR AttrPtr, FILE *Fp)
+inline bool Read(PATTR AttrPtr, FILE *Fp)
 {
   return AttrPtr->Read(Fp);
 }

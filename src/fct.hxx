@@ -36,7 +36,7 @@ public:
 
   void      MergeEntries();
 
-  GDT_BOOLEAN GetEntry(const size_t Index, FC* FcRecord) const;
+  bool GetEntry(const size_t Index, FC* FcRecord) const;
   const FC&   GetEntry(const size_t Index) const; 
 
   // Iteration methods
@@ -48,7 +48,7 @@ public:
 
   void SortByFc();
   void Write(PFILE fp) const;
-  GDT_BOOLEAN Read(PFILE fp);
+  bool Read(PFILE fp);
   void Print(ostream& Os) const;
 
   void SubtractOffset(const GPTYPE GpOffset); // Isearch Compat. function
@@ -69,7 +69,7 @@ inline void Write(const FCLIST& Fct, PFILE Fp)
   Fct.Write(Fp);
 }
 
-inline GDT_BOOLEAN Read(FCLIST *FctPtr, PFILE Fp)
+inline bool Read(FCLIST *FctPtr, PFILE Fp)
 {
   return FctPtr->Read(Fp);
 }
@@ -95,7 +95,7 @@ class FCLISTptr {
       unsorted_ = 0;
       table_ = new FCLIST(Fc);
     }
-    GDT_BOOLEAN IsEmpty() const {
+    bool IsEmpty() const {
       return table_->IsEmpty();
     }
     size_t GetTotalEntries() const {
@@ -223,14 +223,14 @@ public:
 	p_->unsorted_ = 0;
       }
   }
-  GDT_BOOLEAN IsSorted() const {
+  bool IsSorted() const {
     return p_ && p_->unsorted_ == 0; }
-  GDT_BOOLEAN IsEmpty() const  {
+  bool IsEmpty() const  {
     return p_ == NULL || p_->IsEmpty();    }
   size_t GetTotalEntries() const {
     return IsEmpty() ? 0 : p_->GetTotalEntries();
   }
-  GDT_BOOLEAN GetEntry(const size_t Index, FC* FcRecord) const {
+  bool GetEntry(const size_t Index, FC* FcRecord) const {
     return p_->table_->GetEntry(Index, FcRecord);
   }
   const FC& GetEntry(const size_t Index) const {
@@ -248,7 +248,7 @@ public:
   const FC *PrevElementPtr() {
     return &((cursor = cursor->Prev())->Value());
   }
-  GDT_BOOLEAN atEndOfList() {
+  bool atEndOfList() {
     return cursor == p_->table_;
   }
 #endif
@@ -263,7 +263,7 @@ public:
   size_t WriteFct(FILE *fp, GPTYPE GpOffset) const {
     return p_->table_->WriteFct(fp, GpOffset);
   }
-  GDT_BOOLEAN Read(PFILE fp) {
+  bool Read(PFILE fp) {
     return node()->Read(fp);
   }
   int Refcount_() const { return p_ ?  p_->count_  : -1; }
@@ -304,7 +304,7 @@ inline void Write(const FCT& Fctable, PFILE Fp)
   Fctable.Write(Fp);
 }
 
-inline GDT_BOOLEAN Read(FCT *FctablePtr, PFILE Fp)
+inline bool Read(FCT *FctablePtr, PFILE Fp)
 {
   return FctablePtr->Read(Fp);
 }

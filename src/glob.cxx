@@ -18,13 +18,13 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 #include "gdt.h"
 #include <ctype.h>
 
-static inline GDT_BOOLEAN IsPathSep(const int c)
+static inline bool IsPathSep(const int c)
 {
   return (c == '\\' || c == '/');
 }
 
 
-GDT_BOOLEAN Glob(const UCHR *pattern, const UCHR *str, GDT_BOOLEAN dot_special)
+bool Glob(const UCHR *pattern, const UCHR *str, bool dot_special)
 {
 #ifdef _WIN32
 # define CASE(_x) tolower(_x)
@@ -33,13 +33,13 @@ GDT_BOOLEAN Glob(const UCHR *pattern, const UCHR *str, GDT_BOOLEAN dot_special)
 #endif
   char c;
   const UCHR *cp;
-  GDT_BOOLEAN done = GDT_FALSE, ret_code, ok;
+  bool done = false, ret_code, ok;
   // Below is for vi fans
   const char OB = '{', CB = '}';
 
   // dot_special means '.' only matches '.'
   if (dot_special && !isalnum(*str) && *pattern != *str)
-    return GDT_FALSE;
+    return false;
 
   while ((*pattern != '\0') && (!done) && (((*str == '\0') &&
 	       ((*pattern == OB) || (*pattern == '*'))) || (*str != '\0')))
@@ -53,8 +53,8 @@ GDT_BOOLEAN Glob(const UCHR *pattern, const UCHR *str, GDT_BOOLEAN dot_special)
 	  break;
 	case '*':
 	  pattern++;
-	  ret_code = GDT_FALSE;
-	  while ((*str != '\0') && (!(ret_code = Glob (pattern, str++, GDT_FALSE))));
+	  ret_code = false;
+	  while ((*str != '\0') && (!(ret_code = Glob (pattern, str++, false))));
 	  if (ret_code)
 	    {
 	      while (*str != '\0')
@@ -68,7 +68,7 @@ GDT_BOOLEAN Glob(const UCHR *pattern, const UCHR *str, GDT_BOOLEAN dot_special)
 	repeat:
 	  if ((*pattern == '\0') || (*pattern == ']'))
 	    {
-	      done = GDT_TRUE;
+	      done = true;
 	      break;
 	    }
 	  if (*pattern == '\\')
@@ -76,7 +76,7 @@ GDT_BOOLEAN Glob(const UCHR *pattern, const UCHR *str, GDT_BOOLEAN dot_special)
 	      pattern++;
 	      if (*pattern == '\0')
 		{
-		  done = GDT_TRUE;
+		  done = true;
 		  break;
 		}
 	    }
@@ -86,7 +86,7 @@ GDT_BOOLEAN Glob(const UCHR *pattern, const UCHR *str, GDT_BOOLEAN dot_special)
 	      pattern += 2;
 	      if (*pattern == ']')
 		{
-		  done = GDT_TRUE;
+		  done = true;
 		  break;
 		}
 	      if (*pattern == '\\')
@@ -94,7 +94,7 @@ GDT_BOOLEAN Glob(const UCHR *pattern, const UCHR *str, GDT_BOOLEAN dot_special)
 		  pattern++;
 		  if (*pattern == '\0')
 		    {
-		      done = GDT_TRUE;
+		      done = true;
 		      break;
 		    }
 		}
@@ -133,7 +133,7 @@ GDT_BOOLEAN Glob(const UCHR *pattern, const UCHR *str, GDT_BOOLEAN dot_special)
          while ((*pattern != CB) && (*pattern != '\0'))
 	    {
 	      cp = str;
-	      ok = GDT_TRUE;
+	      ok = true;
 	      while (ok && (*cp != '\0') && (*pattern != '\0') &&
                  (*pattern != ',') && (*pattern != CB))
 		{
@@ -143,8 +143,8 @@ GDT_BOOLEAN Glob(const UCHR *pattern, const UCHR *str, GDT_BOOLEAN dot_special)
 		}		// while()
 	      if (*pattern == '\0')
 		{
-		  ok = GDT_FALSE;
-		  done = GDT_TRUE;
+		  ok = false;
+		  done = true;
 		  break;
 		}
 	      else if (ok)
@@ -192,7 +192,7 @@ GDT_BOOLEAN Glob(const UCHR *pattern, const UCHR *str, GDT_BOOLEAN dot_special)
 #ifdef EBUG
 	      cerr << "*str = " << *str << " != " << *pattern << endl;
 #endif
-	      done = GDT_TRUE;
+	      done = true;
 	    }
 	}			// switch()
     }				// while()
@@ -208,7 +208,7 @@ GDT_BOOLEAN Glob(const UCHR *pattern, const UCHR *str, GDT_BOOLEAN dot_special)
 #include <stdio.h>
 main(int argc, char **argv)
 {
-  if (Glob((const UCHR *)argv[1], (const UCHR *)argv[2], GDT_TRUE))
+  if (Glob((const UCHR *)argv[1], (const UCHR *)argv[2], true))
     printf("TRUE\n");
   else
     printf("FALSE\n");

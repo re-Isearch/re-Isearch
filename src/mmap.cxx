@@ -322,13 +322,13 @@ UCHR *MMAP::map(int fd, int permit, off_t from, off_t to,
   return ptr = (UCHR *) p;
 }
 
-GDT_BOOLEAN MMAP::Advise(int flag, size_t from, size_t to)
+bool MMAP::Advise(int flag, size_t from, size_t to)
 {
 #if HAVE_MADVISE
   int advise = MADV_NORMAL;
 
   if ((off_t)(from + to) > len)
-    return GDT_FALSE;
+    return false;
 
   if (flag == MapSequential)
     advise = MADV_SEQUENTIAL;
@@ -337,12 +337,12 @@ GDT_BOOLEAN MMAP::Advise(int flag, size_t from, size_t to)
   size_t length = (to == 0 ? len : to) - from;
   return madvise( (char *)(ptr+from), length, flag == 0 ? MADV_NORMAL : advise) != -1;
 #else
-  return GDT_FALSE;
+  return false;
 #endif
 }
 
 
-GDT_BOOLEAN MMAP::Ok() const
+bool MMAP::Ok() const
 {
 #ifdef _WIN32
   return len > 0;
@@ -357,7 +357,7 @@ size_t MMAP::Size() const
   return size;
 }
 
-GDT_BOOLEAN MMAP::Unmap()
+bool MMAP::Unmap()
 {
   int result = 0;
   if (len)
@@ -370,27 +370,27 @@ GDT_BOOLEAN MMAP::Unmap()
   return result == 0;
 }
 
-GDT_BOOLEAN MMAP::CreateMap(const STRING& fileName)
+bool MMAP::CreateMap(const STRING& fileName)
 {
   return map(fileName.c_str(), O_RDONLY, 0, 0, MapNormal) != NULL;
 }
 
-GDT_BOOLEAN MMAP::CreateMap(const STRING& fileName, enum mapping_access flag)
+bool MMAP::CreateMap(const STRING& fileName, enum mapping_access flag)
 {
   return map(fileName.c_str(), O_RDONLY, 0, 0, flag) != NULL;
 }
 
-GDT_BOOLEAN MMAP::CreateMap(int fd, enum mapping_access flag)
+bool MMAP::CreateMap(int fd, enum mapping_access flag)
 {
   return map(fd, O_RDONLY, 0, 0, flag) != NULL;
 }
 
-GDT_BOOLEAN MMAP::CreateMap(int fd, off_t from, enum mapping_access flag)
+bool MMAP::CreateMap(int fd, off_t from, enum mapping_access flag)
 {
   return map(fd, O_RDONLY, from, 0, flag) != NULL;
 }
 
-GDT_BOOLEAN MMAP::CreateMap(int fd, off_t from, off_t to, enum mapping_access flag)
+bool MMAP::CreateMap(int fd, off_t from, off_t to, enum mapping_access flag)
 {
   return map(fd, O_RDONLY, from, to, flag) != NULL;
 }
@@ -419,22 +419,22 @@ MMAP *MMAP_TABLE::Map(size_t Element) const
 }
 
 
-GDT_BOOLEAN MMAP_TABLE::CreateMap(size_t Element, const STRING& FileName)
+bool MMAP_TABLE::CreateMap(size_t Element, const STRING& FileName)
 {
   if (Element >= 0 && Element < MaxElements)
     {
       return Table[Element].CreateMap(FileName);
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN MMAP_TABLE::Ok(size_t Element) const
+bool MMAP_TABLE::Ok(size_t Element) const
 {
   if (Element >= 0 && Element < MaxElements)
     {
       return Table[Element].Ok();
     }
-  return GDT_FALSE;
+  return false;
 }
 
 PUCHR MMAP_TABLE::Ptr(size_t Element) const
@@ -455,13 +455,13 @@ size_t MMAP_TABLE::Size(size_t Element) const
   return 0;
 }
 
-GDT_BOOLEAN MMAP_TABLE::Advise(size_t Element, int flag, size_t from, size_t to)
+bool MMAP_TABLE::Advise(size_t Element, int flag, size_t from, size_t to)
 {
   if (Element >= 0 && Element < MaxElements)
     {
       return Table[Element].Advise(flag, from, to);
     }
-  return GDT_FALSE;
+  return false;
 }
 
 

@@ -39,14 +39,14 @@ void SCANOBJ::Write(FILE *fp) const
       ::Write(Count, fp);
     }
 }
-GDT_BOOLEAN SCANOBJ::Read(FILE *fp)
+bool SCANOBJ::Read(FILE *fp)
 {
   if (String.Read(fp))
     {
       ::Read(&Count, fp);
-      if (Count > 0) return GDT_TRUE;
+      if (Count > 0) return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -81,13 +81,13 @@ void atomicSCANLIST::Write(FILE *fp) const
     }
 }
 
-GDT_BOOLEAN atomicSCANLIST::Read(FILE *fp)
+bool atomicSCANLIST::Read(FILE *fp)
 {
   obj_t obj = getObjID(fp); // It it really an Atomic Scanlist?
   if (obj != objSCANLIST)
     {
       PushBackObjID(obj, fp);
-      return GDT_FALSE;
+      return false;
     }
   UINT4 count, rcount=0;
 
@@ -100,10 +100,10 @@ GDT_BOOLEAN atomicSCANLIST::Read(FILE *fp)
       rcount++;
     }
   if ((rcount > 0 && count == 0) || rcount == count)
-    return GDT_TRUE; // Everthing went OK
+    return true; // Everthing went OK
   message_log (LOG_ERROR, "Scanlist read failure. Expected %lu elements, got %lu",
 	(unsigned long) count, (unsigned long)rcount);
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -366,16 +366,16 @@ atomicSCANLIST *atomicSCANLIST::Entry (const size_t Index) const
 }
 
 
-GDT_BOOLEAN atomicSCANLIST::GetEntry (const size_t Index, STRING *StringEntry, size_t *freq) const
+bool atomicSCANLIST::GetEntry (const size_t Index, STRING *StringEntry, size_t *freq) const
 {
   atomicSCANLIST *NodePtr = (atomicSCANLIST *) (VLIST::GetNodePtr (Index));
   if (NodePtr)
     {
       *StringEntry = NodePtr->Scan.String;
       *freq = NodePtr->Scan.Count;
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 SCANOBJ atomicSCANLIST::GetEntry (const size_t Index) const
@@ -401,11 +401,11 @@ static int ScanListCompare (const void *x, const void *y)
 
 size_t atomicSCANLIST::UniqueSort ()
 {
-  return UniqueSort(0, 0, GDT_TRUE);
+  return UniqueSort(0, 0, true);
 }
 
 
-size_t atomicSCANLIST::UniqueSort (const size_t from, const size_t max, GDT_BOOLEAN Add)
+size_t atomicSCANLIST::UniqueSort (const size_t from, const size_t max, bool Add)
 {
   const size_t Total = GetTotalEntries();
   size_t newTotal = Total;
@@ -534,7 +534,7 @@ static inline int gpcomp(const void* x, const void* y)
 // Private Version to exploit that its a sorted list and we have a
 // sorted list (and that we are doing this to LARGE numbers of words)
 //
-static GDT_BOOLEAN __IsStopWord(PUCHR term, STOPLIST *StopWords, size_t *position)
+static bool __IsStopWord(PUCHR term, STOPLIST *StopWords, size_t *position)
 {
   const size_t  TotalEntries = StopWords ? StopWords->GetTotalEntries() : 0;
   size_t        pos          = position ? *position : 0;
@@ -551,9 +551,9 @@ static GDT_BOOLEAN __IsStopWord(PUCHR term, STOPLIST *StopWords, size_t *positio
 	stopword = StopWords->Nth(++pos);
       if (position) *position = pos;
 
-      if (diff == 0) return GDT_TRUE;
+      if (diff == 0) return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 #endif
 
@@ -563,8 +563,8 @@ static GDT_BOOLEAN __IsStopWord(PUCHR term, STOPLIST *StopWords, size_t *positio
 
 // VERY Private method
 size_t INDEX::_scanAddEntry(SCANLIST *ListPtr,
-  BUFFER *GpBuffer, size_t compLength, GDT_BOOLEAN have_field,
-  FILE *fpi, const char *tp, const char *Buffer, const size_t Skip, GDT_BOOLEAN Merge) const
+  BUFFER *GpBuffer, size_t compLength, bool have_field,
+  FILE *fpi, const char *tp, const char *Buffer, const size_t Skip, bool Merge) const
 {
   if (Buffer == NULL)
     {
@@ -584,7 +584,7 @@ size_t INDEX::_scanAddEntry(SCANLIST *ListPtr,
   const size_t    termLength = (unsigned char) tp[0];
   if (termLength == 1) return count;  // Don't want singletons!
 
-  const GDT_BOOLEAN truncated = (termLength >= compLength);
+  const bool truncated = (termLength >= compLength);
   size_t          found = nhits;// Total found
   GPTYPE         *gplist = NULL;
   size_t          pos = 0;
@@ -690,7 +690,7 @@ size_t INDEX::_scanAddEntry(SCANLIST *ListPtr,
 //
 
 size_t INDEX::Scan (SCANLIST *ListPtr, const STRING& Fieldname,
-        const STRING& Expression, const INT TotalTermsRequested, GDT_BOOLEAN Cat,
+        const STRING& Expression, const INT TotalTermsRequested, bool Cat,
 	size_t Sis_id) const
 {
 //cerr << "@@@@ Scan(ListPtr, " << Fieldname << ", " << Expression << " ..)" << endl;
@@ -722,7 +722,7 @@ size_t INDEX::Scan (SCANLIST *ListPtr, const STRING& Fieldname,
      size_t total_count = 0;
      if (!Cat) ListPtr->Clear();
      do {
-	total_count += Scan (ListPtr, Fieldname, term, TotalTermsRequested, GDT_TRUE, Sis_id);
+	total_count += Scan (ListPtr, Fieldname, term, TotalTermsRequested, true, Sis_id);
      } while ((term = strtok_r (NULL, "|", &ctxt)) != NULL);
     delete[] token;
 #if 0
@@ -730,7 +730,7 @@ size_t INDEX::Scan (SCANLIST *ListPtr, const STRING& Fieldname,
       {
 	if (TotalTermsRequested > 0 && (INT)total_count > TotalTermsRequested)
 	  total_count = TotalTermsRequested;
-	ListPtr->UniqueSort(0, total_count, GDT_FALSE); // Sort the list
+	ListPtr->UniqueSort(0, total_count, false); // Sort the list
       }
 #endif
     return total_count;
@@ -790,13 +790,13 @@ size_t INDEX::Scan (SCANLIST *ListPtr, const STRING& Fieldname,
   BUFFER   GpBuffer;
   // GPTYPE  *gplist = NULL;
 
-  GDT_BOOLEAN have_field;
+  bool have_field;
   if (Fieldname.GetLength())
     {
       FieldCache->SetFieldName(Fieldname);
-      have_field = GDT_TRUE;
+      have_field = true;
     }
-  else have_field = GDT_FALSE;
+  else have_field = false;
 
   size_t total_count =0, count;
   MMAP MemoryMap;
@@ -871,7 +871,7 @@ size_t INDEX::Scan (SCANLIST *ListPtr, const STRING& Fieldname,
       if (TotalTermsRequested > 0 && total_count >= (size_t)TotalTermsRequested)
 	count = TotalTermsRequested;
       if (!Cat)
-	ListPtr->UniqueSort(0, total_count, GDT_TRUE); // Sort the list
+	ListPtr->UniqueSort(0, total_count, true); // Sort the list
     }
   return total_count;
 }
@@ -880,7 +880,7 @@ size_t INDEX::Scan (SCANLIST *ListPtr, const STRING& Fieldname,
 // Start with the first element that matches Term (inside)
 // Left Truncated Search
 size_t INDEX::ScanLR(SCANLIST *ListPtr, const STRING& Fieldname, const STRING& Term,
-	const size_t Position, const INT TotalTermsRequested, GDT_BOOLEAN Cat,
+	const size_t Position, const INT TotalTermsRequested, bool Cat,
 	size_t Sis_id) const
 {
 //cerr << "@@@@/2  Scan(ListPtr, " << Fieldname << ", " << Term << " ..)" << endl;
@@ -902,14 +902,14 @@ size_t INDEX::ScanLR(SCANLIST *ListPtr, const STRING& Fieldname, const STRING& T
   // Loop through all sub-indexes
   BUFFER   GpBuffer;
   //PGPTYPE  gplist = NULL;
-  GDT_BOOLEAN have_field;
+  bool have_field;
   if (Fieldname.GetLength())
     {
       FieldCache->SetFieldName(Fieldname);
-      have_field = GDT_TRUE;
+      have_field = true;
     }
   else
-    have_field = GDT_FALSE;
+    have_field = false;
 
   size_t count, total_count = 0;
   // size_t pos = 0;
@@ -959,19 +959,19 @@ size_t INDEX::ScanLR(SCANLIST *ListPtr, const STRING& Fieldname, const STRING& T
       if (len >= QueryLength)
 	{
 	  // Look to see if the string is inside..
-	  GDT_BOOLEAN OK = GDT_FALSE;
+	  bool OK = false;
 	  for (size_t i = 1; i <= (len - QueryLength + 1); i++)
 	    {
 	      if (tp[i] != first_char)
 		continue;
 	      if (memcmp(tp+i, QueryTerm.c_str(), QueryLength) == 0)
 		{
-		  OK = GDT_TRUE;
+		  OK = true;
 		  break;
 		}
 	    }
 	  // Did we find a match??
-	  if (OK == GDT_FALSE)
+	  if (OK == false)
 	    continue; // Nope
 
 	  size_t n = _scanAddEntry(ListPtr, &GpBuffer, compLength, have_field, fpi, tp, Buffer, Skip, Cat);
@@ -991,14 +991,14 @@ size_t INDEX::ScanLR(SCANLIST *ListPtr, const STRING& Fieldname, const STRING& T
     {
       if (TotalTermsRequested > 0 && total_count >= (size_t)TotalTermsRequested)
         total_count = TotalTermsRequested;
-      ListPtr->UniqueSort(0, total_count, GDT_TRUE); // Sort the list
+      ListPtr->UniqueSort(0, total_count, true); // Sort the list
     }
   return total_count;
 }
 
 // Start with the first element that matches Term (inside)
 size_t INDEX::ScanGlob(SCANLIST *ListPtr, const STRING& Fieldname, const STRING& Pattern,
-	const size_t Position, const INT TotalTermsRequested, GDT_BOOLEAN Cat,
+	const size_t Position, const INT TotalTermsRequested, bool Cat,
 	size_t Sis_id) const
 {
 //cerr << "@@@@/3 Scan(ListPtr, " << Fieldname << ", " << Pattern << " ..)" << endl ;
@@ -1018,14 +1018,14 @@ size_t INDEX::ScanGlob(SCANLIST *ListPtr, const STRING& Fieldname, const STRING&
   PGPTYPE  gplist = NULL;
   size_t   gplist_siz = 0;
 
-  GDT_BOOLEAN have_field;
+  bool have_field;
   if (Fieldname.GetLength())
     {
       FieldCache->SetFieldName(Fieldname);
-      have_field = GDT_TRUE;
+      have_field = true;
     }
   else
-    have_field = GDT_FALSE;
+    have_field = false;
 
   size_t count, total_count = 0, pos = 0;
   MMAP MemoryMap;
@@ -1135,7 +1135,7 @@ size_t INDEX::ScanGlob(SCANLIST *ListPtr, const STRING& Fieldname, const STRING&
     {
       if (TotalTermsRequested > 0 && total_count >= (size_t)TotalTermsRequested)
         total_count = TotalTermsRequested;
-      ListPtr->UniqueSort(0, total_count, GDT_TRUE); // Sort the list
+      ListPtr->UniqueSort(0, total_count, true); // Sort the list
     }
   return total_count;
 }
@@ -1143,7 +1143,7 @@ size_t INDEX::ScanGlob(SCANLIST *ListPtr, const STRING& Fieldname, const STRING&
 // Start with the first element that matches Term (inside)
 size_t INDEX::ScanSoundex(SCANLIST *ListPtr, const STRING& Fieldname, const STRING& Pattern,
         const size_t HashLen, const size_t Position, const INT TotalTermsRequested,
-	GDT_BOOLEAN Cat, size_t Sis_id) const
+	bool Cat, size_t Sis_id) const
 {
   if (!Cat) ListPtr->Clear();
 
@@ -1160,14 +1160,14 @@ size_t INDEX::ScanSoundex(SCANLIST *ListPtr, const STRING& Fieldname, const STRI
   PGPTYPE  gplist = NULL;
   size_t   gplist_siz = 0;
 
-  GDT_BOOLEAN have_field;
+  bool have_field;
   if (Fieldname.GetLength())
     {
       FieldCache->SetFieldName(Fieldname);
-      have_field = GDT_TRUE;
+      have_field = true;
     }
   else
-    have_field = GDT_FALSE;
+    have_field = false;
 
   size_t count, total_count = 0, pos = 0;
   MMAP MemoryMap;
@@ -1277,7 +1277,7 @@ size_t INDEX::ScanSoundex(SCANLIST *ListPtr, const STRING& Fieldname, const STRI
     {
       if (TotalTermsRequested > 0 && total_count >= (size_t)TotalTermsRequested)
         total_count = TotalTermsRequested;
-      ListPtr->UniqueSort(0, total_count, GDT_TRUE); // Sort the list
+      ListPtr->UniqueSort(0, total_count, true); // Sort the list
     }
   return total_count;
 }
@@ -1285,7 +1285,7 @@ size_t INDEX::ScanSoundex(SCANLIST *ListPtr, const STRING& Fieldname, const STRI
 
 size_t INDEX::Scan (SCANLIST *ListPtr, const STRING& Fieldname,
         const size_t Position, const INT TotalTermsRequested,
-	const size_t Start, GDT_BOOLEAN Cat, size_t Sis_id) const
+	const size_t Start, bool Cat, size_t Sis_id) const
 {
 //cerr << "@@@@ Scan <-- " << Fieldname << " Pos=" << Position << endl;
   if (!Cat) ListPtr->Clear();
@@ -1299,14 +1299,14 @@ size_t INDEX::Scan (SCANLIST *ListPtr, const STRING& Fieldname,
 
   PGPTYPE  gplist = NULL;
   size_t   gplist_siz = 0;
-  GDT_BOOLEAN have_field;
+  bool have_field;
   if (Fieldname.GetLength())
     {
       FieldCache->SetFieldName(Fieldname);
-      have_field = GDT_TRUE;
+      have_field = true;
     }
   else
-    have_field = GDT_FALSE;
+    have_field = false;
 
   size_t count, total_count = 0, pos = 0;
   size_t Offset = Start;
@@ -1426,7 +1426,7 @@ size_t INDEX::Scan (SCANLIST *ListPtr, const STRING& Fieldname,
     {
       if (TotalTermsRequested > 0 && total_count >= (size_t)TotalTermsRequested)
         total_count = TotalTermsRequested;
-      ListPtr->UniqueSort(0, total_count, GDT_TRUE); // Sort the list
+      ListPtr->UniqueSort(0, total_count, true); // Sort the list
     }
 //cerr << "Total = " << total_count << endl;
   return total_count;
@@ -1492,13 +1492,13 @@ size_t INDEX::Scan (PSTRLIST ListPtr, const STRING& Fieldname,
 
   PGPTYPE  gplist = NULL;
   size_t   gplist_siz = 0;
-  GDT_BOOLEAN have_field;
+  bool have_field;
   if (Fieldname.GetLength())
     {
       FieldCache->SetFieldName(Fieldname);
-      have_field = GDT_TRUE;
+      have_field = true;
     }
-  else have_field = GDT_FALSE;
+  else have_field = false;
 
   size_t count, total_count = 0;
   MMAP MemoryMap;
@@ -1555,9 +1555,9 @@ size_t INDEX::Scan (PSTRLIST ListPtr, const STRING& Fieldname,
                 break;
             }
 
-	  GDT_BOOLEAN OK = GDT_TRUE;
+	  bool OK = true;
 	  if (have_field) {
-	    OK = GDT_FALSE;
+	    OK = false;
 	    // Validate term in field.. (TO DO)
 	    const GPTYPE end = GP(tp, compLength+1);
 	    const GPTYPE start = ((long)tp - (long)Buffer) ? GP(tp, GP_OFFSET) + 1LL : 0;
@@ -1578,12 +1578,12 @@ size_t INDEX::Scan (PSTRLIST ListPtr, const STRING& Fieldname,
               QSORT (gplist, num_hits, sizeof(GPTYPE), gpcomp); // Speed up looking
 	    for (INT j=0; j<num_hits; j++) {
 	     if (FieldCache->ValidateInField(gplist[j])) {
-	        OK = GDT_TRUE;
+	        OK = true;
                 break; // in field..
 	      }
 	    } /* for */
 	  }
-	  if (OK == GDT_FALSE)
+	  if (OK == false)
 	    {
 	      continue;
 	    }
@@ -1646,14 +1646,14 @@ size_t INDEX::ScanLR(PSTRLIST ListPtr, const STRING& Fieldname, const STRING& Te
   // Loop through all sub-indexes
   PGPTYPE  gplist = NULL;
   size_t   gplist_siz = 0;
-  GDT_BOOLEAN have_field;
+  bool have_field;
   if (Fieldname.GetLength())
     {
       FieldCache->SetFieldName(Fieldname);
-      have_field = GDT_TRUE;
+      have_field = true;
     }
   else
-    have_field = GDT_FALSE;
+    have_field = false;
 
   size_t count, total_count = 0, pos = 0;
   MMAP MemoryMap;
@@ -1697,20 +1697,20 @@ size_t INDEX::ScanLR(PSTRLIST ListPtr, const STRING& Fieldname, const STRING& Te
       if (len >= QueryLength)
 	{
 	  // Look to see if the string is inside..
-	  GDT_BOOLEAN OK = GDT_FALSE;
+	  bool OK = false;
 	  for (size_t i = 1; i <= (len - QueryLength + 1); i++)
 	    {
 	      if (tp[i] != first_char)
 		continue;
 	      if (memcmp(tp+i, QueryTerm.c_str(), QueryLength) == 0)
 		{
-		  OK = GDT_TRUE;
+		  OK = true;
 		  break;
 		}
 	    }
 	  // Did we find a match??
 	  if (OK && have_field) {
-	    OK = GDT_FALSE;
+	    OK = false;
 	    // Validate term in field.. (TO DO)
 	    const GPTYPE end = GP(tp, compLength+1);
 	    const GPTYPE start = ((long)tp - (long)Buffer) ? GP(tp, GP_OFFSET) + 1 : 0;
@@ -1730,12 +1730,12 @@ size_t INDEX::ScanLR(PSTRLIST ListPtr, const STRING& Fieldname, const STRING& Te
             if (num_hits > 1)
               QSORT (gplist, num_hits, sizeof(GPTYPE), gpcomp); // Speed up looking
 	    for (INT j=0; j<num_hits; j++) {
-	     if ((OK = FieldCache->ValidateInField(gplist[j])) == GDT_TRUE) {
+	     if ((OK = FieldCache->ValidateInField(gplist[j])) == true) {
                 break; // in field..
 	      }
 	    } /* for */
 	  }
-	  if (OK == GDT_FALSE)
+	  if (OK == false)
 	    {
 	      continue;
 	    }
@@ -1799,14 +1799,14 @@ size_t INDEX::ScanGlob(PSTRLIST ListPtr, const STRING& Fieldname, const STRING& 
   PGPTYPE  gplist = NULL;
   size_t   gplist_siz = 0;
 
-  GDT_BOOLEAN have_field;
+  bool have_field;
   if (Fieldname.GetLength())
     {
       FieldCache->SetFieldName(Fieldname);
-      have_field = GDT_TRUE;
+      have_field = true;
     }
   else
-    have_field = GDT_FALSE;
+    have_field = false;
 
   size_t count, total_count = 0, pos = 0;
   MMAP MemoryMap;
@@ -1849,9 +1849,9 @@ size_t INDEX::ScanGlob(PSTRLIST ListPtr, const STRING& Fieldname, const STRING& 
 	  // Term Matches..
           memcpy(tmp, &tp[1], (unsigned char)tp[0]);
           tmp[(unsigned char)tp[0]] = '\0';
-	  GDT_BOOLEAN OK = QueryPattern.MatchWild(tmp);
+	  bool OK = QueryPattern.MatchWild(tmp);
 	  if (OK && have_field) {
-	    OK = GDT_FALSE;
+	    OK = false;
 	    // Validate term in field.. (TO DO)
 	    const GPTYPE end = GP(tp, compLength+1);
 	    const GPTYPE start = ((long)tp - (long)Buffer) ? GP(tp, GP_OFFSET) + 1 : 0;
@@ -1872,12 +1872,12 @@ size_t INDEX::ScanGlob(PSTRLIST ListPtr, const STRING& Fieldname, const STRING& 
               QSORT (gplist, num_hits, sizeof(GPTYPE), gpcomp); // Speed up looking
 	    for (INT j=0; j<num_hits; j++) {
              if (FieldCache->ValidateInField(gplist[j])) {
-	        OK = GDT_TRUE;
+	        OK = true;
                 break; // in field..
 	      }
 	    } /* for */
 	  }
-	  if (OK == GDT_FALSE)
+	  if (OK == false)
 	    {
 	      continue;
 	    }
@@ -1922,14 +1922,14 @@ size_t INDEX::Scan (PSTRLIST ListPtr, const STRING& Fieldname,
 
   PGPTYPE  gplist = NULL;
   size_t   gplist_siz = 0;
-  GDT_BOOLEAN have_field;
+  bool have_field;
   if (Fieldname.GetLength())
     {
       FieldCache->SetFieldName(Fieldname);
-      have_field = GDT_TRUE;
+      have_field = true;
     }
   else
-    have_field = GDT_FALSE;
+    have_field = false;
 
   size_t count, total_count = 0, pos = 0;
   size_t Offset = Start;
@@ -1982,9 +1982,9 @@ size_t INDEX::Scan (PSTRLIST ListPtr, const STRING& Fieldname,
 	char tmp[StringCompLength+1];
 	for(char *tp = (char *)t; tp < &Buffer[size - 5]; tp += dsiz) {
 
-	  GDT_BOOLEAN OK = GDT_TRUE;
+	  bool OK = true;
 	  if (have_field) {
-	    OK = GDT_FALSE;
+	    OK = false;
 	    // Validate term in field.. (TO DO)
 	    const GPTYPE end = GP(tp, compLength+1);
 	    const GPTYPE start = ((long)tp - (long)Buffer) ? GP(tp, GP_OFFSET) + 1 : 0;
@@ -2005,12 +2005,12 @@ size_t INDEX::Scan (PSTRLIST ListPtr, const STRING& Fieldname,
               QSORT (gplist, num_hits, sizeof(GPTYPE), gpcomp); // Speed up looking
 	    for (INT j=0; j<num_hits; j++) {
              if (FieldCache->ValidateInField(gplist[j])) {
-	        OK = GDT_TRUE;
+	        OK = true;
                 break; // in field..
 	      }
 	    } /* for */
 	  }
-	  if (OK == GDT_FALSE)
+	  if (OK == false)
 	    {
 	      continue;
 	    }
@@ -2055,7 +2055,7 @@ size_t INDEX::Scan (PSTRLIST ListPtr, const STRING& Fieldname,
 
 // Start with the first element that matches Term (inside)
 size_t INDEX::ScanMetaphone(SCANLIST *ListPtr, const STRING& Fieldname, const STRING& Pattern,
-	const size_t Position, const INT TotalTermsRequested, GDT_BOOLEAN Cat, size_t Sis_id) const
+	const size_t Position, const INT TotalTermsRequested, bool Cat, size_t Sis_id) const
 {
   if (!Cat) ListPtr->Clear();
 
@@ -2071,14 +2071,14 @@ size_t INDEX::ScanMetaphone(SCANLIST *ListPtr, const STRING& Fieldname, const ST
   PGPTYPE  gplist = NULL;
   size_t   gplist_siz = 0;
 
-  GDT_BOOLEAN have_field;
+  bool have_field;
   if (Fieldname.GetLength())
     {
       FieldCache->SetFieldName(Fieldname);
-      have_field = GDT_TRUE;
+      have_field = true;
     }
   else
-    have_field = GDT_FALSE;
+    have_field = false;
 
   size_t count, total_count = 0, pos = 0;
   MMAP MemoryMap;
@@ -2217,7 +2217,7 @@ size_t INDEX::ScanMetaphone(SCANLIST *ListPtr, const STRING& Fieldname, const ST
     {
       if (TotalTermsRequested > 0 && total_count >= (size_t)TotalTermsRequested)
         total_count = TotalTermsRequested;
-      ListPtr->UniqueSort(0, total_count, GDT_TRUE); // Sort the list
+      ListPtr->UniqueSort(0, total_count, true); // Sort the list
     }
   return total_count;
 }

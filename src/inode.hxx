@@ -35,7 +35,7 @@ public:
   INODE(FILE *fp);
   INODE(int fd);
 
-  GDT_BOOLEAN Ok() const { return  st_ino != 0 && st_nlink != 0; }
+  bool Ok() const { return  st_ino != 0 && st_nlink != 0; }
 
   void Clear();
 
@@ -51,21 +51,21 @@ public:
     return *this;
   }
 
-  GDT_BOOLEAN Equals(const INODE& Other) const {
+  bool Equals(const INODE& Other) const {
     return st_ino == Other.st_ino && st_dev == Other.st_dev;
   }
 
-  GDT_BOOLEAN Set(const STRING& Path);
-  GDT_BOOLEAN Set(FILE *fp);
-  GDT_BOOLEAN Set(int fd);
+  bool Set(const STRING& Path);
+  bool Set(FILE *fp);
+  bool Set(int fd);
 
   STRING      Key() const;
   STRING      Key(off_t start, off_t end) const;
 
 
-  GDT_BOOLEAN isLinked() const { return st_nlink > 0; }
+  bool isLinked() const { return st_nlink > 0; }
 
-  GDT_BOOLEAN isDangling() const { return st_nlink == 0; }
+  bool isDangling() const { return st_nlink == 0; }
   _ib_ino_t   inode() const      { return st_ino; }
   _ib_dev_t   device() const     { return st_dev; }
   off_t       size() const       { return st_size; }
@@ -75,7 +75,7 @@ public:
   friend ostream& operator <<(ostream&, const INODE&);
 
   void           Write(PFILE fp) const;
-  GDT_BOOLEAN    Read(PFILE fp);
+  bool    Read(PFILE fp);
 
   _ib_ino_t   st_ino;   // Inode or file index 
   _ib_dev_t   st_dev;   // Device or volume of file
@@ -100,8 +100,8 @@ private:
 } ;
 
 
-inline GDT_BOOLEAN operator!=(const INODE& s1, const INODE& s2) { return !s1.Equals(s2); }
-inline GDT_BOOLEAN operator==(const INODE& s1, const INODE& s2) { return s1.Equals(s2); }
+inline bool operator!=(const INODE& s1, const INODE& s2) { return !s1.Equals(s2); }
+inline bool operator==(const INODE& s1, const INODE& s2) { return s1.Equals(s2); }
 
 
 // Common Functions
@@ -110,7 +110,7 @@ inline void Write (const INODE& Inode, FILE *Fp)
   Inode.Write(Fp);
 }
 
-inline GDT_BOOLEAN Read (INODE *Ptr, FILE *Fp)
+inline bool Read (INODE *Ptr, FILE *Fp)
 {
   return Ptr->Read (Fp);
 }

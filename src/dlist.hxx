@@ -78,8 +78,8 @@ public:
   // get number of items in table
   INT4         GetCount()              { return(Count); };
   // make room for more entries
-  GDT_BOOLEAN  Expand(size_t amount); 
-  GDT_BOOLEAN  Expand()                { return Resize(Count + (50*Ncoords)); };
+  bool  Expand(size_t amount); 
+  bool  Expand()                { return Resize(Count + (50*Ncoords)); };
   // collapse size to total entries
   void         Cleanup()               { Resize(Count); };
   GPTYPE       GetGlobalStart(INT4 i)  { return(table[i].GetGlobalStart()); };
@@ -107,7 +107,7 @@ public:
   void         SortByGP();                 // sort by global ptr
   void         Dump(ostream& os = cout) const;    // dump all numeric field data
   void         Dump(INT4 start, INT4 end, ostream& os = cout) const; // dump numeric field data
-  GDT_BOOLEAN  Resize(size_t Entries);       // resize table to Entries size
+  bool  Resize(size_t Entries);       // resize table to Entries size
   void         TempLoad();                 // test routine
   size_t       LoadTable(INT4 Start, INT4 End);
   size_t       LoadTable(INT4 Start, INT4 End, NumBlock Offset);

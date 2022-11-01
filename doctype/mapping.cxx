@@ -9,7 +9,7 @@ MAPPING::MAPPING(PDOCTYPE Parent, const STRING& Doctype)
   STRING S;
   STRLIST StrList;
   Parent->Db->GetDocTypeOptions (&StrList);
-  if (StrList.GetValue ("CONFIG-FILE", &S) == GDT_FALSE)
+  if (StrList.GetValue ("CONFIG-FILE", &S) == false)
     {
       if (name.GetLength())
 	{
@@ -21,17 +21,17 @@ MAPPING::MAPPING(PDOCTYPE Parent, const STRING& Doctype)
   if (S.GetLength())
     useBuiltin = (TagRegistry->ProfileLoadFromFile (S) == 0);
   else
-    useBuiltin = GDT_TRUE;
+    useBuiltin = true;
 }
 
 // Get the field name...
-GDT_BOOLEAN MAPPING::UnifiedName (PSTRING StringBuffer, const STRING& name)
+bool MAPPING::UnifiedName (PSTRING StringBuffer, const STRING& name)
 {
   return Name(StringBuffer, name, "MAPPINGS");
 }
 
 // Get the "Fancy" name for presentation
-GDT_BOOLEAN MAPPING::DescriptiveName (PSTRING StringBuffer, const STRING& name)
+bool MAPPING::DescriptiveName (PSTRING StringBuffer, const STRING& name)
 {
   STRING Temp;
   STRINGINDEX len = Name(&Temp, name, "PRESENTATION");
@@ -75,19 +75,19 @@ GDT_BOOLEAN MAPPING::DescriptiveName (PSTRING StringBuffer, const STRING& name)
       Temp = name;
       len = Temp.GetLength();
       *StringBuffer = ""; // Zero buffer
-      GDT_BOOLEAN use_upper = GDT_TRUE;
+      bool use_upper = true;
       for (STRINGINDEX x = 1; x <= len; x++)
 	{
 	  CHR Ch = Temp.GetChr(x);
 	  if (Ch == '-' || Ch == '_')
 	    {
 	      StringBuffer->Cat (' ');
-	      use_upper = GDT_TRUE;
+	      use_upper = true;
 	    }
 	  else if (use_upper)
 	    {
 	      StringBuffer->Cat ((CHR)(toupper (Ch)));
-	      use_upper = GDT_FALSE;
+	      use_upper = false;
 	    }
 	  else
 	    {
@@ -99,7 +99,7 @@ GDT_BOOLEAN MAPPING::DescriptiveName (PSTRING StringBuffer, const STRING& name)
 }
 
 
-GDT_BOOLEAN MAPPING::Name (PSTRING StringBuffer,
+bool MAPPING::Name (PSTRING StringBuffer,
   const STRING& name, const STRING& What)
 {
   if (useBuiltin)
@@ -125,7 +125,7 @@ GDT_BOOLEAN MAPPING::Name (PSTRING StringBuffer,
 
 MAPPING::~MAPPING ()
 {
-  useBuiltin = GDT_TRUE;
+  useBuiltin = true;
   if (TagRegistry)
     delete TagRegistry;
 }

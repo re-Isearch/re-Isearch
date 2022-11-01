@@ -102,7 +102,7 @@ void IKNOWDOC::ParseFields (PRECORD NewRecord)
   STRING FieldName;
   // Walk though tags
   size_t cnt = 0;
-  GDT_BOOLEAN sawHandle = GDT_FALSE;
+  bool sawHandle = false;
 
   for (PCHR * tags_ptr = tags; *tags_ptr; tags_ptr++)
     {
@@ -169,7 +169,7 @@ Record in \"%s\" does not have 'Handle' as its 2nd field", (const char *)fn);
 	  else
 	    {
 	      NewRecord->SetKey (pstr);
-	      sawHandle = GDT_TRUE; // We have one
+	      sawHandle = true; // We have one
 	    }
 	}
 
@@ -243,7 +243,7 @@ Present (const RESULT& ResultRecord,
 	  Headline << " (" << Misc << ")";
 	}
       if (RecordSyntax == HtmlRecordSyntax)
-	HtmlCat (Headline, StringBuffer, GDT_FALSE);
+	HtmlCat (Headline, StringBuffer, false);
       else
 	StringBuffer->Cat (Headline);
       return;

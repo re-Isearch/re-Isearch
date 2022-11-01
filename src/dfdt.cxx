@@ -28,8 +28,8 @@ DFDT::DFDT ()
   MaxEntries = 0;
   Table = NULL;
   TotalEntries = 0;
-  Sorted = GDT_TRUE;
-  Changed = GDT_FALSE;
+  Sorted = true;
+  Changed = false;
 }
 
 DFDT::DFDT (size_t InitialSize)
@@ -37,8 +37,8 @@ DFDT::DFDT (size_t InitialSize)
   MaxEntries = InitialSize;
   Table = MaxEntries ? new DFD[MaxEntries] : NULL;
   TotalEntries = 0;
-  Sorted = GDT_TRUE;
-  Changed = GDT_FALSE;
+  Sorted = true;
+  Changed = false;
 }
 
 
@@ -47,8 +47,8 @@ DFDT::DFDT (const STRING& FileName)
 {
   MaxEntries = 0;
   Table = NULL;
-  Sorted = GDT_TRUE;
-  Changed = GDT_FALSE;
+  Sorted = true;
+  Changed = false;
 
   LoadTable (FileName);
 }
@@ -58,8 +58,8 @@ DFDT::DFDT (PFILE Fp)
 {
   MaxEntries = 0;
   Table = NULL;
-  Sorted = GDT_TRUE;
-  Changed = GDT_FALSE;
+  Sorted = true;
+  Changed = false;
 
   Read (Fp);
 }
@@ -72,9 +72,9 @@ DFDT::DFDT (const DFDT& OtherDfdt)
   *this = OtherDfdt;
 }
 
-GDT_BOOLEAN DFDT::IsSystemFile (const STRING&) const
+bool DFDT::IsSystemFile (const STRING&) const
 {
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -85,7 +85,7 @@ DFDT& DFDT::operator =(const DFDT& OtherDfdt)
   if (OtherTotal > MaxEntries)
     Resize (OtherTotal);
 
-  Changed = GDT_FALSE;
+  Changed = false;
   for (TotalEntries = 0; TotalEntries < OtherTotal; TotalEntries++)
     Table[TotalEntries] = OtherDfdt.Table[TotalEntries];
   Sorted = OtherDfdt.Sorted; // Take the sort
@@ -102,7 +102,7 @@ DFDT& DFDT::Cat (const DFDT& OtherDfdt)
     Resize(GROWTH(NewTotal));
   for (size_t i=0; i < OtherTotal; i++)
     Table[TotalEntries++] = OtherDfdt.Table[i];
-  Sorted = GDT_FALSE;
+  Sorted = false;
   return *this;
 }
 
@@ -122,14 +122,14 @@ void DFDT::LoadTable (const STRING& FileName)
     }
 }
 
-GDT_BOOLEAN DFDT::Read (PFILE fp)
+bool DFDT::Read (PFILE fp)
 {
   TotalEntries = 0;
   obj_t obj = getObjID(fp);
   if (obj != objDFDT)
     {
       PushBackObjID (obj, fp);
-      return GDT_FALSE;
+      return false;
     }
 
   UINT2 DfdCount;
@@ -137,8 +137,8 @@ GDT_BOOLEAN DFDT::Read (PFILE fp)
 
   if (DfdCount > MaxEntries)
     {
-      if (Resize (DfdCount) == GDT_FALSE) // Expand
-	return GDT_FALSE;
+      if (Resize (DfdCount) == false) // Expand
+	return false;
     }
   DFD dfd;
   ATTRLIST AttrList;
@@ -153,10 +153,10 @@ GDT_BOOLEAN DFDT::Read (PFILE fp)
     }
   BYTE x;
   ::Read(&x, fp);
-  Sorted = ((x == 1) ? GDT_TRUE : GDT_FALSE);
+  Sorted = ((x == 1) ? true : false);
   if (!Sorted) Sort(); // Sort
-  Changed = GDT_FALSE;
-  return GDT_TRUE;
+  Changed = false;
+  return true;
 }
 
 void DFDT::Flush(const STRING& FileName)
@@ -177,12 +177,12 @@ void DFDT::SaveTable (const STRING& FileName)
 	  if (!Sorted) Sort();
 	  Write (fp);
 	  fclose (fp);
-	  Changed = GDT_FALSE;
+	  Changed = false;
 	}
     }
   else if (-1 != FileName.Unlink ())
     {
-      Changed = GDT_FALSE;
+      Changed = false;
     }
 }
 
@@ -210,12 +210,12 @@ INT DFDT::GetNewFileNumber () const
   for (x = TotalEntries+1; x > 0; x = ((x+1)%1000))
     {
       // Make sure its not already being used..
-      GDT_BOOLEAN Found = GDT_FALSE;
+      bool Found = false;
       for (size_t y = 0; y < TotalEntries; y++)
 	{
 	  if (Table[y].GetFileNumber () == (INT)x)
 	    {
-	      Found = GDT_TRUE;
+	      Found = true;
 	      break;
 	    }
 	}
@@ -225,7 +225,7 @@ INT DFDT::GetNewFileNumber () const
 #endif
 }
 
-static GDT_BOOLEAN  _checkFieldName(const STRING& Fieldname)
+static bool  _checkFieldName(const STRING& Fieldname)
 {
   static const char ReservedViolationError[] =
         "Fieldname '%s' is a reserved name. Record presentations MAY hang!!";
@@ -236,7 +236,7 @@ static GDT_BOOLEAN  _checkFieldName(const STRING& Fieldname)
 
  if (Fieldname.IsEmpty())
     {
-      return GDT_FALSE;
+      return false;
     }
   if (Fieldname == FULLTEXT_MAGIC)
     {
@@ -257,16 +257,16 @@ static GDT_BOOLEAN  _checkFieldName(const STRING& Fieldname)
   else if (Fieldname.Search(  __AncestorDescendantSeperator ))
     {
       message_log (LOG_ERROR, ReservedViolationFatal, Fieldname.c_str(),  __AncestorDescendantSeperator );
-      return GDT_FALSE;
+      return false;
     }
-  return GDT_TRUE;
+  return true;
 }
 
 void DFDT::FastAddEntry(const DFD& DfdRecord)
 {
   STRING Fieldname ( DfdRecord.GetFieldName ());
 
-  if (_checkFieldName(Fieldname) == GDT_FALSE)
+  if (_checkFieldName(Fieldname) == false)
     {
       return;
     }
@@ -277,7 +277,7 @@ void DFDT::FastAddEntry(const DFD& DfdRecord)
       if (res == 0)
 	return;
       else if (res < 0)
-        Sorted = GDT_FALSE;
+        Sorted = false;
     }
   // Need more room?
   if (TotalEntries == MaxEntries)
@@ -289,7 +289,7 @@ void DFDT::AddEntry(const DFD& DfdRecord)
 {
   STRING Fieldname ( DfdRecord.GetFieldName ());
 
-  if (_checkFieldName(Fieldname) == GDT_FALSE)
+  if (_checkFieldName(Fieldname) == false)
     {
       return;
     }
@@ -305,7 +305,7 @@ void DFDT::AddEntry(const DFD& DfdRecord)
   if (left == 0) {
     const int newNum = GetNewFileNumber ();
     (Table[TotalEntries++] = DfdRecord).SetFileNumber (newNum);
-    Changed = GDT_TRUE;
+    Changed = true;
     return;
   } else if (left == 1) {
     const int res = Fieldname.FieldCmp( Table[0].GetFieldName() );
@@ -318,7 +318,7 @@ void DFDT::AddEntry(const DFD& DfdRecord)
       } else {
 	(Table[TotalEntries++] = DfdRecord).SetFileNumber (newNum);
       }
-      Changed = GDT_TRUE;
+      Changed = true;
     } else {
        Table[0].SetFieldType (DfdRecord.GetFieldType()); // added 9 Oct 2003 
     }
@@ -364,7 +364,7 @@ void DFDT::AddEntry(const DFD& DfdRecord)
     cerr << endl; }
 #endif
 
-  Changed = GDT_TRUE;
+  Changed = true;
 }
 
 STRING DFDT::GetFieldName(size_t Index) const
@@ -442,35 +442,35 @@ INT DFDT::GetFileNumber (const STRING& FieldName) const
   return x ? Table[x-1].GetFileNumber () : 0;
 }
 
-GDT_BOOLEAN DFDT::IsNumericalField (const STRING& FieldName) const
+bool DFDT::IsNumericalField (const STRING& FieldName) const
 {
   size_t x = Lookup (FieldName);
   if (x == 0)
-    return GDT_FALSE;
+    return false;
   return Table[x-1].GetAttributesPtr()->AttrGetFieldNumerical ();
 }
 
-GDT_BOOLEAN DFDT::GetAttributes (const size_t Index, PATTRLIST AttributesBuffer) const
+bool DFDT::GetAttributes (const size_t Index, PATTRLIST AttributesBuffer) const
 {
   if ((Index > 0) && (Index <= TotalEntries))
     {
       *AttributesBuffer = *(Table[Index-1].GetAttributesPtr ());
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN DFDT::GetAttributes (const STRING& FieldName, PATTRLIST AttributesBuffer) const
+bool DFDT::GetAttributes (const STRING& FieldName, PATTRLIST AttributesBuffer) const
 {
   size_t x = Lookup(FieldName);
   if (x)
     {
       // Found it
       *AttributesBuffer = *(Table[x-1].GetAttributesPtr ());
-      return GDT_TRUE;
+      return true;
     }
   // Not found
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -484,33 +484,33 @@ void DFDT::Sort ()
   if (!Sorted)
     {
       QSORT (Table, TotalEntries, sizeof (Table[0]), DfdtCompare);
-      Sorted = GDT_TRUE;
+      Sorted = true;
     }
 }
 
-GDT_BOOLEAN DFDT::GetEntry (const size_t Index, PDFD DfdRecord) const
+bool DFDT::GetEntry (const size_t Index, PDFD DfdRecord) const
 {
   if ((Index > 0) && (Index <= TotalEntries))
     {
       *DfdRecord = Table[Index - 1];
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN DFDT::GetDfdRecord (const STRING& FieldName, PDFD DfdRecord) const
+bool DFDT::GetDfdRecord (const STRING& FieldName, PDFD DfdRecord) const
 {
   const size_t x = Lookup (FieldName);
   if (x)
     {
       *DfdRecord = Table[x - 1];
-      return GDT_TRUE;
+      return true;
     }
   // ER
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN DFDT::Expand ()
+bool DFDT::Expand ()
 {
   return Resize (GROWTH(TotalEntries));
 }
@@ -522,23 +522,23 @@ void DFDT::CleanUp ()
 
 void DFDT::Clear()
 {
-  Sorted = GDT_TRUE;
+  Sorted = true;
   if (TotalEntries)
-    Changed = GDT_TRUE;
+    Changed = true;
   TotalEntries = 0;
 }
 
 void DFDT::Empty()
 {
-  Sorted = GDT_TRUE;
-  Changed = GDT_FALSE;
+  Sorted = true;
+  Changed = false;
   TotalEntries = 0;
   MaxEntries = 0;
   if (Table) delete[]Table;
 }
 
 
-GDT_BOOLEAN DFDT::Resize (const size_t Entries)
+bool DFDT::Resize (const size_t Entries)
 {
   if (Entries != MaxEntries)
     {
@@ -549,7 +549,7 @@ GDT_BOOLEAN DFDT::Resize (const size_t Entries)
 	message_log (LOG_ERRNO, "DFDT:Resize from %u to %u elements failed!",
 		(unsigned)MaxEntries, (unsigned)Entries);
 	Table = OldTable;
-	return GDT_FALSE;
+	return false;
       }
       MaxEntries = Entries;
       TotalEntries = (Entries >= TotalEntries) ? TotalEntries : Entries;
@@ -557,7 +557,7 @@ GDT_BOOLEAN DFDT::Resize (const size_t Entries)
 	Table[i] = OldTable[i];
       if (OldTable) delete[]OldTable;
     }
-  return GDT_TRUE;
+  return true;
 }
 
 #if 0
@@ -587,10 +587,10 @@ STRING DFDT::GetFileName(IDBOBJ* DbParent, const STRING& FieldName)
 }
 
 
-GDT_BOOLEAN DFDT::KillAll(IDBOBJ* DbParent)
+bool DFDT::KillAll(IDBOBJ* DbParent)
 {
   STRING      s;
-  GDT_BOOLEAN result = GDT_TRUE;
+  bool result = true;
   for (size_t i = 0; i < TotalEntries; i++)
     {
       s = DbParent->ComposeDbFn (Table[i].GetFileNumber());
@@ -607,7 +607,7 @@ GDT_BOOLEAN DFDT::KillAll(IDBOBJ* DbParent)
 		{
 		  message_log (LOG_FATAL|LOG_ERRNO, "Can't remove/erase '%s' (%s index) contents for re-index!",
 			s.c_str(), Table[i].GetFieldName().c_str());
-		  result = GDT_FALSE;
+		  result = false;
 		}
 	    }
 	  // Zap also the object tables
@@ -631,7 +631,7 @@ GDT_BOOLEAN DFDT::KillAll(IDBOBJ* DbParent)
 			{
 			  message_log (LOG_FATAL|LOG_ERRNO, "Can't remove/erase '%s' (%s %s index) contents for re-index!",
 				sx.c_str(), Table[i].GetFieldName().c_str(), ft.c_str());
-			  result = GDT_FALSE;
+			  result = false;
 			}
 		    }
 		}

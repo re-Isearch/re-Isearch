@@ -41,11 +41,11 @@ private:
 #else
   STRING      file_cmd;
 #endif
-  GDT_BOOLEAN kludge;
+  bool kludge;
   INT         kludgeCount;
   STRING      InfoPath;
   off_t        HostID;
-  GDT_BOOLEAN ParseInfo;
+  bool ParseInfo;
 };
 
 typedef AUTODETECT *PAUTODETECT;

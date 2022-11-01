@@ -78,14 +78,14 @@ void DFT::FastAddEntry (const DF& DfRecord)
 }
 
 
-GDT_BOOLEAN DFT::GetEntry (const size_t Index, DF *DfRecord) const
+bool DFT::GetEntry (const size_t Index, DF *DfRecord) const
 {
   if ((Index > 0) && (Index <= TotalEntries))
     {
       *DfRecord = Table[Index - 1];
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -154,7 +154,7 @@ void DFT::Write (PFILE fp) const
     }
 }
 
-GDT_BOOLEAN DFT::Read (PFILE fp)
+bool DFT::Read (PFILE fp)
 {
   DFT Dft;
 

@@ -48,21 +48,21 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE */
 SQUERY::SQUERY ()
 {
   Thesaurus       = (THESAURUS *)NULL;
-  expanded        = GDT_FALSE;
+  expanded        = false;
   Hash            = 0;
 }
 
 SQUERY::SQUERY(THESAURUS *ptr)
 {
   Thesaurus  = ptr;
-  expanded   = GDT_FALSE;
+  expanded   = false;
   Hash       = 0;
 }
 
 SQUERY::SQUERY (const STRING& Term, THESAURUS *ptr)
 {
   Thesaurus = ptr;
-  expanded  = GDT_FALSE;
+  expanded  = false;
   Hash      = 0;
   *this     = Term;
 }
@@ -71,7 +71,7 @@ SQUERY::SQUERY (const STRING& Term, THESAURUS *ptr)
 SQUERY::SQUERY(const STRING& QueryTerm, enum QueryTypeMethods Typ, THESAURUS *ptr)
 {
   Thesaurus       = ptr;
-  expanded        = GDT_FALSE;
+  expanded        = false;
   Hash            = 0;
   STRING   query ( QueryTerm.Strip(STRING::both) );
 
@@ -91,7 +91,7 @@ SQUERY::SQUERY(const STRING& QueryTerm, enum QueryTypeMethods Typ, THESAURUS *pt
 }
 
 
-GDT_BOOLEAN SQUERY::haveThesaurus() const
+bool SQUERY::haveThesaurus() const
 {
   return  Thesaurus != NULL && Thesaurus->Ok();
 }
@@ -108,7 +108,7 @@ SQUERY& SQUERY::operator =(const SQUERY& OtherSquery)
 
 SQUERY& SQUERY::operator =(const STRING& OtherQueryTerm)
 {
-  expanded = GDT_FALSE;
+  expanded = false;
 
 //cerr << "SQUERY::= \"" << OtherQueryTerm << "\"" << endl;
 
@@ -316,13 +316,16 @@ if (arg_pos)
             if (StringArgs) *StringArgs = Operator.c_str() + 4;
             return OperatorNotWithin;
           }
+
+	// For now the operator KEY does ABSOLUTELY NOTHING!!!!
+	// --> map to WITHKEY 
         if (Operator.Compare("KEY", 3) == 0)
           {
             if (StringArgs)
               {
                 *StringArgs = Operator.c_str() + 4;
                 if (StringArgs->GetLength())
-                  return OperatorKey;
+                  return OperatorWithKey; // OperatorKey;
               }
           }
         break;
@@ -709,7 +712,7 @@ void SQUERY::GetOpstack (OPSTACK *OpstackBuffer) const
     *OpstackBuffer = Opstack;
   }
 
-GDT_BOOLEAN SQUERY::PushUnaryOperator(const OPERATOR& UnaryOperator)
+bool SQUERY::PushUnaryOperator(const OPERATOR& UnaryOperator)
 {
   t_Operator Op =  UnaryOperator.GetOperatorType();
   if (Op < OperatorOr)
@@ -718,13 +721,13 @@ GDT_BOOLEAN SQUERY::PushUnaryOperator(const OPERATOR& UnaryOperator)
       GetOpstack (&Stack);
       Stack << UnaryOperator;
       Opstack = Stack;
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
-GDT_BOOLEAN SQUERY::SetOperator(const OPERATOR& BinaryOperator)
+bool SQUERY::SetOperator(const OPERATOR& BinaryOperator)
 {
   OPSTACK  Stack;
   OPSTACK  NewOpstack;
@@ -752,14 +755,14 @@ GDT_BOOLEAN SQUERY::SetOperator(const OPERATOR& BinaryOperator)
   if (count)
     {
       Opstack = NewOpstack;
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
 // Replace means don't add to existing attributes
-size_t SQUERY::SetAttributes(const ATTRLIST& Attrlist, GDT_BOOLEAN Replace)
+size_t SQUERY::SetAttributes(const ATTRLIST& Attrlist, bool Replace)
 {
 
   OPSTACK  Stack, newOpstack;
@@ -800,7 +803,7 @@ class __STOPLIST : public LISTOBJ
     __STOPLIST () {;}
 
     // Words stream in list?
-    virtual GDT_BOOLEAN InList (const UCHR* Word) const  {return strlen((const char *)Word)<3; }
+    virtual bool InList (const UCHR* Word) const  {return strlen((const char *)Word)<3; }
   };
 
 
@@ -817,7 +820,7 @@ size_t  SQUERY::SetLiteralPhrase(const STRING& QueryString)
   if (QueryString.IsEmpty()) return 0;
 
   ATTRLIST Attrlist;
-  Attrlist.AttrSetPhrase (GDT_TRUE);
+  Attrlist.AttrSetPhrase (true);
 
   OPSTACK Stack;
   STERM Sterm;
@@ -836,8 +839,8 @@ size_t SQUERY::SetFreeFormWords(const STRING& Sentence, int Weight)
 {
   ATTRLIST   Attrlist;
   __STOPLIST stop;
-  Attrlist.AttrSetRightTruncation (GDT_TRUE);
-  Attrlist.AttrSetFreeForm (GDT_TRUE);
+  Attrlist.AttrSetRightTruncation (true);
+  Attrlist.AttrSetFreeForm (true);
   Attrlist.AttrSetTermWeight (Weight);
   return SetWords(Sentence, &Attrlist, &stop);
 }
@@ -845,8 +848,8 @@ size_t SQUERY::SetFreeFormWordsPhonetic(const STRING& Sentence, int Weight)
 {
   ATTRLIST   Attrlist;
   __STOPLIST stop;
-  Attrlist.AttrSetFreeForm (GDT_TRUE);
-  Attrlist.AttrSetPhonetic(GDT_TRUE);
+  Attrlist.AttrSetFreeForm (true);
+  Attrlist.AttrSetPhonetic(true);
   Attrlist.AttrSetTermWeight (Weight);
   return SetWords(Sentence, &Attrlist, &stop);
 }
@@ -870,14 +873,14 @@ size_t SQUERY::SetWords(const STRING& Sentence, ATTRLIST *AttrlistPtr, const LIS
   STRING  lastWord;
   int     factor = 1;
 
-  const GDT_BOOLEAN rightTrunc = AttrlistPtr->AttrGetRightTruncation();
-  const GDT_BOOLEAN leftTrunc  = AttrlistPtr->AttrGetLeftTruncation ();
+  const bool rightTrunc = AttrlistPtr->AttrGetRightTruncation();
+  const bool leftTrunc  = AttrlistPtr->AttrGetLeftTruncation ();
 
   if (Weight == 0) Weight = 1;
   Words.Sort();
   for (const STRLIST *p = Words.Next(); p; p = p->Next())
     {
-      GDT_BOOLEAN Done = (p == &Words);
+      bool Done = (p == &Words);
 
       if (!Done && (p->Value() ^= lastWord))
         {
@@ -889,8 +892,8 @@ size_t SQUERY::SetWords(const STRING& Sentence, ATTRLIST *AttrlistPtr, const LIS
 
       if ((rightTrunc | leftTrunc) && (lastWord.GetLength() < 4))
         {
-          AttrlistPtr->AttrSetRightTruncation(GDT_FALSE);
-          AttrlistPtr->AttrSetLeftTruncation(GDT_FALSE);
+          AttrlistPtr->AttrSetRightTruncation(false);
+          AttrlistPtr->AttrSetLeftTruncation(false);
         }
       Sterm.SetAttributes (*AttrlistPtr);
 
@@ -1010,7 +1013,7 @@ size_t SQUERY::SetWords (const STRLIST& TermList, const OPERATOR& Operator, PATT
 
 // Alternative phrase heuristic..
 size_t SQUERY::PhraseToProx(const STRING& Term, const STRING& Field,
-                            GDT_BOOLEAN RightTruncated, GDT_BOOLEAN Case)
+                            bool RightTruncated, bool Case)
 {
   OPSTACK  Stack;
   STERM    Sterm;
@@ -1093,7 +1096,7 @@ size_t SQUERY::SetQueryTerm(const STRING& NewTerm)
 // Or'd terms, support field, weight etc
 size_t SQUERY::SetTerm (const STRING& NewTerm)
 {
-  return SetTerm (NewTerm, GDT_TRUE);
+  return SetTerm (NewTerm, true);
 }
 
 // Set Term to contents of RelId
@@ -1158,7 +1161,7 @@ size_t SQUERY::SetRelevantTerm (const STRING& RelId)
       // Locate the Record
       RESULT RsRecord;
       STRING Data;
-      if (pdb->KeyLookup (RecordKey, &RsRecord) == GDT_FALSE)
+      if (pdb->KeyLookup (RecordKey, &RsRecord) == false)
         {
           message_log (LOG_NOTICE, "Stale relevent element %s", RelId.c_str());
         }
@@ -1203,12 +1206,12 @@ size_t SQUERY::SetRelevantTerm (const STRING& RelId)
   if (y > 0)
     {
 #if 0
-      GDT_BOOLEAN HavePositive = GDT_FALSE;
+      bool HavePositive = false;
       STRING PostiveFn;
       STOPLIST PostiveList; // Put in class to cache
       pdb->ComposeDbFn(&PostiveFn, ".lst");
       if (PostiveList.Load(PositiveFn))
-        HavePositive = GDT_TRUE;
+        HavePositive = true;
 #endif
 
       STERM Sterm;
@@ -1218,7 +1221,7 @@ size_t SQUERY::SetRelevantTerm (const STRING& RelId)
       PATTRLIST AttrlistPtr = new ATTRLIST ();
       if (!ESet.IsEmpty())
         AttrlistPtr->AttrSetFieldName (ESet); // All in one field
-      AttrlistPtr->AttrSetFreeForm (GDT_TRUE); // This is feedback
+      AttrlistPtr->AttrSetFreeForm (true); // This is feedback
 
       size_t count=0;
       size_t factor=1;
@@ -1227,7 +1230,7 @@ size_t SQUERY::SetRelevantTerm (const STRING& RelId)
 
       for (const STRLIST *p = Wordlist.Next(); p ; p = p->Next())
         {
-          GDT_BOOLEAN Done = (p == &Wordlist);
+          bool Done = (p == &Wordlist);
 
           if (!Done && (p->Value() ^= Term))
             {
@@ -1291,10 +1294,10 @@ size_t SQUERY::SetInfixTerm (const STRING& NewTerm)
 size_t SQUERY::SetRpnTerm (const STRING& NewTerm)
 {
   ErrorMessage.Clear();
-  return SetTerm (NewTerm, GDT_FALSE);
+  return SetTerm (NewTerm, false);
 }
 
-size_t SQUERY::SetTerm (const STRING& NewTerm, GDT_BOOLEAN Ored)
+size_t SQUERY::SetTerm (const STRING& NewTerm, bool Ored)
 {
   STRING StrTemp;
   STERM Sterm;
@@ -1305,14 +1308,14 @@ size_t SQUERY::SetTerm (const STRING& NewTerm, GDT_BOOLEAN Ored)
 
 //cerr << "SetTerm: " << NewTerm << endl;
 
-  GDT_BOOLEAN is_term = GDT_TRUE;
+  bool is_term = true;
 
   STRLIST TermList;
   TermList.SplitTerms(NewTerm);
 
   size_t term_count = 0;
   size_t op_count   = 0;
-  GDT_BOOLEAN special = GDT_FALSE;
+  bool special = false;
   for (const STRLIST *p = TermList.Next(); p != &TermList; p = p->Next() )
     {
       if ((StrTemp = p->Value()).IsEmpty())
@@ -1455,25 +1458,25 @@ size_t SQUERY::SetTerm (const STRING& NewTerm, GDT_BOOLEAN Ored)
               Operator.SetOperatorMetric( metric );
               Operator.SetOperatorString ( arg );
               Stack << Operator;
-              is_term = GDT_FALSE; // Not a term
+              is_term = false; // Not a term
               op_count++;
 	      if (op_count == 1)
 		{
 		 if (Op ==  OperatorWithinFile || Op == OperatorWithinFileExtension ||
 		 	Op == OperatorWithKey || OperatorWithinDoctype)
-		    special = GDT_TRUE;
+		    special = true;
 		}
             }
           else
             {
-              is_term = GDT_TRUE; // Is a term
-	      special = GDT_FALSE;
+              is_term = true; // Is a term
+	      special = false;
             }
         }
       if (is_term)
         {
-          GDT_BOOLEAN left    = GDT_FALSE;
-          GDT_BOOLEAN literal = GDT_FALSE;
+          bool left    = false;
+          bool literal = false;
 
           AttrlistPtr = new ATTRLIST ();
 
@@ -1523,7 +1526,7 @@ size_t SQUERY::SetTerm (const STRING& NewTerm, GDT_BOOLEAN Ored)
                 {
 		  if (pos == StrTemp.GetLength())
 		    {
-		      AttrlistPtr->AttrSetAlwaysMatches(GDT_TRUE);
+		      AttrlistPtr->AttrSetAlwaysMatches(true);
 		      StrTemp.EraseAfter (--pos);
 		    }
 		  else
@@ -1575,13 +1578,13 @@ size_t SQUERY::SetTerm (const STRING& NewTerm, GDT_BOOLEAN Ored)
 
           if (StrTemp.GetChr(1) == '*')
             {
-              left = GDT_TRUE;
+              left = true;
               StrTemp.EraseBefore(2);
             }
           if (StrTemp.GetChr(1) == '"')
             {
               StrTemp.EraseBefore(2);
-              literal = GDT_TRUE;
+              literal = true;
             }
           if ((pos = StrTemp.SearchReverse(':')) > 1 && (
                 isdigit(StrTemp.GetChr(pos+1)) ||
@@ -1595,35 +1598,35 @@ size_t SQUERY::SetTerm (const STRING& NewTerm, GDT_BOOLEAN Ored)
           if (StrTemp.GetChr (pos) == '*' && StrTemp.GetChr(pos-1) != '\\')
             {
               if (left)
-                AttrlistPtr-> AttrSetLeftAndRightTruncation (GDT_TRUE);
+                AttrlistPtr-> AttrSetLeftAndRightTruncation (true);
               else
-                AttrlistPtr->AttrSetRightTruncation (GDT_TRUE);
+                AttrlistPtr->AttrSetRightTruncation (true);
               StrTemp.EraseAfter (--pos);
             }
           else if (StrTemp.GetChr (pos) == '>' && StrTemp.GetChr(pos-1) != '\\')
             {
               if (left)
-                AttrlistPtr-> AttrSetLeftAndRightTruncation (GDT_TRUE);
+                AttrlistPtr-> AttrSetLeftAndRightTruncation (true);
               else
-                AttrlistPtr->AttrSetRightTruncation (GDT_TRUE);
-              AttrlistPtr->AttrSetAlwaysMatches (GDT_TRUE);
+                AttrlistPtr->AttrSetRightTruncation (true);
+              AttrlistPtr->AttrSetAlwaysMatches (true);
               StrTemp.EraseAfter (--pos);
             }
           else if (left)
             {
-              AttrlistPtr->AttrSetLeftTruncation (GDT_TRUE);
+              AttrlistPtr->AttrSetLeftTruncation (true);
             }
           if (StrTemp.GetChr (pos) == '=' && StrTemp.GetChr(pos-1) != '\\')
             {
-              AttrlistPtr->AttrSetAlwaysMatches (GDT_TRUE);
+              AttrlistPtr->AttrSetAlwaysMatches (true);
               StrTemp.EraseAfter (--pos);
               // Can have =* but also the mutation *=
               if (StrTemp.GetChr (pos) == '*')
                 {
                   if (left)
-                    AttrlistPtr-> AttrSetLeftAndRightTruncation (GDT_TRUE);
+                    AttrlistPtr-> AttrSetLeftAndRightTruncation (true);
                   else
-                    AttrlistPtr->AttrSetRightTruncation (GDT_TRUE);
+                    AttrlistPtr->AttrSetRightTruncation (true);
                   StrTemp.EraseAfter (--pos);
                 }
             }
@@ -1633,40 +1636,40 @@ size_t SQUERY::SetTerm (const STRING& NewTerm, GDT_BOOLEAN Ored)
 //cerr << "StrTemp = " << StrTemp << endl;
 	      if ( AttrlistPtr-> AttrGetLeftAndRightTruncation())
 		{
-		   AttrlistPtr-> AttrSetLeftAndRightTruncation(GDT_FALSE);
+		   AttrlistPtr-> AttrSetLeftAndRightTruncation(false);
 		   StrTemp.Prepend("*");
 		   StrTemp.Cat ("*");
 		   pos += 2;
 		}
 	      else if ( AttrlistPtr->AttrGetRightTruncation())
 		{
-		  AttrlistPtr->AttrSetRightTruncation(GDT_FALSE);
+		  AttrlistPtr->AttrSetRightTruncation(false);
 		  StrTemp += "*";
 		  pos++;
 		}
 	      else if ( AttrlistPtr->AttrGetLeftTruncation())
 		{
-		  AttrlistPtr->AttrSetLeftTruncation(GDT_FALSE);
+		  AttrlistPtr->AttrSetLeftTruncation(false);
 		  StrTemp.Prepend("*");
 		  pos++;
 		}
-	      AttrlistPtr->AttrSetGlob(GDT_TRUE);
+	      AttrlistPtr->AttrSetGlob(true);
 	    }
 #endif
           if (StrTemp.GetChr (pos) == '.' && StrTemp.GetChr(pos-1) != '\\')
             {
-              AttrlistPtr->AttrSetExactTerm (GDT_TRUE);
+              AttrlistPtr->AttrSetExactTerm (true);
               StrTemp.EraseAfter (--pos);
             }
           if (StrTemp.GetChr (pos) == '~' && StrTemp.GetChr(pos-1) != '\\')
             {
-              AttrlistPtr->AttrSetPhonetic (GDT_TRUE);
+              AttrlistPtr->AttrSetPhonetic (true);
               StrTemp.EraseAfter (--pos);
             }
 #if 1
           if (StrTemp.GetChr (pos) == '$' && StrTemp.GetChr(pos-1) != '\\')
             {
-              AttrlistPtr->AttrSetFreeForm (GDT_TRUE);
+              AttrlistPtr->AttrSetFreeForm (true);
               StrTemp.EraseAfter (--pos);
             }
 #endif
@@ -1679,7 +1682,7 @@ size_t SQUERY::SetTerm (const STRING& NewTerm, GDT_BOOLEAN Ored)
             {
               pos--;
               if (literal)
-                AttrlistPtr->AttrSetPhrase (GDT_TRUE);
+                AttrlistPtr->AttrSetPhrase (true);
             }
           // Remove tailing space
           while (pos && isspace(StrTemp.GetChr(pos)))
@@ -1719,11 +1722,11 @@ size_t SQUERY::SetTerm (const STRING& NewTerm, GDT_BOOLEAN Ored)
   return term_count;
 }
 
-GDT_BOOLEAN SQUERY::Equals(const SQUERY& Other)
+bool SQUERY::Equals(const SQUERY& Other)
 {
   STRLIST     words, other_words;
-  GDT_BOOLEAN isplain       = isPlainQuery(&words, OperatorOr);
-  GDT_BOOLEAN other_isplain = Other.isPlainQuery(&other_words, OperatorOr);
+  bool isplain       = isPlainQuery(&words, OperatorOr);
+  bool other_isplain = Other.isPlainQuery(&other_words, OperatorOr);
 
   if (!isplain && !other_isplain)
     {
@@ -1737,29 +1740,29 @@ GDT_BOOLEAN SQUERY::Equals(const SQUERY& Other)
       return words ^= other_words;
     }
   if (words != other_words)
-    return GDT_FALSE;
+    return false;
   STRING s1, s2;
   if (GetRpnTerm(&s1) == Other.GetRpnTerm(&s2))
     return s1 ^= s2;
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN SQUERY::isPlainQuery (t_Operator Operator) const
+bool SQUERY::isPlainQuery (t_Operator Operator) const
 {
   return isPlainQuery((STRLIST *)NULL, Operator);
 }
 
-GDT_BOOLEAN SQUERY::isPlainQuery(STRING *Words, t_Operator Operator) const
+bool SQUERY::isPlainQuery(STRING *Words, t_Operator Operator) const
 {
   if (Words == NULL) return isPlainQuery(Operator);
 
   STRLIST     List;
-  GDT_BOOLEAN result = isPlainQuery(&List, Operator);
+  bool result = isPlainQuery(&List, Operator);
   *Words = List.Join(" ");
   return result;
 }
 
-GDT_BOOLEAN SQUERY::isPlainQuery (STRLIST *Words, t_Operator Operator) const
+bool SQUERY::isPlainQuery (STRLIST *Words, t_Operator Operator) const
 {
     size_t   fieldCount    = 0;
     size_t   operatorCount = 0;
@@ -1814,14 +1817,14 @@ GDT_BOOLEAN SQUERY::isPlainQuery (STRLIST *Words, t_Operator Operator) const
         if (Words == NULL && (fieldCount || operatorCount || rsetCount)) break;
       }
 
-    if (fieldCount || operatorCount || rsetCount) return GDT_FALSE;
+    if (fieldCount || operatorCount || rsetCount) return false;
     if (otherCount) message_log (LOG_WARN, "isPlainQuery(%d): otherCount = %d",
 	(int)Operator, otherCount);
-    return GDT_TRUE;
+    return true;
 }
 
 // Same as below really BUT never OR
-GDT_BOOLEAN SQUERY::isIntersectionQuery() const
+bool SQUERY::isIntersectionQuery() const
 {
     size_t   operatorCount = 0;
     size_t   rsetCount     = 0;
@@ -1855,7 +1858,7 @@ GDT_BOOLEAN SQUERY::isIntersectionQuery() const
 }
 
 
-GDT_BOOLEAN SQUERY::isOpQuery (const t_Operator Operator) const
+bool SQUERY::isOpQuery (const t_Operator Operator) const
 {
     size_t   operatorCount = 0;
     size_t   otherCount    = 0;
@@ -1888,13 +1891,13 @@ GDT_BOOLEAN SQUERY::isOpQuery (const t_Operator Operator) const
         if (operatorCount) break;
       }
 
-    if (operatorCount) return GDT_FALSE;
+    if (operatorCount) return false;
     if (otherCount) message_log (LOG_WARN, "isOpQuery(%d): otherCount = %d",
 	(int)Operator, otherCount);
-    return GDT_TRUE;
+    return true;
 }
 
-GDT_BOOLEAN SQUERY::SetOperatorAndWithin(const STRING& FieldName)
+bool SQUERY::SetOperatorAndWithin(const STRING& FieldName)
 {
   OPERATOR Operator;
   Operator.SetOperatorType(OperatorAndWithin);
@@ -1902,22 +1905,22 @@ GDT_BOOLEAN SQUERY::SetOperatorAndWithin(const STRING& FieldName)
   return SetOperator(Operator);
 }
 
-GDT_BOOLEAN SQUERY::SetOperatorNear() { return SetOperator (OPERATOR(OperatorNear)); }
-GDT_BOOLEAN SQUERY::SetOperatorPeer() { return SetOperator (OPERATOR(OperatorPeer)); }
-GDT_BOOLEAN SQUERY::SetOperatorOr()   { return SetOperator (OPERATOR(OperatorOr));   }
+bool SQUERY::SetOperatorNear() { return SetOperator (OPERATOR(OperatorNear)); }
+bool SQUERY::SetOperatorPeer() { return SetOperator (OPERATOR(OperatorPeer)); }
+bool SQUERY::SetOperatorOr()   { return SetOperator (OPERATOR(OperatorOr));   }
 
-GDT_BOOLEAN SQUERY::PushReduce(int Reduce)
+bool SQUERY::PushReduce(int Reduce)
 {
   OPERATOR op (OperatorReduce);
   op.SetOperatorMetric(Reduce);
   return PushUnaryOperator (op);
 }
 
-GDT_BOOLEAN SQUERY::SetOperatorOrReduce(int Reduce)
+bool SQUERY::SetOperatorOrReduce(int Reduce)
 {
   if (SetOperatorOr())
     return PushReduce(Reduce);
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -1925,18 +1928,18 @@ GDT_BOOLEAN SQUERY::SetOperatorOrReduce(int Reduce)
 // Rebuild the Term
 size_t SQUERY::GetTerm (PSTRING StringBuffer) const
 {
-  return fetchTerm (StringBuffer, GDT_FALSE);
+  return fetchTerm (StringBuffer, false);
 }
 
 // Rebuild the RpnTerm
 size_t SQUERY::GetRpnTerm (PSTRING StringBuffer) const
 {
-  return fetchTerm (StringBuffer, GDT_TRUE);
+  return fetchTerm (StringBuffer, true);
 }
 
 // The main routine to rebuild the query (private)
 // author: edz@nonmonotonic.com
-size_t SQUERY::fetchTerm (PSTRING StringBuffer, GDT_BOOLEAN WantRpn) const
+size_t SQUERY::fetchTerm (PSTRING StringBuffer, bool WantRpn) const
 {
     StringBuffer->Clear();
     OPSTACK Stack;
@@ -2025,12 +2028,12 @@ size_t SQUERY::fetchTerm (PSTRING StringBuffer, GDT_BOOLEAN WantRpn) const
           }
         else if (OpPtr->GetOpType () == TypeOperator)
           {
-            if (WantRpn == GDT_FALSE)
+            if (WantRpn == false)
               {
                 if (OpPtr->GetOperatorType () != OperatorOr)
                   {
                     // Not a "plain" query!
-                    fetchTerm (StringBuffer, GDT_TRUE);
+                    fetchTerm (StringBuffer, true);
                     delete OpPtr;
                     break;
                   }
@@ -2202,7 +2205,7 @@ size_t SQUERY::fetchTerm (PSTRING StringBuffer, GDT_BOOLEAN WantRpn) const
           }
         delete OpPtr;
       }
-    StringBuffer->Trim(GDT_TRUE);
+    StringBuffer->Trim(true);
     return termCount;
 }
 
@@ -2265,7 +2268,7 @@ void SQUERY::Write (PFILE Fp) const
     ::Write ((UCHR)255 /* '\377'*/, Fp);
 }
 
-GDT_BOOLEAN SQUERY::Read (PFILE Fp)
+bool SQUERY::Read (PFILE Fp)
 {
   OPSTACK Stack;
 
@@ -2329,7 +2332,7 @@ GDT_BOOLEAN SQUERY::Read (PFILE Fp)
       delete AttrlistPtr;
     }
   SetOpstack (Stack);
-  return (GDT_BOOLEAN)(obj == objSQUERY);
+  return (bool)(obj == objSQUERY);
 }
 
 
@@ -2339,7 +2342,7 @@ void SQUERY::SetThesaurus(THESAURUS *ptr)
     {
       CloseThesaurus();
       Thesaurus = ptr;
-      expanded  = GDT_FALSE;
+      expanded  = false;
     }
 }
 
@@ -2347,7 +2350,7 @@ void SQUERY::OpenThesaurus(const STRING& Path)
 {
   CloseThesaurus(); // Close Old
   Thesaurus = new THESAURUS(Path);
-  expanded  = GDT_FALSE;
+  expanded  = false;
 }
 
 
@@ -2436,7 +2439,7 @@ void SQUERY::ExpandQuery()
 //cerr << "Term = " << StringBuffer << endl;
   SetTerm(StringBuffer);
 //cerr << "Done" << endl;
-  expanded = GDT_TRUE;
+  expanded = true;
 }
 
 SQUERY::~SQUERY ()
@@ -2449,7 +2452,7 @@ void Write(const SQUERY& SQuery, PFILE Fp)
   SQuery.Write (Fp);
 }
 
-GDT_BOOLEAN Read(PSQUERY SQueryPtr, PFILE Fp)
+bool Read(PSQUERY SQueryPtr, PFILE Fp)
 {
   return SQueryPtr->Read (Fp);
 }
@@ -2465,7 +2468,7 @@ void QUERY::Write(PFILE Fp) const
 }
 
 
-GDT_BOOLEAN QUERY::Read (PFILE Fp)
+bool QUERY::Read (PFILE Fp)
 {
   OPSTACK Stack;
 
@@ -2474,11 +2477,11 @@ GDT_BOOLEAN QUERY::Read (PFILE Fp)
     {
       // Not a SQUERY!
       PushBackObjID (obj, Fp);
-      return GDT_FALSE;
+      return false;
     }
 
-  if (Squery.Read(Fp) == GDT_FALSE)
-    return GDT_FALSE;
+  if (Squery.Read(Fp) == false)
+    return false;
 
   BYTE x;
   ::Read(&x, Fp); Sort = (enum SortBy)x;
@@ -2487,9 +2490,9 @@ GDT_BOOLEAN QUERY::Read (PFILE Fp)
   ::Read(&m, Fp); MaxResults = (size_t)m;
 
   if (x >= UndefinedNormalization)
-    return GDT_FALSE; // Bad Value
+    return false; // Bad Value
 
-  return GDT_TRUE;
+  return true;
 }
 
 
@@ -2514,7 +2517,7 @@ void Write(const QUERY& Query, PFILE Fp)
   Query.Write (Fp);
 }
 
-GDT_BOOLEAN Read(QUERY *QueryPtr, PFILE Fp)
+bool Read(QUERY *QueryPtr, PFILE Fp)
 {
   return QueryPtr->Read (Fp);
 }

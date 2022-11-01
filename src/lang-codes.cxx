@@ -3450,7 +3450,7 @@ STRING  CHARSET::ToUpper(const STRING& String) const
 }
 
 
-GDT_BOOLEAN CHARSET::Read(FILE *Fp)
+bool CHARSET::Read(FILE *Fp)
 {
   BYTE  Cset;
 
@@ -3525,14 +3525,14 @@ static int Wctomb( char *s, long wc )
 
 #if 0
 
-GDT_BOOLEAN IsLatin1(UINT2 *src, size_t len)
+bool IsLatin1(UINT2 *src, size_t len)
 {
   for (size_t i=0; i<len; i++)
-    if (src[i] > 255) return GDT_FALSE;
-  return GDT_TRUE;
+    if (src[i] > 255) return false;
+  return true;
 }
 
-GDT_BOOLEAN UCSToLatin1(const char *dest, UINT2 *src, size_t len)
+bool UCSToLatin1(const char *dest, UINT2 *src, size_t len)
 {
   unsigned ch;
   for (size_t i=0; i<len; i++)
@@ -5000,7 +5000,7 @@ static int funcLocal(const void *s1, const void *s2)
 }
 
 
-static GDT_BOOLEAN _setcharset(BYTE, const OCTET **, const OCTET **,
+static bool _setcharset(BYTE, const OCTET **, const OCTET **,
 const OCTET **, const OCTET **);
 
 BYTE CHARSET::SetSet (BYTE Id)
@@ -5097,7 +5097,7 @@ const OCTET *__IB_cclass      = _cclass_8859_1;
 static BYTE CharsetId = 1;
 
 // Support 8859-x
-GDT_BOOLEAN SetGlobalCharset (const STRING& Name)
+bool SetGlobalCharset (const STRING& Name)
 {
   BYTE set = Charset2Id (Name);
   return SetGlobalCharset ( set );
@@ -5105,7 +5105,7 @@ GDT_BOOLEAN SetGlobalCharset (const STRING& Name)
 
 
 
-static GDT_BOOLEAN _setcharset(BYTE Charset,
+static bool _setcharset(BYTE Charset,
 	const OCTET     **ctype,
 	const OCTET     **trans_upper,
 	const OCTET     **trans_lower,
@@ -5233,13 +5233,13 @@ static GDT_BOOLEAN _setcharset(BYTE Charset,
       default: /* Not available */
 	message_log (LOG_DEBUG, "Using old character set %d", oldCharsetId);
 	CharsetId = oldCharsetId;
-	return GDT_FALSE;
+	return false;
     }
-  return GDT_TRUE;
+  return true;
 }
 
 
-GDT_BOOLEAN SetGlobalCharset (BYTE Charset)
+bool SetGlobalCharset (BYTE Charset)
 {
   return _setcharset(Charset,
 	&__IB_ctype, &__IB_trans_upper, &__IB_trans_lower, &__IB_cclass);
@@ -5807,7 +5807,7 @@ LANGUAGE& LANGUAGE::operator=(const char *Language)
   return *this;
 }
 
-GDT_BOOLEAN LANGUAGE::Read(FILE *Fp)
+bool LANGUAGE::Read(FILE *Fp)
 {
   ::Read(&Which, Fp);
   return Which <= MAX_LANGUAGE;
@@ -5964,7 +5964,7 @@ STRING LOCALE::LocaleName() const
 }
 
 
-GDT_BOOLEAN LOCALE::Read(FILE *Fp)
+bool LOCALE::Read(FILE *Fp)
 {
   UINT4 id;
 
@@ -5986,7 +5986,7 @@ LOCALE::~LOCALE()
 }
 
 void       Write(const LOCALE& Locale, PFILE Fp) { Locale.Write(Fp);           }
-GDT_BOOLEAN Read(LOCALE *LocalePtr, PFILE Fp)    { return LocalePtr->Read(Fp); }
+bool Read(LOCALE *LocalePtr, PFILE Fp)    { return LocalePtr->Read(Fp); }
 
 
 #ifdef MAIN_STUB

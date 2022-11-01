@@ -95,7 +95,7 @@ void IAFADOC::ParseFields (PRECORD NewRecord)
   STRING FieldName;
   // Walk though tags
   INT cnt = 0;
-  GDT_BOOLEAN sawHandle = GDT_FALSE; // Do we have a handle?
+  bool sawHandle = false; // Do we have a handle?
   for (PCHR * tags_ptr = tags; *tags_ptr; tags_ptr++)
     {
       cnt++;
@@ -156,7 +156,7 @@ void IAFADOC::ParseFields (PRECORD NewRecord)
 	  else
 	    {
 	      NewRecord->SetKey (pstr);
-	      sawHandle = GDT_TRUE; // We have one
+	      sawHandle = true; // We have one
 	    }
 	}
       Db->DfdtAddEntry (dfd);

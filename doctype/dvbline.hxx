@@ -33,7 +33,7 @@ public:
 
   PCHR *parse_subtags (PCHR b, off_t len) const;
 // Presentation hooks
-  GDT_BOOLEAN GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const;
+  bool GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const;
 };
 typedef DVBLINE* PDVBLINE;
 

@@ -39,16 +39,16 @@ void BUFFER::SetPageSize(size_t size)
 
 }
 
-GDT_BOOLEAN BUFFER::Ok() const
+bool BUFFER::Ok() const
 {
   if (Buffer)
     return Buffer[Buffer_size] == (unsigned  char)(((Buffer_size+1)/1024)&0xFF);
   return Buffer_size == 0;
 }
 
-GDT_BOOLEAN BUFFER::Free(const char *Class, const char *What)
+bool BUFFER::Free(const char *Class, const char *What)
 {
-  GDT_BOOLEAN res = GDT_TRUE;
+  bool res = true;
   if (Buffer)
     {
       if (!Ok())
@@ -56,7 +56,7 @@ GDT_BOOLEAN BUFFER::Free(const char *Class, const char *What)
           message_log (LOG_PANIC, "Buffer %s::%s (%u kbytes) got corrupted (%x != %x)!",
 		Class ? Class : "", What && *What ? What : "<Unknown>",
 		(unsigned)Buffer_size, Buffer[Buffer_size], (unsigned char)(((Buffer_size+1)/1024)&0xFF) );
-	  res = GDT_FALSE;
+	  res = false;
 	}
       delete[] Buffer;
     }
@@ -65,12 +65,12 @@ GDT_BOOLEAN BUFFER::Free(const char *Class, const char *What)
   return res;
 }
 
-GDT_BOOLEAN BUFFER::Free(const char *What)
+bool BUFFER::Free(const char *What)
 {
   return Free(NULL, What);
 }
 
-GDT_BOOLEAN BUFFER::Free()
+bool BUFFER::Free()
 {
   return Free(NULL, NULL);
 }

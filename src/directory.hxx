@@ -7,8 +7,8 @@ void do_directory( const STRING& dir,
   const char *exclude = NULL,
   const char *inclDirpattern = NULL,
   const char *excludeDirpattern = NULL,
-  GDT_BOOLEAN recurse = GDT_TRUE,
-  GDT_BOOLEAN follow = GDT_TRUE);
+  bool recurse = true,
+  bool follow = true);
 
 
 void do_directory( const STRING& dir,
@@ -17,8 +17,8 @@ void do_directory( const STRING& dir,
   const STRING& exclude = NulString,
   const STRING& inclDirpattern = NulString,
   const STRING& excludeDirpattern = NulString,
-  GDT_BOOLEAN recurse = GDT_TRUE,
-  GDT_BOOLEAN follow = GDT_TRUE);
+  bool recurse = true,
+  bool follow = true);
 
 void do_directory(const STRING& dir,
   int (*do_file)(const STRING&),
@@ -26,7 +26,7 @@ void do_directory(const STRING& dir,
   const STRLIST *excludeList = NULL,
   const STRLIST *inclDirList = NULL,
   const STRLIST *excludeDirList = NULL,
-  GDT_BOOLEAN recurse = GDT_TRUE,
-  GDT_BOOLEAN follow = GDT_TRUE);
+  bool recurse = true,
+  bool follow = true);
 
 

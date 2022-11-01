@@ -25,6 +25,7 @@ Description:	Class IDB
 #include "fpt.hxx"
 #include "registry.hxx"
 #include "lang-codes.hxx"
+#include "recordsyntax.hxx"
 
 
 class IDBVOL {
@@ -32,9 +33,9 @@ public:
   IDBVOL();
   IDBVOL(const STRING& dbname, INT volume);
   IDBVOL&     operator =(const IDBVOL& Other);
-  GDT_BOOLEAN operator==(const IDBVOL& Other) const {
+  bool operator==(const IDBVOL& Other) const {
 	return Volume == Other.Volume && DbName == Other.DbName;}
-  GDT_BOOLEAN operator!=(const IDBVOL& Other) const {
+  bool operator!=(const IDBVOL& Other) const {
 	return Volume != Other.Volume || DbName != Other.DbName;}
   IDBVOL&     operator++()                  { Volume++; return *this; }
   IDBVOL&     operator--()                  { Volume--; return *this; }
@@ -60,35 +61,35 @@ friend class IRSET;
 friend class DOCTYPE;
 public:
   IDB();
-  IDB(GDT_BOOLEAN SearchOnly);
-  IDB(const STRING& DBName, GDT_BOOLEAN SearchOnly = GDT_FALSE);
+  IDB(bool SearchOnly);
+  IDB(const STRING& DBName, bool SearchOnly = false);
   IDB(IDBOBJ *myParent, const STRING& DBName, const STRLIST& NewDocTypeOptions,
-	GDT_BOOLEAN SearchOnly = GDT_FALSE);
-  IDB(const STRING& DBName, const STRLIST& NewDocTypeOptions,  GDT_BOOLEAN SearchOnly = GDT_FALSE);
-  IDB(const STRING& NewPathName, const STRING& NewFileName,  GDT_BOOLEAN SearchOnly = GDT_FALSE);
+	bool SearchOnly = false);
+  IDB(const STRING& DBName, const STRLIST& NewDocTypeOptions,  bool SearchOnly = false);
+  IDB(const STRING& NewPathName, const STRING& NewFileName,  bool SearchOnly = false);
   IDB(const STRING& NewPathName, const STRING& NewFileName, const STRLIST& NewDocTypeOptions,
-	 GDT_BOOLEAN SearchOnly = GDT_FALSE);
+	 bool SearchOnly = false);
 
   // Open a DB
-  GDT_BOOLEAN Open (const STRING& DBName, GDT_BOOLEAN SearchOnly = GDT_FALSE);
-  GDT_BOOLEAN Open (const STRING& DBName, const STRLIST& NewDocTypeOptions, GDT_BOOLEAN SearchOnly = GDT_FALSE);
-  GDT_BOOLEAN Open (const STRING& NewPathName, const STRING& NewFileName,
-        const STRLIST& NewDocTypeOptions, GDT_BOOLEAN SearchOnly = GDT_FALSE);
+  bool Open (const STRING& DBName, bool SearchOnly = false);
+  bool Open (const STRING& DBName, const STRLIST& NewDocTypeOptions, bool SearchOnly = false);
+  bool Open (const STRING& NewPathName, const STRING& NewFileName,
+        const STRLIST& NewDocTypeOptions, bool SearchOnly = false);
   // Close a DB
-  GDT_BOOLEAN Close();
+  bool Close();
 
   void SetVolume(const STRING& Name, INT Vol);
   INT  GetVolume(STRING *StrBufferPtr = NULL) const;
 
-  void SetFindConcatWords(GDT_BOOLEAN Set=GDT_TRUE) {
+  void SetFindConcatWords(bool Set=true) {
     if (MainIndex) MainIndex->SetFindConcatWords(Set);
   }
-  GDT_BOOLEAN GetFindConcatWords() const {
+  bool GetFindConcatWords() const {
     if (MainIndex) return MainIndex->GetFindConcatWords();
-    return GDT_FALSE;
+    return false;
   }
 
-  long TermFreq(const STRING& Word, GDT_BOOLEAN Truncate=GDT_FALSE) {
+  long TermFreq(const STRING& Word, bool Truncate=false) {
     if (MainIndex) return MainIndex->TermFreq(Word, Truncate);
     return 0;
   }
@@ -118,17 +119,17 @@ public:
 
   void SetCommonWordsThreshold(off_t x) { if (MainIndex) MainIndex->SetCommonWordsThreshold(x); } 
 
-  GDT_BOOLEAN SetLocale(const LOCALE& Locale);
-  GDT_BOOLEAN SetLocale(const CHR *LocaleName = NULL);
+  bool SetLocale(const LOCALE& Locale);
+  bool SetLocale(const CHR *LocaleName = NULL);
   LOCALE      GetLocale() const { return GlobalLocale; }
 
-  GDT_BOOLEAN IsDbCompatible() const;
-  GDT_BOOLEAN IsEmpty() const;
-  GDT_BOOLEAN Ok () const { return IsDbCompatible() && !IsEmpty(); }
+  bool IsDbCompatible() const;
+  bool IsEmpty() const;
+  bool Ok () const { return IsDbCompatible() && !IsEmpty(); }
 
   int BitVersion() const;
 
-  GDT_BOOLEAN CreateCentroid() { return MainIndex ? MainIndex->CreateCentroid() : GDT_FALSE; }
+  bool CreateCentroid() { return MainIndex ? MainIndex->CreateCentroid() : false; }
 
   void SetMergeStatus(t_merge_status x) { if (MainIndex) MainIndex->SetMergeStatus(x);};
   t_merge_status GetMergeStatus() const {
@@ -166,35 +167,35 @@ public:
 
 
   // DOCTYPE STUFF
-  GDT_BOOLEAN     RegisterDoctype (const STRING& name, DOCTYPE* Ptr) {
+  bool     RegisterDoctype (const STRING& name, DOCTYPE* Ptr) {
     if (DocTypeReg && DocTypeReg->RegisterDocType(name, Ptr) != NULL)
-      return GDT_TRUE;
-    return GDT_FALSE;
+      return true;
+    return false;
   }
-  GDT_BOOLEAN     UnregisterDoctype (const STRING& name) {
-    return DocTypeReg ? DocTypeReg->UnregisterDocType(name) : GDT_FALSE;
+  bool     UnregisterDoctype (const STRING& name) {
+    return DocTypeReg ? DocTypeReg->UnregisterDocType(name) : false;
   };
-  GDT_BOOLEAN     DoctypeAddPluginPath(const STRING& Path) {
-    if (DocTypeReg == NULL || Path.IsEmpty()) return GDT_FALSE;
+  bool     DoctypeAddPluginPath(const STRING& Path) {
+    if (DocTypeReg == NULL || Path.IsEmpty()) return false;
     DocTypeReg->AddPluginPath(Path);
-    return GDT_TRUE;
+    return true;
   }
-  GDT_BOOLEAN     DoctypePluginExists(const STRING& Name) const {
-     return DocTypeReg ? DocTypeReg->PluginExists(Name) : GDT_FALSE; }
+  bool     DoctypePluginExists(const STRING& Name) const {
+     return DocTypeReg ? DocTypeReg->PluginExists(Name) : false; }
 
   const STRLIST&  GetAllDocTypes()  { return DocTypeReg->GetDocTypeList (); };
   void GetDocTypeOptions(PSTRLIST StringListBuffer) const {
 	*StringListBuffer = DocTypeOptions;};
   const STRLIST  *GetDocTypeOptionsPtr() const { return &DocTypeOptions; }
   const STRLIST&  GetDocTypeOptions() const    { return  DocTypeOptions; }
-  GDT_BOOLEAN     ValidateDocType(const STRING& DocType) const;
-  GDT_BOOLEAN     ValidateDocType(const DOCTYPE_ID& Id) const;
+  bool     ValidateDocType(const STRING& DocType) const;
+  bool     ValidateDocType(const DOCTYPE_ID& Id) const;
 
   // MDT Metadata stuff
   SRCH_DATE DateCreated() const;
   SRCH_DATE DateLastModified() const;
 
-  GDT_BOOLEAN KeyLookup(const STRING& Key, PRESULT ResultBuffer = NULL) const;
+  bool KeyLookup(const STRING& Key, PRESULT ResultBuffer = NULL) const;
 
   // First, Last, Next, Prev Record Keys
   STRING FirstKey() const;
@@ -202,7 +203,7 @@ public:
   STRING NextKey(const STRING& Key) const;
   STRING PrevKey(const STRING& Key) const;
 
-  GDT_BOOLEAN ValidNodeName(const STRING& nodeName) const;
+  bool ValidNodeName(const STRING& nodeName) const;
 
   STRING GetXMLHighlightRecordFormat(const RESULT& Result, const STRING& PageField = NulString,
 	const STRING& TagElement = NulString);
@@ -249,8 +250,8 @@ public:
       *DfdtBuffer = *MainDfdt;
     return MainDfdt;
   }
-  GDT_BOOLEAN GetRecordDfdt(const STRING& Key, DFDT *DfdtBuffer);
-  GDT_BOOLEAN GetRecordDfdt(const RESULT& Result, DFDT *DfdtBuffer) {
+  bool GetRecordDfdt(const STRING& Key, DFDT *DfdtBuffer);
+  bool GetRecordDfdt(const RESULT& Result, DFDT *DfdtBuffer) {
     return GetRecordDfdt(Result.GetKey(), DfdtBuffer);
   }
 
@@ -271,7 +272,7 @@ public:
 
 //
   void DfdtAddEntry(const DFD& NewDfd) {  MainDfdt->AddEntry(NewDfd);};
-  GDT_BOOLEAN DfdtGetEntry(const size_t Index, PDFD DfdRecord) const {  return MainDfdt->GetEntry(Index, DfdRecord);};
+  bool DfdtGetEntry(const size_t Index, PDFD DfdRecord) const {  return MainDfdt->GetEntry(Index, DfdRecord);};
   size_t DfdtGetTotalEntries() const { return MainDfdt->GetTotalEntries ();};
   PDOCTYPE GetDocTypePtr(const DOCTYPE_ID& DocType) const;
 //void AddRecordList(const RECLIST& NewRecordList);
@@ -284,13 +285,13 @@ public:
   size_t DeleteExpired();
   size_t DeleteExpired(const SRCH_DATE Now);
 
-  void   SetIndexingMemory(const size_t MemorySize, GDT_BOOLEAN Force=GDT_FALSE);
+  void   SetIndexingMemory(const size_t MemorySize, bool Force=false);
   size_t GetIndexingMemory() const { return IndexingMemory;};
 
 //  void SetDebugSkip(const INT Skip);
 
-  GDT_BOOLEAN FieldExists(const STRING& FieldName) const {
-    return MainDfdt ? MainDfdt->FieldExists(FieldName) > 0 : GDT_FALSE;
+  bool FieldExists(const STRING& FieldName) const {
+    return MainDfdt ? MainDfdt->FieldExists(FieldName) > 0 : false;
   }
 
   // Standard Search Interface function
@@ -339,40 +340,40 @@ public:
     return MainIndex->DoctypeSearch(DoctypeSpecification);
   }
 
-  GDT_BOOLEAN DfdtGetFileName(const STRING& FieldName, PSTRING StringBuffer);
-  GDT_BOOLEAN DfdtGetFileName(const STRING& FieldName, const FIELDTYPE& FieldType,
+  bool DfdtGetFileName(const STRING& FieldName, PSTRING StringBuffer);
+  bool DfdtGetFileName(const STRING& FieldName, const FIELDTYPE& FieldType,
 	PSTRING StringBuffer);
-  GDT_BOOLEAN DfdtGetFileName(const DFD& dfd, STRING *StringBuffer);
+  bool DfdtGetFileName(const DFD& dfd, STRING *StringBuffer);
 
 //void GetRecordData(const RESULT& ResultRecord, PSTRING StringBuffer) const;
-  GDT_BOOLEAN GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+  bool GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
 	PSTRING StringBuffer, const DOCTYPE *DoctypePtr = NULL);
-  GDT_BOOLEAN GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+  bool GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
 	PSTRLIST StrlistBuffer, const DOCTYPE *DoctypePtr = NULL);
 
-  GDT_BOOLEAN GetFieldData (const RESULT &ResultRecord, const FC& Fc,
+  bool GetFieldData (const RESULT &ResultRecord, const FC& Fc,
         STRING * StingBuffer, const DOCTYPE *DoctypePtr = NULL) ;
 
-  GDT_BOOLEAN GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+  bool GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
 	const FIELDTYPE& FieldType, STRING *StringBuffer, const DOCTYPE *DoctypePtr = NULL);
 
-  GDT_BOOLEAN GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+  bool GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
 	DOUBLE* Buffer);
-  GDT_BOOLEAN GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+  bool GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
         DATERANGE* Buffer);
-  GDT_BOOLEAN GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+  bool GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
         SRCH_DATE* Buffer); 
 
-  GDT_BOOLEAN GetFieldData(GPTYPE, DOUBLE*); 
-  GDT_BOOLEAN GetFieldData(GPTYPE, SRCH_DATE* ); 
-  GDT_BOOLEAN GetFieldData(GPTYPE, STRING*); 
+  bool GetFieldData(GPTYPE, DOUBLE*); 
+  bool GetFieldData(GPTYPE, SRCH_DATE* ); 
+  bool GetFieldData(GPTYPE, STRING*); 
 
-  GDT_BOOLEAN GetFieldData(const FC& FieldFC, const STRING& FieldName, STRING* Buffer);
+  bool GetFieldData(const FC& FieldFC, const STRING& FieldName, STRING* Buffer);
 
   // Show Headline ("B")..
-  GDT_BOOLEAN Headline(const RESULT& ResultRecord, const STRING& RecordSyntax,
+  bool Headline(const RESULT& ResultRecord, const STRING& RecordSyntax,
 	PSTRING StringBuffer) const;
-  GDT_BOOLEAN Headline(const RESULT& ResultRecord, PSTRING StringBuffer) const;
+  bool Headline(const RESULT& ResultRecord, PSTRING StringBuffer) const;
   STRING      Headline(const RESULT& ResultRecord, const STRING& RecordSyntax = NulString) const {
     STRING headline;
     Headline(ResultRecord, RecordSyntax, &headline);
@@ -380,7 +381,7 @@ public:
   }
 
   // Context Match
-  GDT_BOOLEAN Context(const RESULT& ResultRecord, PSTRING Line, STRING *Term = NULL,
+  bool Context(const RESULT& ResultRecord, PSTRING Line, STRING *Term = NULL,
 	const STRING& Before = NulString, const STRING& After = NulString,
 	STRING *TagName = NULL) const;
   STRING      Context(const RESULT& ResultRecord,
@@ -389,7 +390,7 @@ public:
     Context(ResultRecord, &line, NULL, Before, After, TagName);
     return line;
   }
-  GDT_BOOLEAN NthContext(size_t N, const RESULT& ResultRecord, PSTRING Line, STRING *Term = NULL,
+  bool NthContext(size_t N, const RESULT& ResultRecord, PSTRING Line, STRING *Term = NULL,
         const STRING& Before = NulString, const STRING& After = NulString, STRING *TagName = NULL) const {
     return (&ResultRecord)->PresentNthHit(N, Line, Term, Before, After, 
 	GetDocTypePtr( ResultRecord.GetDocumentType() ), TagName);
@@ -404,11 +405,11 @@ public:
 
   STRING XMLHitTable(const RESULT& Result);
 
-  GDT_BOOLEAN XMLContext(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
+  bool XMLContext(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
 	const STRING& Tag) const;
 
   // Record Summary (if available)
-  GDT_BOOLEAN Summary(const RESULT& ResultRecord, const STRING& RecordSyntax,
+  bool Summary(const RESULT& ResultRecord, const STRING& RecordSyntax,
 	PSTRING StringBuffer) const;
   STRING      Summary(const RESULT& ResultRecord, const STRING& RecordSyntax = NulString) const {
     STRING summary;
@@ -417,9 +418,9 @@ public:
   }
 
   // Return URL to Source Document
-  GDT_BOOLEAN URL(const RESULT& ResultRecord, PSTRING StringBuffer,
-	GDT_BOOLEAN OnlyRemote=GDT_FALSE) const;
-  STRING  URL (const RESULT& ResultRecord, GDT_BOOLEAN OnlyRemote = GDT_FALSE) const {
+  bool URL(const RESULT& ResultRecord, PSTRING StringBuffer,
+	bool OnlyRemote=false) const;
+  STRING  URL (const RESULT& ResultRecord, bool OnlyRemote = false) const {
     STRING url;
     URL(ResultRecord, &url, OnlyRemote);
     return url;
@@ -516,13 +517,13 @@ public:
 
  size_t ScanSoundex(SCANLIST *ListPtr, const STRING& Fieldname, const STRING& Pattern,
         const size_t HashLen = 6,
-        const size_t Position = 0, const INT TotalTermsRequested = -1, GDT_BOOLEAN Cat = GDT_FALSE) const {
+        const size_t Position = 0, const INT TotalTermsRequested = -1, bool Cat = false) const {
      return MainIndex->ScanSoundex(ListPtr, Fieldname, Pattern, HashLen, Position, TotalTermsRequested, Cat);
   }
 
   // Scan for field contents according to a search
   size_t ScanSearch(SCANLIST *ListPtr, const QUERY& SearchQuery, const STRING& Fieldname,
-         size_t MaxRecordsThreshold = 0, GDT_BOOLEAN Cat = GDT_FALSE) {
+         size_t MaxRecordsThreshold = 0, bool Cat = false) {
      return MainIndex->ScanSearch(ListPtr, SearchQuery, Fieldname, MaxRecordsThreshold, Cat);
   }
   SCANLIST ScanSearch(const QUERY& Query, const STRING& Fieldname, size_t MaxRecordsThreshold = 0) {
@@ -532,27 +533,27 @@ public:
   void AddTemplate (const STRING& foo);
 //void GenerateKeys();
 
-  void SetDebugMode(GDT_BOOLEAN OnOff);
-  void DebugModeOn()	{ SetDebugMode(GDT_TRUE);}; // Obsolete
-  void DebugModeOff()	{ SetDebugMode(GDT_FALSE);}; // Obsolete
-  GDT_BOOLEAN GetDebugMode() const { return DebugMode; };
+  void SetDebugMode(bool OnOff);
+  void DebugModeOn()	{ SetDebugMode(true);}; // Obsolete
+  void DebugModeOff()	{ SetDebugMode(false);}; // Obsolete
+  bool GetDebugMode() const { return DebugMode; };
 
 
-  GDT_BOOLEAN SetCacheDir(const STRING& Dir);
+  bool SetCacheDir(const STRING& Dir);
   STRING      GetCacheDir() const { return CacheDir; }
-  GDT_BOOLEAN KillCache(GDT_BOOLEAN Complete=GDT_FALSE) const;
-  GDT_BOOLEAN FillHeadlineCache(const STRING& RecordSyntax = NulString);
+  bool KillCache(bool Complete=false) const;
+  bool FillHeadlineCache(const STRING& RecordSyntax = NulString);
 
   void        SetStoplist(const STRING& Filename);
-  GDT_BOOLEAN IsSystemFile(const STRING& FileName);
+  bool IsSystemFile(const STRING& FileName);
 
   void   SetServerName(const STRING& ServerName);
   STRING GetServerName() const;
 
-  GDT_BOOLEAN MergeIndexFiles();
-  GDT_BOOLEAN CollapseIndexFiles();
+  bool MergeIndexFiles();
+  bool CollapseIndexFiles();
 
-  GDT_BOOLEAN KillAll();
+  bool KillAll();
   STRING  ComposeDbFn(const CHR* Suffix) const;
   STRING& ComposeDbFn(PSTRING StringBuffer, const CHR* Suffix) const {
 	return *StringBuffer = ComposeDbFn(Suffix); }
@@ -577,9 +578,9 @@ public:
     if (StringBuffer) *StringBuffer = GetVersionID();
   }
 
-  virtual GDT_BOOLEAN SetSortIndexes(int Which, atomicIRSET *Irset);
-  GDT_BOOLEAN         BeforeSortIndex(int Which);
-  GDT_BOOLEAN         AfterSortIndex(int Which=0);
+  virtual bool SetSortIndexes(int Which, atomicIRSET *Irset);
+  bool         BeforeSortIndex(int Which);
+  bool         AfterSortIndex(int Which=0);
   SORT_INDEX_ID       GetSortIndex(int Which, INDEX_ID index_id);
 
   STRING Description() const;
@@ -599,12 +600,12 @@ public:
 
   void SetMaximumRecordSize(INT value);
 
-  GDT_BOOLEAN  AddRecord(const RECORD& NewRecord); // 1st Queue
+  bool  AddRecord(const RECORD& NewRecord); // 1st Queue
   void         DocTypeAddRecord(const RECORD& NewRecord); // 2te Queue
-  GDT_BOOLEAN Index(GDT_BOOLEAN newIndex = GDT_FALSE);
+  bool Index(bool newIndex = false);
 
-  GDT_BOOLEAN Index1();
-  GDT_BOOLEAN Index2();
+  bool Index1();
+  bool Index2();
  
 
   size_t ParseWords2(const STRING& Buffer, WORDSLIST *ListPtr) const;
@@ -631,32 +632,32 @@ public:
   INT fflush(PFILE FilePointer) {
 	return MainFpt.fflush(FilePointer); }
 
-  GDT_BOOLEAN IsStopWord (const STRING& Word) const {
+  bool IsStopWord (const STRING& Word) const {
 	return MainIndex->IsStopWord(Word);} ;
-  GDT_BOOLEAN IsStopWord (const UCHR* Word, STRINGINDEX MaxLen, INT Limit=0) const {
+  bool IsStopWord (const UCHR* Word, STRINGINDEX MaxLen, INT Limit=0) const {
 	return MainIndex->IsStopWord(Word, MaxLen, Limit);};
 
   void SetDocumentInfo(const INT Index, const RECORD& Record);
-  GDT_BOOLEAN GetDocumentInfo(const INT Index, RECORD *RecordBuffer) const;
+  bool GetDocumentInfo(const INT Index, RECORD *RecordBuffer) const;
 
   size_t MdtLookupKey (const STRING& Key) const {
 	return MainMdt->LookupByKey (Key);
   };
   void MdtSetUniqueKey(RECORD *NewRecord, const STRING& Key);
 
-  GDT_BOOLEAN GetDocumentDeleted(const INT Index) const;
-  GDT_BOOLEAN DeleteByIndex (const INT Index);
-  GDT_BOOLEAN DeleteByKey(const STRING& Key);
-  GDT_BOOLEAN UndeleteByIndex (const INT Index);
-  GDT_BOOLEAN UndeleteByKey(const STRING& Key);
+  bool GetDocumentDeleted(const INT Index) const;
+  bool DeleteByIndex (const INT Index);
+  bool DeleteByKey(const STRING& Key);
+  bool UndeleteByIndex (const INT Index);
+  bool UndeleteByKey(const STRING& Key);
 
   // Daterange code will change..
-  GDT_BOOLEAN SetDateRange(const DATERANGE& DateRange);
-  GDT_BOOLEAN SetDateRange(const SRCH_DATE& From, const SRCH_DATE& To);
-  GDT_BOOLEAN GetDateRange(DATERANGE *DateRange = NULL) const;
+  bool SetDateRange(const DATERANGE& DateRange);
+  bool SetDateRange(const SRCH_DATE& From, const SRCH_DATE& To);
+  bool GetDateRange(DATERANGE *DateRange = NULL) const;
 
-  void        SetOverride(GDT_BOOLEAN Flag) { Override = Flag; }
-  GDT_BOOLEAN GetOverride() const           { return Override; }
+  void        SetOverride(bool Flag) { Override = Flag; }
+  bool GetOverride() const           { return Override; }
 
   INT CleanupDb();
 
@@ -683,8 +684,8 @@ public:
 
   INT GetLocks() const;
 
-  GDT_BOOLEAN GetHTTP_server(PSTRING path) const;
-  GDT_BOOLEAN GetHTTP_root(PSTRING path = NULL, GDT_BOOLEAN *Mirror = NULL) const;
+  bool GetHTTP_server(PSTRING path) const;
+  bool GetHTTP_root(PSTRING path = NULL, bool *Mirror = NULL) const;
 
   PDTREG  GetDocTypeReg()      { return DocTypeReg; }
   PMDT    GetMainMdt() const   { return MainMdt;    }
@@ -703,13 +704,13 @@ public:
 
   void        GetFieldDefinitionList(STRLIST *StrlistPtr) const;
 
-  GDT_BOOLEAN UsePersistantCache() const  { return !PersistantIrsetCache.IsEmpty(); }
+  bool UsePersistantCache() const  { return !PersistantIrsetCache.IsEmpty(); }
   STRING PersistantCacheName() const { return PersistantIrsetCache; }
 
   FPT       *GetMainFpt() { return &MainFpt ; }
 
-  GDT_BOOLEAN setUseRelativePaths(GDT_BOOLEAN val);
-  GDT_BOOLEAN setAutoDeleteExpired(GDT_BOOLEAN val);
+  bool setUseRelativePaths(bool val);
+  bool setAutoDeleteExpired(bool val);
 
   ~IDB();
 
@@ -720,25 +721,25 @@ protected:
   PMDT        MainMdt;
 
 private:
-  void Initialize (const STRING& DBName, const STRLIST& NewDocTypeOptions, GDT_BOOLEAN SearchOnly = GDT_FALSE);
+  void Initialize (const STRING& DBName, const STRLIST& NewDocTypeOptions, bool SearchOnly = false);
   void Initialize (IDBOBJ *myParent, const STRING& DBName, const STRLIST& NewDocTypeOptions,
-        GDT_BOOLEAN SearchOnly = GDT_FALSE);
+        bool SearchOnly = false);
   void Initialize(const STRING& NewPathName, const STRING& NewFileName,
-        const STRLIST& NewDocTypeOptions, GDT_BOOLEAN SearchOnly = GDT_FALSE);
+        const STRLIST& NewDocTypeOptions, bool SearchOnly = false);
   void Initialize(IDBOBJ *myParent, const STRING& NewPathName, const STRING& NewFileName,
-        const STRLIST& NewDocTypeOptions, GDT_BOOLEAN SearchOnly = GDT_FALSE);
+        const STRLIST& NewDocTypeOptions, bool SearchOnly = false);
 
   void        FlushMainRegistry();
   void        MergeTemplates ();
-  GDT_BOOLEAN CacheHeadline(GPTYPE, const STRING&, const STRING&) const;
+  bool CacheHeadline(GPTYPE, const STRING&, const STRING&) const;
   STRING      LookupHeadlineCache(GPTYPE, const STRING&) const;
   SRCH_DATE   DateOf(const STRING&) const;
 
-  GDT_BOOLEAN GetFieldData(const FC& FieldFC, const STRING& FieldName, DOUBLE* Buffer);
-  GDT_BOOLEAN GetFieldData(const FC& FieldFC, const STRING& FieldName, SRCH_DATE* Buffer);
+  bool GetFieldData(const FC& FieldFC, const STRING& FieldName, DOUBLE* Buffer);
+  bool GetFieldData(const FC& FieldFC, const STRING& FieldName, SRCH_DATE* Buffer);
 
   // Openend?
-  GDT_BOOLEAN Initialized;
+  bool Initialized;
 
   // Variables...
   DOCTYPE_ID GlobalDoctype;
@@ -746,20 +747,20 @@ private:
   STRING      DbFileStem;
   STRLIST     DatabaseList;
   STRING      HTpath, HTDocumentRoot;
-  GDT_BOOLEAN isMirror;
+  bool isMirror;
   STRLIST     TemplateTypes;
   PINDEX      MainIndex;
   PDFDT       MainDfdt;
   size_t      IndexingMemory;
-  GDT_BOOLEAN DebugMode;
-  GDT_BOOLEAN autoDeleteExpired; 
+  bool DebugMode;
+  bool autoDeleteExpired; 
   PDTREG      DocTypeReg;
   FPT         MainFpt;
   size_t      TotalRecordsQueued;
   PREGISTRY   MainRegistry;
-  GDT_BOOLEAN DbInfoChanged;
-  GDT_BOOLEAN wrongEndian; // @@@ edz: Cache
-  GDT_BOOLEAN Override;
+  bool DbInfoChanged;
+  bool wrongEndian; // @@@ edz: Cache
+  bool Override;
   int         errorCode;
 //Z3950_ERROR ZerrorCode;
   FILE       *SortIndexFp;
@@ -793,7 +794,7 @@ private:
   // Persistant IRSET Cache
   STRING PersistantIrsetCache;
 
-  GDT_BOOLEAN compatible;
+  bool compatible;
   long        Queue1Add;
   long        Queue2Add;
 

@@ -48,11 +48,11 @@ public:
   sHASHTABLE();
   sHASHTABLE(const STRING& Fn, int size_prime=0);
 
-  void         MMAP_reads(GDT_BOOLEAN Map) { mmap_reads = Map; }
+  void         MMAP_reads(bool Map) { mmap_reads = Map; }
 
   void         Init(const STRING& Fn, int size = 0);  // intialize the hashtable
 
-  GDT_BOOLEAN  KillAll();
+  bool  KillAll();
 
   off_t        Add(const STRING& Str);            // add a string to the table, return file offset
 
@@ -65,11 +65,11 @@ public:
 
 private:
   void         AllocTable();
-  GDT_BOOLEAN  LoadOnDiskHashTable();  // load on disk hash (into memory)
+  bool  LoadOnDiskHashTable();  // load on disk hash (into memory)
   void         DeleteTable();
   size_t       Hash(const STRING& Str) const;   // hash function for in memory hashtable
   MMAP         DiskTable;
-  GDT_BOOLEAN  loaded;
+  bool  loaded;
 
   sHASHOBJ     lastCache;   // Cache last string/offset pair
 
@@ -77,7 +77,7 @@ private:
   int          fd;          // file handle
   off_t        offset;      // current offset into on-disk file
   off_t        file_length; // length of file
-  GDT_BOOLEAN  mmap_reads;  // MMAP or not?
+  bool  mmap_reads;  // MMAP or not?
 
   size_t       tableSize;   // size of in memory hashtable (prime)
   sHASHOBJ   **Table;       // in memory hashtable of value-index pairs
@@ -90,9 +90,9 @@ public:
   MDTHASHTABLE(const IDBOBJ *Idb);
   MDTHASHTABLE(const INDEX  *Index); 
   MDTHASHTABLE(const STRING& Stem);
-  MDTHASHTABLE(const STRING& Stem, GDT_BOOLEAN Fast);
+  MDTHASHTABLE(const STRING& Stem, bool Fast);
 
-  GDT_BOOLEAN  KillAll();
+  bool  KillAll();
 
   GPTYPE    Add(const STRING& Name) {
     if (Name == oldFileName) return oldFileOffset;

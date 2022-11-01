@@ -20,11 +20,11 @@ PLIST::~PLIST()
 }
 
 
-GDT_BOOLEAN PLIST::IsEmpty(void)
+bool PLIST::IsEmpty(void)
 {
   if(Length==0)
-    return GDT_TRUE;
-  return GDT_FALSE;
+    return true;
+  return false;
 }
 
 
@@ -88,10 +88,10 @@ IATOM* PLIST::GetEntry(INT Index, IPOSITION *p) {
 }
 
     
-GDT_BOOLEAN PLIST::InsertBefore(IPOSITION p, IATOM *a)
+bool PLIST::InsertBefore(IPOSITION p, IATOM *a)
 {
   if((p == (IPOSITION)NULL) || (a == (IATOM*)NULL))
-    return GDT_FALSE;
+    return false;
 
   if(IsEmpty())
     AddTail(a);
@@ -102,7 +102,7 @@ GDT_BOOLEAN PLIST::InsertBefore(IPOSITION p, IATOM *a)
 
     IPOSITION nc;
     if((nc =  new _cell) == NULL)
-      return GDT_FALSE;
+      return false;
     nc->Atom = a;
 	  
     IPOSITION tc;
@@ -116,28 +116,28 @@ GDT_BOOLEAN PLIST::InsertBefore(IPOSITION p, IATOM *a)
 
     Length++;
   }	
-  return GDT_TRUE;
+  return true;
 }
 
 
-GDT_BOOLEAN PLIST::SetAt(IPOSITION p, IATOM *a)
+bool PLIST::SetAt(IPOSITION p, IATOM *a)
 {
   if((p == (IPOSITION)NULL) || (a == (IATOM*)NULL))
-    return GDT_FALSE;
+    return false;
 
   p->Atom = a;
 
-  return GDT_TRUE;
+  return true;
 }
 
 
-GDT_BOOLEAN PLIST::InsertAfter(IPOSITION p, IATOM *a)
+bool PLIST::InsertAfter(IPOSITION p, IATOM *a)
 {
 
   if(Head == (IPOSITION)NULL) {
     // Inserting into empty list
     if((Head = new struct _cell) == NULL)
-      return GDT_FALSE;
+      return false;
     Head->Atom = a;
     Head->Next = (IPOSITION)NULL;
     Head->Prev = (IPOSITION)NULL;
@@ -147,7 +147,7 @@ GDT_BOOLEAN PLIST::InsertAfter(IPOSITION p, IATOM *a)
 
     // Inserting into non-empty list
     if((nc =  new struct _cell) == NULL)
-      return GDT_FALSE;
+      return false;
     nc->Atom = a;
 
     tc = p->Next;
@@ -162,11 +162,11 @@ GDT_BOOLEAN PLIST::InsertAfter(IPOSITION p, IATOM *a)
     Length++;
   }
 
-  return GDT_TRUE;
+  return true;
 }
 
 
-GDT_BOOLEAN PLIST::Cat(PLIST* PlistPtr, IPOSITION p) 
+bool PLIST::Cat(PLIST* PlistPtr, IPOSITION p) 
 {
   IPOSITION TempTail;
   TempTail = PlistPtr->GetTailPosition();
@@ -200,10 +200,10 @@ GDT_BOOLEAN PLIST::Cat(PLIST* PlistPtr, IPOSITION p)
       p = p->Next;
       Length++;
     }
-  	return GDT_TRUE;
+  	return true;
   }
   else {
-	return GDT_FALSE;
+	return false;
   }
 }
 
@@ -248,12 +248,12 @@ PLIST::RemoveAt(IPOSITION p)
 }
 
 
-GDT_BOOLEAN PLIST::AddTail(IATOM *a)
+bool PLIST::AddTail(IATOM *a)
 {
   if(Head == (IPOSITION)NULL) {
     // Inserting into empty list
     if((Head = new struct _cell) == NULL)
-      return GDT_FALSE;
+      return false;
     Head->Atom = a;
     Head->Next = (IPOSITION)NULL;
     Head->Prev = (IPOSITION)NULL;
@@ -262,7 +262,7 @@ GDT_BOOLEAN PLIST::AddTail(IATOM *a)
     IPOSITION nc;
     // Inserting into non-empty list
     if((nc =  new struct _cell) == NULL)
-      return GDT_FALSE;
+      return false;
     nc->Atom = a;
     nc->Next = (IPOSITION)NULL;
     nc->Prev = Tail;
@@ -272,7 +272,7 @@ GDT_BOOLEAN PLIST::AddTail(IATOM *a)
   }
   Length++;
 
-  return GDT_TRUE;
+  return true;
 }
 
 
@@ -306,12 +306,12 @@ void PLIST::RemoveRightAndDelete(IPOSITION p)
 {
   IPOSITION q = p;
   IPOSITION TempTail = p;
-  GDT_BOOLEAN FromHead = GDT_FALSE;
+  bool FromHead = false;
 
   if ((p) && (Length > 0)) {
     TempTail = p->Prev;
     if (p == Head)
-      FromHead = GDT_TRUE;
+      FromHead = true;
 
     while ((p) && (p->Next)) {
       // delete p->Atom;
@@ -345,7 +345,7 @@ PLIST::RemoveRight(IPOSITION p)
 {
   IPOSITION q;
   IPOSITION TempTail = (IPOSITION)NULL;
-  GDT_BOOLEAN FromHead = GDT_FALSE;
+  bool FromHead = false;
 
 
   if ((p) && (Length > 0)) { // length is quick hack until we can find
@@ -354,7 +354,7 @@ PLIST::RemoveRight(IPOSITION p)
       TempTail = p->Prev;
     }
     else {
-      FromHead = GDT_TRUE;
+      FromHead = true;
     }
 
     while ((p) && (p->Next)) { // Tail seems to be getting corrupted
@@ -394,12 +394,12 @@ PLIST::RemoveRight(IPOSITION p)
 }
 
 
-GDT_BOOLEAN 
+bool 
 PLIST::AddHead(IATOM *a)
 {
   IPOSITION nc;
   if((nc =  new struct _cell) == NULL)
-    return GDT_FALSE;
+    return false;
   nc->Atom = a;
 
   if(IsEmpty()) {
@@ -412,7 +412,7 @@ PLIST::AddHead(IATOM *a)
     Head = nc;
   }	
   Length++;
-  return GDT_TRUE;
+  return true;
 }
 
 

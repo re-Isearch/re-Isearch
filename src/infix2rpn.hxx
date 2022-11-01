@@ -14,14 +14,14 @@ class INFIX2RPN {
     INFIX2RPN ();
     INFIX2RPN (const STRING& StrInput, STRING *StrOutput);
 
-    GDT_BOOLEAN    Parse (const STRING &StrInput, STRING *StrOutput);
+    bool    Parse (const STRING &StrInput, STRING *StrOutput);
     STRING         Parse(const STRING& Input) {
       STRING Temp;
       return Parse(Input, &Temp) ? Temp : NulString;
     }
 
-    GDT_BOOLEAN    InputParsedOK () const;
-    GDT_BOOLEAN    GetErrorMessage (STRING *Error) const;
+    bool    InputParsedOK () const;
+    bool    GetErrorMessage (STRING *Error) const;
     STRING         GetErrorMessage() const { return ErrorMessage; }
 
     void           SetDefaultOp(const STRING& Op) { DefaultOp = string2op (Op); }

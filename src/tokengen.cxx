@@ -14,15 +14,15 @@ size_t TOKENGEN::GetTotalEntries ()
   return TokenList.GetTotalEntries ();
 }
 
-void TOKENGEN::SetQuoteStripping (GDT_BOOLEAN DoItOrNot)
+void TOKENGEN::SetQuoteStripping (bool DoItOrNot)
 {
   DoStripQuotes = DoItOrNot;
-  HaveParsed = GDT_FALSE;
+  HaveParsed = false;
   DoParse ();
 }
 
-TOKENGEN::TOKENGEN (const STRING& InString) : DoStripQuotes (GDT_FALSE), 
-HaveParsed (GDT_FALSE)
+TOKENGEN::TOKENGEN (const STRING& InString) : DoStripQuotes (false), 
+HaveParsed (false)
 {
   InCharP = InString.NewCString ();
 }
@@ -46,12 +46,12 @@ void TOKENGEN::DoParse (void)
 	      TokenList.AddEntry (TokenStr);
 	    }
 	}
-      HaveParsed = GDT_TRUE;
+      HaveParsed = true;
     }
 }
 
 
-GDT_BOOLEAN TOKENGEN::GetEntry (const size_t Index, STRING *StringEntry)
+bool TOKENGEN::GetEntry (const size_t Index, STRING *StringEntry)
 {
   DoParse ();
   return TokenList.GetEntry (Index, StringEntry);
@@ -59,7 +59,7 @@ GDT_BOOLEAN TOKENGEN::GetEntry (const size_t Index, STRING *StringEntry)
 
 char *TOKENGEN::nexttoken (char *input, STRING *token)
 {
-  GDT_BOOLEAN istoken = GDT_FALSE;
+  bool istoken = false;
 
   token->Clear();
   while (*input)
@@ -118,7 +118,7 @@ char *TOKENGEN::nexttoken (char *input, STRING *token)
 	    {
 	      if (!DoStripQuotes)
 		token->Cat(*input++);
-	      istoken = GDT_TRUE;
+	      istoken = true;
 
 	      // special case for weighted terms (BUGFIX)
 	      if ( *input == ':' && isdigit(*(input+1)) )
@@ -186,13 +186,13 @@ char *TOKENGEN::nexttoken (char *input, STRING *token)
 	  else
 	    {
 	      //must be part of something else
-	      istoken = GDT_TRUE;
+	      istoken = true;
 	      token->Cat( *input++ );
 	      continue;
 	    }
 	}
 
-      istoken = GDT_TRUE;
+      istoken = true;
       token->Cat( *input++ );
       continue;
     }

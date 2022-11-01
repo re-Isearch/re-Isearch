@@ -39,7 +39,7 @@ public:
   void        SetVertexCount(size_t x);
 
   // Start count with 0
-  GDT_BOOLEAN GetVertexN(size_t x, DOUBLE* value) const;
+  bool GetVertexN(size_t x, DOUBLE* value) const;
   void        SetVertexN(size_t x, DOUBLE value);
 
   // 0 if undefined (eg. nVertices != 4 (not a box)

@@ -200,7 +200,7 @@ static inline STRINGINDEX MailAnchor(const STRING& Input, STRINGINDEX Start=1)
       last_ch = Input.GetChr(Start);
       if (! isalnum(last_ch)) continue; // First character must be alphanumeric
 
-      GDT_BOOLEAN ipnum = isdigit(last_ch);
+      bool ipnum = isdigit(last_ch);
       len = Input.GetLength();
       dots = 0;
       for (STRINGINDEX x = Start+1; x <= len; x++)
@@ -252,7 +252,7 @@ static inline STRINGINDEX MailAnchor(const STRING& Input, STRINGINDEX Start=1)
 
 #endif
 
-const STRING& CHARSET::HtmlCat (const STRING& Input, GDT_BOOLEAN Anchor) const
+const STRING& CHARSET::HtmlCat (const STRING& Input, bool Anchor) const
 {
   STRING tmp;
   return HtmlCat(Input, &tmp, Anchor);
@@ -260,7 +260,7 @@ const STRING& CHARSET::HtmlCat (const STRING& Input, GDT_BOOLEAN Anchor) const
 
 
 
-const STRING& CHARSET::HtmlCat (const STRING& Input, PSTRING StringBufferPtr, GDT_BOOLEAN Anchor) const
+const STRING& CHARSET::HtmlCat (const STRING& Input, PSTRING StringBufferPtr, bool Anchor) const
 {
   if (Anchor)
     {
@@ -656,7 +656,7 @@ onMouseOver=\"self.status='eMail " << What << "'; return true\">" << What << "</
 		  // Note: <S> was <STRIKE> in draft-ietf-html-spec-04.txt 
 		  // We adopt the tags from the latest DTDs...
 		  // <U> is for underline and <S> for overstrike
-		  GDT_BOOLEAN Underlined = (ch == '_');
+		  bool Underlined = (ch == '_');
 		  StringBufferPtr->Cat (Underlined ? "<U>" : "<S>");
 		  do
 		    {

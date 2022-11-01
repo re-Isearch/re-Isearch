@@ -261,7 +261,7 @@ STOPLIST::STOPLIST ()
   list = NULL;
   list_len = 0;
 #endif
-  deallocate = GDT_FALSE;
+  deallocate = false;
   currentLanguage =  NullStop;
 }
 
@@ -273,7 +273,7 @@ STOPLIST::STOPLIST (const CHR* language)
   list = NULL;
   list_len = 0;
 #endif
-  deallocate = GDT_FALSE;
+  deallocate = false;
   Load(language);
 }
 
@@ -284,7 +284,7 @@ STOPLIST::STOPLIST (const STRING& language)
   list = NULL;
   list_len = 0;
 #endif
-  deallocate = GDT_FALSE;
+  deallocate = false;
   Load(language);
 }
 
@@ -294,7 +294,7 @@ STOPLIST::STOPLIST (const PPCHR words, INT len, const STRING& language)
   list = NULL;
   list_len = 0;
 #endif
-  deallocate = GDT_FALSE;
+  deallocate = false;
   Load (words, len, language);
 }
 
@@ -304,12 +304,12 @@ STOPLIST::STOPLIST (const STRLIST& wordList, const STRING& language)
   list = NULL;
   list_len = 0;
 #endif
-  deallocate = GDT_FALSE;
+  deallocate = false;
   Load (wordList, language);
 }
 
 
-GDT_BOOLEAN STOPLIST::LoadInternal(const STRING& Lang)
+bool STOPLIST::LoadInternal(const STRING& Lang)
 {
   // Zap en-gb to en etc..
   STRING language(Lang);
@@ -323,10 +323,10 @@ GDT_BOOLEAN STOPLIST::LoadInternal(const STRING& Lang)
 	  return Load ((PPCHR)internal_stoplists[i].words, (size_t)internal_stoplists[i].size, Lang);
         }
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN STOPLIST::Load (const PPCHR words, size_t len, const STRING& language)
+bool STOPLIST::Load (const PPCHR words, size_t len, const STRING& language)
 {
 #ifndef  _USE_ArraySTRING
   if (deallocate && list_len)
@@ -334,20 +334,20 @@ GDT_BOOLEAN STOPLIST::Load (const PPCHR words, size_t len, const STRING& languag
 #else
   Words.Clear();
 #endif
-  deallocate = GDT_FALSE;
+  deallocate = false;
   list = (UCHR **)words;
   list_len = len; 
   QSORT (list, list_len, sizeof(UCHR *), PchrCompare);
   currentLanguage = language;
-  return GDT_TRUE;
+  return true;
 }
 
 // Load words from a STRLIST method
-GDT_BOOLEAN STOPLIST::Load(const STRLIST& wordList, const STRING& language)
+bool STOPLIST::Load(const STRLIST& wordList, const STRING& language)
 {
   if (deallocate && list_len) {
     lfree(list);
-    deallocate = GDT_FALSE;
+    deallocate = false;
   }
 
   size_t TotalEntries = wordList.GetTotalEntries();
@@ -358,7 +358,7 @@ GDT_BOOLEAN STOPLIST::Load(const STRLIST& wordList, const STRING& language)
   if (tp == NULL)
    {
      message_log (LOG_ERRNO , "Memory allocation to load stoplist failed.");
-     return GDT_FALSE;
+     return false;
    }
 
   size_t x;
@@ -373,34 +373,34 @@ GDT_BOOLEAN STOPLIST::Load(const STRLIST& wordList, const STRING& language)
   // Install the words
   list_len = x;
   list = tp;
-  deallocate = GDT_TRUE;
+  deallocate = true;
   currentLanguage = language;
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN STOPLIST::Load(const STRING& language)
+bool STOPLIST::Load(const STRING& language)
 {
   return LoadList(language);
 }
 
 // Load a data file whose name is a 'C' string method
-GDT_BOOLEAN STOPLIST::Load(const CHR* language)
+bool STOPLIST::Load(const CHR* language)
 {
   if (language == NULL || *language == '\0')
     return LoadList(NulString);
   return LoadList(language);
 }
 
-GDT_BOOLEAN STOPLIST::LoadList(const STRING& language)
+bool STOPLIST::LoadList(const STRING& language)
 {
 //cerr << "LoadList(" << language << ")" << endl;
   if (currentLanguage ^= language)
-    return GDT_TRUE; // Cached!
+    return true; // Cached!
   if (deallocate && list_len)
     {
       // Collect old trash
       lfree(list);
-      deallocate = GDT_FALSE;
+      deallocate = false;
     }
   // "C" language? Use default "internal" list
   if (!language.IsEmpty())
@@ -412,7 +412,7 @@ GDT_BOOLEAN STOPLIST::LoadList(const STRING& language)
 	{
 	  list = NULL;
 	  list_len = 0;
-	  return GDT_TRUE;
+	  return true;
 	}
 
       static const char *IFS = " ,\t\n\r\013\f";
@@ -445,9 +445,9 @@ GDT_BOOLEAN STOPLIST::LoadList(const STRING& language)
 	if (LoadInternal(currentLanguage))
 	  {
 	    message_log (LOG_WARN, "Using internal '%s' stoplist.", currentLanguage.c_str());
-	    return GDT_TRUE;
+	    return true;
 	  }
-	return GDT_TRUE;
+	return true;
       }
 
       // An external stopword file is a list of words
@@ -512,11 +512,11 @@ GDT_BOOLEAN STOPLIST::LoadList(const STRING& language)
       if (words == NULL) {
 	// We ran out of memory
 	message_log (LOG_ERRNO, "Not enough core to load '%s' stoplist.", currentLanguage.c_str());
-	return GDT_FALSE;
+	return false;
       }
       list = words;
       list_len = count-1;
-      deallocate = GDT_TRUE;
+      deallocate = true;
     }
   else
     {
@@ -525,10 +525,10 @@ GDT_BOOLEAN STOPLIST::LoadList(const STRING& language)
     }
 
   // Load OK
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN STOPLIST::InList (const STRING& Word) const
+bool STOPLIST::InList (const STRING& Word) const
 {
   STRINGINDEX Len;
 
@@ -543,7 +543,7 @@ GDT_BOOLEAN STOPLIST::InList (const STRING& Word) const
    stop list.
 */
 
-GDT_BOOLEAN STOPLIST::InList (const UCHR* WordStart, const STRINGINDEX Len) const
+bool STOPLIST::InList (const UCHR* WordStart, const STRINGINDEX Len) const
 {
 // cerr << "Looking at \"" << WordStart << "\"  len=" << Len;
   const size_t WordLength = (Len == 0 && WordStart) ? strlen((const char *)WordStart) : Len;
@@ -586,16 +586,16 @@ GDT_BOOLEAN STOPLIST::InList (const UCHR* WordStart, const STRINGINDEX Len) cons
 }
 
 
-GDT_BOOLEAN STOPLIST::AddWord(const CHR *NewWord)
+bool STOPLIST::AddWord(const CHR *NewWord)
 {
   if (NewWord == NULL || *NewWord == '\0')
-    return GDT_TRUE; // Nothing to add
+    return true; // Nothing to add
 
   size_t  count = list_len + 1;
   UCHR **words = (UCHR **) malloc ((count+1)*sizeof (UCHR *));
 
   if (words == NULL)
-    return GDT_FALSE; // NO MORE CORE
+    return false; // NO MORE CORE
 
   // Add Word
   int installed = 0;
@@ -618,8 +618,8 @@ GDT_BOOLEAN STOPLIST::AddWord(const CHR *NewWord)
   // Install
   list = words;
   list_len += installed;
-  deallocate = GDT_TRUE;
-  return GDT_TRUE;
+  deallocate = true;
+  return true;
 }
 
 
@@ -633,16 +633,16 @@ PUCHR STOPLIST::Nth (size_t idx) const
   return (( idx<= list_len && idx > 0) ?  list[idx-1] : NULL);
 }
 
-GDT_BOOLEAN STOPLIST::GetEntry (const size_t Index, PSTRING StringEntry) const
+bool STOPLIST::GetEntry (const size_t Index, PSTRING StringEntry) const
 {
   UCHR *val = Nth(Index);
   if (val == NULL)
     {
       if (StringEntry) StringEntry->Clear();
-      return GDT_FALSE;
+      return false;
     }
   if (StringEntry) *StringEntry = val; 
-  return GDT_TRUE;
+  return true;
 }
 
 STOPLIST::~STOPLIST ()

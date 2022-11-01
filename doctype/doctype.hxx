@@ -41,7 +41,7 @@ public:
   virtual void ParseRecords(const RECORD& FileRecord);
   virtual void SelectRegions(const RECORD& Record, FCT* FctPtr);
 
-  virtual GDT_BOOLEAN IsStopWord(const UCHR* Word, STRINGINDEX MaxLen) const;
+  virtual bool IsStopWord(const UCHR* Word, STRINGINDEX MaxLen) const;
 
   virtual GPTYPE ParseWords(UCHR* DataBuffer, GPTYPE DataLength,
 	GPTYPE DataOffset, GPTYPE* GpBuffer, GPTYPE GpLength);
@@ -58,7 +58,7 @@ public:
 
   virtual NUMERICOBJ ParsePhonhash(const STRING& Buffer) const;
   virtual NUMERICOBJ ParseNumeric(const STRING& Buffer) const;
-  virtual GDT_BOOLEAN ParseRange(const STRING& Buffer, const STRING& FieldName,
+  virtual bool ParseRange(const STRING& Buffer, const STRING& FieldName,
 	DOUBLE* fStart, DOUBLE* fEnd) const;
 
   virtual int        ParseBBox(const STRING& Buffer,const STRING& FieldName,  BBOXFLD* gpoly) const;
@@ -94,22 +94,22 @@ public:
 
   virtual REGISTRY *GetMetadata(const RECORD& record,
 	const STRING& mdType, const REGISTRY* defaults);
-  virtual GDT_BOOLEAN Headline(const STRING& HeadlineFormat,
+  virtual bool Headline(const STRING& HeadlineFormat,
 	const RESULT& ResultRecord, const STRING& RecordSyntax, PSTRING StringBuffer) const;
-  virtual GDT_BOOLEAN Headline(const RESULT& ResultRecord, const STRING& RecordSyntax,
+  virtual bool Headline(const RESULT& ResultRecord, const STRING& RecordSyntax,
 	PSTRING StringBuffer) const;
-  virtual GDT_BOOLEAN Headline(const RESULT& ResultRecord, PSTRING StringBuffer) const;
+  virtual bool Headline(const RESULT& ResultRecord, PSTRING StringBuffer) const;
 
-  virtual GDT_BOOLEAN Summary(const RESULT& ResultRecord,
+  virtual bool Summary(const RESULT& ResultRecord,
 	const STRING& RecordSyntax, PSTRING StringBuffer) const;
-  virtual GDT_BOOLEAN Summary(const RESULT& ResultRecord, PSTRING StringBuffer) const;
+  virtual bool Summary(const RESULT& ResultRecord, PSTRING StringBuffer) const;
 
   // These are about getting the URL to access the record
-  virtual GDT_BOOLEAN GetResourcePath(const RESULT& ResultRecord, PSTRING StringBuffer) const;
-  virtual GDT_BOOLEAN URL(const RESULT& ResultRecord, PSTRING StringBuffer,
-	GDT_BOOLEAN OnlyRemote = GDT_TRUE) const;
+  virtual bool GetResourcePath(const RESULT& ResultRecord, PSTRING StringBuffer) const;
+  virtual bool URL(const RESULT& ResultRecord, PSTRING StringBuffer,
+	bool OnlyRemote = true) const;
 
-  virtual GDT_BOOLEAN Full(const RESULT& ResultRecord, const STRING& RecordSyntax,
+  virtual bool Full(const RESULT& ResultRecord, const STRING& RecordSyntax,
 	PSTRING StringBuffer) const;
 
   // Highlight using the "right" 
@@ -128,8 +128,8 @@ public:
 	const QUERY& Query) const;
 
   virtual void SetMetaIgnore(const STRING& Tag);
-  virtual GDT_BOOLEAN IsMetaIgnoreField(const STRING& Tag, STRING *Val = NULL) const;
-  virtual GDT_BOOLEAN IsIgnoreMetaField(const STRING&) const { return GDT_FALSE; };
+  virtual bool IsMetaIgnoreField(const STRING& Tag, STRING *Val = NULL) const;
+  virtual bool IsIgnoreMetaField(const STRING&) const { return false; };
 
   virtual void XmlMetaPresent(const RESULT &ResultRecord, const STRING &RecordSyntax,
 	STRING *StringBuffer) const;
@@ -150,7 +150,7 @@ public:
 
   // hooks into the guts of the field parsers
   // used during index and presentation.
-  virtual INT UnifiedNames (const STRING& Tag, PSTRLIST Value, GDT_BOOLEAN Use) const;
+  virtual INT UnifiedNames (const STRING& Tag, PSTRLIST Value, bool Use) const;
   virtual INT     UnifiedNames (const STRING& Tag, PSTRLIST Value) const;
   virtual STRING  UnifiedName (const STRING& tag) const;
   virtual STRING  UnifiedName (const STRING& tag, PSTRING Value) const;
@@ -167,12 +167,12 @@ public:
 
   // Convert to HTML
   void HtmlCat (const RESULT& Result, const STRING& Input, PSTRING StringBufferPtr,
-	GDT_BOOLEAN Anchor) const;
+	bool Anchor) const;
   void HtmlCat (const RESULT& Result, const STRING& Input, PSTRING StringBufferPtr) const;
   void HtmlCat (const RESULT& Result, const CHR Ch, PSTRING StringBufferPtr) const;
 
   void HtmlCat (const STRING& Input, PSTRING StringBufferPtr,
-	GDT_BOOLEAN Anchor) const;
+	bool Anchor) const;
   void HtmlCat (const STRING& Input, PSTRING StringBufferPtr) const;
   void HtmlCat (const CHR Ch, PSTRING StringBufferPtr) const;
 
@@ -192,16 +192,16 @@ public:
 	STRING *StringBufferPtr) const;
 
   // Set field type only if not already defined to something special
-  GDT_BOOLEAN SetFieldType(const STRING& FieldName, const FIELDTYPE FieldType);
+  bool SetFieldType(const STRING& FieldName, const FIELDTYPE FieldType);
 
-  virtual GDT_BOOLEAN IsSpecialField(const STRING &FieldName) const;
+  virtual bool IsSpecialField(const STRING &FieldName) const;
   virtual void        HandleSpecialFields(RECORD* NewRecord, const STRING& Field, const char *Buffer);
   const char *c_str() const { return Doctype.c_str(); }
 
 protected:
-   GDT_BOOLEAN PluginExists(const STRING& doctype);
+   bool PluginExists(const STRING& doctype);
 
-   GDT_BOOLEAN _write_resource_path (const STRING& file,
+   bool _write_resource_path (const STRING& file,
         const RECORD& Filerecord, STRING *PathFilePath = NULL) const;
 
   STRING      Httpd_Content_type (const RESULT& Record, const STRING& MimeType = NulString) const;

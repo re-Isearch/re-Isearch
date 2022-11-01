@@ -150,31 +150,31 @@ static struct {
 // PATH TO OUR FILE COMMAND
 #define FILE_CMD "/opt/BSN/bin/file"
 
-GDT_BOOLEAN FILETYP::Doctype(PSTRING StringBufferPtr)
+bool FILETYP::Doctype(PSTRING StringBufferPtr)
 {
   *StringBufferPtr = doctype;
   return StringBufferPtr->GetLength() != 0;
 }
 
-GDT_BOOLEAN FILETYP::Author(PSTRING StringBufferPtr)
+bool FILETYP::Author(PSTRING StringBufferPtr)
 {
   *StringBufferPtr = author;
   return StringBufferPtr->GetLength() != 0;
 }
 
-GDT_BOOLEAN FILETYP::MimeType(PSTRING StringBufferPtr)
+bool FILETYP::MimeType(PSTRING StringBufferPtr)
 {
   *StringBufferPtr = mimeType;
   return StringBufferPtr->GetLength() != 0;
 }
 
-GDT_BOOLEAN FILETYP::FormatDesc(PSTRING StringBufferPtr)
+bool FILETYP::FormatDesc(PSTRING StringBufferPtr)
 {
   *StringBufferPtr = description;
   return StringBufferPtr->GetLength() != 0;
 }
 
-GDT_BOOLEAN FILETYP::Summary(PSTRING StringBufferPtr)
+bool FILETYP::Summary(PSTRING StringBufferPtr)
 {
   *StringBufferPtr = summary;
   return StringBufferPtr->GetLength() != 0;

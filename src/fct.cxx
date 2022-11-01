@@ -100,15 +100,15 @@ FCLIST *FCLIST::AddEntry (const FCLIST& OtherFct)
 }
 
 
-GDT_BOOLEAN FCLIST::GetEntry (const size_t Index, FC* FcRecord) const
+bool FCLIST::GetEntry (const size_t Index, FC* FcRecord) const
 {
   FCLIST *NodePtr = (FCLIST *) (VLIST::GetNodePtr (Index));
   if (NodePtr)
     {
       *FcRecord = NodePtr->Fc;
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 const FC& FCLIST::GetEntry (const size_t Index) const
@@ -144,16 +144,16 @@ void FCLIST::SortByFc ()
 #else
   // Get total while we check if already sorted
   size_t TotalEntries = 0;
-  GDT_BOOLEAN sorted = GDT_TRUE;
+  bool sorted = true;
   for (register const FCLIST *p = Next(); p != this; p = p->Next())
    {
      if (sorted && (p->Fc < p->Prev()->Fc))
-       sorted = GDT_FALSE;
+       sorted = false;
      TotalEntries++;
    }
 
   // DO we have anything to sort?
-  if (sorted == GDT_FALSE && TotalEntries > 1)
+  if (sorted == false && TotalEntries > 1)
     {
       FC           *TablePtr = new FC[TotalEntries];
       register FC  *ptr = TablePtr;
@@ -198,7 +198,7 @@ void FCLIST::Write (PFILE fp) const
     p->Value().Write(fp);
 }
 
-GDT_BOOLEAN FCLIST::Read (PFILE fp)
+bool FCLIST::Read (PFILE fp)
 {
   Clear ();
 
@@ -286,7 +286,7 @@ void FCLIST::MergeEntries()
 {
   // Get total while we check if already sorted
   size_t TotalEntries = 0;
-  GDT_BOOLEAN sorted = GDT_TRUE;
+  bool sorted = true;
 
   for (register FCLIST *p = Next(); p != this; p = p->Next())
    {
@@ -294,12 +294,12 @@ void FCLIST::MergeEntries()
      if (p->Fc == p->Prev()->Fc)
 	delete (FCLIST *)p->Prev()->Disattach(); // Added delete (Apr 2008)
      else if (sorted && (p->Fc <= p->Prev()->Fc))
-       sorted = GDT_FALSE;
+       sorted = false;
      TotalEntries++;
    }
 
   // DO we have anything to sort?
-  if (sorted == GDT_FALSE && TotalEntries > 1)
+  if (sorted == false && TotalEntries > 1)
     {
       FC           *TablePtr = new FC[TotalEntries];
       FC            fc (0,0);

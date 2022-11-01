@@ -9,9 +9,9 @@ public:
   const char *Description(PSTRLIST List) const;
   void DocPresent(const RESULT& ResultRecord, const STRING& ElementSet,
 	const STRING& RecordSyntax, PSTRING StringBuffer) const;
-  GDT_BOOLEAN GetResourcePath(const RESULT& ResultRecord, PSTRING StringBuffer) const;
-  GDT_BOOLEAN URL(const RESULT& ResultRecord, PSTRING StringBuffer,
-	GDT_BOOLEAN OnlyRemote) const;
+  bool GetResourcePath(const RESULT& ResultRecord, PSTRING StringBuffer) const;
+  bool URL(const RESULT& ResultRecord, PSTRING StringBuffer,
+	bool OnlyRemote) const;
   ~HARVEST();
 };
 

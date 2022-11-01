@@ -5,10 +5,6 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 /*=======================================================
  *
  *  CLASS IO - manipulate generalized input/output objects
- *  for Isite
- *
- *  1/23/95  Jim Fullton
- *
  *======================================================*/
 
 /*  functions 
@@ -47,15 +43,16 @@ extern RLDCACHE* Cache;
 
 IO::IO()                    
 { 
-  debug=GDT_FALSE; 
+  debug=false; 
   Buf = NULL;  
   ptr.fp=NULL;
+  type = LFILE;
 }
 
 
 IO::IO(const STRING& Fname, const STRING& mmode)
 {
-  debug=GDT_FALSE;
+  debug=false;
   Buf = NULL;
   ptr.fp=NULL;
   open(Fname, mmode);
@@ -69,13 +66,9 @@ IO::~IO()
 
 
 /*==================================================================
- *
  *   iseek:  seek to position in an IO channel, with optional offset
  *   
  *   returns: position after seek
- *
- *   1/23/95 Jim Fullton
- *
  *=================================================================*/
 off_t IO::iseek(off_t pos) 
 {
@@ -98,7 +91,7 @@ off_t IO::iseek(off_t pos)
 }
 
 
-CHR* IO::igets(char *b, int len)
+char* IO::igets(char *b, int len)
 {
   char *q;
   if(debug) message_log(LOG_DEBUG,"read %d bytes as fgets",len);
@@ -157,13 +150,8 @@ off_t IO::iseek(off_t pos, int offset)
 
 
 /*==================================================================
- *
- *   itell:  tell current IO channel pointer psoition
- *   
+ *   itell:  tell current IO channel pointer position
  *   returns: position
- *
- *   1/23/95 Jim Fullton
- *
  *=================================================================*/
 off_t IO::itell()
 {
@@ -179,22 +167,16 @@ off_t IO::itell()
     xPos=cachePtr;
     break;
   }
-  
   return(xPos);
-  
 }
 
 
 /*==================================================================
- *
  *   open:  open an IO channel
  *   
- *   returns: 1 on success, 0 on failure
- *
- *   1/23/95 Jim Fullton
- *
+ *   returns: true on success, false on failure
  *=================================================================*/
-GDT_BOOLEAN IO::open(const STRING& Fname, const STRING& mmode)
+bool IO::open(const STRING& Fname, const STRING& mmode)
 {
   id = Fname;
   mode = mmode;
@@ -206,7 +188,7 @@ GDT_BOOLEAN IO::open(const STRING& Fname, const STRING& mmode)
 	{
 	  type=LFILE;
 	  if(debug) message_log(LOG_DEBUG,"Open of '%s' Succeeded", id.c_str());
-	  return GDT_TRUE;
+	  return true;
 	}
     }
   else
@@ -222,7 +204,7 @@ GDT_BOOLEAN IO::open(const STRING& Fname, const STRING& mmode)
 	{
 	  type=URL;
 	  if(debug) message_log(LOG_DEBUG,"Open of '%s' Succeeded", id.c_str());
-	  return GDT_TRUE; // Success
+	  return true; // Success
 	}
 #else
       message_log (LOG_ERROR, "IO:open() Failed, Cache is NULL");
@@ -230,59 +212,49 @@ GDT_BOOLEAN IO::open(const STRING& Fname, const STRING& mmode)
      }
 
   if(debug) message_log(LOG_DEBUG, "Open Failed for '%s'",id.c_str());
-  return GDT_FALSE;
+  return false;
 }
 
 
 /*==================================================================
- *
  *   close:  close an open IO channel
- *   
- *
- *
- *   1/23/95 Jim Fullton
- *
  *=================================================================*/
 void IO::close()
 {
-  if (debug) message_log(LOG_DEBUG,"Close %s",id.c_str());
+  if (debug && !id.IsEmpty()) message_log(LOG_DEBUG,"Close %s",id.c_str());
   switch (type) {
   case LFILE:
     if(ptr.fp){
       fclose(ptr.fp);
       ptr.fp=NULL;
+      id.Clear();
     }else{
       if(debug) message_log(LOG_DEBUG,"Attempt to close closed LFILE");
     }
     break;
   case URL:
-    if(Buf != NULL)
+    if(Buf != NULL) {
       free(Buf);
-    /*
-      RLDENTRY *NewEntry;
-      //    NewEntry=rldcache_GetEntryByName(Cache,id);
-      NewEntry=Cache->GetEntryByName(id);
-      if (NewEntry) {
-      //      rldcache_DeleteEntry(Cache,NewEntry);
+      Buf = NULL;
+    }
+#ifndef NO_RLDCACHE
+   RLDENTRY *NewEntry = Cache ? Cache->GetEntryByName(id) : NULL;
+   if (NewEntry) {
+cerr << "DELETE ENTRY" << endl;
       Cache->DeleteEntry(NewEntry);
-      }
-      ptr.p=0;
-      */
+   }
+   ptr.p=0;
+#endif
     break;
   }
 }
 
 
 /*==================================================================
- *
  *   remove:  destroy object accessed by IO channel
- *
- *   returns - 1 on success, 0 on failure
+ *   returns - true on success, false on failure
  *
  *   side effects - closes IO channel if open.
- *
- *   1/23/95 Jim Fullton
- *
  *=================================================================*/
 int IO::remove()
 {
@@ -306,14 +278,10 @@ int IO::remove()
 
 
 /*==================================================================
- *
  *   read:  read length items of size bytes (length*size bytes) from
  *   IO channel.
  *
  *   returns - items read, 0 for EOF
- *
- *   1/23/95 Jim Fullton
- *
  *=================================================================*/
 size_t IO::read(char *buffer, size_t length, size_t size) 
 {
@@ -350,16 +318,12 @@ size_t IO::read(char *buffer, size_t length, size_t size)
 
 
 /*==================================================================
- *
  *   write:  write length items of size bytes (length*size bytes) to
  *   IO channel.
  *
  *   returns - items written
- *
- *   1/23/95 Jim Fullton
- *
  *=================================================================*/
-size_t IO::write(char *buffer, size_t length, size_t size)
+size_t IO::write(const char *buffer, size_t length, size_t size)
 {
   size_t writeSize;
   
@@ -396,4 +360,4 @@ void IO::top()
     cachePtr=0;
     break;
   }
-}	
+}

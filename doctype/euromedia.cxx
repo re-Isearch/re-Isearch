@@ -89,7 +89,7 @@ DocPresent (const RESULT& ResultRecord,
 	((RecordSyntax == HtmlRecordSyntax) || 
 	 (RecordSyntax == SutrsRecordSyntax)) )
     {
-      GDT_BOOLEAN useHTML = (RecordSyntax == HtmlRecordSyntax);
+      bool useHTML = (RecordSyntax == HtmlRecordSyntax);
       if (useHTML)
 	HtmlHead (ResultRecord, ElementSet, StringBuffer);
       // Documents are 1-deep so just collect the fields
@@ -149,7 +149,7 @@ void EUROMEDIA::
 Present (const RESULT& ResultRecord, const STRING& ElementSet, const STRING& RecordSyntax,
 	PSTRING StringBuffer) const
 {
-  const GDT_BOOLEAN UseHtml = (RecordSyntax == HtmlRecordSyntax);
+  const bool UseHtml = (RecordSyntax == HtmlRecordSyntax);
   STRING Tmp;
   if (ElementSet == SOURCE_MAGIC)
     {
@@ -163,7 +163,7 @@ Present (const RESULT& ResultRecord, const STRING& ElementSet, const STRING& Rec
       DOCTYPE::Present (ResultRecord, UnifiedName("Local_number", &Tmp), &Call);
       DOCTYPE::Present (ResultRecord, UnifiedName("Title", &Tmp), &Title);
       DOCTYPE::Present (ResultRecord, UnifiedName("Code_language", &Tmp), &Language);
-      GDT_BOOLEAN got = GDT_FALSE;
+      bool got = false;
 
       StringBuffer->Clear();
       if (Title.GetLength() == 0)
@@ -176,14 +176,14 @@ Present (const RESULT& ResultRecord, const STRING& ElementSet, const STRING& Rec
       if (Call.GetLength())
 	{
 	  Headline.Cat (Call);
-	  got = GDT_TRUE;
+	  got = true;
 	}
       if (Title.GetLength())
 	{
 	  if (got)
 	    Headline.Cat (": ");
 	  Headline.Cat (Title);
-	  got = GDT_TRUE;
+	  got = true;
 	}
       if (! got)
 	{
@@ -210,7 +210,7 @@ Present (const RESULT& ResultRecord, const STRING& ElementSet, const STRING& Rec
 	  Headline.Cat (")");
 	}
       if (UseHtml)
-	HtmlCat(Headline, StringBuffer, GDT_FALSE);
+	HtmlCat(Headline, StringBuffer, false);
       else
 	StringBuffer->Cat (Headline);
     }
@@ -246,7 +246,7 @@ HREF=\"i.search?DATABASE%3D" << DBname << "/TERM%3D%22" << ElementSet << "/";
 	      ch = *tcp;
 	      *tcp = '\0';
 	      *StringBuffer << Anchor << URLencode(tp, &Tmp) << "%22\">";
-	      HtmlCat(tp, StringBuffer, GDT_FALSE);
+	      HtmlCat(tp, StringBuffer, false);
 	      *StringBuffer << "</A>; ";
 	      *tcp = ch;
 	      tp = tcp; // pointing at after digits
@@ -279,7 +279,7 @@ HREF=\"i.search?DATABASE%3D" << DBname
 	      *tp2++='\0';
 	      while (isspace(*tp)) tp++;
 	      *StringBuffer << Anchor << URLencode(tp, &Tmp) << "%22\">";
-	      HtmlCat(tp, StringBuffer, GDT_FALSE);
+	      HtmlCat(tp, StringBuffer, false);
 	      *StringBuffer << "</A>; ";
 	      tp = tp2;
 	    }
@@ -289,7 +289,7 @@ HREF=\"i.search?DATABASE%3D" << DBname
 	      *StringBuffer << Anchor
 		<< URLencode(tp, &Tmp)
 		<< "%22\">";
-	      HtmlCat(tp, StringBuffer, GDT_FALSE);
+	      HtmlCat(tp, StringBuffer, false);
 	      *StringBuffer << "</A>";
 	    }
 	  delete[]buf;

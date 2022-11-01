@@ -98,8 +98,8 @@ void do_directory( const STRING& dir,
   const char *exclude = NULL,
   const char *inclDirpattern = NULL,
   const char *excludeDirpattern = NULL,
-  GDT_BOOLEAN recurse = GDT_TRUE,
-  GDT_BOOLEAN follow = GDT_TRUE);
+  bool recurse = true,
+  bool follow = true);
 
 
 void do_directory( const STRING& dir,
@@ -108,8 +108,8 @@ void do_directory( const STRING& dir,
   const STRING& exclude = NulString,
   const STRING& inclDirpattern = NulString,
   const STRING& excludeDirpattern = NulString,
-  GDT_BOOLEAN recurse = GDT_TRUE,
-  GDT_BOOLEAN follow = GDT_TRUE);
+  bool recurse = true,
+  bool follow = true);
 
 void do_directory(const STRING& dir,
   int (*do_file)(const STRING&),
@@ -117,8 +117,8 @@ void do_directory(const STRING& dir,
   const STRLIST *excludeList = NULL,
   const STRLIST *inclDirList = NULL,
   const STRLIST *excludeDirList = NULL,
-  GDT_BOOLEAN recurse = GDT_TRUE,
-  GDT_BOOLEAN follow = GDT_TRUE);
+  bool recurse = true,
+  bool follow = true);
 
 STRING FindExecutable(const STRING& Argv0=NulString);
 STRING FindSharedLibrary(const STRING& Argv0=NulString);
@@ -127,16 +127,18 @@ STRING FindSharedLibrary(const STRING& Argv0=NulString);
 STRING GlobalSharedLibraryName ();
 #endif
 
-GDT_BOOLEAN IsAbsoluteFilePath(const STRING& Path);
-GDT_BOOLEAN IsRootDirectory(const STRING& Path);
-GDT_BOOLEAN DirectoryExists(const STRING& Path);
-GDT_BOOLEAN FileExists(const STRING& Path); // Exists and not a directory
-GDT_BOOLEAN ExeExists(const STRING& Path); // Is executable (script or bin)
+bool IsAbsoluteFilePath(const STRING& Path);
+bool IsRootDirectory(const STRING& Path);
+bool DirectoryExists(const STRING& Path);
+bool FileExists(const STRING& Path); // Exists and not a directory
+bool ExeExists(const STRING& Path); // Is executable (script or bin)
 
+
+bool DBExists(const STRING& FileSpec);
 
 CHR         PathSepChar();
-GDT_BOOLEAN IsPathSep(const int c);
-GDT_BOOLEAN ContainsPathSep(const STRING& Path);
+bool IsPathSep(const int c);
+bool ContainsPathSep(const STRING& Path);
 
 void  AddTrailingSlash(PSTRING PathName);
 void  RemoveTrailingSlash(PSTRING PathName);
@@ -156,22 +158,22 @@ STRING      GetCwd(); // Current Working Directory
 STRING      SetCwd(const STRING& Dir); // Set the Working Directory
 
 STRING      GetTempDir();
-STRING      GetTempFilename(const char *Prefix=NULL, GDT_BOOLEAN Secure=GDT_FALSE);
+STRING      GetTempFilename(const char *Prefix=NULL, bool Secure=false);
 
-GDT_BOOLEAN WritableDir(const STRING& path);
+bool WritableDir(const STRING& path);
 
 STRING GetUserHome(const char *user);
 
-GDT_BOOLEAN SetUserName(const STRING& Id);
+bool SetUserName(const STRING& Id);
 
-GDT_BOOLEAN SetUserGroup(const STRING& Id);
+bool SetUserGroup(const STRING& Id);
 STRING      GetUserGroup();
 
 
-STRING MakeTempFileName(const STRING& Fn);
+// STRING MakeTempFileName(const STRING& Fn);
 
-GDT_BOOLEAN IsRunningProcess(long pid);
-GDT_BOOLEAN IsMyProcess(long uid);
+bool IsRunningProcess(long pid);
+bool IsMyProcess(long uid);
 
 STRING ProcessOwner(long uid = 0);
 STRING ResourceOwner(const STRING& Path);
@@ -186,9 +188,9 @@ STRING RemoveFileName(const STRING& PathName);
 #ifndef STANDALONE
 STRING      ResolveBinPath(const STRING& Filename);
 STRING      ResolveConfigPath(const STRING& Filename);
-GDT_BOOLEAN ResolveConfigPath(PSTRING Filename);
+bool ResolveConfigPath(PSTRING Filename);
 #ifndef _WIN32
-STRING      ResolveHtdocPath(const STRING& Filename, GDT_BOOLEAN AsUrl = GDT_FALSE);
+STRING      ResolveHtdocPath(const STRING& Filename, bool AsUrl = false);
 #endif
 #endif
 
@@ -208,16 +210,16 @@ off_t GetFileSize(const STRING& filename);
 off_t GetFileSize(const CHR *filename);
 off_t GetFileSize(int fd);
 
-GDT_BOOLEAN Exists(const STRING& path);
+bool Exists(const STRING& path);
 
-GDT_BOOLEAN IsExecutable(const STRING &path);
+bool IsExecutable(const STRING &path);
 
 STRING ExpandFileSpec(const STRING& FileSpec);
 void   ExpandFileSpec(PSTRING FileSpec);
 
-int MkDir(const STRING& Dir, int mask, GDT_BOOLEAN Forced);
+int MkDir(const STRING& Dir, int mask, bool Forced);
 int MkDir(const STRING& Dir, int mask = 0);
-GDT_BOOLEAN MkDirs(const STRING& Path, int mask = 0);
+bool MkDirs(const STRING& Path, int mask = 0);
 
 INT2  Swab (INT2 *Ptr);
 UINT2 Swab (UINT2 *Ptr);
@@ -246,7 +248,7 @@ size_t tRead(int fd, void *bufptr, size_t length, struct timeval *tv);
 #endif
 
 
-GDT_BOOLEAN IsBigEndian();
+bool IsBigEndian();
 
 char *Copystring (const char *s);
 char *Copystring (const char *s, size_t len);
@@ -258,8 +260,8 @@ INT StrNCaseCmp(const UCHR* s1, const UCHR* s2, const INT n);
 INT StrNCmp(const CHR* s1, const CHR* s2, const INT n);
 INT StrNCmp(const UCHR* s1, const UCHR* s2, const INT n);
 
-GDT_BOOLEAN FileGlob(const UCHR *pattern, const UCHR *str);
-GDT_BOOLEAN Glob(const UCHR *pattern, const UCHR *str, GDT_BOOLEAN dot_special=GDT_FALSE);
+bool FileGlob(const UCHR *pattern, const UCHR *str);
+bool Glob(const UCHR *pattern, const UCHR *str, bool dot_special=false);
 
 int getHostname (char *buf, int len);
 
@@ -268,11 +270,11 @@ int getOfficialHostName(char *buf, int len);
 
 // 
 
-GDT_BOOLEAN _IB_GetPlatformName(char *buf, int maxSize);
-GDT_BOOLEAN _IB_GetHostName(char *buf, int maxSize);
-GDT_BOOLEAN _IB_GetUserId(char *buf, int maxSize);
-GDT_BOOLEAN _IB_GetUserName(char *buf, int maxSize);
-GDT_BOOLEAN _IB_GetmyMail (PSTRING Name, PSTRING Address);
+bool _IB_GetPlatformName(char *buf, int maxSize);
+bool _IB_GetHostName(char *buf, int maxSize);
+bool _IB_GetUserId(char *buf, int maxSize);
+bool _IB_GetUserName(char *buf, int maxSize);
+bool _IB_GetmyMail (PSTRING Name, PSTRING Address);
 long        _IB_Hostid();
 rlim_t      _IB_GetFreeMemory();
 rlim_t      _IB_GetTotalMemory();
@@ -283,5 +285,6 @@ ssize_t _sys_read(int fildes, void *buf, size_t nbyte);
 ssize_t pread(int fildes, void *buf, size_t nbyte, off_t offset);
 #endif
 size_t pfread(FILE *fp, void *buf, size_t nbyte, off_t offset);
+
 
 #endif

@@ -368,7 +368,7 @@ DocPresent (const RESULT& ResultRecord,
     }
 
   STRING Value;
-  GDT_BOOLEAN UseHtml = (RecordSyntax == HtmlRecordSyntax);
+  bool UseHtml = (RecordSyntax == HtmlRecordSyntax);
   if (UseHtml)
     {
       HtmlHead (ResultRecord, ElementSet, StringBuffer);
@@ -493,7 +493,7 @@ void REFERBIB::Present (const RESULT& ResultRecord,
     }
   else
     {
-      GDT_BOOLEAN UseHtml = (RecordSyntax == HtmlRecordSyntax);
+      bool UseHtml = (RecordSyntax == HtmlRecordSyntax);
       // Get Value of the field, use parent
       if (UseHtml && (ElementSet ^= UnifiedName("%G", &Tmp)))
 	DOCTYPE::Present (ResultRecord, ElementSet, SutrsRecordSyntax, StringBuffer);

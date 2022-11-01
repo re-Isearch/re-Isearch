@@ -76,11 +76,11 @@ override the command line arguments!" << endl;
   STRING DBName;
   STRLIST WordList;
   STRING  prepend;
-  GDT_BOOLEAN DebugFlag = GDT_FALSE;
-  GDT_BOOLEAN Shredder  = GDT_FALSE;
-  GDT_BOOLEAN Dont_delete = GDT_FALSE;
-  GDT_BOOLEAN QuietFlag = GDT_FALSE;
-  GDT_BOOLEAN VerboseFlag = GDT_FALSE;
+  bool DebugFlag = false;
+  bool Shredder  = false;
+  bool Dont_delete = false;
+  bool QuietFlag = false;
+  bool VerboseFlag = false;
   INT x = 0;
   INT LastUsed = 0;
   while (x < argc)
@@ -178,12 +178,12 @@ override the command line arguments!" << endl;
 	    }
 	  else if (Flag.Equals("-mark"))
 	    {
-	      Dont_delete = GDT_TRUE;
+	      Dont_delete = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals("-shredder"))
 	    {
-	      Shredder = GDT_TRUE;
+	      Shredder = true;
 	      LastUsed = 1;
 	    }
 	}
@@ -218,7 +218,7 @@ override the command line arguments!" << endl;
 #if 0
   // Check if database exits
   STRING DbInfo = DBPathName + DBFileName + ".dbi";
-  if (Exists (DbInfo) == GDT_FALSE)
+  if (Exists (DbInfo) == false)
     {
       cout << "The specified database \"" << DbInfo << "\" does not exist." << endl;
       return 0;
@@ -293,7 +293,7 @@ override the command line arguments!" << endl;
 			  last = Fullname;
 			}
                       Record.SetFullFileName(NulString);
-		      Record.SetBadRecord(GDT_TRUE);
+		      Record.SetBadRecord(true);
                       pdb->SetDocumentInfo (x, Record);
 		      if (!QuietFlag)
 			cout << endl;

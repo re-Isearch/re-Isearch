@@ -55,7 +55,7 @@ void DIGESTTOC::Present(const RESULT& ResultRecord, const STRING& ElementSet,
       // Headline is only the subject line
       STRING Headline;
       MAILDIGEST::Present(ResultRecord, "SUBJECT", SutrsRecordSyntax, &Headline);
-      HtmlCat(Headline, StringBuffer, GDT_FALSE);
+      HtmlCat(Headline, StringBuffer, false);
     }
   else
     {
@@ -120,7 +120,7 @@ void DIGESTTOC::DocPresent(const RESULT& ResultRecord, const STRING& ElementSet,
 		  StringBuffer->Cat (">");
 		  TOC = Had;
 contents:
-		  GDT_BOOLEAN saw_content = GDT_FALSE;
+		  bool saw_content = false;
 		  RESULT tmpResult;
 		  STRING Key, xKey, tmp;
 		  ResultRecord.GetKey (&Key);
@@ -137,12 +137,12 @@ contents:
 #define CGI_FETCH "ifetch"
 			  if (tmp != "")
 			    {
-			      if (saw_content == GDT_FALSE)
+			      if (saw_content == false)
 				{
 				  if (TOC == Had)
 				    StringBuffer->Cat ("<H2>Contents:</H2>\n");
 				  StringBuffer->Cat ("<!-- Synthetic TOC Links --><OL>\n");
-				  saw_content = GDT_TRUE;
+				  saw_content = true;
 				}
 			      *StringBuffer << "<LI>" << 
 				"<A HREF=\"" << CGI_FETCH << furl << xKey <<

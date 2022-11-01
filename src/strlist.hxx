@@ -27,11 +27,11 @@ public:
   virtual ~LISTOBJ();
 
   virtual size_t GetTotalEntries () const;
-  virtual GDT_BOOLEAN Load(const STRING&);
+  virtual bool Load(const STRING&);
 
   // Words stream in list?
-  virtual GDT_BOOLEAN InList(const STRING& Word) const;
-  virtual GDT_BOOLEAN InList (const UCHR* WordStart, const STRINGINDEX WordLength=0) const;
+  virtual bool InList(const STRING& Word) const;
+  virtual bool InList (const UCHR* WordStart, const STRINGINDEX WordLength=0) const;
 
 #else
   // Creation
@@ -42,13 +42,13 @@ public:
   virtual size_t GetTotalEntries () const { return 0; }
 
   // Load
-  virtual GDT_BOOLEAN Load(const STRING&) { return GDT_FALSE; }
+  virtual bool Load(const STRING&) { return false; }
 
   // Words stream in list?
-  virtual GDT_BOOLEAN InList(const STRING& Word) const {
+  virtual bool InList(const STRING& Word) const {
     return InList((const UCHR*)(Word.c_str()), Word.GetLength());
   }
-  virtual GDT_BOOLEAN InList (const UCHR* WordStart, const STRINGINDEX WordLength=0) const { return GDT_FALSE; }
+  virtual bool InList (const UCHR* WordStart, const STRINGINDEX WordLength=0) const { return false; }
 #endif
 private:
 };
@@ -67,8 +67,8 @@ public:
 
   UINT8       Hash() const;
 
-  GDT_BOOLEAN Equals(const STRLIST& OtherList) const;
-  GDT_BOOLEAN CaseEquals(const STRLIST& OtherList) const;
+  bool Equals(const STRLIST& OtherList) const;
+  bool CaseEquals(const STRLIST& OtherList) const;
 
   // Create a Semi-infinite string for a list
   operator       STRING () const { return Join('\000'); };
@@ -91,8 +91,8 @@ public:
   // methods below instead.. but...
   STRLIST    *SetEntry(const size_t Index, const STRING& StringEntry);
   STRING      GetEntry(const size_t Index) const;
-  GDT_BOOLEAN GetEntry(const size_t Index, STRING* StringEntry) const;
-  GDT_BOOLEAN DeleteEntry(const size_t pos);
+  bool GetEntry(const size_t Index, STRING* StringEntry) const;
+  bool DeleteEntry(const size_t pos);
 
   // Iteration methods
   STRLIST       *Next()       { return (STRLIST *)GetNextNodePtr();       }
@@ -101,7 +101,7 @@ public:
   const STRLIST *Prev() const { return (const STRLIST *)GetPrevNodePtr(); }
   STRING        Value() const { return String;                            }
 
-  int    Do(GDT_BOOLEAN (*Function)(const STRING& What));
+  int    Do(bool (*Function)(const STRING& What));
 
   void   Expand() {};
   void   CleanUp() {};
@@ -145,15 +145,15 @@ public:
   friend ostream & operator<<(ostream& os, const STRLIST& str);
 
   void Write (PFILE Fp) const;
-  GDT_BOOLEAN Read (PFILE Fp);
+  bool Read (PFILE Fp);
   ~STRLIST();
 private:
   STRING String;
 };
 
-inline GDT_BOOLEAN operator==(const STRLIST& s1, const STRLIST& s2) { return s1.Equals(s2); }
-inline GDT_BOOLEAN operator^=(const STRLIST& s1, const STRLIST& s2) { return s1.CaseEquals(s2); }
-inline GDT_BOOLEAN operator!=(const STRLIST& s1, const STRLIST& s2) { return !s1.Equals(s2); }
+inline bool operator==(const STRLIST& s1, const STRLIST& s2) { return s1.Equals(s2); }
+inline bool operator^=(const STRLIST& s1, const STRLIST& s2) { return s1.CaseEquals(s2); }
+inline bool operator!=(const STRLIST& s1, const STRLIST& s2) { return !s1.Equals(s2); }
 
 extern const STRLIST NulStrlist;
 
@@ -161,7 +161,7 @@ extern const STRLIST NulStrlist;
 typedef STRLIST* PSTRLIST;
 
 void Write(const STRLIST Strlist, PFILE Fp);
-GDT_BOOLEAN Read(PSTRLIST StrlistPtr, PFILE Fp);
+bool Read(PSTRLIST StrlistPtr, PFILE Fp);
 
 /////////////////////////////////////////////////////////////////
 // Freestore management for STRINGS
@@ -279,16 +279,16 @@ public:
   size_t Sort() { return node()->Sort(); }
   size_t UniqueSort()  { return node()->UniqueSort(); }
 
-  GDT_BOOLEAN IsEmpty() const { return p_->ptr_->IsEmpty(); }
+  bool IsEmpty() const { return p_->ptr_->IsEmpty(); }
   size_t GetTotalEntries() const { return p_->ptr_->GetTotalEntries(); }
 
-  GDT_BOOLEAN GetEntry(const size_t Index, STRING* StringBuffer) const {
+  bool GetEntry(const size_t Index, STRING* StringBuffer) const {
     return p_->ptr_->GetEntry(Index, StringBuffer);
   }
   void Write(PFILE fp) const {
     p_->ptr_->Write(fp);
   }
-  GDT_BOOLEAN Read(PFILE fp) {
+  bool Read(PFILE fp) {
     return node()->Read(fp);
   }
   ~STRINGS() { unlock(); }

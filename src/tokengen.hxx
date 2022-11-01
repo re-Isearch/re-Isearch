@@ -11,14 +11,14 @@ class TOKENGEN
 public:
   TOKENGEN (const STRING& InString);
   ~TOKENGEN ();
-  GDT_BOOLEAN GetEntry (const size_t Index, STRING *StringEntry);
-  void        SetQuoteStripping (GDT_BOOLEAN);
+  bool GetEntry (const size_t Index, STRING *StringEntry);
+  void        SetQuoteStripping (bool);
   size_t      GetTotalEntries ();
 
 private:
   CHR * nexttoken (CHR *input, STRING *token);
   STRLIST TokenList;
-  GDT_BOOLEAN DoStripQuotes, HaveParsed;
+  bool DoStripQuotes, HaveParsed;
   void DoParse (void);
   CHR *InCharP;
 };

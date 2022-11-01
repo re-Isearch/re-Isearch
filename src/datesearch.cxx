@@ -46,8 +46,8 @@ const UINT4 DATE_PRESENT = 100000000;
 
 
 // Flag to select searching on interval start dates or interval end dates
-//const GDT_BOOLEAN SEARCH_START = GDT_TRUE;
-//const GDT_BOOLEAN SEARCH_END   = GDT_FALSE;
+//const bool SEARCH_START = true;
+//const bool SEARCH_END   = false;
 const IntBlock SEARCH_START = START_BLOCK;
 const IntBlock SEARCH_END   = END_BLOCK;
 
@@ -55,13 +55,13 @@ const IntBlock SEARCH_END   = END_BLOCK;
 // in the interval must match the query conditions, or loose date matching
 // (so we'll get a match if any date in the target interval matches the
 // query conditions)
-const GDT_BOOLEAN STRICT_MATCH = GDT_TRUE;
-const GDT_BOOLEAN LOOSE_MATCH  = GDT_FALSE;
+const bool STRICT_MATCH = true;
+const bool LOOSE_MATCH  = false;
 
 // Flag to select whether to match the query condition endpoint, or to
 // use strict inequality
-const GDT_BOOLEAN NOT_DURING = GDT_FALSE;
-const GDT_BOOLEAN DURING     = GDT_TRUE;
+const bool NOT_DURING = false;
+const bool DURING     = true;
 
 
 // Search date fields for matches
@@ -78,7 +78,7 @@ PIRSET INDEX::DoDateSearch(const STRING& QueryTerm, const STRING& FieldName,
 // Will accept intervals or single dates, and varying precisions
 // YYYY, YYYYMM or YYYYMMDD
 PIRSET INDEX::DoDateSearch(const STRING& QueryTerm, const STRING& FieldName, 
-			 INT4 Relation, INT4 Structure, GDT_BOOLEAN Strict)
+			 INT4 Relation, INT4 Structure, bool Strict)
 {
   PIRSET pirset=(PIRSET)NULL;
   FIELDTYPE FieldType = Parent->GetFieldType(FieldName);
@@ -118,7 +118,7 @@ PIRSET INDEX::DoDateSearch(const STRING& QueryTerm, const STRING& FieldName,
 // range specified by the user's query term.  QueryTerm has the form
 // "YYYY[MM[DD]] YYYY[MM[DD]]"
 PIRSET INDEX::DateRangeSearch(const STRING& QueryTerm, const STRING& FieldName, 
-		       INT4 Relation, GDT_BOOLEAN Strict)
+		       INT4 Relation, bool Strict)
 {
   PIRSET    pirset=(PIRSET)NULL;
   PIRSET    other_pirset=(PIRSET)NULL;
@@ -216,7 +216,7 @@ PIRSET INDEX::DateRangeSearch(const STRING& QueryTerm, const STRING& FieldName,
 // the date specified by the query term.  Variable precision strings are
 // handled - "YYYY", "YYYYMM" or "YYYYMMDD"
 PIRSET INDEX::SingleDateSearch(const STRING& QueryTerm, const STRING& FieldName, 
-			INT4 Relation, GDT_BOOLEAN Strict)
+			INT4 Relation, bool Strict)
 {
   PIRSET      pirset=(PIRSET)NULL;
   PIRSET      pirset1=(PIRSET)NULL;
@@ -328,7 +328,7 @@ PIRSET INDEX::SingleDateSearch(const STRING& QueryTerm, const STRING& FieldName,
 PIRSET INDEX::SingleDateSearchBefore(const SRCH_DATE& QueryDate, 
 			      const STRING& FieldName, 
 			      IntBlock FindBlock,
-			      GDT_BOOLEAN fIncludeEndpoint)
+			      bool fIncludeEndpoint)
 {
   PIRSET      YYYY=(PIRSET)NULL;
   PIRSET      YYYYMM=(PIRSET)NULL;
@@ -336,7 +336,7 @@ PIRSET INDEX::SingleDateSearchBefore(const SRCH_DATE& QueryDate,
   SRCH_DATE   Y, YM, YMD;
   INT         Precision;
   PIRSET      p_today=(PIRSET)NULL;
-  GDT_BOOLEAN AddPresentResults=GDT_FALSE;
+  bool AddPresentResults=false;
   //DOUBLE      fPresent=DATE_PRESENT;
 
   if (!QueryDate.Ok())
@@ -440,7 +440,7 @@ PIRSET INDEX::SingleDateSearchBefore(const SRCH_DATE& QueryDate,
 // which equal the query date match if fIncludesEndpoint is true, otherwise 
 // the inequality is strict.  Only dates of the form YYYY are matched.
 PIRSET INDEX::YSearchBefore(const SRCH_DATE& DateY, const STRING& FieldName,
-		     IntBlock FindBlock, GDT_BOOLEAN fIncludeEndpoint)
+		     IntBlock FindBlock, bool fIncludeEndpoint)
 {
   PIRSET pirset=(PIRSET)NULL;
   PIRSET LowerBound=(PIRSET)NULL;
@@ -483,7 +483,7 @@ PIRSET INDEX::YSearchBefore(const SRCH_DATE& DateY, const STRING& FieldName,
 // which equal the query date match if fIncludesEndpoint is true, otherwise 
 // the inequality is strict.  Only dates of the form YYYYMM are matched.
 PIRSET INDEX::YMSearchBefore(const SRCH_DATE& DateYM, const STRING& FieldName,
-		      IntBlock FindBlock, GDT_BOOLEAN fIncludeEndpoint)
+		      IntBlock FindBlock, bool fIncludeEndpoint)
 {
   PIRSET pirset=(PIRSET)NULL;
   PIRSET LowerBound=(PIRSET)NULL;
@@ -523,7 +523,7 @@ PIRSET INDEX::YMSearchBefore(const SRCH_DATE& DateYM, const STRING& FieldName,
 // which equal the query date match if fIncludesEndpoint is true, otherwise 
 // the inequality is strict.  Only dates of the form YYYYMMDD are matched.
 PIRSET INDEX::YMDSearchBefore(const SRCH_DATE& DateYMD, const STRING& FieldName,
-		       IntBlock FindBlock, GDT_BOOLEAN fIncludeEndpoint)
+		       IntBlock FindBlock, bool fIncludeEndpoint)
 {
   PIRSET pirset=(PIRSET)NULL;
   PIRSET LowerBound=(PIRSET)NULL;
@@ -565,12 +565,12 @@ PIRSET INDEX::YMDSearchBefore(const SRCH_DATE& DateYMD, const STRING& FieldName,
 PIRSET INDEX::SingleDateSearchAfter(const SRCH_DATE& QueryDate, 
 			     const STRING& FieldName, 
 			     IntBlock FindBlock,
-			     GDT_BOOLEAN fIncludeEndpoint)
+			     bool fIncludeEndpoint)
 {
   PIRSET      YYYY=(PIRSET)NULL;
   PIRSET      YYYYMM=(PIRSET)NULL;
   PIRSET      YYYYMMDD=(PIRSET)NULL;
-  GDT_BOOLEAN AddPresentResults=GDT_FALSE;
+  bool AddPresentResults=false;
 
 
   if (!QueryDate.Ok())
@@ -664,7 +664,7 @@ PIRSET INDEX::SingleDateSearchAfter(const SRCH_DATE& QueryDate,
 // which equal the query date match if fIncludesEndpoint is true, otherwise
 // the inequality is strict.  Only dates of the form YYYYMMDD are matched.
 PIRSET INDEX::YMDSearchAfter(const SRCH_DATE& DateYMD, const STRING& FieldName,
-		     IntBlock FindBlock, GDT_BOOLEAN fIncludeEndpoint)
+		     IntBlock FindBlock, bool fIncludeEndpoint)
 {
   PIRSET    pirset=(PIRSET)NULL;
   PIRSET    UpperBound=(PIRSET)NULL;
@@ -721,7 +721,7 @@ PIRSET INDEX::YMDSearchAfter(const SRCH_DATE& DateYMD, const STRING& FieldName,
 // which equal the query date match if fIncludesEndpoint is true, otherwise
 // the inequality is strict.  Only dates of the form YYYYMM are matched.
 PIRSET INDEX::YMSearchAfter(const SRCH_DATE& DateYM, const STRING& FieldName,
-		     IntBlock FindBlock, GDT_BOOLEAN fIncludeEndpoint)
+		     IntBlock FindBlock, bool fIncludeEndpoint)
 {
   PIRSET pirset=(PIRSET)NULL;
   PIRSET UpperBound=(PIRSET)NULL;
@@ -761,7 +761,7 @@ PIRSET INDEX::YMSearchAfter(const SRCH_DATE& DateYM, const STRING& FieldName,
 // which equal the query date match if fIncludesEndpoint is true, otherwise
 // the inequality is strict.  Only dates of the form YYYY are matched.
 PIRSET INDEX::YSearchAfter(const SRCH_DATE& DateY, const STRING& FieldName,
-		     IntBlock FindBlock, GDT_BOOLEAN fIncludeEndpoint)
+		     IntBlock FindBlock, bool fIncludeEndpoint)
 {
   PIRSET pirset=(PIRSET)NULL;
   PIRSET UpperBound=(PIRSET)NULL;
@@ -800,7 +800,7 @@ PIRSET INDEX::YSearchAfter(const SRCH_DATE& DateY, const STRING& FieldName,
 PIRSET INDEX::DateRangeSearchContains(const DATERANGE& QueryDate, 
 			      const STRING& FieldName,
 			      IntBlock FindBlock,
-			      GDT_BOOLEAN fIncludeEndpoint)
+			      bool fIncludeEndpoint)
 {
   PIRSET      pirset  = (PIRSET)NULL;
   PIRSET      pirset1 = (PIRSET)NULL;
@@ -809,7 +809,7 @@ PIRSET INDEX::DateRangeSearchContains(const DATERANGE& QueryDate,
   //INT         Precision;
   SRCH_DATE   Today;
   PIRSET      p_today=(PIRSET)NULL;
-  GDT_BOOLEAN AddPresentResults=GDT_FALSE;
+  bool AddPresentResults=false;
   //DOUBLE      fPresent=DATE_PRESENT;
 
   Today.GetTodaysDate();
@@ -964,7 +964,7 @@ PIRSET INDEX::DateSearch(const DOUBLE fKey, const STRING& FieldName,
   FILE  *fp = ffopen(TextFn, "rb");
 
   for(size_t Pointer=0; Pointer<ListCount; Pointer++){
-    GDT_BOOLEAN isDeleted;
+    bool isDeleted;
     GPTYPE      Gp;
 
     if ((w = Parent->GetMainMdt()->LookupByGp( Gp = List.GetGlobalStart(Pointer) ) ) != 0)
@@ -976,7 +976,7 @@ PIRSET INDEX::DateSearch(const DOUBLE fKey, const STRING& FieldName,
 	    if ( Parent->GetMainMdt()->GetEntry ( w, &mdtrec ) ) {
 	      rec_date = mdtrec.GetDate ();
 	      isDeleted = mdtrec.GetDeleted ();
-	    } else isDeleted = GDT_TRUE;
+	    } else isDeleted = true;
             old_w = w;
           }
 	 if ( isDeleted )
@@ -996,7 +996,7 @@ PIRSET INDEX::DateSearch(const DOUBLE fKey, const STRING& FieldName,
   if (fp) ffclose(fp);
 
 //pirset->SortBy(ByIndex);
-  pirset->MergeEntries(GDT_TRUE);
+  pirset->MergeEntries(true);
 
   //  SetCache->Add(T1,Relation,FieldName,DBName,pirset);
 

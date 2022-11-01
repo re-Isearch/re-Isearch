@@ -256,10 +256,10 @@ bool RSET::GetEntry (const size_t Index, PRESULT ResultRecord) const
       message_log (LOG_DEBUG, "Fetching RSET element %d", Index);
       *ResultRecord = Table[Index - 1];
 //cerr << "Score = " << ResultRecord->GetScore() << endl;
-      return GDT_TRUE;
+      return true;
     }
 //message_log (LOG_DEBUG, "RSET Element %d does not exist", Index);
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -608,7 +608,7 @@ void RSET::SortByCategoryMagnetism(DOUBLE Factor)
 		      RESULT tmp = Table[j];
 		      Table[i+1] = Table[j+1];
 		      Table[i+2] = tmp;
-		      changed = GDT_TRUE;
+		      changed = true;
 		    }
 		}
 	    }
@@ -878,9 +878,9 @@ size_t RSET::SetTotalEntries(size_t NewTotal)
 bool RSET::FilterDateRange(const DATERANGE& Range)
 {
   if (TotalEntries <= 1)
-    return GDT_TRUE; // Don't bother..
+    return true; // Don't bother..
   if (!Range.Ok())
-    return GDT_FALSE;
+    return false;
   PRESULT oldTable = Table;
   MaxEntries = TotalEntries;
   Table = new RESULT[MaxEntries];
@@ -898,7 +898,7 @@ bool RSET::FilterDateRange(const DATERANGE& Range)
     }
   if (oldTable) delete[]oldTable;
   Timestamp.SetNow();
-  return GDT_TRUE;
+  return true;
 }
 
 

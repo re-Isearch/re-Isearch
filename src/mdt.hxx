@@ -34,7 +34,7 @@ class MDT {
 friend class MDTREC;
  public:
   MDT (INDEX *Index);
-  MDT (const STRING& DbFileStem, const GDT_BOOLEAN WrongEndian);
+  MDT (const STRING& DbFileStem, const bool WrongEndian);
 
   STRING GetFileStem() const { return FileStem; }
 
@@ -43,7 +43,7 @@ friend class MDTREC;
 
   MDTREC * operator[](const size_t Idx) { return GetEntry(Idx-1); }
 
-  GDT_BOOLEAN GetEntry (const size_t Index, MDTREC *MdtrecPtr) const;
+  bool GetEntry (const size_t Index, MDTREC *MdtrecPtr) const;
   MDTREC     *GetEntry (const size_t Index);
 
   // Special to get Key
@@ -54,11 +54,11 @@ friend class MDTREC;
     return Index == 0 ? GetTimestamp() : tmpMdtrec.GetDate(MdtFp, Index); }
 
   // Mark the record by index as deleted
-  GDT_BOOLEAN Delete(const size_t Index)   { return SetDeleted(Index, GDT_TRUE);  }
+  bool Delete(const size_t Index)   { return SetDeleted(Index, true);  }
   // Mark the record by index as not deleted
-  GDT_BOOLEAN UnDelete(const size_t Index) { return SetDeleted(Index, GDT_FALSE); }
+  bool UnDelete(const size_t Index) { return SetDeleted(Index, false); }
   // Is the record Marked deleted?
-  GDT_BOOLEAN IsDeleted(const size_t Index) const;
+  bool IsDeleted(const size_t Index) const;
 
   void Resize (const size_t Entries);
 
@@ -71,21 +71,21 @@ friend class MDTREC;
   GPTYPE GetNameByGlobal(GPTYPE gp, STRING *Path, GPTYPE *Size, GPTYPE *LS, DOCTYPE_ID *Doctype);
 
   GPTYPE GetNextGlobal ();
-  GDT_BOOLEAN IsEmpty() const  { return TotalEntries == 0; }
+  bool IsEmpty() const  { return TotalEntries == 0; }
   size_t GetTotalEntries () const { return TotalEntries; }
   size_t GetTotalDeleted() const;
 
-  STRING& GetUniqueKey (PSTRING StringPtr, GDT_BOOLEAN Override=GDT_FALSE);
+  STRING& GetUniqueKey (PSTRING StringPtr, bool Override=false);
   void Dump (INT Skip = 0, ostream& os = cout) const;
-  GDT_BOOLEAN GetChanged () const { return Changed; }
+  bool GetChanged () const { return Changed; }
 
   void IndexSortByIndex ();
   size_t RemoveDeleted ();
   void SortKeyIndex ();
   void SortGpIndex ();
 
-  GDT_BOOLEAN Ok() const;
-  GDT_BOOLEAN IsSystemFile (const STRING& FileName);
+  bool Ok() const;
+  bool IsSystemFile (const STRING& FileName);
   int         Version() const;
 
 #if USE_MDTHASHTABLE && 0
@@ -105,14 +105,14 @@ friend class MDTREC;
 #endif
 
   // We store this here for convienience
-  GDT_BOOLEAN SetIndexNum(INT Num) const;
+  bool SetIndexNum(INT Num) const;
   INT         GetIndexNum() const;
 
   size_t      KeySortPosition(_index_id_t Index) const;
 
   void FlushMDTIndexes();
 
-  GDT_BOOLEAN KillAll();
+  bool KillAll();
 
   SRCH_DATE   GetTimestamp() const { return Timestamp; }
 
@@ -125,17 +125,17 @@ friend class MDTREC;
 
  private:
   void        Init();
-  GDT_BOOLEAN SetDeleted(const size_t Index, GDT_BOOLEAN Delete);
+  bool SetDeleted(const size_t Index, bool Delete);
   void        WriteHeader() const;
-  GDT_BOOLEAN RebuildIndex();
-  GDT_BOOLEAN BuildKeySortTable ();
+  bool RebuildIndex();
+  bool BuildKeySortTable ();
 
   void        WriteTimestamp();
   void        ReadTimestamp();
 
 #if USE_MDTHASHTABLE
   MDTHASHTABLE *MDTHashTable;
-  GDT_BOOLEAN   fastAdd;
+  bool   fastAdd;
 
 #endif
   STRING      FileStem;
@@ -152,16 +152,16 @@ friend class MDTREC;
   size_t      lastKeyIndex;
 
   MMAP        IndexMap;
-  GDT_BOOLEAN useIndexMap;
+  bool useIndexMap;
   MMAP        MdtMap;
-  GDT_BOOLEAN useMdtMap;
+  bool useMdtMap;
   MDTREC      tmpMdtrec;
 
-  GDT_BOOLEAN KeyIndexSorted;
-  GDT_BOOLEAN GpIndexSorted;
-  GDT_BOOLEAN Changed;
-  GDT_BOOLEAN MdtWrongEndian;
-  GDT_BOOLEAN ReadOnly;
+  bool KeyIndexSorted;
+  bool GpIndexSorted;
+  bool Changed;
+  bool MdtWrongEndian;
+  bool ReadOnly;
 
   STRING      MdtIndexName;
   STRING      MdtName;

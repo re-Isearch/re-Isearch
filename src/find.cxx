@@ -42,7 +42,7 @@ static int SisKeys(const void *node1, const void *node2)
   return diff;
 }
 
-extern int findIt(GDT_BOOLEAN, const char *, const char *, GPTYPE *);
+extern int findIt(bool, const char *, const char *, GPTYPE *);
 
 main(int argc, char **argv)
 {
@@ -92,7 +92,7 @@ main(int argc, char **argv)
 }
   
 
-int findIt(GDT_BOOLEAN Truncate, const char *Index, const char *Term, GPTYPE *start)
+int findIt(bool Truncate, const char *Index, const char *Term, GPTYPE *start)
 {
   int num_hits = 0;
 

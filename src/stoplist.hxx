@@ -25,25 +25,25 @@ public:
   void        SetCharset(CHARSET& Charset);
 
   // Load a new list
-  GDT_BOOLEAN LoadInternal(const STRING& language);
-  GDT_BOOLEAN Load(const CHR* language = NULL); // Load file
-  GDT_BOOLEAN Load(const STRING& language); // Load file
-  GDT_BOOLEAN Load(const STRLIST& wordList, const STRING& Language = NulString); // Copy string list
-  GDT_BOOLEAN Load(const PPCHR words, size_t len,
+  bool LoadInternal(const STRING& language);
+  bool Load(const CHR* language = NULL); // Load file
+  bool Load(const STRING& language); // Load file
+  bool Load(const STRLIST& wordList, const STRING& Language = NulString); // Copy string list
+  bool Load(const PPCHR words, size_t len,
 	const STRING& Language = NulString); // words installed
 
   // Add words
-  GDT_BOOLEAN AddWord(const CHR *Word);
+  bool AddWord(const CHR *Word);
 
   // Words stream in list?
-  GDT_BOOLEAN InList (const STRING& Word) const;
-  GDT_BOOLEAN InList (const UCHR* WordStart, const STRINGINDEX WordLength=0) const;
-  GDT_BOOLEAN InList (const CHR* WordStart, const STRINGINDEX WordLength=0) const {
+  bool InList (const STRING& Word) const;
+  bool InList (const UCHR* WordStart, const STRINGINDEX WordLength=0) const;
+  bool InList (const CHR* WordStart, const STRINGINDEX WordLength=0) const {
 	return InList((const UCHR *)WordStart, WordLength); }
 
   // Utility functions
   size_t GetTotalEntries () const;
-  GDT_BOOLEAN GetEntry (const size_t idx, PSTRING value) const;
+  bool GetEntry (const size_t idx, PSTRING value) const;
   PUCHR Nth (size_t idx) const;
 
   PUCHR operator[](const size_t idx) const { return Nth(idx-1); }
@@ -52,7 +52,7 @@ public:
   ~STOPLIST ();
 
 private:
-  GDT_BOOLEAN LoadList(const STRING& language); // Load file
+  bool LoadList(const STRING& language); // Load file
   int (*Compare) (const void *, const void *, size_t);
   STRING      currentLanguage;
 #ifndef _USE_ArraySTRING
@@ -61,7 +61,7 @@ private:
 #else
   ArraySTRING Words;
 #endif
-  GDT_BOOLEAN deallocate;
+  bool deallocate;
 };
 
 #endif

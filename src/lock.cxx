@@ -338,7 +338,7 @@ static int db_unlock (const char *dbname, int Lock)
   return -1; // Nope, not my lock
 }
 
-static GDT_BOOLEAN SetLock (const char *dbFileStem, int Lock)
+static bool SetLock (const char *dbFileStem, int Lock)
 {
   int i = 0;
   int nap = Lock != L_READ ? 5 : 2;
@@ -348,11 +348,11 @@ static GDT_BOOLEAN SetLock (const char *dbFileStem, int Lock)
     {
       if (++i > timeout)
 	{
-	  return GDT_FALSE;	// Timeout;
+	  return false;	// Timeout;
 	}
       rand_wait (nap);
     }
-  return GDT_TRUE;
+  return true;
 }
 
 INT Lock (const char *dbFileStem, int Flags)
@@ -424,15 +424,15 @@ INT UnLock (const char *dbFileStem, int Flags)
   return res;
 }
 
-static GDT_BOOLEAN waitlock (const char *lfile, int secs)
+static bool waitlock (const char *lfile, int secs)
 {
   int i = secs ? (secs / 10 + 1) : 0;
-  GDT_BOOLEAN res = GDT_TRUE;
+  bool res = true;
   while (db_lockactive (lfile, 0))
     {
       if (i-- == 0)
 	{
-	  res = GDT_FALSE;
+	  res = false;
 	  break;
 	}
       rand_wait (5);

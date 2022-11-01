@@ -11,10 +11,11 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 #include "treebox.hxx"
 
 int ResolveURL(const STRING& URL, FILE *fp, size_t *Len);
-int ProcessGopherRequest(char *Host, int Port, char *Request, FILE *fp,
-			 size_t *Len);
-int ProcessHTTPRequest(char *Host, int Port, char *Request, FILE *fp,
-		       size_t *Len);
+
+int ProcessGopherRequest(char *Host, int Port, char *Request, FILE *fp, size_t *Len);
+int ProcessHTTPRequest(char *Host, int Port, char *Request, FILE *fp, size_t *Len);
+int ProcessIPFSRequest(char *Host, int Port, char *Request,FILE *fp,size_t *Len);
+
 void StripURLsToStream(char *InBuf, FILE *Stream, char *Separator);
 void PrintOtherHosts(char *InBuf);
 int GopherWalk(char *Host, int Port, char *Selector, FILE *fp, LPBSTNODE Tree);

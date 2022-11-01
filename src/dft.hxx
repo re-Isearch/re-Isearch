@@ -19,7 +19,7 @@ public:
 
   void        AddEntry(const DF& DfRecord);
   void        FastAddEntry(const DF& DfRecord);
-  GDT_BOOLEAN GetEntry(const size_t Index, DF *DfRecord) const;
+  bool GetEntry(const size_t Index, DF *DfRecord) const;
   const DF   *GetEntryPtr(const size_t Index) const;
 
   STRING     GetFieldName (const size_t Index) const;
@@ -32,7 +32,7 @@ public:
   size_t GetTotalEntries() const;
 
   void Write(PFILE fp) const;
-  GDT_BOOLEAN Read(PFILE fp);
+  bool Read(PFILE fp);
 
   ~DFT();
 private:
@@ -53,7 +53,7 @@ inline void Write (const DFT& Dft, PFILE Fp)
   Dft.Write (Fp);
 }
 
-inline GDT_BOOLEAN Read (DFT *DftPtr, PFILE Fp)
+inline bool Read (DFT *DftPtr, PFILE Fp)
 {
   return DftPtr->Read (Fp);
 }

@@ -167,22 +167,22 @@ static STRING SetFilter(const STRING& arg, const STRING& Doctype)
 
 #define _setFilter { \
   STRING s (::SetFilter(filter, Doctype) ); \
-  if (s.GetLength()) { Filter = s; return GDT_TRUE; } \
-  return GDT_FALSE; }
+  if (s.GetLength()) { Filter = s; return true; } \
+  return false; }
 
-GDT_BOOLEAN FILTER2HTMLDOC::SetFilter(const STRING& filter)
+bool FILTER2HTMLDOC::SetFilter(const STRING& filter)
 {
   _setFilter;
 }
-GDT_BOOLEAN FILTER2XMLDOC::SetFilter(const STRING& filter)
+bool FILTER2XMLDOC::SetFilter(const STRING& filter)
 {
   _setFilter;
 }
-GDT_BOOLEAN FILTER2TEXTDOC::SetFilter(const STRING& filter)
+bool FILTER2TEXTDOC::SetFilter(const STRING& filter)
 {
   _setFilter;
 }
-GDT_BOOLEAN FILTER2MEMODOC::SetFilter(const STRING& filter)
+bool FILTER2MEMODOC::SetFilter(const STRING& filter)
 {
   _setFilter;
 }
@@ -288,13 +288,13 @@ FILTER2MEMODOC::FILTER2MEMODOC(PIDBOBJ DbParent, const STRING& Name) : MEMODOC(D
 //
 // This is the common routine that does some of the significant work
 //
-static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord, STRING *Filter, STRING *Args, DOCTYPE* Doctype)
+static bool GenRecord(IDBOBJ *Db, const RECORD& FileRecord, STRING *Filter, STRING *Args, DOCTYPE* Doctype)
 {
   const char *doctype = Doctype ? Doctype->c_str() : "Filter2";
   if (Filter == NULL || Filter->IsEmpty())
     {
       message_log (LOG_WARN, "%s: Filter is NIL", doctype);
-      return GDT_TRUE; // Do nothing
+      return true; // Do nothing
     }
 
   STRING key, s, Fn, outfile;
@@ -312,12 +312,12 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord, STRING *Filte
 	message_log(LOG_ERROR, "%s: '%s' is a dangling symbollic link", doctype, Fn.c_str());
       else
 	message_log(LOG_ERRNO, "%s: Can't stat '%s'.", doctype , Fn.c_str());
-      return GDT_FALSE;
+      return false;
     }
   if (Inode.st_size == 0)
     {
       message_log(LOG_ERROR, "'%s' has ZERO (0) length? Skipping.", Fn.c_str());
-      return GDT_FALSE;
+      return false;
     }
 
   // Need to have not just the inode but also the start and end since
@@ -336,10 +336,10 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord, STRING *Filte
   message_log (LOG_DEBUG, "%s: Key set to '%s'", doctype, key.c_str());
 
   Db->ComposeDbFn (&s, DbExtCat);
-  if (MkDir(s, 0, GDT_TRUE) == -1) // Force creation
+  if (MkDir(s, 0, true) == -1) // Force creation
     {
       message_log (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
-      return GDT_FALSE;
+      return false;
     }
 //  outfile.form ("%s/%s", s.c_str(), key.c_str());
 
@@ -349,7 +349,7 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord, STRING *Filte
   // <db_ext>.cat/<Hash>/<Key>
   outfile =  AddTrailingSlash(s);
   outfile.Cat (((long)key.CRC16()) % 1000);
-  if (MkDir(outfile, 0, GDT_TRUE) == -1)
+  if (MkDir(outfile, 0, true) == -1)
     outfile = s; // Can't make it
   AddTrailingSlash(&outfile);
   outfile.Cat (key);
@@ -361,7 +361,7 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord, STRING *Filte
   if ((fp = fopen(outfile, "w")) == NULL)
    {
      message_log (LOG_ERRNO, "%s: Could not create '%s'",  doctype, outfile.c_str());
-     return GDT_FALSE;
+     return false;
    }
   off_t len = 0;
 
@@ -391,7 +391,7 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord, STRING *Filte
 	  message_log (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.", doctype, Filter->c_str());
 	  Filter->Clear();
 	}
-      return GDT_FALSE;
+      return false;
     }
 
   int ch;
@@ -400,6 +400,7 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord, STRING *Filte
       fputc(ch, fp);
       len++;
     }
+  fputc('\n', fp); // 2022, make sure ends in a new line
   _IB_pclose(pp);
   fclose(fp);
 
@@ -409,7 +410,7 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord, STRING *Filte
       RECORD NewRecord(FileRecord);
       // We now have a record in outfile from start (just after the path) to len
       NewRecord.SetRecordStart (start);
-      NewRecord.SetRecordEnd ( start + len);
+      NewRecord.SetRecordEnd ( start + len ); // 2022 !
       NewRecord.SetFullFileName ( outfile );
       NewRecord.SetKey( key ); // Set the key since we did the effort
 
@@ -420,16 +421,16 @@ static GDT_BOOLEAN GenRecord(IDBOBJ *Db, const RECORD& FileRecord, STRING *Filte
       NewRecord.SetDate ( mod_input ); 
 
       STRING urifile;
-      if (Db->_write_resource_path(outfile, FileRecord, &urifile) == GDT_FALSE)
+      if (Db->_write_resource_path(outfile, FileRecord, &urifile) == false)
 	message_log (LOG_ERRNO, "%s: Could not create '%s'", doctype, urifile.c_str());
 
       Db->DocTypeAddRecord(NewRecord);
-      return GDT_TRUE;
+      return true;
     }
   message_log (LOG_ERROR, "%s: pipe '%s' returned ONLY %d bytes!", doctype, pipe.c_str(), len);
   // Remove junk
   UnlinkFile(outfile);
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -636,28 +637,28 @@ void FILTER2MEMODOC::Present (const RESULT& ResultRecord,
 
 
 
-GDT_BOOLEAN FILTER2HTMLDOC::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool FILTER2HTMLDOC::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   STRING fullpath (  Db->_get_resource_path(ResultRecord.GetFullFileName()) );
   if (StringBuffer)
     *StringBuffer = fullpath;
   return Exists (fullpath);
 }
-GDT_BOOLEAN FILTER2XMLDOC::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool FILTER2XMLDOC::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   STRING fullpath (  Db->_get_resource_path(ResultRecord.GetFullFileName()) );
   if (StringBuffer)
     *StringBuffer = fullpath;
   return Exists (fullpath);
 }
-GDT_BOOLEAN FILTER2TEXTDOC::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool FILTER2TEXTDOC::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   STRING fullpath (  Db->_get_resource_path(ResultRecord.GetFullFileName()) );
   if (StringBuffer)
     *StringBuffer = fullpath;
   return Exists (fullpath);
 }
-GDT_BOOLEAN FILTER2MEMODOC::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool FILTER2MEMODOC::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   STRING fullpath (  Db->_get_resource_path(ResultRecord.GetFullFileName()) );
   if (StringBuffer)

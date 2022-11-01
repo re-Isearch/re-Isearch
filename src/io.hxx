@@ -12,25 +12,37 @@ class IO {
     FILE  *fp;         // file ptr for open file
     int    p;          // for other types - may be an enum in future
   } ptr;
-  GDT_BOOLEAN      debug;      // 1 = show debugging, 0=hide
+  bool             debug;      // 1 = show debugging, 0=hide
   unsigned char   *Buf;
   size_t           BufLength;
   off_t            cachePtr; 
 
 public:
   IO();
-  IO(const STRING& Fname, const STRING& mmode);
-  void          debug_on() { debug = GDT_TRUE; }
-  void          debug_off(){ debug = GDT_FALSE;}
-  GDT_BOOLEAN   open(const STRING& Fname, const STRING& mmode);
+  IO(const STRING& Fname, const STRING& mmode = "rb");
+
+
+  IO& operator =(FILE *fp) {
+    close();
+    ptr.fp = fp;
+    return *this;
+  };
+
+  void          debug_on() { debug = true; }
+  void          debug_off(){ debug = false;}
+
+  bool          open(const STRING& Fname, const STRING& mmode);
   void          close();
+
   int           remove(); 
+
   size_t        read(char *buffer, size_t length, size_t size);
-  size_t        write(char *buffer, size_t length, size_t size);
+  size_t        write(const char *buffer, size_t length, size_t size);
+
   off_t         iseek(off_t pos, int whence);
   off_t         iseek(off_t pos);
   off_t         itell();
-  CHR          *igets(char *, int);
+  char         *igets(char *, int);
   void          top();
   ~IO();
 
@@ -40,20 +52,27 @@ public:
 };
 
 // Like the stdio functions
+//
+//
+
+inline char *fgets(char *s, int size, IO& i) {
+  return i.igets(s, size); 
+}
+
 inline void fclose(IO i) { i.close(); }
-inline size_t fread(void *ptr, size_t size, size_t nitems, IO i) {
+inline size_t fread(void *ptr, size_t size, size_t nitems, IO& i) {
   return i.write((char *)ptr, nitems, size);
 }
-inline size_t fwrite(const void *ptr, size_t size, size_t nitems, IO i) {
+inline size_t fwrite(const void *ptr, size_t size, size_t nitems, IO& i) {
   return i.write((char *)ptr, nitems, size);
 }
 inline int fseek(IO i, off_t offset, int whence) {
   return i.iseek(offset, whence);
 }
-inline long ftell(IO i) {
+inline long ftell(IO& i) {
   return i.itell();
 }
-inline void rewind(IO i) {
+inline void rewind(IO& i) {
   i.top();
 }
 

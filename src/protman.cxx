@@ -3,6 +3,7 @@ Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
 It is made available and licensed under the Apache 2.0 license: see LICENSE
 */
 #include "protman.hxx"
+#include "common.hxx"
 //#include "dict.hxx"
 
 #define NEWSTRUCT(a) (a*)malloc(sizeof(a))
@@ -23,6 +24,22 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 #define HOSTNAME "doright.stsci.edu"
 #endif
 
+
+// Use ISO date/time format (alternative is RFCdate )
+#define DATE_STRING ::ISOdate(0)
+
+
+static struct strint {
+  const char *s;
+  int i;
+} protocols[] = {
+  {"gopher", 70 },
+  {"whois",  43},
+  {"https",  443},
+  {"http",   80},
+  NULL
+};
+
 /* 
    To add new supported protocols, add the protocol name as it
    appears in a url to this table and add the default port number
@@ -32,11 +49,12 @@ const char *ProtTable[] = {
   "gopher",
   "whois",
   "http",
+  "https",
   ""		/* code depends on this NULL being last in list! */
 };
-int ProtTableCount = 4;
+int ProtTableCount = 5;
 int PortTable[] = {
-  70,43,80,0
+  70,43,80, 4430
 };
 
 
@@ -78,7 +96,7 @@ FILE *message_logp;
 
 int ResolveURL(const STRING& URL, FILE *fp, size_t *Len) 
 {
-  char Host[64], Protocol[64],Time[64];
+  char Host[64], Protocol[64];
   char *P, *Q, *S;
   int ProtTabEntry, Port,err;
   //  char Command[64];
@@ -87,14 +105,14 @@ int ResolveURL(const STRING& URL, FILE *fp, size_t *Len)
   message_logp=fopen("protman.log","a");
 #endif
   if((S = (char *)calloc(1,URL.GetLength()+1)) == NULL) {
-    printf("out of memory\n");
+    message_log(LOG_ERROR, "out of memory!");
     return(-1);
   }
   strcpy(S, URL.c_str());
 
   /* Error check a bit */
   if((Q = strtok(S, "://")) == NULL) {
-    printf("Invalid URL format: --> %s\n",P);
+    message_log(LOG_ERROR, "Invalid URL format: --> %s\n",P);
     return(-1);
   }
 	
@@ -103,7 +121,7 @@ int ResolveURL(const STRING& URL, FILE *fp, size_t *Len)
   /* Which protocols are we supporting? */
   for(ProtTabEntry=0;ProtTabEntry<ProtTableCount;ProtTabEntry++) {
     if(ProtTable[ProtTabEntry][0] == '\0') {
-      printf("Invalid URL format: Unsupported protocol\n");
+      message_log (LOG_ERROR, "Invalid URL format: Unsupported protocol.");
       return(-1);
     }
     if(!strcasecmp(Protocol, ProtTable[ProtTabEntry])) {
@@ -114,12 +132,12 @@ int ResolveURL(const STRING& URL, FILE *fp, size_t *Len)
 	
   P = strstr(S, "://");
   if(P == NULL) {
-    printf("Invalid URL format: --> %s\n",URL.c_str());
+    message_log (LOG_ERROR, "PROTMAN: Invalid URL format: --> %s\n",URL.c_str());
     return(-1);
   }
   P = strtok(P+3, "/");
   if(P == NULL) {
-    printf("Invalid URL format: --> %s\n",URL.c_str());
+    message_log (LOG_ERROR, "PROTMAN: Invalid URL format: --> %s\n",URL.c_str());
     return(-1);
   }
   strcpy(S,P);	
@@ -134,53 +152,54 @@ int ResolveURL(const STRING& URL, FILE *fp, size_t *Len)
   }
   strcpy(S, URL.c_str());
   if((P = strstr(S, "://"))==NULL) {
-    printf("Invalid URL format.  Expected '://' --> %s\n",URL.c_str());
+    message_log (LOG_ERROR, "PROTMAN: Invalid URL format.  Expected '://' --> %s\n",URL.c_str());
     return(-1);
   }
   if((P = strstr(P+3, "/"))==NULL) {
-    printf("Invalid URL format.  Expected ':' --> %s\n",URL.c_str());
+    message_log (LOG_ERROR, "PROTMAN: Invalid URL format.  Expected ':' --> %s\n",URL.c_str());
     return(-1);
   }
   strcpy(Command, P+1);
   Command[strlen(Command)] = '\0';
   if(!strcmp(Protocol, "gopher")) {
     if(Command[strlen(Command)-1] == '*') {
+     // Walk the tree
       LPBSTNODE BSTree;
       int Count=0l;
       Command[strlen(Command)-1]='\0';
       /* Walk the gopher tree */
       BSTree=bst_Create();
-      strbox_TheTime(Time);
-      printf("Begin Gopher Walk: %s\n",Time);	
 #ifdef DEBUG
       fprintf(message_logp,"*************************************************\n");
-      fprintf(message_logp,"[%s] Walk: <%s>\n",Time,URL.c_str());
+      fprintf(message_logp,"[%s] Walk: <%s>\n", DATE_STRING, URL.c_str());
 #endif
       err= GopherWalk(Host, Port, Command, fp, BSTree);
       bst_Print(BSTree, fp);
-      strbox_TheTime(Time);
 #ifdef DEBUG
       bst_Count(BSTree,&Count);
-      fprintf(message_logp,"[%s] Read %ld URLs\n",Time,Count);
+      fprintf(message_logp,"[%s] Read %ld URLs\n", DATE_STRING, Count);
 #endif
-      printf("End Gopher Walk: %s\n",Time);	
+      // printf("End Gopher Walk: %s\n",Time);	
       return err;
     } else {
-      strbox_TheTime(Time);
+      // Get a file
 #ifdef DEBUG
       fprintf(message_logp,"*************************************************\n");
-      fprintf(message_logp,"[%s] Retrieve <%s>\n",Time,URL.c_str());
+      fprintf(message_logp,"[%s] Retrieve <%s>\n", DATE_STRING,URL.c_str());
 #endif
       err = ProcessGopherRequest(Host,Port,Command,fp,Len);
-      strbox_TheTime(Time);
 #ifdef DEBUG
-      fprintf(message_logp,"[%s] Read %ld bytes\n",Time,*Len);
+      fprintf(message_logp,"[%s] Read %ld bytes\n", DATE_STRING,*Len);
 #endif
       return err;
     }
   }
-  if(!strcmp(Protocol, "http")) {
+  else if(!strcmp(Protocol, "http")) {
     return(ProcessHTTPRequest(Host, Port, Command,fp,Len));
+  }
+  else  if(!strcmp(Protocol, "ipfs")) {
+    // IPFS
+    return(ProcessIPFSRequest(Host, Port, Command,fp,Len));
   }
   return(1);
 }
@@ -204,19 +223,19 @@ ProcessGopherRequest(char *Host, int Port, char *Request,FILE *fp,size_t *Len)
   Net.SetTimeOutSec(60l);
 
   if(Net.Open()!=1) {
-    fprintf(stderr, "Failed to open connection: %s[%d]\n",Host,Port);
+    message_log (LOG_ERROR, "Failed to open connection: %s[%d]",Host,Port);
     FREE(NewRequest);
     return -1;
   }
 	
   if(Net.SendBuffer(NewRequest,strlen(NewRequest))<=0) {
-    fprintf(stderr, "Failed to send data: %s[%d]\n",Host,Port);
+    message_log (LOG_ERROR, "Failed to send data: %s[%d]",Host,Port);
     FREE(NewRequest);
     return -1;
   }
 
   if(Net.WaitForData()!=1) {
-    fprintf(stderr, "Failed to send data: %s[%d]\n",Host,Port);
+    message_log (LOG_ERROR, "Failed to send data: %s[%d]",Host,Port);
     FREE(NewRequest);
     return -1;
   }
@@ -237,7 +256,7 @@ ProcessGopherRequest(char *Host, int Port, char *Request,FILE *fp,size_t *Len)
       *Len+=err;
       fwrite(Buf,1,err,fp);
     } else {
-      fprintf(stderr, "Failed to read data: %s[%i]\n",Host,Port);
+      message_log (LOG_ERROR, "Failed to read data: %s[%i]",Host,Port);
       Net.Close();
       FREE(NewRequest);
       return -1;
@@ -258,11 +277,14 @@ void StripURLsToStream(char *InBuf, FILE *Stream, char *Separator)
 }
 
 
-void 
-PrintOtherHosts(char *InBuf)
-{
+void PrintOtherHosts(char *InBuf) { printf("%s\n",InBuf); }
 
-  printf("%s\n",InBuf);
+
+int ProcessIPFSRequest(char *Host, int Port, char *Request,FILE *fp,size_t *Len)
+{
+  // Rewrite ipfs://hash into https://gateway/hash
+  // https://ipfs.io/api/v0/dag/get?arg=bafyreiah7uhzdxbuik6sexirej22iyi5nau3d4nnfhv6ux33ogtdpeznpm
+  // bafyreiah7 uhzdxbuik6 sexirej22i yi5nau3d4 nnfhv6ux3 3ogtdpeznp m // 61 byte hash
 }
 
 
@@ -352,12 +374,12 @@ GopherWalk(char *Host, int Port, char *Selector, FILE *fp, LPBSTNODE Tree)
   Dictionary=bst_Create();
 
   if((Buf = NEWSTRING(MaxLen+1)) == NULL) {
-    fprintf(stderr, "GopherWalk:Out of memory\n");
+    message_log (LOG_ERROR, "GopherWalk:Out of memory");
     return -1;
   }
 
   if((NewRequest=NEWSTRING(2048))==NULL) {
-    fprintf(stderr, "GopherWalk:Out of memory\n");
+    message_log (LOG_ERROR, "GopherWalk:Out of memory");
     FREE(Buf);
     return -1;
   }
@@ -376,14 +398,14 @@ GopherWalk(char *Host, int Port, char *Selector, FILE *fp, LPBSTNODE Tree)
   }
 
   if(Net.SendBuffer(NewRequest,strlen(NewRequest))<=0) {
-    fprintf(stderr, "Failed to send data: %s[%d]\n",Host,Port);
+    message_log (LOG_ERROR, "Failed to send data: %s[%d]",Host,Port);
     FREE(NewRequest);
     FREE(Buf);
     return -1;
   }
 
   if(Net.WaitForData()!=1) {
-    fprintf(stderr, "Failed to send data: %s[%d]\n",Host,Port);
+    message_log (LOG_ERROR,"Failed to send data: %s[%d]",Host,Port);
     FREE(NewRequest);
     return -1;
   }
@@ -395,7 +417,7 @@ GopherWalk(char *Host, int Port, char *Selector, FILE *fp, LPBSTNODE Tree)
 	break;
       Total+=err;
     } else {
-      fprintf(stderr, "Failed to read data: %s[%d]\n",Host,Port);
+      message_log (LOG_ERROR, "Failed to read data: %s[%d]",Host,Port);
       Net.Close();
       FREE(NewRequest);
       FREE(Buf);

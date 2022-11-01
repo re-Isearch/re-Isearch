@@ -20,12 +20,12 @@ public:
   ~STRSTACK();
   void        Push(const STRING &Value);
   STRING      Pop();
-  GDT_BOOLEAN Pop(STRING *Value);
+  bool Pop(STRING *Value);
   size_t      GetTotalEntries(void);
-  GDT_BOOLEAN Examine(STRING *Value) const;
-  GDT_BOOLEAN Examine(size_t i, STRING *Value) const;
+  bool Examine(STRING *Value) const;
+  bool Examine(size_t i, STRING *Value) const;
   STRING      Examine() const;
-  GDT_BOOLEAN IsEmpty(void);
+  bool IsEmpty(void);
   void        Reset(size_t Index);
   STRING      Join(const STRING& Sep) const;
 private:

@@ -136,13 +136,13 @@ void MEMODOC::ParseRecords (const RECORD& FileRecord)
   DOCTYPE::ParseRecords (FileRecord);
 }
 
-GDT_BOOLEAN MEMODOC::IsIgnoreMetaField(const STRING& Tag) 
+bool MEMODOC::IsIgnoreMetaField(const STRING& Tag) 
 {
   if (PTEXT::IsIgnoreMetaField(Tag))
-    return GDT_TRUE;
+    return true;
   if (Tag ^=  UnifiedName(Doctype+"-Body"))
-    return GDT_TRUE;
-  return GDT_FALSE;
+    return true;
+  return false;
 }
 
 
@@ -221,7 +221,7 @@ void MEMODOC::ParseFields (RECORD *NewRecord)
       while (isspace (RecBuffer[val_start]))
 	val_start++, off++;
       // Also leave off the \n
-      INT val_len = (p - *tags_ptr) - off - 1;
+      INT val_len = (p - *tags_ptr) - off - 1; // - 1; // 2022
 
       // Strip potential trailing while space
       while (val_len >= 0 && isspace (RecBuffer[val_len + val_start+1])) // ???? 2008
@@ -355,7 +355,7 @@ DocPresent (const RESULT& ResultRecord,
       return;
     }
   STRING Value;
-  GDT_BOOLEAN UseHtml = (RecordSyntax == HtmlRecordSyntax);
+  bool UseHtml = (RecordSyntax == HtmlRecordSyntax);
   if (UseHtml)
     {
       HtmlHead (ResultRecord, ElementSet, StringBuffer);
@@ -670,7 +670,7 @@ _VMEMODOC::_VMEMODOC (PIDBOBJ DbParent, const STRING& Name) : MEMODOC (DbParent,
     }
 }
 
-GDT_BOOLEAN _VMEMODOC::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool _VMEMODOC::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   if (SOURCE_PATH_ELEMENT.IsEmpty())
     return PTEXT::GetResourcePath(ResultRecord, StringBuffer);
@@ -681,8 +681,8 @@ GDT_BOOLEAN _VMEMODOC::GetResourcePath(const RESULT& ResultRecord, STRING *Strin
 
   if (uri.GetLength())
     {
-      uri.Trim(GDT_TRUE);
-      uri.Trim(GDT_FALSE);
+      uri.Trim(true);
+      uri.Trim(false);
     }
   else if (Db && Db->getUseRelativePaths() )
     {
@@ -767,7 +767,7 @@ void _VMEMODOC::ParseRecords(const RECORD& FileRecord)
   message_log (LOG_DEBUG, "Key set to '%s'", key.c_str());
 
   Db->ComposeDbFn (&s, DbExtCat);
-  if (MkDir(s, 0, GDT_TRUE) == -1)
+  if (MkDir(s, 0, true) == -1)
     {
       message_log (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
       return;
@@ -775,7 +775,7 @@ void _VMEMODOC::ParseRecords(const RECORD& FileRecord)
   // <db_ext>.cat/<Hash>/<Key>.memo
   outfile =  AddTrailingSlash(s);
   outfile.Cat (((long)key.CRC16()) % 1000);
-  if (MkDir(outfile, 0, GDT_TRUE) == -1)
+  if (MkDir(outfile, 0, true) == -1)
     outfile = s; // Can't make it
   AddTrailingSlash(&outfile);
   outfile.Cat (key);

@@ -135,7 +135,7 @@ void FILTERDOC::ParseRecords(const RECORD& FileRecord)
   message_log (LOG_DEBUG, "Key set to '%s'", key.c_str());
 
   Db->ComposeDbFn (&s, DbExtCat);
-  if (MkDir(s, 0, GDT_TRUE) == -1)
+  if (MkDir(s, 0, true) == -1)
     {
       message_log (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
       return;

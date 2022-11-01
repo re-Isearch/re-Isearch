@@ -62,7 +62,7 @@ static char *getlogin()
   static char tmp[127];
   if (tmp[0] == '\0')
     {
-      if (_IB_GetUserId(tmp, sizeof(tmp)-1) == GDT_FALSE)
+      if (_IB_GetUserId(tmp, sizeof(tmp)-1) == false)
         strcpy(tmp, "anonymous");
     }
   return tmp;
@@ -83,7 +83,7 @@ static char *getlogin()
 # endif
 #endif
 
-GDT_BOOLEAN _ib_debug = GDT_FALSE;
+bool _ib_debug = false;
 static const int LOG_DEFAULT = (iLOG_ALL&(~iLOG_DEBUG));
 
 
@@ -91,7 +91,7 @@ MessageLogger::MessageLogger()
 {
   l_level = LOG_DEFAULT;
   l_file = NULL;
-  l_console = GDT_FALSE;
+  l_console = false;
   l_prefix[0] = '\0';
   syslog_device  = LOG_IB;
   syslog_stream = (FILE *)(-2); // was -1
@@ -153,10 +153,10 @@ static char *mystrerror (int n) { return sys_errlist[n]; }
 #endif
 
 
-GDT_BOOLEAN  MessageLogger::set_syslog(const char *name)
+bool  MessageLogger::set_syslog(const char *name)
 {
   if (name == NULL || *name == '\0')
-    return GDT_FALSE;
+    return false;
   if (name[1] == '\0')
     return set_syslog(name[1]);
   if (strncmp(name, "LOG_", 4) == 0)
@@ -196,10 +196,10 @@ GDT_BOOLEAN  MessageLogger::set_syslog(const char *name)
     return set_syslog('D');
   else if (strcmp(name, "<user>") == 0)
     return set_syslog('U');
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN  MessageLogger::set_syslog(const int Ch)
+bool  MessageLogger::set_syslog(const int Ch)
 {
   switch (Ch)
     {
@@ -265,13 +265,13 @@ GDT_BOOLEAN  MessageLogger::set_syslog(const int Ch)
 #endif
 	case -1: default:  syslog_device = LOG_IB; break;
     }
-  return GDT_TRUE;
+  return true;
 }
 
 
-GDT_BOOLEAN MessageLogger::Init (FILE *fp)
+bool MessageLogger::Init (FILE *fp)
 {
-  GDT_BOOLEAN res = GDT_TRUE;
+  bool res = true;
   if (l_prefix[0] == '\0')
     strcpy(l_prefix, default_prefix);
   if (fp == NULL)
@@ -310,43 +310,43 @@ GDT_BOOLEAN MessageLogger::Init (FILE *fp)
 	  l_console = isatty(fileno(fp));
 	}
       else
-	res = GDT_FALSE;
+	res = false;
     }
   else
-    l_console = GDT_FALSE;
+    l_console = false;
   return res;
 }
 
-GDT_BOOLEAN MessageLogger::Init (int level, FILE *fp)
+bool MessageLogger::Init (int level, FILE *fp)
 {
-  GDT_BOOLEAN res = Init(fp);
+  bool res = Init(fp);
   l_level = level;
   if (level & iLOG_DEBUG)
-    _ib_debug = GDT_TRUE;
+    _ib_debug = true;
   else
-    _ib_debug = GDT_FALSE;
+    _ib_debug = false;
   return res;
 }
 
-GDT_BOOLEAN MessageLogger::Init (const char *prefix, const char *name)
+bool MessageLogger::Init (const char *prefix, const char *name)
 {
   return Init (l_level, prefix, name);
 }
 
-GDT_BOOLEAN MessageLogger::Init (const char *prefix, FILE *fp)
+bool MessageLogger::Init (const char *prefix, FILE *fp)
 {
   return Init (l_level, prefix, fp);
 }
 
-GDT_BOOLEAN MessageLogger::Init (int level, const char *prefix, FILE *fp)
+bool MessageLogger::Init (int level, const char *prefix, FILE *fp)
 {
   Init (level, prefix);
   return Init(fp);
 }
 
-GDT_BOOLEAN MessageLogger::Init (int level, const char *prefix, const char *name)
+bool MessageLogger::Init (int level, const char *prefix, const char *name)
 {
-  GDT_BOOLEAN res = GDT_TRUE;
+  bool res = true;
 //  if (level != 0) 
     l_level = level;
 
@@ -375,9 +375,9 @@ GDT_BOOLEAN MessageLogger::Init (int level, const char *prefix, const char *name
 	res = Init(fopen(name, "a"));
     }
   if (level & iLOG_DEBUG)
-    _ib_debug = GDT_TRUE;
+    _ib_debug = true;
   else
-    _ib_debug = GDT_FALSE;
+    _ib_debug = false;
   return res;
 }
 

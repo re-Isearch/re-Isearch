@@ -32,18 +32,18 @@ void GEOSCORE::Write(FILE *fp) const
   ::Write(q, fp);
 }
 
-GDT_BOOLEAN GEOSCORE::Read(FILE *fp)
+bool GEOSCORE::Read(FILE *fp)
 {
   obj_t obj = getObjID(fp); // It it really GEOSCORE? 
 
   if (obj != objGEOSCORE)
     {
       PushBackObjID (obj, fp);
-      return GDT_FALSE;
+      return false;
     }
   ::Read(&t, fp);
   ::Read(&q, fp);
-  return GDT_TRUE;
+  return true;
 }
 #endif
 
@@ -206,14 +206,14 @@ void IRESULT::Write(FILE *fp) const
 #endif
 }
 
-GDT_BOOLEAN IRESULT::Read(FILE *fp)
+bool IRESULT::Read(FILE *fp)
 {
   obj_t obj = getObjID(fp); // It it really an IRESULT?
 
   if (obj != objIRESULT)
     {
       PushBackObjID (obj, fp);
-      return GDT_FALSE;
+      return false;
     }
   ::Read(&Index, fp);
 
@@ -227,10 +227,10 @@ GDT_BOOLEAN IRESULT::Read(FILE *fp)
 #endif
   Mdt = NULL;
   SortIndex = 0;
-  return GDT_TRUE; // TODO: Sanity check!
+  return true; // TODO: Sanity check!
 }
 
-GDT_BOOLEAN IRESULT::SetVectorTermHits (const UINT count)
+bool IRESULT::SetVectorTermHits (const UINT count)
 {
 //cerr << "AuxCount = " << AuxCount << "  hits=" << count << endl;
   if (AuxCount >= maxTermHitsVector)
@@ -248,14 +248,14 @@ GDT_BOOLEAN IRESULT::SetVectorTermHits (const UINT count)
 	  free(TermHitsVector);
 	  TermHitsVector = NULL;
 	  maxTermHitsVector = 0;
-	  return GDT_FALSE; // Can't, no memory
+	  return false; // Can't, no memory
 	}
     }
   else if (AuxCount) // We con't want to count more than 0xFFFFFFFF hits
     TermHitsVector[AuxCount-1] = (count <= 0xFFFFFFFF ? (UINT4)count :  0xFFFFFFFF);
   else
-    return GDT_FALSE; // AuxCount can't be zero.. 
-  return GDT_TRUE;
+    return false; // AuxCount can't be zero.. 
+  return true;
 }
 
 
@@ -278,7 +278,7 @@ void Write(const IRESULT& Iresult, PFILE Fp)
   Iresult.Write(Fp); 
 }
 
-GDT_BOOLEAN Read(PIRESULT IresultPtr, PFILE Fp)
+bool Read(PIRESULT IresultPtr, PFILE Fp)
 {
   return IresultPtr->Read(Fp);
 }
@@ -295,9 +295,9 @@ struct IRESULTData
   int RefCount() const { return nRefs; }
 
   // empty string has a special ref count so it's never deleted
-  GDT_BOOLEAN  IsEmpty()   const { return nRefs == -1; }
-  GDT_BOOLEAN  IsShared()  const { return nRefs > 1;   }
-  GDT_BOOLEAN  IsValid()   const { return nRefs != 0;  }
+  bool  IsEmpty()   const { return nRefs == -1; }
+  bool  IsShared()  const { return nRefs > 1;   }
+  bool  IsValid()   const { return nRefs != 0;  }
 
   // lock/unlock
   void  Lock()   { if ( nRefs >= 0 ) nRefs++;                        }
@@ -472,7 +472,7 @@ void IRESULT_TABLE::AddEntry(const IRESULT& Record)
 }
 
 
-GDT_BOOLEAN IRESULT_TABLE::SetEntry(size_t n, const IRESULT& Record)
+bool IRESULT_TABLE::SetEntry(size_t n, const IRESULT& Record)
 {
   if (n > 0 && n <= GetIRESULTData()->nMaxEntries)
     {
@@ -489,7 +489,7 @@ GDT_BOOLEAN IRESULT_TABLE::SetEntry(size_t n, const IRESULT& Record)
 	      if (score > MaxScore) MaxScore = score;
 	      if (Sort == ByScore)
 		Sort = Unsorted;
-	      return GDT_TRUE;
+	      return true;
 	    }
 	  if (Sort == ByIndex && t_Data[n-2].GetMdtIndex() > index)
 	    Sort = Unsorted;
@@ -497,9 +497,9 @@ GDT_BOOLEAN IRESULT_TABLE::SetEntry(size_t n, const IRESULT& Record)
       t_Data[n-1] = Record;
       if (n > GetIRESULTData()->nTotalEntries)
 	GetIRESULTData()->nTotalEntries = n;
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 static int iIndexCompare(const void *x, const void *y)

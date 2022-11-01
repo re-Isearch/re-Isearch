@@ -135,13 +135,13 @@ XFILTER::XFILTER(PIDBOBJ DbParent, const STRING& Name) : XML(DbParent, Name)
 }
 
 //
-GDT_BOOLEAN XFILTER::GenRecord(const RECORD& FileRecord)
+bool XFILTER::GenRecord(const RECORD& FileRecord)
 {
   const char *doctype = Doctype.c_str();
   if (Filter.IsEmpty())
     {
       message_log (LOG_WARN, "%s: Filter is NIL", doctype);
-      return GDT_TRUE; // Do nothing
+      return true; // Do nothing
     }
 
   STRING key, s, Fn, outfile;
@@ -164,12 +164,12 @@ GDT_BOOLEAN XFILTER::GenRecord(const RECORD& FileRecord)
 	message_log(LOG_ERROR, "%s: '%s' is a dangling symbollic link", doctype, Fn.c_str());
       else
 	message_log(LOG_ERRNO, "%s: Can't stat '%s'.", doctype , Fn.c_str());
-      return GDT_FALSE;
+      return false;
     }
   if (Inode.st_size == 0)
     {
       message_log(LOG_ERROR, "'%s' has ZERO (0) length? Skipping.", Fn.c_str());
-      return GDT_FALSE;
+      return false;
     }
 
   // Need to have not just the inode but also the start and end since
@@ -188,10 +188,10 @@ GDT_BOOLEAN XFILTER::GenRecord(const RECORD& FileRecord)
   message_log (LOG_DEBUG, "%s: Key set to '%s'", doctype, key.c_str());
 
   Db->ComposeDbFn (&s, DbExtCat);
-  if (MkDir(s, 0, GDT_TRUE) == -1) // Force creation
+  if (MkDir(s, 0, true) == -1) // Force creation
     {
       message_log (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
-      return GDT_FALSE;
+      return false;
     }
 //  outfile.form ("%s/%s", s.c_str(), key.c_str());
 
@@ -201,7 +201,7 @@ GDT_BOOLEAN XFILTER::GenRecord(const RECORD& FileRecord)
   // <db_ext>.cat/<Hash>/<Key>
   outfile =  AddTrailingSlash(s);
   outfile.Cat (((long)key.CRC16()) % 1000);
-  if (MkDir(outfile, 0, GDT_TRUE) == -1)
+  if (MkDir(outfile, 0, true) == -1)
     outfile = s; // Can't make it
   AddTrailingSlash(&outfile);
   outfile.Cat (key);
@@ -213,7 +213,7 @@ GDT_BOOLEAN XFILTER::GenRecord(const RECORD& FileRecord)
   if ((fp = fopen(outfile, "w")) == NULL)
    {
      message_log (LOG_ERRNO, "%s: Could not create '%s'",  doctype, outfile.c_str());
-     return GDT_FALSE;
+     return false;
    }
   off_t len = 0;
 
@@ -240,7 +240,7 @@ GDT_BOOLEAN XFILTER::GenRecord(const RECORD& FileRecord)
 	  message_log (LOG_ERROR, "%s: Check configuration for filter '%s'. Skipping rest.", doctype, Filter.c_str());
 	  Filter.Clear();
 	}
-      return GDT_FALSE;
+      return false;
     }
 
   int ch;
@@ -273,16 +273,16 @@ GDT_BOOLEAN XFILTER::GenRecord(const RECORD& FileRecord)
 #if USE_LIBMAGIC
  		mime_typ, 
 #endif
-		&urifile) == GDT_FALSE)
+		&urifile) == false)
         message_log (LOG_ERRNO, "%s: Could not create '%s'", doctype, urifile.c_str());
 
       Db->DocTypeAddRecord(NewRecord);
-      return GDT_TRUE;
+      return true;
     }
   message_log (LOG_ERROR, "%s: pipe '%s' returned ONLY %d bytes!", doctype, pipe.c_str(), len);
   // Remove junk
   UnlinkFile(outfile);
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -345,7 +345,7 @@ void XFILTER::Present (const RESULT& ResultRecord,
    XML::Present(ResultRecord, ElementSet, RecordSyntax, StringBuffer);
 }
 
-GDT_BOOLEAN XFILTER::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool XFILTER::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   STRING fullpath (  Db->_get_resource_path(ResultRecord.GetFullFileName()) );
   if (StringBuffer)

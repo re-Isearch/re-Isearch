@@ -36,7 +36,7 @@ public:
    void ParseRecords(const RECORD& FileRecord);
    void ParseFields(RECORD *RecordPtr);
 
-   GDT_BOOLEAN GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
+   bool GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
 
    void Present (const RESULT& ResultRecord,
          const STRING& ElementSet, const STRING& RecordSyntax,
@@ -51,7 +51,7 @@ private:
    STRING      Filter;
    STRING      desc;
    off_t        HostID;
-   GDT_BOOLEAN oneline; 
+   bool oneline; 
 };
 
 static const char myDescription[] = "M$ Excel (XLS) Plugin";
@@ -59,7 +59,7 @@ static const char myDescription[] = "M$ Excel (XLS) Plugin";
 
 IBDOC_MSEXCEL::IBDOC_MSEXCEL(PIDBOBJ DbParent, const STRING& Name) : TSLDOC(DbParent, Name)
 {
-  oneline = GDT_TRUE;
+  oneline = true;
 
   const char *oneline_default_value = oneline ? "Yes" : "No";
 
@@ -135,7 +135,7 @@ void IBDOC_MSEXCEL::ParseRecords(const RECORD& FileRecord)
 
 
   Db->ComposeDbFn (&s, DbExtCat);
-  if (MkDir(s, 0, GDT_TRUE) == -1)
+  if (MkDir(s, 0, true) == -1)
     {
       message_log (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
       return;
@@ -143,12 +143,12 @@ void IBDOC_MSEXCEL::ParseRecords(const RECORD& FileRecord)
   // <db_ext>.cat/<Hash>/<Key>.memo
   outfile =  AddTrailingSlash(s);
   outfile.Cat (((long)key.CRC16()) % 1000);
-  if (MkDir(outfile, 0, GDT_TRUE) == -1)
+  if (MkDir(outfile, 0, true) == -1)
     outfile = s; // Can't make it
   AddTrailingSlash(&outfile);
   outfile.Cat (key);
 
-  if (Db->_write_resource_path(outfile, FileRecord, mime_type, &urifile) == GDT_FALSE) 
+  if (Db->_write_resource_path(outfile, FileRecord, mime_type, &urifile) == false) 
     {
       message_log (LOG_ERRNO, "%s: Could not create '%s'", urifile.c_str());
       return;
@@ -280,7 +280,7 @@ void IBDOC_MSEXCEL::ParseRecords(const RECORD& FileRecord)
 			    message_log (LOG_INFO, "\
 %s: '%s' has irregular columns (line #%d, %d != %d). ONELINE turned off",
 				Doctype.c_str(), outfile.c_str(), lineno+1, column+1, column0+1);
-			    oneline = GDT_FALSE;
+			    oneline = false;
 			  }
 		      }
 		     column = 0;
@@ -336,7 +336,7 @@ void IBDOC_MSEXCEL:: DocPresent (const RESULT& ResultRecord,
    TSLDOC::DocPresent(ResultRecord, ElementSet, RecordSyntax, StringBuffer);
 }
 
-GDT_BOOLEAN IBDOC_MSEXCEL::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool IBDOC_MSEXCEL::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   STRING fullpath (  Db->_get_resource_path(ResultRecord.GetFullFileName()) );
   if (StringBuffer)

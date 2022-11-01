@@ -51,8 +51,8 @@ enum NormalizationMethods defaultNormalization = CosineNormalization;
 
 
 
-static GDT_BOOLEAN _compLTE(const FC& Fc1, const FC& Fc2) { return Fc1 <= Fc2; }
-static GDT_BOOLEAN _compGTE(const FC& Fc1, const FC& Fc2) { return Fc1 >= Fc2; } 
+static bool _compLTE(const FC& Fc1, const FC& Fc2) { return Fc1 <= Fc2; }
+static bool _compGTE(const FC& Fc1, const FC& Fc2) { return Fc1 >= Fc2; } 
 
 ///
 /// NOTE: Instead of GetMdtIndex() use GetIndex()
@@ -203,12 +203,12 @@ atomicIRSET& atomicIRSET::Concat(const atomicIRSET& OtherIrset)
 
 }
 
-OPOBJ& atomicIRSET::Cat(const OPOBJ& OtherIrset, GDT_BOOLEAN AddHitCounts)
+OPOBJ& atomicIRSET::Cat(const OPOBJ& OtherIrset, bool AddHitCounts)
 {
   return Cat(OtherIrset, OtherIrset.GetTotalEntries (), AddHitCounts);
 }
 
-OPOBJ& atomicIRSET::Cat(const OPOBJ& OtherIrset, size_t Total, GDT_BOOLEAN AddHitCounts)
+OPOBJ& atomicIRSET::Cat(const OPOBJ& OtherIrset, size_t Total, bool AddHitCounts)
 {
   const size_t y = OtherIrset.GetTotalEntries ();
   if (Total == 0 || Total > y)
@@ -230,7 +230,7 @@ OPOBJ& atomicIRSET::Cat(const OPOBJ& OtherIrset, size_t Total, GDT_BOOLEAN AddHi
 
 OPOBJ& atomicIRSET::operator +=(const OPOBJ& OtherIrset)
 {
-  return Cat(OtherIrset, OtherIrset.GetTotalEntries (), GDT_FALSE);
+  return Cat(OtherIrset, OtherIrset.GetTotalEntries (), false);
 }
 
 OPOBJ *atomicIRSET::Duplicate () const
@@ -253,7 +253,7 @@ atomicIRSET *atomicIRSET::Duplicate()
   return(Temp);
 }
 
-void atomicIRSET::MergeEntries(const GDT_BOOLEAN AddHitCounts)
+void atomicIRSET::MergeEntries(const bool AddHitCounts)
 {
   size_t  CurrentItem = 0;
 
@@ -358,7 +358,7 @@ const MDT *atomicIRSET::GetMdt(size_t i) const
   return Parent ? Parent->GetMainMdt ( ) : NULL;
 }
 
-GDT_BOOLEAN atomicIRSET::GetMdtrec(size_t i, MDTREC *Mdtrec) const
+bool atomicIRSET::GetMdtrec(size_t i, MDTREC *Mdtrec) const
 {
   if (i > 0 && i <= TotalEntries)
     {
@@ -369,13 +369,13 @@ GDT_BOOLEAN atomicIRSET::GetMdtrec(size_t i, MDTREC *Mdtrec) const
         else message_log (LOG_PANIC, "::Getmdtrec MDT position undefined (ZERO)");
       }
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
 void atomicIRSET::LoadTable (const STRING& FileName)
 {
-  GDT_BOOLEAN ok = GDT_FALSE;
+  bool ok = false;
   TotalEntries = 0;
   PFILE fp = FileName.Fopen ("rb");
   if (fp)
@@ -383,11 +383,11 @@ void atomicIRSET::LoadTable (const STRING& FileName)
       ok = Read(fp);
       fclose(fp);
     }
-  if (ok == GDT_FALSE && Parent)
+  if (ok == false && Parent)
     Parent->SetErrorCode(30); // "Specified result set does not exist"
 }
 
-GDT_BOOLEAN atomicIRSET::Read (PFILE fp)
+bool atomicIRSET::Read (PFILE fp)
 {
   TotalEntries = 0;
   obj_t obj = getObjID(fp);
@@ -427,7 +427,7 @@ GDT_BOOLEAN atomicIRSET::Read (PFILE fp)
 		path.c_str(), stem.c_str());
 
       if (Parent && TimeStamp <  Parent->DateLastModified() )
-	return GDT_FALSE; // Expired
+	return false; // Expired
     }
   return obj == objIRSET;
 }
@@ -566,7 +566,7 @@ size_t atomicIRSET::FindByMdtIndex(size_t Index) const
   return 0; // NOT FOUND
 }
 
-void atomicIRSET::AddEntry (const IRESULT& ResultRecord, const GDT_BOOLEAN AddHitCounts)
+void atomicIRSET::AddEntry (const IRESULT& ResultRecord, const bool AddHitCounts)
 {
   const INDEX_ID Index = ResultRecord.GetIndex (); 
   size_t pos;
@@ -625,14 +625,14 @@ void atomicIRSET::AddEntry (const IRESULT& ResultRecord, const GDT_BOOLEAN AddHi
     Table[TotalEntries++] = ResultRecord;
 }
 
-GDT_BOOLEAN atomicIRSET::GetEntry (const size_t Index, PIRESULT ResultRecord) const
+bool atomicIRSET::GetEntry (const size_t Index, PIRESULT ResultRecord) const
 {
   if ((Index > 0) && (Index <= TotalEntries))
     {
       *ResultRecord = Table[Index - 1];
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 IRESULT atomicIRSET::GetEntry (const size_t Index) const
@@ -721,7 +721,7 @@ PRSET atomicIRSET::Fill(size_t Start, size_t End, PRSET set) const
       {
 	message_log (LOG_ERROR, "atomicIRSET Can't fill %d", x);
       }
-    else if (mdtrec.GetDeleted() == GDT_FALSE)
+    else if (mdtrec.GetDeleted() == false)
       {
 	RESULT result (mdtrec);
 	DOUBLE myScore = Table[x].GetScore();
@@ -1470,7 +1470,7 @@ OPOBJ *atomicIRSET::_Or (const OPOBJ& OtherIrset)
       IRESULT iresult;
       for (size_t x = 1; x <= Total; x++)
         OtherIrset.GetEntry (x, Table + TotalEntries++);
-      MergeEntries(GDT_TRUE);
+      MergeEntries(true);
     }
   return this;
 }
@@ -1907,7 +1907,7 @@ OPOBJ *atomicIRSET::_And (const OPOBJ& OtherIrset, size_t Limit)
 
   size_t offset = 0;
   const atomicIRSET  *OtherPtr = (atomicIRSET *)&OtherIrset;
-  GDT_BOOLEAN   OtherSorted = OtherPtr->Sort == ByIndex;
+  bool   OtherSorted = OtherPtr->Sort == ByIndex;
   for (size_t x=1; x <= OtherTotal &&  offset < TotalEntries; x++)
     {
       OtherIrset.GetEntry(x, &OtherIresult);
@@ -1935,7 +1935,7 @@ OPOBJ *atomicIRSET::_And (const OPOBJ& OtherIrset, size_t Limit)
 /*
   // Don't think that this is needed..
   if (count)
-    MyResult.MergeEntries(GDT_FALSE);
+    MyResult.MergeEntries(false);
 */
 #endif
 //cerr << "_AND::DELETE Table... ";
@@ -2033,7 +2033,7 @@ OPOBJ *atomicIRSET::Peer (const OPOBJ& Irset, peer_t compFunc)
       const FCLIST   *MyHitPtr = (const FCLIST *) IresultPtr->GetHitTable();
       const FCLIST   *OtherHitPtr = (const FCLIST *) OtherIresultPtr->GetHitTable();
 
-//      const GDT_BOOLEAN IsSorted = IresultPtr->HitTableIsSorted() && OtherIresultPtr->HitTableIsSorted();
+//      const bool IsSorted = IresultPtr->HitTableIsSorted() && OtherIresultPtr->HitTableIsSorted();
 
       size_t          matchCount = 0;
 
@@ -2141,7 +2141,7 @@ OPOBJ *atomicIRSET::XPeer (const OPOBJ& Irset)
     if (idx2 == idx1) {
       const FCLIST   *MyHitPtr = (const FCLIST *) IresultPtr->GetHitTable();
       const FCLIST   *OtherHitPtr = (const FCLIST *) OtherIresultPtr->GetHitTable();
-//      const GDT_BOOLEAN IsSorted = IresultPtr->HitTableIsSorted() && OtherIresultPtr->HitTableIsSorted();
+//      const bool IsSorted = IresultPtr->HitTableIsSorted() && OtherIresultPtr->HitTableIsSorted();
 
       size_t          matchCount = 0;
 
@@ -2197,16 +2197,16 @@ OPOBJ *atomicIRSET::XPeer (const OPOBJ& Irset)
 
 
 // Private
-GDT_BOOLEAN atomicIRSET::FieldExists(const STRING& FieldName)
+bool atomicIRSET::FieldExists(const STRING& FieldName)
 {
   if (Parent == NULL) message_log (LOG_ERROR, "Orphaned IRSET ????");
-  else if (Parent->DfdtGetFileName (FieldName, NULL) == GDT_FALSE)
+  else if (Parent->DfdtGetFileName (FieldName, NULL) == false)
     message_log (LOG_DEBUG, "Within non-existant field '%s'", FieldName.c_str());
-  else if (Parent->GetFieldCache()->SetFieldName(FieldName, GDT_FALSE) == GDT_FALSE)
+  else if (Parent->GetFieldCache()->SetFieldName(FieldName, false) == false)
     message_log (LOG_DEBUG, "Can't load field data for %s", FieldName.c_str());
   else
-    return GDT_TRUE; // Exists
-  return GDT_FALSE;
+    return true; // Exists
+  return false;
 }
 
 
@@ -2231,8 +2231,8 @@ OPOBJ *atomicIRSET::AfterWithin (const OPOBJ& Irset, const STRING& FieldName)
 OPOBJ *atomicIRSET::AndWithinFile(const STRING& FileSpec)
 {
   MDTREC             mdtrec;
-  const GDT_BOOLEAN  isWild = FileSpec.IsWild();
-  const GDT_BOOLEAN  noPath = !ContainsPathSep(FileSpec);
+  const bool  isWild = FileSpec.IsWild();
+  const bool  noPath = !ContainsPathSep(FileSpec);
   const PATHNAME     myPath (FileSpec);
   DOUBLE             score;
   size_t             current = 0;
@@ -2393,7 +2393,7 @@ OPOBJ *atomicIRSET::Within(const OPOBJ& Irset, const STRING& FieldName,  peer_t 
     }
 #endif
   // Can save some effort
-  if (FieldExists(FieldName) == GDT_FALSE)
+  if (FieldExists(FieldName) == false)
     {
       Clear();
       return this;
@@ -2445,7 +2445,7 @@ OPOBJ *atomicIRSET::Within(const OPOBJ& Irset, const STRING& FieldName,  peer_t 
     if (idx2 == idx1) {
       const FCLIST   *MyHitPtr = (const FCLIST *) IresultPtr->GetHitTable();
       const FCLIST   *OtherHitPtr = (const FCLIST *) OtherIresultPtr->GetHitTable();
-//      const GDT_BOOLEAN IsSorted = IresultPtr->HitTableIsSorted() && OtherIresultPtr->HitTableIsSorted();
+//      const bool IsSorted = IresultPtr->HitTableIsSorted() && OtherIresultPtr->HitTableIsSorted();
 
       size_t          matchCount = 0;
 
@@ -2636,7 +2636,7 @@ OPOBJ *atomicIRSET::Within(const STRING& FieldName)
     }
 #endif
   // Can save some effort
-  if (FieldExists(FieldName) == GDT_FALSE)
+  if (FieldExists(FieldName) == false)
     {
       DATERANGE Range (FieldName);
 
@@ -2648,7 +2648,7 @@ OPOBJ *atomicIRSET::Within(const STRING& FieldName)
 
   atomicIRSET MyResult(Parent);
   size_t count  = 0;
-  GDT_BOOLEAN Changed = GDT_FALSE;
+  bool Changed = false;
 
   if (Parent)
     {
@@ -2678,11 +2678,11 @@ OPOBJ *atomicIRSET::Within(const STRING& FieldName)
 	      MyResult.FastAddEntry(iresult);
 	      count++;
 	    }
-	  if (misses) Changed = GDT_TRUE;
+	  if (misses) Changed = true;
 	}
     }
   else
-   Changed = GDT_TRUE; // Changed to nothing;
+   Changed = true; // Changed to nothing;
 
   if (Changed)
     {
@@ -2753,12 +2753,12 @@ OPOBJ *atomicIRSET::XWithin(const STRING& FieldName)
     }
 #endif
   // Can save some effort
-  if (FieldExists(FieldName) == GDT_FALSE)
+  if (FieldExists(FieldName) == false)
     return this; // XWithin a non-existent field should be everything..
 
   atomicIRSET MyResult(Parent);
   size_t count  = 0;
-  GDT_BOOLEAN Changed = GDT_FALSE;
+  bool Changed = false;
 
   if (Parent)
     {
@@ -2784,7 +2784,7 @@ OPOBJ *atomicIRSET::XWithin(const STRING& FieldName)
 	      MyResult.FastAddEntry(iresult);
 	      count++;
 	    }
-	  else Changed = GDT_TRUE;
+	  else Changed = true;
 	}
     }
 
@@ -2859,7 +2859,7 @@ OPOBJ *atomicIRSET::Inclusive(const STRING& FieldName)
     }
 #endif
   // Can save some effort
-  if (FieldExists(FieldName) == GDT_FALSE)
+  if (FieldExists(FieldName) == false)
     {
       Clear();
       return this;
@@ -2867,7 +2867,7 @@ OPOBJ *atomicIRSET::Inclusive(const STRING& FieldName)
 
   atomicIRSET MyResult(Parent);
   size_t count  = 0;
-  GDT_BOOLEAN Changed = GDT_FALSE;
+  bool Changed = false;
 
   if (Parent)
     {
@@ -2897,11 +2897,11 @@ OPOBJ *atomicIRSET::Inclusive(const STRING& FieldName)
 	      MyResult.FastAddEntry(iresult);
 	      count++;
 	    }
-	  if (misses) Changed = GDT_TRUE;
+	  if (misses) Changed = true;
 	}
     }
   else
-   Changed = GDT_TRUE; // Changed to nothing;
+   Changed = true; // Changed to nothing;
 
   if (Changed)
     {
@@ -3018,7 +3018,7 @@ OPOBJ *atomicIRSET::_AndNot (const OPOBJ& OtherIrset)
     }
   IRESULT OtherIresult;
   atomicIRSET MyResult(Parent);
-  const GDT_BOOLEAN OtherSorted = (((atomicIRSET *) &OtherIrset)->Sort == ByIndex);
+  const bool OtherSorted = (((atomicIRSET *) &OtherIrset)->Sort == ByIndex);
   IRESULT *ptr = NULL;
 
   SortByIndex();
@@ -3031,7 +3031,7 @@ OPOBJ *atomicIRSET::_AndNot (const OPOBJ& OtherIrset)
       if (TotalEntries == 0 || (ptr = (IRESULT *)bsearch(&OtherIresult, (const void *)(Table+offset),
 		TotalEntries-offset, sizeof(IRESULT), IrsetIndexCompare)) == NULL)
 	{
-	  MyResult.FastAddEntry(OtherIresult /*, GDT_FALSE */);
+	  MyResult.FastAddEntry(OtherIresult /*, false */);
 	  count++;
 	}
       else if (TotalEntries && OtherSorted)
@@ -3165,22 +3165,22 @@ OPOBJ *atomicIRSET::_Xor (const OPOBJ& OtherIrset)
   for (size_t y = 1; y <= OtherTotal; y++)
     {
       OtherIrset.GetEntry (y, &OtherIresult);
-      GDT_BOOLEAN found = GDT_FALSE;
+      bool found = false;
       const _index_id_t Index = OtherIresult.GetIndex ();
       for (size_t x = 0; x < TotalEntries; x++)
 	{
-	  found = GDT_FALSE;
+	  found = false;
 	  if (Table[x].GetIndex () == Index)
 	    {
 	      // Found so remove set
-	      found = GDT_TRUE;
+	      found = true;
 	      for (size_t w = x; w < (TotalEntries - 1); w++)
 		Table[w] = Table[w + 1];
 	      TotalEntries--;
 	      break;
 	    }
 	}			/* for */
-      if (found == GDT_FALSE)
+      if (found == false)
 	AddTable[AddCount++] = OtherIresult;	// Add this
     }				/* for */
 
@@ -3277,7 +3277,7 @@ OPOBJ *atomicIRSET::CharProx (const OPOBJ& OtherIrset, const float Metric, DIR_T
 
       const FCLIST   *MyHitPtr = (const FCLIST *) IresultPtr->GetHitTable();
       const FCLIST   *OtherHitPtr = (const FCLIST *) OtherIresultPtr->GetHitTable();
-      const GDT_BOOLEAN IsSorted = IresultPtr->HitTableIsSorted() && OtherIresultPtr->HitTableIsSorted();
+      const bool IsSorted = IresultPtr->HitTableIsSorted() && OtherIresultPtr->HitTableIsSorted();
 
       size_t          matchCount = 0;
 
@@ -3285,7 +3285,7 @@ OPOBJ *atomicIRSET::CharProx (const OPOBJ& OtherIrset, const float Metric, DIR_T
       for (const FCLIST * kp = MyHitPtr->Next(); kp != MyHitPtr; kp = kp->Next()) {
 	const FC        MyFc(kp->Value());
 	for (const FCLIST * p = OtherHitPtr->Next(); p != OtherHitPtr; p = p->Next()) {
-	  GDT_BOOLEAN     IsMatch = GDT_FALSE;
+	  bool     IsMatch = false;
 	  const FC        OtherFc(p->Value());
 	  const INT       diff = MyFc.GetFieldStart() - OtherFc.GetFieldStart();
 	  if (Distance >= 0) {
@@ -3294,11 +3294,11 @@ OPOBJ *atomicIRSET::CharProx (const OPOBJ& OtherIrset, const float Metric, DIR_T
 	      if (direction != BEFORE &&
 		  ((size_t) ((OtherFc.GetFieldStart() -
 			      MyFc.GetFieldEnd() - 1)) <= (size_t) Distance))
-		IsMatch = GDT_TRUE;
+		IsMatch = true;
 	    } else if (direction != AFTER &&
 		       ((size_t) ((MyFc.GetFieldStart()
 		      - OtherFc.GetFieldEnd() - 1)) <= (size_t) Distance)) {
-	      IsMatch = GDT_TRUE;
+	      IsMatch = true;
 	    }
 	  } else {
 	    // Far
@@ -3306,11 +3306,11 @@ OPOBJ *atomicIRSET::CharProx (const OPOBJ& OtherIrset, const float Metric, DIR_T
 	      if (direction != BEFORE &&
 		  ((size_t) ((OtherFc.GetFieldStart() -
 			  MyFc.GetFieldEnd() - 1)) >= (size_t) (-Distance)))
-		IsMatch = GDT_TRUE;
+		IsMatch = true;
 	    } else if (direction != AFTER &&
 		       ((size_t) ((MyFc.GetFieldStart()
 		   - OtherFc.GetFieldEnd() - 1)) >= (size_t) (-Distance))) {
-	      IsMatch = GDT_TRUE;
+	      IsMatch = true;
 	    }
 	  }
 	  if (IsMatch) {
@@ -3385,7 +3385,7 @@ OPOBJ *atomicIRSET::_CharProx (const OPOBJ& OtherIrset, const float Metric, DIR_
     }
 
   const atomicIRSET  *OtherPtr = (atomicIRSET *)&OtherIrset;
-  GDT_BOOLEAN   OtherSorted = OtherPtr->Sort == ByIndex;
+  bool   OtherSorted = OtherPtr->Sort == ByIndex;
   if (OtherSorted)
     SortByIndex();
 
@@ -3413,7 +3413,7 @@ OPOBJ *atomicIRSET::_CharProx (const OPOBJ& OtherIrset, const float Metric, DIR_
 		} else Distance = (INT)Metric;
 	      const FCLIST *MyHitPtr    = (const FCLIST *)MyIresult.GetHitTable ();
 	      const FCLIST *OtherHitPtr = (const FCLIST *)OtherIresult.GetHitTable();
-	      const GDT_BOOLEAN IsSorted = MyIresult.HitTableIsSorted() && OtherIresult.HitTableIsSorted();
+	      const bool IsSorted = MyIresult.HitTableIsSorted() && OtherIresult.HitTableIsSorted();
 
 	      size_t matchCount = 0;
 #if STORE_PROX
@@ -3424,7 +3424,7 @@ OPOBJ *atomicIRSET::_CharProx (const OPOBJ& OtherIrset, const float Metric, DIR_
 		  const FC MyFc ( kp->Value() );
 		  for (const FCLIST *p = OtherHitPtr->Next(); p != OtherHitPtr; p = p->Next())
 		    {
-		      GDT_BOOLEAN IsMatch = GDT_FALSE;
+		      bool IsMatch = false;
 		      const FC OtherFc ( p->Value() );
 		      const INT diff = MyFc.GetFieldStart () - OtherFc.GetFieldStart ();
 		      if (Distance >= 0)
@@ -3435,13 +3435,13 @@ OPOBJ *atomicIRSET::_CharProx (const OPOBJ& OtherIrset, const float Metric, DIR_
 			      if (direction != BEFORE &&
 				  ((size_t) ((OtherFc.GetFieldStart () -
 				     MyFc.GetFieldEnd () - 1)) <= (size_t)Distance))
-				IsMatch = GDT_TRUE;
+				IsMatch = true;
 			    }
 			  else if (direction != AFTER &&
 				   ((size_t) ((MyFc.GetFieldStart ()
 				- OtherFc.GetFieldEnd () - 1)) <= (size_t)Distance))
 			    {
-			      IsMatch = GDT_TRUE;
+			      IsMatch = true;
 			    }
 			}
 		      else
@@ -3452,13 +3452,13 @@ OPOBJ *atomicIRSET::_CharProx (const OPOBJ& OtherIrset, const float Metric, DIR_
 			      if (direction != BEFORE &&
 				  ((size_t) ((OtherFc.GetFieldStart () -
 				     MyFc.GetFieldEnd () - 1)) >= (size_t)(-Distance)))
-				IsMatch = GDT_TRUE;
+				IsMatch = true;
 			    }
 			  else if (direction != AFTER &&
 				   ((size_t) ((MyFc.GetFieldStart ()
 				- OtherFc.GetFieldEnd () - 1)) >= (size_t)(-Distance)))
 			    {
-			      IsMatch = GDT_TRUE;
+			      IsMatch = true;
 			    }
 			}
 		      if (IsMatch)
@@ -3492,7 +3492,7 @@ OPOBJ *atomicIRSET::_CharProx (const OPOBJ& OtherIrset, const float Metric, DIR_
 #if AWWW
 		  MyResult.FastAddEntry (OtherIresult);
 #else
-		  MyResult.AddEntry (OtherIresult, GDT_FALSE);
+		  MyResult.AddEntry (OtherIresult, false);
 #endif
 		}
 	    }
@@ -3503,7 +3503,7 @@ OPOBJ *atomicIRSET::_CharProx (const OPOBJ& OtherIrset, const float Metric, DIR_
 
 #if AWWW
   if (OtherSetTotalEntries)
-    MyResult.MergeEntries(GDT_FALSE);
+    MyResult.MergeEntries(false);
 #endif
 
   delete[]Table;

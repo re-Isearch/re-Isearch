@@ -61,7 +61,7 @@ INTERVALLIST::INTERVALLIST()
 //  FileName   = "";
   Pointer    = 0;
   StartIndex = EndIndex = -1;
-  Truncate   = GDT_FALSE;
+  Truncate   = false;
 }
 
 
@@ -74,7 +74,7 @@ INTERVALLIST::INTERVALLIST(INT n)
   FileName   = "";
   Pointer    = 0;
   StartIndex = EndIndex = -1;
-  Truncate   = GDT_FALSE;
+  Truncate   = false;
 }
 
 

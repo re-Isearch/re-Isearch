@@ -37,7 +37,7 @@ private:
   INT4         Count;      // count of items in table
   STRING       FileName;   // the file which attributes/numeric data are in
   INT4         MaxEntries; // current maximum size of table - see Resize()
-  GDT_BOOLEAN  Sorted;     // Have we done the optimization or not?
+  bool  Sorted;     // Have we done the optimization or not?
 
 public:
   GPOLYLIST();

@@ -30,12 +30,12 @@ DFD& DFD::operator=(const DFD& OtherDfd)
 }
 
 #if 0
-GDT_BOOLEAN DFD::GetFieldName(PSTRING StringBuffer) const
+bool DFD::GetFieldName(PSTRING StringBuffer) const
 {
   return Attributes.AttrGetFieldName(StringBuffer);
 }
 
-GDT_BOOLEAN DFD::GetFieldType(PSTRING StringBuffer) const
+bool DFD::GetFieldType(PSTRING StringBuffer) const
 {
   return Attributes.AttrGetFieldType(StringBuffer);
 }

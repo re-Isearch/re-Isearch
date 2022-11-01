@@ -25,14 +25,14 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 static const int LOG_DEFAULT = (iLOG_ALL&(~iLOG_DEBUG));
 static int           l_level = LOG_DEFAULT;
 static FILE         *l_file = NULL;
-static GDT_BOOLEAN   l_console = GDT_FALSE;
+static bool   l_console = false;
 static char l_prefix[30];
 
 static FILE *syslog_stream = (FILE *)(-1);
 static int   syslog_device  = LOG_IB;
 
 
-int _ib_debug = GDT_FALSE;
+bool _ib_debug = false;
 
 static struct
   {
@@ -109,10 +109,10 @@ static void bkgrnd_write (int)
 #endif
 
 
-GDT_BOOLEAN set_syslog(const char *name)
+bool set_syslog(const char *name)
 {
   if (name == NULL || *name == '\0')
-    return GDT_FALSE;
+    return false;
   if (name[1] == '\0')
     return set_syslog(name[1]);
   if (strncmp(name, "LOG_", 4) == 0)
@@ -152,10 +152,10 @@ GDT_BOOLEAN set_syslog(const char *name)
     return set_syslog('D');
   else if (strcmp(name, "<user>") == 0)
     return set_syslog('U');
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN set_syslog(const int Ch)
+bool set_syslog(const int Ch)
 {
   switch (Ch)
     {
@@ -196,13 +196,13 @@ GDT_BOOLEAN set_syslog(const int Ch)
 
 	case -1: default:  syslog_device = LOG_IB; break;
     }
-  return GDT_TRUE;
+  return true;
 }
 
 
-GDT_BOOLEAN log_init (FILE *fp)
+bool log_init (FILE *fp)
 {
-  GDT_BOOLEAN res = GDT_TRUE;
+  bool res = true;
   if (l_prefix[0] == '\0')
     strcpy(l_prefix, default_prefix);
   if (fp == NULL)
@@ -226,7 +226,7 @@ GDT_BOOLEAN log_init (FILE *fp)
       }
       // Don't have a controlling console
       char tty[L_ctermid+L_cuserid+1];
-      if (_IB_GetUserId(tty, sizeof(tty)) == GDT_FALSE)
+      if (_IB_GetUserId(tty, sizeof(tty)) == false)
 	sprintf(tty, "uid%lu", (long)getuid());
       char pid[L_ctermid+L_cuserid+ 128];
       for (size_t i=0; dirs[i]; i++)
@@ -251,10 +251,10 @@ GDT_BOOLEAN log_init (FILE *fp)
 	  l_console = isatty(fileno(fp));
 	}
       else
-	res = GDT_FALSE;
+	res = false;
     }
   else
-    l_console = GDT_FALSE;
+    l_console = false;
 #ifdef SIGTTOU
   signal (SIGTTOU, bkgrnd_write);
 #endif
@@ -267,36 +267,36 @@ GDT_BOOLEAN log_init (FILE *fp)
   return res;
 }
 
-GDT_BOOLEAN log_init (int level, FILE *fp)
+bool log_init (int level, FILE *fp)
 {
-  GDT_BOOLEAN res = log_init(fp);
+  bool res = log_init(fp);
   l_level = level;
   if (level & LOG_DEBUG)
-    _ib_debug = GDT_TRUE;
+    _ib_debug = true;
   else
-    _ib_debug = GDT_FALSE;
+    _ib_debug = false;
   return res;
 }
 
-GDT_BOOLEAN log_init (const char *prefix, const char *name)
+bool log_init (const char *prefix, const char *name)
 {
   return log_init (l_level, prefix, name);
 }
 
-GDT_BOOLEAN log_init (const char *prefix, FILE *fp)
+bool log_init (const char *prefix, FILE *fp)
 {
   return log_init (l_level, prefix, fp);
 }
 
-GDT_BOOLEAN log_init (int level, const char *prefix, FILE *fp)
+bool log_init (int level, const char *prefix, FILE *fp)
 {
   log_init (level, prefix);
   return log_init(fp);
 }
 
-GDT_BOOLEAN log_init (int level, const char *prefix, const char *name)
+bool log_init (int level, const char *prefix, const char *name)
 {
-  GDT_BOOLEAN res = GDT_TRUE;
+  bool res = true;
 //  if (level != 0) 
     l_level = level;
 
@@ -327,9 +327,9 @@ GDT_BOOLEAN log_init (int level, const char *prefix, const char *name)
 	res = log_init(fopen(name, "a"));
     }
   if (level & LOG_DEBUG)
-    _ib_debug = GDT_TRUE;
+    _ib_debug = true;
   else
-    _ib_debug = GDT_FALSE;
+    _ib_debug = false;
   return res;
 }
 

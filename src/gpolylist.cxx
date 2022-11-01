@@ -31,7 +31,7 @@ void GPOLYLIST::Clear()
 {
   Count      = 0;
   FileName.Clear();
-  Sorted     = GDT_FALSE;
+  Sorted     = false;
 }
 
 void GPOLYLIST::Empty()
@@ -60,7 +60,7 @@ GPOLYLIST::GPOLYLIST(INT n)
   MaxEntries = n > 0 ? n : 0;
   table      = MaxEntries ? new GPOLYFLD[MaxEntries] : NULL;
   Count      = 0;
-  Sorted     = GDT_FALSE;
+  Sorted     = false;
 }
 
 
@@ -138,7 +138,7 @@ INT4 GPOLYLIST::Read(FILE *fp)
   if (Count > nCount)
     {
       Cleanup();
-      Sorted = GDT_FALSE;
+      Sorted = false;
     }
   return Count - nCount;
 }
@@ -177,7 +177,7 @@ INT GPOLYLIST::LoadTable(STRING& Fn)
 	    result++;
 	    table[i] = gfld;
 	   }
-	  Sorted = GDT_TRUE;
+	  Sorted = true;
 	}
       else /* NOT MAGIC so not sorted! */
 	{
@@ -203,10 +203,10 @@ void GPOLYLIST::Sort()
 {
 #if 0
   // Can't sort since the lengths of each object is variable
-  if (Sorted == GDT_FALSE)
+  if (Sorted == false)
     {
       if (table) qsort((void *)table, Count, sizeof(GPOLYFLD),  GpolyfldGpSearchCmp);
-      Sorted = GDT_TRUE;
+      Sorted = true;
     }
 #endif
 }

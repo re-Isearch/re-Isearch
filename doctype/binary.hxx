@@ -32,12 +32,12 @@ class BINARY:public DOCTYPE
   void BeforeIndexing();
   void AfterIndexing();
 
-  virtual GDT_BOOLEAN IsIgnoreMetaField(const STRING&) const { return GDT_FALSE; };
+  virtual bool IsIgnoreMetaField(const STRING&) const { return false; };
 
   void ParseRecords(const RECORD& FileRecord);
   void ParseFields(PRECORD FileRecord);
 
-  GDT_BOOLEAN GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
+  bool GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
 
   void DocPresent (const RESULT& ResultRecord, const STRING& ElementSet,
 		const STRING& RecordSyntax, PSTRING StringBuffer) const;
@@ -68,9 +68,9 @@ class XBINARY:public BINARY
   void ParseRecords(const RECORD& FileRecord);
   void ParseFields(PRECORD FileRecord);
 
-  virtual GDT_BOOLEAN IsIgnoreMetaField(const STRING &Fieldname) const;
+  virtual bool IsIgnoreMetaField(const STRING &Fieldname) const;
 
-  GDT_BOOLEAN GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
+  bool GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
 
   void DocPresent (const RESULT& ResultRecord, const STRING& ElementSet,
                 const STRING& RecordSyntax, PSTRING StringBuffer) const;
@@ -91,7 +91,7 @@ class TBINARY:public XBINARY
   TBINARY (PIDBOBJ DbParent, const STRING& Name);
   const char *Description(PSTRLIST List) const;
 
-  virtual GDT_BOOLEAN IsIgnoreMetaField(const STRING &Fieldname) const;
+  virtual bool IsIgnoreMetaField(const STRING &Fieldname) const;
 
    ~TBINARY () {};
 };

@@ -20,7 +20,7 @@ int errno;
 
 DB::DB()
 {
-  isOpen = GDT_FALSE;
+  isOpen = false;
 }
 
 

@@ -159,7 +159,7 @@ protected:
   STRING	c_hostname,
 		c_ipaddress,
 		c_addinfo;
-  GDT_BOOLEAN	c_inetd,
+  bool	c_inetd,
 		c_inetd_not_set_yet;
 public:
   UNISOCK(INT family, INT comm_type, INT protocol);
@@ -204,10 +204,10 @@ public:
   void BlockingModeON() { BlockingMode(0); }
   void BlockingModeOFF() { BlockingMode(1); }
 
-  GDT_BOOLEAN StartedByInetd();
+  bool StartedByInetd();
 };
 
-GDT_BOOLEAN StartedByInetd();
+bool StartedByInetd();
 
 // Well defined port numbers
 

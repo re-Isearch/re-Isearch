@@ -26,7 +26,7 @@ class           DTREG {
   DTREG(PIDBOBJ DbParent);
   DTREG(PIDBOBJ DbParent, const STRING& PluginsPath);
 
-  GDT_BOOLEAN     PluginExists(const STRING& Name) const;
+  bool     PluginExists(const STRING& Name) const;
 
   void            AddPluginPath(const STRING& Path);
 
@@ -36,10 +36,10 @@ class           DTREG {
   DOCTYPE        *GetDocTypePtr(const STRING& DocType, const STRING& DocTypeID);
 
   DOCTYPE        *RegisterDocType (const STRING& name, DOCTYPE* Ptr);
-  GDT_BOOLEAN     UnregisterDocType (const STRING& name);
+  bool     UnregisterDocType (const STRING& name);
 
-  GDT_BOOLEAN     ValidateDocType(const STRING& DocType);
-  GDT_BOOLEAN     ValidateDocType(const DOCTYPE_ID& Id);
+  bool     ValidateDocType(const STRING& DocType);
+  bool     ValidateDocType(const DOCTYPE_ID& Id);
   int             DoctypeId(const STRING& DocType);
 
   const           STRLIST& GetDocTypeList();

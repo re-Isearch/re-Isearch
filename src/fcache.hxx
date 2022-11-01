@@ -15,49 +15,49 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 class FCACHE {
 public:
    FCACHE(const PIDBOBJ parent);
-   FCACHE(const PIDBOBJ parent, const STRING& fieldName, GDT_BOOLEAN useDisk = GDT_FALSE);
+   FCACHE(const PIDBOBJ parent, const STRING& fieldName, bool useDisk = false);
 
 
-   GDT_BOOLEAN Ok() const { return FieldTotal != 0; }
+   bool Ok() const { return FieldTotal != 0; }
 
    // Normal entry points...
-   GDT_BOOLEAN ValidateInField(const GPTYPE HitGp);
-   GDT_BOOLEAN ValidateInField(const FC& HitGp);
+   bool ValidateInField(const GPTYPE HitGp);
+   bool ValidateInField(const FC& HitGp);
 
-   GDT_BOOLEAN ValidateInField(const GPTYPE HitGp, const STRING& fieldName, GDT_BOOLEAN Disk);
-   GDT_BOOLEAN ValidateInField(const FC& HitGp, const STRING& fieldName, GDT_BOOLEAN Disk);
+   bool ValidateInField(const GPTYPE HitGp, const STRING& fieldName, bool Disk);
+   bool ValidateInField(const FC& HitGp, const STRING& fieldName, bool Disk);
 
-   GDT_BOOLEAN ValidateInField(const GPTYPE HitGp, STRSTACK& Stack, GDT_BOOLEAN Disk);
-   GDT_BOOLEAN ValidateInField(const FC& HitFc, STRSTACK Stack, GDT_BOOLEAN Disk);
+   bool ValidateInField(const GPTYPE HitGp, STRSTACK& Stack, bool Disk);
+   bool ValidateInField(const FC& HitFc, STRSTACK Stack, bool Disk);
 
    FC FcInField (const GPTYPE HitGp, FILE *fp) const;
 
    // The workhorses..
-   GDT_BOOLEAN ValidateInField (const GPTYPE HitGp, const STRING& FieldName) const;
-   GDT_BOOLEAN ValidateInField (const GPTYPE HitGp, FILE *Fp,  const size_t Total = 0) const;
-   GDT_BOOLEAN ValidateInField (const GPTYPE HitGp, const void *Buffer, const size_t Length) const;
-   GDT_BOOLEAN ValidateInField (const GPTYPE HitGp, const GPTYPE *Buffer, const size_t Total) const;
+   bool ValidateInField (const GPTYPE HitGp, const STRING& FieldName) const;
+   bool ValidateInField (const GPTYPE HitGp, FILE *Fp,  const size_t Total = 0) const;
+   bool ValidateInField (const GPTYPE HitGp, const void *Buffer, const size_t Length) const;
+   bool ValidateInField (const GPTYPE HitGp, const GPTYPE *Buffer, const size_t Total) const;
 
-   GDT_BOOLEAN ValidateInField (const FC& HitFc, const STRING& FieldName) const;
-   GDT_BOOLEAN ValidateInField (const FC& HitFc, FILE *Fp, const size_t Total = 0) const;
-   GDT_BOOLEAN ValidateInField (const FC& HitFc, const void *Buffer, const size_t Length) const;
-   GDT_BOOLEAN ValidateInField (const FC& HitFc, const GPTYPE *Buffer, const size_t Total) const;
+   bool ValidateInField (const FC& HitFc, const STRING& FieldName) const;
+   bool ValidateInField (const FC& HitFc, FILE *Fp, const size_t Total = 0) const;
+   bool ValidateInField (const FC& HitFc, const void *Buffer, const size_t Length) const;
+   bool ValidateInField (const FC& HitFc, const GPTYPE *Buffer, const size_t Total) const;
 
    size_t GetTotal() const { return FieldTotal; }
 
-   GDT_BOOLEAN SetFieldName(const STRING& fieldName, GDT_BOOLEAN Disk=GDT_FALSE);
-   GDT_BOOLEAN GetFieldName(STRING *fieldNamePtr) const;
+   bool SetFieldName(const STRING& fieldName, bool Disk=false);
+   bool GetFieldName(STRING *fieldNamePtr) const;
    STRING      GetFieldName() const { return FieldName; }
 
    ~FCACHE();
 private:
-   size_t LoadFieldCache(const STRING& fieldName, GDT_BOOLEAN useDisk);
+   size_t LoadFieldCache(const STRING& fieldName, bool useDisk);
    size_t GetZones (const GPTYPE HitGp, const STRING& fieldName, FCT *Zones);
 
 /* Private data */
    MMAP        Cache;    	// Memory Maped 
    FILE       *Fp;		// Stream
-   GDT_BOOLEAN Disk;     	// Use disk or memory?
+   bool Disk;     	// Use disk or memory?
    FC          Range;    	// Start and End points
    size_t      FieldTotal;	// How many Fields?
    STRING      FieldName;	// The name of the loaded field

@@ -100,8 +100,8 @@ UNISOCK::UNISOCK(INT family, INT comm_type, INT protocol = 0)
   c_reverse_name_lookup = 1;
 //  c_hostname = NulString;
 //  c_ipaddress = NulString;
-  c_inetd_not_set_yet = GDT_TRUE;
-  c_inetd = GDT_FALSE;
+  c_inetd_not_set_yet = true;
+  c_inetd = false;
 #ifdef UNISOCK_WINSOCK
   WORD VersionReqd;
   WSADATA WSAData;
@@ -136,8 +136,8 @@ UNISOCK::UNISOCK(INT family, INT comm_type, INT protocol = 0, INT timeout = 3600
   c_reverse_name_lookup = 1;
 //  c_hostname = NulString;
 //  c_ipaddress = NulString;
-  c_inetd_not_set_yet = GDT_TRUE;
-  c_inetd = GDT_FALSE;
+  c_inetd_not_set_yet = true;
+  c_inetd = false;
   c_timeout = timeout;
 
 #ifdef UNISOCK_WINSOCK
@@ -574,17 +574,17 @@ UNISOCK& UNISOCK::operator=(const UNISOCK & Other)
 }
 
 
-GDT_BOOLEAN UNISOCK::StartedByInetd()
+bool UNISOCK::StartedByInetd()
 {
   if (c_inetd_not_set_yet)
     c_inetd = StartedByInetd();
   else 
-    c_inetd_not_set_yet = GDT_TRUE;
+    c_inetd_not_set_yet = true;
   return c_inetd;
 }
 
 
-GDT_BOOLEAN 
+bool 
 StartedByInetd()
 {
   struct sockaddr_in Name;
@@ -592,9 +592,9 @@ StartedByInetd()
   NameLen = sizeof(Name);
   if (getpeername(fileno(stdout), (SOCKADDR *)&Name, 
 		  (SOCKLEN_T *)&NameLen) == -1) {
-    return GDT_FALSE;
+    return false;
   } else {
-    return GDT_TRUE;
+    return true;
   }
 }
 

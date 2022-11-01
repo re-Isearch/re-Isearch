@@ -47,7 +47,7 @@ static void LocalGetSistring(STRING *s, size_t Gp, const UCHR *buf)
   s->SetTermLower(&buf[Gp], StringCompLength);
 }
 
-GDT_BOOLEAN MERGEUNIT::CacheLoad()
+bool MERGEUNIT::CacheLoad()
 {
 //  GPTYPE fe;
 //  int namecount=0;
@@ -63,7 +63,7 @@ GDT_BOOLEAN MERGEUNIT::CacheLoad()
   }
   if(found==0){
     LoadLim=0;
-    return(GDT_FALSE);
+    return(false);
   }
   TotalLoaded +=found;
 
@@ -135,7 +135,7 @@ GDT_BOOLEAN MERGEUNIT::CacheLoad()
 }
 
 // flush entire unit to file
-GDT_BOOLEAN MERGEUNIT::Flush(FILE *fout, FILE *sout)
+bool MERGEUNIT::Flush(FILE *fout, FILE *sout)
 { 
   message_log(LOG_DEBUG, "Merge Flush..");
 
@@ -154,7 +154,7 @@ GDT_BOOLEAN MERGEUNIT::Flush(FILE *fout, FILE *sout)
     Parent->GpFwrite(Gp,fout);
   }
   CachePosition=LoadLim;
-  return GDT_TRUE;
+  return true;
 }
 
 // write item in Gp to disk
@@ -168,22 +168,22 @@ void MERGEUNIT::Write(FILE *fout, FILE *sout)
 }
 
 
-GDT_BOOLEAN MERGEUNIT::Smallest(PSTRING Current)
+bool MERGEUNIT::Smallest(PSTRING Current)
 {
   const char *a = (const char *)(Current[0]); 
   const char *b = (const char *)(sistrings[CachePosition]);
   if(a && b && strcmp(a,b)<=0)
-    return(GDT_TRUE); 
+    return(true); 
   if (b && *b) *Current=b;
-  return(GDT_FALSE);
+  return(false);
 }
 
 
 // signify whether entire unit is empty
 
-GDT_BOOLEAN MERGEUNIT::Empty()
+bool MERGEUNIT::Empty()
 {
-  return ((fp==NULL)||(feof(fp)&&(CacheEmpty()==GDT_TRUE)));
+  return ((fp==NULL)||(feof(fp)&&(CacheEmpty()==true)));
 }
 
 GPTYPE MERGEUNIT::GetGp()
@@ -196,7 +196,7 @@ void MERGEUNIT::GetSistring(PSTRING a)
   *a=sistrings[CachePosition];
 }
 
-GDT_BOOLEAN MERGEUNIT::CacheEmpty()
+bool MERGEUNIT::CacheEmpty()
 {
   // note - we have a good value in Gp!!
   return (CachePosition==LoadLim);
@@ -222,18 +222,18 @@ void MERGEUNIT::SetLoadLimit(INT v)
 // reload cache if necessary
 // returns TRUE if cache is empty (nothing left)
 
-GDT_BOOLEAN MERGEUNIT::Load()
+bool MERGEUNIT::Load()
 {
-  if( CacheEmpty()==GDT_TRUE)
-    return CacheLoad() ? GDT_FALSE : GDT_TRUE;
-  return(GDT_FALSE);
+  if( CacheEmpty()==true)
+    return CacheLoad() ? false : true;
+  return(false);
 }
 
 
-GDT_BOOLEAN MERGEUNIT::Initialize(STRING& IndexFileName,const PINDEX iParent, FILEMAP *m,
+bool MERGEUNIT::Initialize(STRING& IndexFileName,const PINDEX iParent, FILEMAP *m,
 	size_t value)
 {
-  GDT_BOOLEAN val = GDT_FALSE;
+  bool val = false;
 
   const off_t Size = GetFileSize(IndexFileName);
   const INT Off = Size % sizeof (GPTYPE);
@@ -253,7 +253,7 @@ GDT_BOOLEAN MERGEUNIT::Initialize(STRING& IndexFileName,const PINDEX iParent, FI
 		(const char *)IndexFileName, (int)(magic&0xFF), (int)Parent->Version()-6);
 	Parent->ffclose(fp);
 	fp = NULL;
-	return GDT_FALSE;
+	return false;
       }
       // Move past magic
       if (fseek(fp, Off, SEEK_SET) == -1)

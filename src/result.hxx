@@ -124,32 +124,32 @@ public:
   void   GetRecordData(STRING *StringBuffer, DOCTYPE *DoctypePtr = NULL) const;
 
 
-  GDT_BOOLEAN PresentHit(const FC& Fc, STRING *StringBuffer, STRING *Term,
+  bool PresentHit(const FC& Fc, STRING *StringBuffer, STRING *Term,
         const STRING& BeforeTerm, const STRING& AfterTerm, DOCTYPE *DoctypePtr = NULL,
 	STRING *Tag = NULL) const;
 
   // Context..
   FC GetBestContextHit() const;
-  GDT_BOOLEAN PresentBestContextHit(STRING *StringBuffer, STRING *Term,
+  bool PresentBestContextHit(STRING *StringBuffer, STRING *Term,
 	const STRING& BeforeTerm = NulString, const STRING& AfterTerm = NulString,
 	DOCTYPE *DoctypePtr = NULL, STRING *FieldNamePtr=NULL) const;
 
   // Get the Context of the Nth hit
-  GDT_BOOLEAN PresentNthHit(size_t N, STRING *StringBuffer, STRING *Term,
+  bool PresentNthHit(size_t N, STRING *StringBuffer, STRING *Term,
         const STRING& BeforeTerm, const STRING& AfterTerm, DOCTYPE *DoctypePtr = NULL, STRING *TagPtr = NULL) const;
   // Get the Context of the first hit
-  GDT_BOOLEAN PresentFirstHit(STRING *StringBuffer, STRING *Term = NULL, DOCTYPE *DoctypePtr = NULL,
+  bool PresentFirstHit(STRING *StringBuffer, STRING *Term = NULL, DOCTYPE *DoctypePtr = NULL,
 	STRING *TagPtr = NULL) const {
     return PresentNthHit(1, StringBuffer, Term,  NulString,  NulString, DoctypePtr, TagPtr);
   }
-  GDT_BOOLEAN PresentFirstHit(STRING *StringBuffer, STRING *Term,
+  bool PresentFirstHit(STRING *StringBuffer, STRING *Term,
 	const STRING& BeforeTerm, const STRING& AfterTerm, DOCTYPE *DoctypePtr = NULL, STRING *TagPtr = NULL) const {
     return PresentNthHit(1, StringBuffer, Term, BeforeTerm, AfterTerm, DoctypePtr, TagPtr);
   }
   // XML versions of above
-  GDT_BOOLEAN XMLPresentNthHit(size_t N, STRING *StringBuffer, const STRING& Tag,
+  bool XMLPresentNthHit(size_t N, STRING *StringBuffer, const STRING& Tag,
         STRING *Term = NULL, DOCTYPE *DoctypePtr = NULL) const;
-  GDT_BOOLEAN XMLPresentFirstHit(STRING *StringBuffer, const STRING& Tag,
+  bool XMLPresentFirstHit(STRING *StringBuffer, const STRING& Tag,
 	STRING *Term = NULL, DOCTYPE *DoctypePtr = NULL) const {
     return XMLPresentNthHit(1, StringBuffer, Tag, Term, DoctypePtr);
   }
@@ -163,7 +163,7 @@ public:
 	const STRING& AfterTerm, FC Range, STRING *StringBuffer, DOCTYPE *DoctypePtr = NULL) const;
 
   void Write(FILE *fp) const;
-  GDT_BOOLEAN Read(FILE *fp);
+  bool Read(FILE *fp);
 
   ~RESULT();
 private:
@@ -196,7 +196,7 @@ inline void Write(const RESULT& Result, PFILE Fp)
   Result.Write(Fp);
 }
 
-inline GDT_BOOLEAN Read(PRESULT ResultPtr, PFILE Fp)
+inline bool Read(PRESULT ResultPtr, PFILE Fp)
 {
   return ResultPtr->Read(Fp);
 }

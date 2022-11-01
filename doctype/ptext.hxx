@@ -34,12 +34,12 @@ public:
         const STRING& RecordSyntax,  STRING *StringBufferPtr) const;
    ~PTEXT();
 
-  GDT_BOOLEAN IsIgnoreMetaField(const STRING& FieldName) const;
+  bool IsIgnoreMetaField(const STRING& FieldName) const;
 protected:
    PDFT     ParseStructure(FILE *Fp, const off_t Position = 0, const off_t Length = 0);
    void     ParseStructure(DFT *pdft, const char * const mem, const off_t Position, const off_t Length);
    void     InitFields();
-   void     AllowZeroLengthPages (GDT_BOOLEAN OnOff) { allowZeroLengthPages = OnOff; };
+   void     AllowZeroLengthPages (bool OnOff) { allowZeroLengthPages = OnOff; };
 
 private:
    STRING      satzFieldName;
@@ -53,10 +53,10 @@ private:
 
    STRING      firstsatzFieldName, firstparaFieldName, firstlineFieldName;
    STRING      headlineFieldName;
-   GDT_BOOLEAN allowZeroLengthPages;
-   GDT_BOOLEAN ParseBody;
-   GDT_BOOLEAN initFields;
-   GDT_BOOLEAN initAutoFields;
+   bool allowZeroLengthPages;
+   bool ParseBody;
+   bool initFields;
+   bool initAutoFields;
 };
 
 typedef PTEXT* PPTEXT;

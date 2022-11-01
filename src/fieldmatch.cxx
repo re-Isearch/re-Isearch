@@ -20,12 +20,12 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 #define SP_EQ(_x, _y) ((*(_x) == '\\' || *(_x) == '/' || *(_x) == '|') \
 	&& (*(_y) == '\\' || *(_y) == '/' || *(_y) == '|'))
 
-static GDT_BOOLEAN FieldPathGlob(const UCHR *pattern, const UCHR *str)
+static bool FieldPathGlob(const UCHR *pattern, const UCHR *str)
 {
 # define CASE(_x) toupper(_x)
   char c;
   const UCHR *cp;
-  GDT_BOOLEAN done = GDT_FALSE, ret_code, ok;
+  bool done = false, ret_code, ok;
   // Below is for vi fans
   const char OB = '{', CB = '}';
 
@@ -36,7 +36,7 @@ static GDT_BOOLEAN FieldPathGlob(const UCHR *pattern, const UCHR *str)
 	{
 	case '*':
 	  pattern++;
-	  ret_code = GDT_FALSE;
+	  ret_code = false;
 	  while ((*str != '\0') && (!(ret_code = FieldPathGlob (pattern, str++))));
 	  if (ret_code)
 	    {
@@ -51,7 +51,7 @@ static GDT_BOOLEAN FieldPathGlob(const UCHR *pattern, const UCHR *str)
 	repeat:
 	  if ((*pattern == '\0') || (*pattern == ']'))
 	    {
-	      done = GDT_TRUE;
+	      done = true;
 	      break;
 	    }
 	  if (*(pattern + 1) == '-')
@@ -60,7 +60,7 @@ static GDT_BOOLEAN FieldPathGlob(const UCHR *pattern, const UCHR *str)
 	      pattern += 2;
 	      if (*pattern == ']')
 		{
-		  done = GDT_TRUE;
+		  done = true;
 		  break;
 		}
 	      if ((*str < c) || (*str > *pattern))
@@ -94,7 +94,7 @@ static GDT_BOOLEAN FieldPathGlob(const UCHR *pattern, const UCHR *str)
          while ((*pattern != CB) && (*pattern != '\0'))
 	    {
 	      cp = str;
-	      ok = GDT_TRUE;
+	      ok = true;
 	      while (ok && (*cp != '\0') && (*pattern != '\0') &&
                  (*pattern != ',') && (*pattern != CB))
 		{
@@ -104,8 +104,8 @@ static GDT_BOOLEAN FieldPathGlob(const UCHR *pattern, const UCHR *str)
 		}		// while()
 	      if (*pattern == '\0')
 		{
-		  ok = GDT_FALSE;
-		  done = GDT_TRUE;
+		  ok = false;
+		  done = true;
 		  break;
 		}
 	      else if (ok)
@@ -133,7 +133,7 @@ static GDT_BOOLEAN FieldPathGlob(const UCHR *pattern, const UCHR *str)
 #ifdef EBUG
 	      cerr << "*str = " << *str << " != " << *pattern << endl;
 #endif
-	      done = GDT_TRUE;
+	      done = true;
 	    }
 	}			// switch()
     }				// while()
@@ -142,13 +142,13 @@ static GDT_BOOLEAN FieldPathGlob(const UCHR *pattern, const UCHR *str)
   return ((*str == '\0') && (*pattern == '\0'));
 }
 
-GDT_BOOLEAN STRING::FieldMatch(const STRING& OtherString) const
+bool STRING::FieldMatch(const STRING& OtherString) const
 {
   return FieldPathGlob((const UCHR *)m_pchData, (const UCHR *)OtherString.m_pchData);
 }
 
 
-GDT_BOOLEAN STRING::FieldMatch(const CHR * CString) const
+bool STRING::FieldMatch(const CHR * CString) const
 {
   return FieldPathGlob((const UCHR *)m_pchData, (const UCHR *)CString);
 }

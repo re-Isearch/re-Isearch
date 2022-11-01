@@ -151,7 +151,7 @@ void MAILDIGEST::ParseRecords (const RECORD& FileRecord)
 
   // Do we need the last bits?
   fseek(Fp, RecordStart, SEEK_SET);
-  GDT_BOOLEAN SkipEnd = GDT_TRUE; // Usually NOT!
+  bool SkipEnd = true; // Usually NOT!
 
   GPTYPE Off = Position; 
   // NOTE: In new engine we must only look to tail of record (END)
@@ -161,12 +161,12 @@ void MAILDIGEST::ParseRecords (const RECORD& FileRecord)
 	  strncmp("From: ", buf, 6) == 0 ||
 	  strncmp("Subject: ", buf, 9) == 0)
 	{
-	  SkipEnd = GDT_FALSE; // Oops, looks like real stuff
+	  SkipEnd = false; // Oops, looks like real stuff
 	}
 	Off += strlen(buf);
     }
 
-  if (SkipEnd == GDT_FALSE)
+  if (SkipEnd == false)
     {
 //cerr << "Position = " << Position << endl;
 //cerr << "\tRecord End = " << RecordEnd << endl;

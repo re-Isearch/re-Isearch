@@ -44,7 +44,7 @@ public:
   void   Dump(ostream& os = cout) const;
 
   void Write(FILE *fp) const;
-  GDT_BOOLEAN Read(FILE *fp);
+  bool Read(FILE *fp);
 
   ~SCANOBJ() { };
 private:
@@ -68,7 +68,7 @@ public:
 
   atomicSCANLIST   *Entry (const size_t Index) const;
   SCANOBJ     GetEntry (const size_t Index) const;
-  GDT_BOOLEAN GetEntry (const size_t Index, STRING *StringEntry, size_t *Freq) const;
+  bool GetEntry (const size_t Index, STRING *StringEntry, size_t *Freq) const;
 
   // Iteration methods
   atomicSCANLIST       *Next()       { return (atomicSCANLIST *)VLIST::GetNextNodePtr();       }
@@ -89,12 +89,12 @@ public:
   void FastAddEntry (const STRING& StringEntry, size_t Frequency);
 
   size_t UniqueSort ();
-  size_t UniqueSort (const size_t from, const size_t max, GDT_BOOLEAN add = GDT_TRUE);
+  size_t UniqueSort (const size_t from, const size_t max, bool add = true);
 
   void   Dump(ostream& os = cout) const;
 
   void Write(FILE *fp) const;
-  GDT_BOOLEAN Read(FILE *fp);
+  bool Read(FILE *fp);
 
   void Save(const STRING& Filename) const;
   void Load(const STRING& Filename);
@@ -207,14 +207,14 @@ public:
   }
   void Reverse()       { node()->Reverse(); }
   size_t UniqueSort () { return node()->UniqueSort();  }
-  size_t UniqueSort (const size_t from, const size_t max, GDT_BOOLEAN add = GDT_TRUE) {
+  size_t UniqueSort (const size_t from, const size_t max, bool add = true) {
     return node()->UniqueSort(from, max, add);
   }
 
-  GDT_BOOLEAN IsEmpty() const { return p_->table_->IsEmpty(); }
+  bool IsEmpty() const { return p_->table_->IsEmpty(); }
   size_t GetTotalEntries() const { return p_->table_->GetTotalEntries(); }
 
-  GDT_BOOLEAN GetEntry(const size_t Index, STRING *StringEntry, size_t *Freq) const {
+  bool GetEntry(const size_t Index, STRING *StringEntry, size_t *Freq) const {
     return p_->table_->GetEntry(Index, StringEntry, Freq);
   }
   SCANOBJ     GetEntry (const size_t Index) const {
@@ -224,7 +224,7 @@ public:
   void   Dump(ostream& os = cout) const { p_->table_->Dump(os); }
 
   void        Write(FILE *fp) const { p_->table_->Write(fp);   }
-  GDT_BOOLEAN Read(FILE *fp)        { return node()->Read(fp); }
+  bool Read(FILE *fp)        { return node()->Read(fp); }
 
 
   void   Save(const STRING& Filename) const { p_->table_->Save(Filename); }

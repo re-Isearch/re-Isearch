@@ -21,15 +21,15 @@ LISTOBJ::LISTOBJ () { message_log(LOG_DEBUG, "LISTOBJ Create");}
 LISTOBJ::LISTOBJ (const STRING&) {;}
 LISTOBJ::~LISTOBJ() { message_log(LOG_DEBUG, "LISTOBJ Destroy");}
 size_t      LISTOBJ::GetTotalEntries () const { return 0; }
-GDT_BOOLEAN LISTOBJ::Load(const STRING& arg) {
+bool LISTOBJ::Load(const STRING& arg) {
   message_log(LOG_DEBUG, "LISTOBJ::Load(%s)", arg.c_str());
-  return GDT_FALSE;
+  return false;
 }
-GDT_BOOLEAN LISTOBJ::InList(const STRING& Word) const {
+bool LISTOBJ::InList(const STRING& Word) const {
   return InList((const UCHR*)(Word.c_str()), Word.GetLength());
 }
-GDT_BOOLEAN LISTOBJ::InList (const UCHR*, const STRINGINDEX) const {
-  return GDT_FALSE;
+bool LISTOBJ::InList (const UCHR*, const STRINGINDEX) const {
+  return false;
 }
 #endif
 
@@ -247,7 +247,7 @@ size_t STRLIST::UniqueSort (const size_t from, const size_t max)
   return newTotal;
 }
 
-GDT_BOOLEAN STRLIST::DeleteEntry(const size_t pos)
+bool STRLIST::DeleteEntry(const size_t pos)
 {
   size_t i = 0;
   for (register STRLIST *p = Next(); p != this; p = p->Next() )
@@ -255,10 +255,10 @@ GDT_BOOLEAN STRLIST::DeleteEntry(const size_t pos)
       if (++i == pos)
 	{
 	  delete (STRLIST *)p->Disattach();
-	  return GDT_TRUE;
+	  return true;
 	}
     }
-  return GDT_FALSE;
+  return false;
 }
 
  
@@ -374,16 +374,16 @@ STRING STRLIST::GetEntry (const size_t Index) const
   return NulString;
 }
 
-GDT_BOOLEAN STRLIST::GetEntry (const size_t Index, STRING *StringEntry) const
+bool STRLIST::GetEntry (const size_t Index, STRING *StringEntry) const
 {
   STRLIST *NodePtr = (STRLIST *) (VLIST::GetNodePtr (Index));
   if (NodePtr)
     {
       *StringEntry = NodePtr->String;
-      return GDT_TRUE;
+      return true;
     }
   StringEntry->Clear();
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -857,7 +857,7 @@ void STRLIST::Write (PFILE Fp) const
     p->Value().Write(Fp);
 }
 
-GDT_BOOLEAN STRLIST::Read (PFILE Fp)
+bool STRLIST::Read (PFILE Fp)
 {
   STRLIST NewList;
   obj_t obj = getObjID(Fp);
@@ -896,7 +896,7 @@ UINT8 STRLIST::Hash() const
 }
 
 
-GDT_BOOLEAN STRLIST::Equals(const STRLIST& OtherList) const
+bool STRLIST::Equals(const STRLIST& OtherList) const
 {
   const STRLIST *p = Next();
   const STRLIST *p2 = OtherList.Next();
@@ -904,14 +904,14 @@ GDT_BOOLEAN STRLIST::Equals(const STRLIST& OtherList) const
   while (p != this && p2 != &OtherList)
     { 
       if (p->Value() != p2->Value())
-	return GDT_FALSE;
+	return false;
       p  = p->Next();
       p2 = p2->Next();
     }
  return (p == this && p2 == &OtherList);
 }
 
-GDT_BOOLEAN STRLIST::CaseEquals(const STRLIST& OtherList) const
+bool STRLIST::CaseEquals(const STRLIST& OtherList) const
 {
   const STRLIST *p = Next();
   const STRLIST *p2 = OtherList.Next();
@@ -919,7 +919,7 @@ GDT_BOOLEAN STRLIST::CaseEquals(const STRLIST& OtherList) const
   while (p != this && p2 != &OtherList)
     {
       if (!(p->Value() ^= p2->Value()))
-        return GDT_FALSE;
+        return false;
       p  = p->Next();
       p2 = p2->Next();
     }
@@ -939,21 +939,21 @@ void Write(const STRLIST Strlist, PFILE Fp)
   Strlist.Write(Fp);
 }
 
-GDT_BOOLEAN Read(PSTRLIST StrlistPtr, PFILE Fp)
+bool Read(PSTRLIST StrlistPtr, PFILE Fp)
 {
   return StrlistPtr->Read(Fp);
 }
 
 
 
-int STRLIST::Do(GDT_BOOLEAN (*Function)(const STRING& What))
+int STRLIST::Do(bool (*Function)(const STRING& What))
 {
   int count = 0;
   for (STRLIST *f = Next(); f != this; )
     {
       STRLIST *f0 = f;
       f = f->Next();
-      if (Function(f0->Value()) == GDT_TRUE)
+      if (Function(f0->Value()) == true)
 	delete f0->Disattach();
       else
 	count++;

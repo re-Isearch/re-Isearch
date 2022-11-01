@@ -20,7 +20,7 @@ public:
   MEMODOC(PIDBOBJ DbParent, const STRING& Name);
   const char *Description(PSTRLIST List) const;
 
-  GDT_BOOLEAN IsIgnoreMetaField(const STRING& Fieldname);
+  bool IsIgnoreMetaField(const STRING& Fieldname);
 
   FIELDTYPE GuessFieldType(const STRING& FieldName, const STRING& Contents);
 
@@ -38,7 +38,7 @@ public:
   void Present(const RESULT& ResultRecord, const STRING& ElementSet,
 	const STRING& RecordSyntax, PSTRING StringBuffer) const;
   void SourceMIMEContent(PSTRING StringBuffer) const;
-  void SetParseMessageStructure(GDT_BOOLEAN newVal=GDT_TRUE) {
+  void SetParseMessageStructure(bool newVal=true) {
     ParseMessageStructure = newVal;
   }
 
@@ -52,8 +52,8 @@ private:
   BUFFER       tmpBuffer, tagBuffer;
   STRING       help_text;
   PCHR        *parse_tags(PCHR b, off_t len);
-  GDT_BOOLEAN  ParseMessageStructure;
-  GDT_BOOLEAN  autoFieldTypes;
+  bool  ParseMessageStructure;
+  bool  autoFieldTypes;
   unsigned     recordsAdded;
 };
 
@@ -64,7 +64,7 @@ class _VMEMODOC : public MEMODOC {
 public:
   _VMEMODOC(PIDBOBJ DbParent, const STRING& Name);
 
-  GDT_BOOLEAN   GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
+  bool   GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
   void          ParseRecords(const RECORD& FileRecord);
 
   virtual off_t RunPipe(FILE *fp, const STRING& Source);

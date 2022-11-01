@@ -52,19 +52,19 @@ public:
   ~METADOC();
 
 protected:
-  void            SetPresentStyle(GDT_BOOLEAN useTable);
+  void            SetPresentStyle(bool useTable);
   PCHR           *parse_tags(PCHR b, off_t len);
-  GDT_BOOLEAN     GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const;
+  bool     GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const;
   void            SetSepChar(const STRING& Default);
 
 private:
   void            SetPresentType(const STRING& Default);
   BUFFER          tmpBuffer, tagBuffer;
-  GDT_BOOLEAN     allowWhiteBeforeField;
-  GDT_BOOLEAN     UseTable;
-  GDT_BOOLEAN     IgnoreTagWords;
+  bool     allowWhiteBeforeField;
+  bool     UseTable;
+  bool     IgnoreTagWords;
   CHR             sepChar;
-  GDT_BOOLEAN     autoFieldTypes;
+  bool     autoFieldTypes;
   unsigned        recordsAdded;
 };
 

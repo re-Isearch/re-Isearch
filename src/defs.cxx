@@ -114,7 +114,7 @@ const STRING __IB_DefaultDbName ("IB");
 const STRING __IB_DefaultDbName (".IB");
 #endif
 
-const char *__IB_Version = "4.0a";
+const char *__IB_Version = "4.9a";
 
 // Special Elements
 const STRING BRIEF_MAGIC    (ELEMENT_Brief); /* CNIDR "hardwires" this */
@@ -141,6 +141,9 @@ const STRING IsearchAttributeSet ("1.2.840.10003.3.1000.34.1");
 // Record Syntaxes
 //
 // Z39.50 Record Syxtax OIDs are: 1.2.840.10003.5
+
+// NEED TO Change this to use presentationsyntax methods!
+//
 const STRING SutrsRecordSyntax    ("1.2.840.10003.5.101");
 const STRING UsmarcRecordSyntax   ("1.2.840.10003.5.10");
 const STRING HtmlRecordSyntax     ("1.2.840.10003.5.108");
@@ -311,7 +314,7 @@ const CHR* _DbExt(enum DbExtensions which)
 int __IB_CheckUserRegistration(const char *file)
 {
 #ifndef MSDOS 
-  GDT_BOOLEAN Register = GDT_TRUE;
+  bool Register = true;
   const char *action = "New User";
   STRING Reg = GetUserHome(NULL) + file;
   if (FileExists(Reg))
@@ -324,7 +327,7 @@ int __IB_CheckUserRegistration(const char *file)
 	  fscanf(fp, "IB v%s %lo", Version, &l);
 	  fclose(fp);
 	  if (strcmp(Version, __IB_Version) == 0 && l == timeout)
-	    Register = GDT_FALSE;
+	    Register = false;
 	}
       action = "Update";
     }
@@ -334,7 +337,7 @@ int __IB_CheckUserRegistration(const char *file)
 
       FILE *fp, *fp_reg = fopen(Reg, "wt");
       if (fp_reg == NULL)
-	return GDT_FALSE;
+	return false;
 
 #ifdef MAIL_CMD
       static const char *mail_cmd = MAIL_CMD;
@@ -403,11 +406,11 @@ force_registration:
       else
 	{
 	  fclose(fp_reg);
-	  return GDT_FALSE; // Error
+	  return false; // Error
 	}
     }
 #endif
-  return GDT_TRUE;
+  return true;
 }
 
 #ifndef MSDOS
@@ -685,7 +688,9 @@ Please update or install a permanent license key.",
 #ifndef NO_RLDCACHE
   if (Cache == NULL)
     {
-      Cache = new RLDCACHE("/tmp/ib_cache.rld");
+      const char *location = "/tmp/ib_cache.rld";
+      Cache = new RLDCACHE( location );
+      message_log (iLOG_DEBUG, "Opened an RLDCACHE %s", location );
     }
 #endif
 

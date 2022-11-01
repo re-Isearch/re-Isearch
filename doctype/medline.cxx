@@ -215,7 +215,7 @@ INT MEDLINE::UnifiedNames (const TagTable_t *Table, const size_t Elements,
   INT n;
 
   // Go via the registry..
-  if ((n = DOCTYPE::UnifiedNames (Tag, Value, GDT_FALSE)) != 0)
+  if ((n = DOCTYPE::UnifiedNames (Tag, Value, false)) != 0)
     {
       return n;
     }
@@ -766,7 +766,7 @@ DocPresent (const RESULT& ResultRecord,
    }
 
   STRING Value;
-  GDT_BOOLEAN UseHtml =(RecordSyntax == HtmlRecordSyntax);
+  bool UseHtml =(RecordSyntax == HtmlRecordSyntax);
   if (UseHtml)
     {
       HtmlHead (ResultRecord, ElementSet, StringBuffer);

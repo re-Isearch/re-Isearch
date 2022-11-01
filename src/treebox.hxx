@@ -21,7 +21,7 @@ public:
   int         Insert(const STRING& Data);
   void        Print(FILE *fp) const;
   size_t      GetTotalEntries() const;
-  GDT_BOOLEAN IsEmpty() const { return _data.IsEmpty(); }
+  bool IsEmpty() const { return _data.IsEmpty(); }
 
   BSTNODE    *Left()  const { return _left;  }
   BSTNODE    *Right() const { return _right; }

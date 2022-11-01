@@ -37,7 +37,7 @@ public:
   void  CloseAll();
 
   INT   ffclose(const STRING& Filename);
-  GDT_BOOLEAN hasOpenHandle(const STRING& Filename) const;
+  bool hasOpenHandle(const STRING& Filename) const;
 
   void   Dump(ostream& os = cout) const;
   STRING Dump(const STRING& FileName) const {

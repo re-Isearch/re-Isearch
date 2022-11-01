@@ -22,6 +22,8 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 #include <string.h>
 #include "common.hxx"
 #include "dictionary.hxx"
+#include "string.hxx"
+
 #include <iostream>
 using namespace std;
 
@@ -249,7 +251,7 @@ void Dictionary::Add(const STRING& name, Object *obj)
 //*********************************************************************
 //   Remove an entry from the hash table.
 //
-GDT_BOOLEAN Dictionary::Remove(const STRING& name)
+bool Dictionary::Remove(const STRING& name)
 {
     unsigned int	hash = hashCode(name);
     int			index = hash % tableLength;
@@ -269,10 +271,10 @@ GDT_BOOLEAN Dictionary::Remove(const STRING& name)
 	    }
 	    count--;
             delete e;
-	    return GDT_TRUE;
+	    return true;
 	}
     }
-    return GDT_FALSE;
+    return false;
 }
 
 
@@ -337,7 +339,7 @@ Object *Dictionary::Find(const STRING& name) const
 
 //*********************************************************************
 //
-GDT_BOOLEAN Dictionary::Exists(const char *name) const
+bool Dictionary::Exists(const char *name) const
 {
     unsigned int	hash = hashCode(name);
     size_t		index = hash % tableLength;
@@ -347,13 +349,13 @@ GDT_BOOLEAN Dictionary::Exists(const char *name) const
     {
 	if (e->hash == hash && e->key == name)
 	{
-	    return GDT_TRUE;
+	    return true;
 	}
     }
-    return GDT_FALSE;
+    return false;
 }
 
-GDT_BOOLEAN Dictionary::Exists(const STRING& name) const
+bool Dictionary::Exists(const STRING& name) const
 {
     unsigned int        hash = hashCode(name);
     size_t              index = hash % tableLength;
@@ -363,10 +365,10 @@ GDT_BOOLEAN Dictionary::Exists(const STRING& name) const
     {
         if (e->hash == hash && e->key == name)
         {
-            return GDT_TRUE;
+            return true;
         }
     }
-    return GDT_FALSE;
+    return false;
 }
 
 

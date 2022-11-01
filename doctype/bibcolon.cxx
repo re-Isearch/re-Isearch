@@ -341,7 +341,7 @@ Present (const RESULT& ResultRecord,
 	  Headline << " (" << Misc << ")";
 	}
       if (RecordSyntax == HtmlRecordSyntax)
-	HtmlCat (Headline, StringBuffer, GDT_FALSE);
+	HtmlCat (Headline, StringBuffer, false);
       else
 	StringBuffer->Cat (Headline);
       return;

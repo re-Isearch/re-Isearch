@@ -37,12 +37,12 @@ STRING STRSTACK::Pop ()
 }
 
 
-GDT_BOOLEAN STRSTACK::Pop (STRING *Value)
+bool STRSTACK::Pop (STRING *Value)
 {
   if (CurrIndex >= 1)
     return StackList.GetEntry (CurrIndex--, Value);
   Value->Clear();
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -51,9 +51,9 @@ size_t STRSTACK::GetTotalEntries ()
   return CurrIndex;
 }
 
-GDT_BOOLEAN STRSTACK::IsEmpty ()
+bool STRSTACK::IsEmpty ()
 {
-  return (CurrIndex ? GDT_FALSE : GDT_TRUE);
+  return (CurrIndex ? false : true);
 }
 
 STRING STRSTACK::Examine() const
@@ -61,14 +61,14 @@ STRING STRSTACK::Examine() const
   return StackList.GetEntry(CurrIndex);
 }
 
-GDT_BOOLEAN STRSTACK::Examine (STRING *Value) const
+bool STRSTACK::Examine (STRING *Value) const
 {
   if (CurrIndex >= 1)
     return StackList.GetEntry (CurrIndex, Value);
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN STRSTACK::Examine (size_t i, STRING *Value) const
+bool STRSTACK::Examine (size_t i, STRING *Value) const
 {
   return StackList.GetEntry (i, Value);
 }

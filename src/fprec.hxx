@@ -21,8 +21,8 @@ public:
   int GetPriority() const                     { return Priority;        }
   void SetClosed()                            { RefCount--;             }
   void SetOpened()                            { RefCount++;             }
-  GDT_BOOLEAN GetClosed() const               { return RefCount <= 0;   }
-  GDT_BOOLEAN GetOpened() const               { return RefCount > 0;    }
+  bool GetClosed() const               { return RefCount <= 0;   }
+  bool GetOpened() const               { return RefCount > 0;    }
   void SetOpenMode(const STRING& NewMode)     { OpenMode = NewMode;     }
   const STRING& GetOpenMode() const           { return OpenMode;        }
   void Dispose();

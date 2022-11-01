@@ -71,10 +71,10 @@ Description:	Common functions
 static const char SEP = '\\';
 static const char dot_ib[] = "_ib";
 
-GDT_BOOLEAN IsPathSep(const int c)
+bool IsPathSep(const int c)
 {
-  if(c == '\\' || c == '/') return GDT_TRUE;
-    return GDT_FALSE;
+  if(c == '\\' || c == '/') return true;
+    return false;
 }
 
 
@@ -82,7 +82,7 @@ GDT_BOOLEAN IsPathSep(const int c)
 static const char dot_ib[] = ".ib";
 static const char SEP = '/';
 
-GDT_BOOLEAN IsPathSep(const int c)
+bool IsPathSep(const int c)
 {
   return (c == SEP);
 }
@@ -93,7 +93,7 @@ GDT_BOOLEAN IsPathSep(const int c)
 
 //////////////////////////// CODE //////////////////////////////
 static STRLIST     GarbageFileList;
-static GDT_BOOLEAN FinalGarbageCollect = GDT_FALSE;
+static bool FinalGarbageCollect = false;
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -127,18 +127,18 @@ int EraseFileContents(FILE *Fp)
 }
 
 
-static GDT_BOOLEAN _remove(const STRING& Fn)
+static bool _remove(const STRING& Fn)
 {
   if (Fn.Unlink() && FileExists(Fn))
     {
       if (FinalGarbageCollect)
 	message_log (LOG_WARN|LOG_ERRNO, "Could not remove '%s'. Remove by hand.", Fn.c_str());
-      return GDT_FALSE;
+      return false;
     }
-  return GDT_TRUE;
+  return true;
 }
 
-static int _CollectFileGarbage(GDT_BOOLEAN Final = GDT_FALSE)
+static int _CollectFileGarbage(bool Final = false)
 {
   int count = 0;
   if (!GarbageFileList.IsEmpty())
@@ -155,7 +155,7 @@ static int _CollectFileGarbage(GDT_BOOLEAN Final = GDT_FALSE)
 
 static void _FinalCollectFileGarbage()
 {
-  _CollectFileGarbage(GDT_TRUE);
+  _CollectFileGarbage(true);
 }
 
 int  AddtoGarbageFileList(const STRING& Fn)
@@ -184,9 +184,9 @@ STRING FixMicrosoftPathNames(const STRING& Path)
       STRING newPath(Path);
       //UNC pathes
       if(bPos == 1 && Path.GetChar(2) == '\\')
-	newPath.Replace("/", "\\", GDT_TRUE);
+	newPath.Replace("/", "\\", true);
       else
-	newPath.Replace("\\", "/", GDT_TRUE);
+	newPath.Replace("\\", "/", true);
       return newPath;
    }
   return Path;
@@ -308,7 +308,7 @@ STRING GlobalSharedLibraryName ()
     if(GetModuleFileName(_hglobalSharedLibrary, tmp, sizeof(tmp)/sizeof(tmp[0])))
       {
 	STRING name = RemovePath (_sglobalSharedLibraryName = tmp);
-	size_t x = name.Find('.', GDT_TRUE); if (x) name.EraseAfter(x);
+	size_t x = name.Find('.', true); if (x) name.EraseAfter(x);
 	return name;
       }
   }
@@ -463,7 +463,7 @@ STRING FindExecutable(const STRING& Argv0)
   const char *path = getenv("PATH");
   if (path && *path)
     {
-      GDT_BOOLEAN found = GDT_FALSE;
+      bool found = false;
       STRLIST PathList;
       STRING  spec;
 #ifdef _WIN32
@@ -474,14 +474,14 @@ STRING FindExecutable(const STRING& Argv0)
 
       PathList.SplitPaths(Path);
       for (const STRLIST *ptr = PathList.Next();
-	found == GDT_FALSE && ptr != &PathList; ptr = ptr->Next())
+	found == false && ptr != &PathList; ptr = ptr->Next())
 	{
 	  spec = ptr->Value();
 	  AddTrailingSlash(&spec);
 	  spec.Cat (Argv0);
 	  found = FileExists (spec);
 #ifdef _WIN32
-	  if (found == GDT_FALSE)
+	  if (found == false)
 	    found = Exists (spec + ".exe");
 #endif
 	}
@@ -491,23 +491,23 @@ STRING FindExecutable(const STRING& Argv0)
 }
 
 
-GDT_BOOLEAN ContainsPathSep(const STRING& Path)
+bool ContainsPathSep(const STRING& Path)
 {
   const char *path = Path.c_str();
   while (*path)
     {
-      if (IsPathSep(*path)) return GDT_TRUE;
+      if (IsPathSep(*path)) return true;
 #ifdef _WIN32
-      if (*path == ':') return GDT_TRUE;
+      if (*path == ':') return true;
 #endif
       path++;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
 //
-GDT_BOOLEAN IsAbsoluteFilePath(const STRING& Path)
+bool IsAbsoluteFilePath(const STRING& Path)
 {
 #ifdef _WIN32
 
@@ -516,21 +516,21 @@ GDT_BOOLEAN IsAbsoluteFilePath(const STRING& Path)
   	 isalpha(Path.GetChr(1))	&&
      Path.GetChr(2) == ':'		&&
      IsPathSep(Path.GetChr(3))	 )
-    return GDT_TRUE;
+    return true;
 
   // Network drive convensiton \\xxxx\ where xxxx is machine id
   if(Path.GetLength() >= 3	&&
      Path.GetChr(1) == '\\' &&
      Path.GetChr(2) == '\\'  )
-    return GDT_TRUE;
+    return true;
 
   //Any path beginning with a path separator is absolute within the current drive only.
   //Therefore I (PS) recommend to not regard it as absolute
   /*
   if((Ch = IsPathSep(Path.GetChr(1)))
-    return GDT_TRUE;
+    return true;
   */
-  return GDT_FALSE;
+  return false;
 
 #else
   return Path.GetChr(1) == SEP;
@@ -540,7 +540,7 @@ GDT_BOOLEAN IsAbsoluteFilePath(const STRING& Path)
 
 
 //
-GDT_BOOLEAN IsRootDirectory(const STRING& Path)
+bool IsRootDirectory(const STRING& Path)
 {
 #ifdef _WIN32
   // Standard drive convention
@@ -548,7 +548,7 @@ GDT_BOOLEAN IsRootDirectory(const STRING& Path)
   	 isalpha(Path.GetChr(1))  &&
      Path.GetChr(2) == ':'    &&
      IsPathSep(Path.GetChr(3)) )
-    return GDT_TRUE;
+    return true;
 
   // Network drive convensiton \\xxxx\ where xxxx is machine id
   if(Path.GetLength() >= 3  &&
@@ -560,9 +560,9 @@ GDT_BOOLEAN IsRootDirectory(const STRING& Path)
   	size_t i2 = Path.Find("\\", 2);
   	if((i1 == NOT_FOUND || i1 == Path.GetLength()-1) &&
   	   (i2 == NOT_FOUND || i2 == Path.GetLength()-1)  )
-  		return GDT_TRUE; 
+  		return true; 
   }
-  return GDT_FALSE;
+  return false;
 #else
   return (Path.GetLength() == 1 && Path.GetChr(1) == SEP);
 #endif
@@ -656,7 +656,7 @@ int RenameFile(const STRING& From, const STRING& To)
 }
 
 
-GDT_BOOLEAN FileExists(const STRING& Path)
+bool FileExists(const STRING& Path)
 {
   struct stat st_buf;
 
@@ -664,13 +664,13 @@ GDT_BOOLEAN FileExists(const STRING& Path)
   if (stat(Path.c_str(), &st_buf) == 0)
     {
       if (!S_ISDIR((st_buf.st_mode))) // Not a directory?
-        return GDT_TRUE;
+        return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 // Is the file executable?
-GDT_BOOLEAN ExeExists(const STRING& Path)
+bool ExeExists(const STRING& Path)
 {
 #ifdef _WIN32
   // Like IsExecutable but can look at extensions
@@ -684,7 +684,7 @@ GDT_BOOLEAN ExeExists(const STRING& Path)
 
 
 // Does it exist and is it a directory?
-GDT_BOOLEAN DirectoryExists(const STRING& Path)
+bool DirectoryExists(const STRING& Path)
 {
   struct stat  st_buf;
   const size_t len = Path.GetLength();
@@ -696,9 +696,9 @@ GDT_BOOLEAN DirectoryExists(const STRING& Path)
 	return DirectoryExists(Path + ".");
 #endif
       if (stat(Path.c_str(), &st_buf)== 0 && S_ISDIR(st_buf.st_mode))
-        return GDT_TRUE;
+        return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 CHR PathSepChar()
@@ -821,6 +821,7 @@ STRING RemoveFileName (const STRING& PathName)
 }
 
 
+#if 0
 // Make a temporary file name, opens it to write
 // whhen OK, closes it and returns the name...
 STRING MakeTempFileName(const STRING& Fn)
@@ -853,11 +854,12 @@ STRING MakeTempFileName(const STRING& Fn)
   fclose(oFp);
  return TmpName;
 }
+#endif
 
-GDT_BOOLEAN WritableDir(const STRING& path)
+bool WritableDir(const STRING& path)
 {
   const size_t len = path.Length();
-  if (len == 0) return GDT_TRUE;
+  if (len == 0) return true;
 
 #ifdef _WIN32
   if (IsPathSep(path.GetChr(len)))
@@ -868,14 +870,14 @@ GDT_BOOLEAN WritableDir(const STRING& path)
   if (DirectoryExists(path) && (
 	_access(path.c_str(), 4 ) != 0 ||
 	_access(path.c_str(), 6) == 0)) {
-    return GDT_TRUE;
+    return true;
   } else {
    // We are given a file in a directory
    const STRING  dir (PATHNAME(path).GetPath());
    if (DirectoryExists(dir) && (
 	_access(path.c_str(), 4) != 0 ||
 	_access(path.c_str(), 6) == 0))
-     return GDT_TRUE;
+     return true;
   }
 #else
   struct stat st_buf;
@@ -888,21 +890,21 @@ check:
 	  const gid_t my_gid = getegid();
 	  // const int perms    = st_buf.st_mode & 0x1FF;
 	  if (my_uid == 0)
-	    return GDT_TRUE;
+	    return true;
 #define _S_IS(flag) (((st_buf.st_mode)&(flag)) == (flag))
 	  if (st_buf.st_uid == my_uid)
 	    {
 	      if (_S_IS(S_IWUSR))
-		return GDT_TRUE;
+		return true;
 	    }
 	  else if (st_buf.st_gid == my_gid)
 	    {
 	      if (_S_IS(S_IWGRP) && _S_IS(S_IRGRP))
-		return GDT_TRUE;
+		return true;
 	    }
 	  else if (_S_IS(S_IWOTH) && _S_IS(S_IROTH))
 	    {
-	      return GDT_TRUE;
+	      return true;
 	    }
 #undef _S_IS
 	  // Try to open something?
@@ -919,7 +921,7 @@ check:
 		    // It opens!! OK!
 		    fclose(fp);
 		    unlink(test);
-		    return GDT_TRUE;
+		    return true;
 		  }
 		break; // Nope
             }
@@ -936,10 +938,10 @@ check:
 	goto check;
     }
 #endif
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN Exists(const STRING &path)
+bool Exists(const STRING &path)
 {
   struct stat st_buf;
   int res = stat(path.c_str(), &st_buf);
@@ -949,7 +951,7 @@ GDT_BOOLEAN Exists(const STRING &path)
 //
 // Does file exist and can it be run?
 //
-GDT_BOOLEAN IsExecutable(const STRING &path)
+bool IsExecutable(const STRING &path)
 {
   struct stat st_buf;
   int         res = stat(path.c_str(), &st_buf);
@@ -957,7 +959,7 @@ GDT_BOOLEAN IsExecutable(const STRING &path)
 #if defined(_MSDOS) || defined(_WIN32)
   // if it does not stat or if its a directory its not a bin
   if (res < 0 || S_ISDIR(st_buf.st_mode))
-    return GDT_FALSE;
+    return false;
   // WIN32  stat does not implement S_IXUSR
   // Windows executables are .COM, .BAT or .EXE
   STRING ext ( path.Left('.') );
@@ -965,7 +967,7 @@ GDT_BOOLEAN IsExecutable(const STRING &path)
 	(ext ^= "exe") || (ext ^= "com") || (ext ^= "bat"));
 #else
 
-  return res == 0 ?  (st_buf.st_mode & S_IXUSR) == S_IXUSR : GDT_FALSE;
+  return res == 0 ?  (st_buf.st_mode & S_IXUSR) == S_IXUSR : false;
 #endif
 }
 
@@ -1017,7 +1019,7 @@ off_t GetFileSize (const CHR *path)
   return 0;                     // Error (return 0 instead of -1)
 }
 
-GDT_BOOLEAN SetUserName(const STRING& Id)
+bool SetUserName(const STRING& Id)
 {
 #if defined(_MSDOS) || defined(_WIN32)
   // Could use NIS, MS-Mail or other site specific programs
@@ -1025,7 +1027,7 @@ GDT_BOOLEAN SetUserName(const STRING& Id)
 //  SetProfileString(IB_SECTION, eUSERNAME, Id.c_str()); 
   // Now check that its set
   char buf[256];
-  GDT_BOOLEAN b = _IB_GetUserName(buf, sizeof(buf)/sizeof(buf[0])-1);
+  bool b = _IB_GetUserName(buf, sizeof(buf)/sizeof(buf[0])-1);
   if (b) b = Id.Equals(buf);
   return b;
 #else
@@ -1040,20 +1042,20 @@ GDT_BOOLEAN SetUserName(const STRING& Id)
 	{
 	  if (errno == 0)
 	    errno =  EINVAL;
-	  return GDT_FALSE; // No user
+	  return false; // No user
 	}
     }
   if (uid >= 0 && setuid (uid) >= 0)
-    return GDT_TRUE;
-  return GDT_FALSE;
+    return true;
+  return false;
 #endif
 }
 
 
-GDT_BOOLEAN SetUserGroup(const STRING& Id)
+bool SetUserGroup(const STRING& Id)
 {
 #if defined(_MSDOS) || defined(_WIN32)
-  return GDT_FALSE;
+  return false;
 #else
   gid_t gid = (gid_t) Id.GetLong();
   errno = 0;
@@ -1066,12 +1068,12 @@ GDT_BOOLEAN SetUserGroup(const STRING& Id)
         {
           if (errno == 0)
             errno =  EINVAL;
-          return GDT_FALSE; // No group
+          return false; // No group
         }
     }
   if (gid >= 0 && setgid (gid) >= 0)
-    return GDT_TRUE;
-  return GDT_FALSE;
+    return true;
+  return false;
 #endif
 }
 
@@ -1128,7 +1130,7 @@ STRING _win_MyFiles()
       const char *drive = getenv("HOMEDRIVE");
       const char *path  = getenv("HOMEPATH");
       const char *share = getenv("HOMESHARE"); 
-      GDT_BOOLEAN   want_msg = (drive && path) || share ? GDT_FALSE : GDT_TRUE;
+      bool   want_msg = (drive && path) || share ? false : true;
 
       if (drive == NULL && path == NULL && share && DirectoryExists(share))
 	{
@@ -1238,7 +1240,7 @@ static char *_Realpath (char *path)
  	if(path[0] && path[1])
   	{
 #ifdef _WIN32
-  		GDT_BOOLEAN bPathChanged = FALSE;
+  		bool bPathChanged = FALSE;
 #endif
 		for (char *p = &path[2]; *p; p++)
 		{
@@ -1630,7 +1632,7 @@ int winMkDir(const STRING& Dir)
 	sDir.Replace("/", "\\");
 
 	int nLastError = 0;
-	GDT_BOOLEAN bIsUNC = Dir.Left((size_t)2) == "\\\\"; 
+	bool bIsUNC = Dir.Left((size_t)2) == "\\\\"; 
 	if(bIsUNC)	sDir = sDir.Mid(2);
 	
 	ArraySTRING	aDir;
@@ -1696,9 +1698,9 @@ int winMkDir(const STRING& Dir)
 }
 #endif
 
-int MkDir(const STRING& Dir, int Mask, GDT_BOOLEAN Forced)
+int MkDir(const STRING& Dir, int Mask, bool Forced)
 {
-  if (Forced == GDT_FALSE)
+  if (Forced == false)
     return MkDir(Dir, Mask);
 
   struct stat stbuf;
@@ -1736,18 +1738,18 @@ int MkDir(const STRING& Dir, int Mask)
 }
 
 #ifdef _WIN32
-GDT_BOOLEAN MkDirs(const STRING& Path, int Mask)
+bool MkDirs(const STRING& Path, int Mask)
 {
   int mask = (Mask == 0 ? DefMask : Mask);
   /*
    * Path expansion is not supported in WIN32 here.
    * Escape path, expand and unescape it before calling.
    */
-  if(MKDIR(Path, mask) == 0 || errno == EEXIST) return GDT_TRUE;
-    return GDT_FALSE;
+  if(MKDIR(Path, mask) == 0 || errno == EEXIST) return true;
+    return false;
 }
 #else
-GDT_BOOLEAN MkDirs(const STRING& Path, int Mask)
+bool MkDirs(const STRING& Path, int Mask)
 {
   int         res = 0;
   struct stat st_buf;
@@ -2136,10 +2138,10 @@ size_t tRead(int fd, void *bufptr, size_t length, struct timeval *tv)
 ///////////////////////////////////////////////////////////////////
 
 
-GDT_BOOLEAN IsBigEndian ()
+bool IsBigEndian ()
 {
   UINT2 Test = 1;
-  return (*((PUCHR) (&Test)) == 0) ? GDT_TRUE : GDT_FALSE;
+  return (*((PUCHR) (&Test)) == 0) ? true : false;
 }
 
 // Like strdup()
@@ -2252,16 +2254,16 @@ INT StrNCmp (const UCHR *p1, const UCHR *p2, const INT n)
 }
 
 
-GDT_BOOLEAN FileGlob(const UCHR *pattern, const UCHR *str)
+bool FileGlob(const UCHR *pattern, const UCHR *str)
 {
 #ifdef _WIN32
   //Allways convert "\" in str to "/"
   // ==> For globbing allways use "/" for path separators in patterns
   STRING sstr(str);
   sstr.Replace("\\", "/");
-  return Glob(pattern, sstr.ToLower(), GDT_TRUE);
+  return Glob(pattern, sstr.ToLower(), true);
 #else
-  return Glob(pattern, str, GDT_TRUE);
+  return Glob(pattern, str, true);
 #endif
 }
 
@@ -2577,7 +2579,7 @@ STRING GetTempDir()
 	return tempDir;
 }
 
-STRING GetTempFilename(const char *prefix, GDT_BOOLEAN Secure)
+STRING GetTempFilename(const char *prefix, bool Secure)
 {
 #ifdef _WIN32
     STRING filename;
@@ -2614,7 +2616,7 @@ STRING GetTempFilename(const char *prefix, GDT_BOOLEAN Secure)
 	  if (Secure)
 	    {
 #ifdef WIN32
-	      int fd = open(filename, O_CREAT|O_TRUNC|O_RDWR);
+	      int fd = open(tfilename, O_CREAT|O_TRUNC|O_RDWR);
 
 #else
 	      int fd = open (tfilename, O_CREAT|O_EXCL|O_TRUNC|O_RDWR, 0600);
@@ -2637,7 +2639,7 @@ STRING GetTempFilename(const char *prefix, GDT_BOOLEAN Secure)
 
 
 #ifdef _WIN32
-GDT_BOOLEAN _IB_GetPlatformName(char *buf, int maxSize)
+bool _IB_GetPlatformName(char *buf, int maxSize)
 {
 	OSVERSIONINFO osvi;
 	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
@@ -2647,7 +2649,7 @@ GDT_BOOLEAN _IB_GetPlatformName(char *buf, int maxSize)
 		if((sysname = getenv("OS")) == NULL)
 		{
 			buf[0] = '\0';
-			return GDT_FALSE;
+			return false;
 		}
 		strncpy(buf, sysname, maxSize);
 		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2655,7 +2657,7 @@ GDT_BOOLEAN _IB_GetPlatformName(char *buf, int maxSize)
 		//Shouldn´t this be buf[maxSize-1] = '\0'; ???????????? 
 		//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		buf[maxSize] = '\0';
-		return GDT_TRUE;
+		return true;
 	}
 
 	STRING sosvi;
@@ -2698,16 +2700,16 @@ GDT_BOOLEAN _IB_GetPlatformName(char *buf, int maxSize)
 	//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	buf[maxSize] = '\0';
 
- 	return GDT_TRUE;
+ 	return true;
 }
 
 // Get full hostname (eg. icebear.nonmonotonic.net)
-GDT_BOOLEAN _IB_GetHostName(char *buf, int maxSize)
+bool _IB_GetHostName(char *buf, int maxSize)
 {
   //Use win api
   DWORD msize = maxSize;
   if(GetComputerName(buf, &msize))
-  	return GDT_TRUE;
+  	return true;
   	
   //Try with env
   char *sysname;
@@ -2718,11 +2720,11 @@ GDT_BOOLEAN _IB_GetHostName(char *buf, int maxSize)
   //Shouldn´t this be buf[maxSize-1] = '\0'; ???????????? 
   //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   buf[maxSize] = '\0';
-  return *buf ? GDT_TRUE : GDT_FALSE;
+  return *buf ? true : false;
 }
 
 // Get user ID e.g. jacs
-GDT_BOOLEAN _IB_GetUserId(char *buf, int maxSize)
+bool _IB_GetUserId(char *buf, int maxSize)
 {
   /* Note:
    * We could get a real ID by using GetUserNameEx.
@@ -2732,7 +2734,7 @@ GDT_BOOLEAN _IB_GetUserId(char *buf, int maxSize)
   //Use win api
   DWORD msize = maxSize;
   if(GetUserName(buf, &msize))
-  	return GDT_TRUE;
+  	return true;
 
   //Try with env
   char *username;
@@ -2743,11 +2745,11 @@ GDT_BOOLEAN _IB_GetUserId(char *buf, int maxSize)
   //Shouldn´t this be buf[maxSize-1] = '\0'; ???????????? 
   //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   buf[maxSize] = '\0';
-  return buf && *buf ? GDT_TRUE : GDT_FALSE;
+  return buf && *buf ? true : false;
 }
 
 // Get user name e.g. Edward Zimmermann 
-GDT_BOOLEAN _IB_GetUserName(char *buf, int maxSize)
+bool _IB_GetUserName(char *buf, int maxSize)
 {
 	return _IB_GetUserId(buf, maxSize);
 }
@@ -2797,10 +2799,10 @@ rlim_t _IB_GetTotalMemory()
 	return (rlim_t)(_memstat.dwTotalPhys);
 }
 
-GDT_BOOLEAN _IB_GetmyMail (PSTRING Name, PSTRING Address)
+bool _IB_GetmyMail (PSTRING Name, PSTRING Address)
 {
 	/* No way to have an "official" E-Mail adress in Windows*/
-	return GDT_FALSE;
+	return false;
 }
 
 #else		/* UNIX */
@@ -2808,7 +2810,7 @@ GDT_BOOLEAN _IB_GetmyMail (PSTRING Name, PSTRING Address)
 #include <sys/utsname.h>
 
 // UNIX
-GDT_BOOLEAN _IB_GetPlatformName(char *buf, int maxSize)
+bool _IB_GetPlatformName(char *buf, int maxSize)
 {
   struct utsname name;
   if (uname(&name) == 0)
@@ -2821,13 +2823,13 @@ GDT_BOOLEAN _IB_GetPlatformName(char *buf, int maxSize)
       strcat(tmp, name.machine);
       strncpy(buf, tmp, maxSize);
       buf[maxSize] = '\0';
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
-GDT_BOOLEAN _IB_GetHostName(char *buf, int maxSize)
+bool _IB_GetHostName(char *buf, int maxSize)
 {
 #if defined(SI_HOSTNAME)
   return sysinfo (SI_HOSTNAME, buf, maxSize);
@@ -2898,7 +2900,7 @@ Set hostid to the Ethernet MAC address of its main networking card.");
 }
 
 
-GDT_BOOLEAN _IB_GetUserId(char *buf, int maxSize)
+bool _IB_GetUserId(char *buf, int maxSize)
 {
 #ifdef BSD
   struct passwd  *pwent = getpwuid(getuid());
@@ -2916,7 +2918,7 @@ GDT_BOOLEAN _IB_GetUserId(char *buf, int maxSize)
 }
 
 // UNIX
-GDT_BOOLEAN _IB_GetUserName(char *buf, int maxSize)
+bool _IB_GetUserName(char *buf, int maxSize)
 {
   static char tmp[256];
 
@@ -2949,7 +2951,7 @@ GDT_BOOLEAN _IB_GetUserName(char *buf, int maxSize)
   if (name == NULL || *name == '\0')
     {
       buf[0] = tmp[0] = '\0';
-      return GDT_FALSE;
+      return false;
     }
   strncpy(tmp, name, maxSize-1);
   if ((name = getenv("ORGANIZATION")) != NULL)
@@ -2960,7 +2962,7 @@ GDT_BOOLEAN _IB_GetUserName(char *buf, int maxSize)
     }
   strncpy(buf, tmp, maxSize-1);
   buf[maxSize] = '\0';
-  return GDT_TRUE;
+  return true;
 }
 #endif
 
@@ -2997,7 +2999,7 @@ GDT_BOOLEAN _IB_GetUserName(char *buf, int maxSize)
 **	Output : char * to allocated URL
 */
 // UNIX
-GDT_BOOLEAN _IB_GetmyMail (PSTRING Name, PSTRING Address)
+bool _IB_GetmyMail (PSTRING Name, PSTRING Address)
 {
   Address->Clear();
   Name->Clear();
@@ -3032,9 +3034,9 @@ GDT_BOOLEAN _IB_GetmyMail (PSTRING Name, PSTRING Address)
 	      Address->form("%s@%s", user_id, buf);
 	    }
 	}
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -3283,7 +3285,7 @@ FILE_ID& FILE_ID::operator=(const STRING& nFilename)
   return *this;
 }
 
-GDT_BOOLEAN FILE_ID::operator== (const FILE_ID& OtherId) const
+bool FILE_ID::operator== (const FILE_ID& OtherId) const
 {
   return (inode == OtherId.inode) && (device == OtherId.device);
 }
@@ -3302,7 +3304,7 @@ STRING ProcessOwner(long uid)
   struct passwd *pass = getpwuid (Uid);
   if (pass)
     {
-      GDT_BOOLEAN have_gecos = (pass->pw_gecos && *(pass->pw_gecos));
+      bool have_gecos = (pass->pw_gecos && *(pass->pw_gecos));
 
       String << (have_gecos ? pass->pw_gecos : pass->pw_name);
       if (have_gecos)
@@ -3333,7 +3335,7 @@ STRING ResourceOwner(const STRING& Path)
       struct passwd *pass = getpwuid (stbuf.st_uid);
       if (pass)
         {
-	  GDT_BOOLEAN have_gecos = (pass->pw_gecos && *(pass->pw_gecos));
+	  bool have_gecos = (pass->pw_gecos && *(pass->pw_gecos));
 
 	  String << (have_gecos ? pass->pw_gecos : pass->pw_name);
 	  if (have_gecos)
@@ -3380,31 +3382,31 @@ STRING ResourcePublisher(const STRING& Path)
 }
 
 
-GDT_BOOLEAN IsRunningProcess(long pid)
+bool IsRunningProcess(long pid)
 {
 #if defined(_MSDOS) || defined(_WIN32)
   /* Note: Could do better - maybe later.  */
   //Only need to check processes that are no me!
-  if(pid == GetCurrentProcessId()) return GDT_TRUE;
+  if(pid == GetCurrentProcessId()) return true;
 
   HANDLE hProc = NULL;
-  if(!(hProc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid))) return GDT_FALSE;
+  if(!(hProc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid))) return false;
   CloseHandle(hProc);
-  return GDT_TRUE;
+  return true;
 #else
   // Only need to check processes that are no me!
   if (pid <= 0 || (pid != (long)getpid() && kill (pid, 0) == -1 &&  errno == ESRCH))  
-    return GDT_FALSE;
-  return GDT_TRUE; // Looks OK
+    return false;
+  return true; // Looks OK
 #endif
 }
   
 
-GDT_BOOLEAN IsMyProcess(long uid)
+bool IsMyProcess(long uid)
 {
 #if defined(_MSDOS) || defined(_WIN32)
   /*Note: * Can't check because we currently have no implementation for getuid() */
-  return GDT_TRUE;
+  return true;
 #else
   return ((uid_t)uid == getuid ()) ;
 #endif
@@ -3540,7 +3542,7 @@ int PathCompare(const char *Path1, const char *Path2)
   if (Path1 == NULL) return -1;
   if (Path2 == NULL) return  1;
 
-  GDT_BOOLEAN s = GDT_FALSE;
+  bool s = false;
   // Find first difference
   while (*Path1 && (((s = IsPathSep(*Path1)) && IsPathSep(*Path2)) || (C(*Path1) == C(*Path2))))
     {
@@ -3549,7 +3551,7 @@ int PathCompare(const char *Path1, const char *Path2)
 	  // Note:  x//y//z matches x/y/z 
 	  while (IsPathSep(*++Path1)) /* loop */;
 	  while (IsPathSep(*++Path2)) /* loop */;
-	  s = GDT_FALSE;
+	  s = false;
 	}
       else
 	Path1++, Path2++;
@@ -3697,6 +3699,11 @@ BOOL IsRealFile(STRING sAbsFN)
 }
 
 #endif
+
+bool DBExists(const STRING& FileSpec)
+{
+  return FileExists ( FileSpec + DbExtIndex);
+}
 
 
 

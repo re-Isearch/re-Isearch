@@ -170,7 +170,7 @@ void MAILFOLDER::LoadFieldTable()
       Db->AddFieldType(MailPriority, FIELDTYPE::computed);
 */
       Db->AddFieldType("X-UID", FIELDTYPE::numerical);
-      loadFieldTable = GDT_FALSE;
+      loadFieldTable = false;
     }
   DOCTYPE::LoadFieldTable();
 }
@@ -274,10 +274,10 @@ X-Sun-Content-Lines:
 // Loads of possible tags are in mail headers
 // but we will ONLY use the following for
 // tags.
-GDT_BOOLEAN MAILFOLDER::accept_tag(const PCHR tag) const
+bool MAILFOLDER::accept_tag(const PCHR tag) const
 {
   if (!RestrictFields)
-    return GDT_TRUE; // Anything goes
+    return true; // Anything goes
 
   int n = 0;
   if (tag && *tag) {
@@ -286,7 +286,7 @@ GDT_BOOLEAN MAILFOLDER::accept_tag(const PCHR tag) const
       n = StrCaseCmp(tag, Keywords[i]);
     } while (++i < sizeof(Keywords)/sizeof(Keywords[0]) && n > 0);
   }
-  return n == 0 ? GDT_TRUE : GDT_FALSE;
+  return n == 0 ? true : false;
 }
 
 const CHR * MAILFOLDER::Seperator() const
@@ -310,7 +310,7 @@ MAILFOLDER::MAILFOLDER (PIDBOBJ DbParent, const STRING& Name) :
   RestrictFields = Getoption(RESTRICT_FIELDS, YES).GetBool();
   message_log (LOG_DEBUG, msg, Doctype.c_str(), RESTRICT_FIELDS, (int)RestrictFields);
 
-  loadFieldTable = GDT_TRUE;
+  loadFieldTable = true;
   LoadFieldTable();
 }
 
@@ -381,8 +381,8 @@ void MAILFOLDER::ParseRecords (const RECORD& FileRecord)
   // Read lines from file and search for record seperation
   enum {Header, ContentLength, DigestMagic} LookFor = Header;
 #ifdef DIGEST
-  GDT_BOOLEAN IsDigest = GDT_FALSE;
-  GDT_BOOLEAN DigestKnown = GDT_FALSE;
+  bool IsDigest = false;
+  bool DigestKnown = false;
 #endif
   do
     {
@@ -425,7 +425,7 @@ void MAILFOLDER::ParseRecords (const RECORD& FileRecord)
 		}
 	      Start = SavePosition;
 #ifdef DIGEST
-	      IsDigest = DigestKnown = GDT_FALSE;
+	      IsDigest = DigestKnown = false;
 #endif
 	    }
 	}
@@ -456,7 +456,7 @@ void MAILFOLDER::ParseRecords (const RECORD& FileRecord)
 	     // AOL Listserver software
 	     ((buf[6] == '\"' || buf[6] == '\t') && strncmp(buf+7, "L-Soft list server at", 21)) == 0)
 	    {
-	      IsDigest = GDT_TRUE;
+	      IsDigest = true;
 	    }
 	}
      else if (LookFor == ContentLength && !IsDigest &&
@@ -472,7 +472,7 @@ void MAILFOLDER::ParseRecords (const RECORD& FileRecord)
 	    }
 	  if (StrNCaseCmp(tcp, "Digest Number ", 14) == 0)
 	    {
-	      IsDigest = GDT_TRUE;
+	      IsDigest = true;
 	    }
 	  else
 	    {
@@ -490,7 +490,7 @@ void MAILFOLDER::ParseRecords (const RECORD& FileRecord)
 		  if (strncasecmp(tp, "Re: ", 4) != 0)
 		    {
 		      // Looks like a maildigest
-		      IsDigest = GDT_TRUE;
+		      IsDigest = true;
 		    }
 		}
 	    }
@@ -542,9 +542,9 @@ ________________________________________________________________________", 72, 0
 		(!Digests[i].need_cr || isspace(buf[Digests[i].magic_len])) )
 		{
 		  LookFor = Header;
-		  IsDigest = GDT_FALSE;
+		  IsDigest = false;
 		  Record.SetDocumentType (Digests[i].doctype);
-		  DigestKnown = GDT_TRUE;
+		  DigestKnown = true;
 		  message_log (LOG_INFO, "Identified %s (Digest)", Digests[i].doctype);
 		  LookFor = Header;
 		  break;
@@ -885,7 +885,7 @@ void MAILFOLDER::AfterIndexing()
  */
 // TODO: Rework using a state machine. The current implementation
 // is getting to be a collection of kludges.
-PCHR MAILFOLDER::NameKey (PCHR buf, GDT_BOOLEAN wantName) const
+PCHR MAILFOLDER::NameKey (PCHR buf, bool wantName) const
 {
   char p1, p2, b1, b2;
   char email[1024];
@@ -965,14 +965,14 @@ PCHR MAILFOLDER::NameKey (PCHR buf, GDT_BOOLEAN wantName) const
   // problem with "Lee Newman (814) 865-1818" <EWN%PSULIAS.BITNET@vm.gmd.de>
   // Need to look for ". Used Quoted logic
 
-  GDT_BOOLEAN Quoted = GDT_FALSE;
+  bool Quoted = false;
   for (s = email; *s ; s++)
     {
       if (*s == '"') Quoted = !Quoted;
       else if (*s == '\\') s++;
       else if (!Quoted && *s == p2) break;
     }
-  Quoted = GDT_FALSE;
+  Quoted = false;
   for (e = email; *e ; e++)
     {
       if (*e == '"') Quoted = !Quoted;
@@ -987,14 +987,14 @@ PCHR MAILFOLDER::NameKey (PCHR buf, GDT_BOOLEAN wantName) const
     }
 
   // Look for bits..
-  Quoted = GDT_FALSE;
+  Quoted = false;
   for (s = email; *s ; s++)
     {
       if (*s == '"') Quoted = !Quoted;
       else if (*s == '\\') s++;
       else if (!Quoted && *s == p1) break;
     }
-  Quoted = GDT_FALSE;
+  Quoted = false;
   for (e = email; *e ; e++) 
     {
       if (*e == '"') Quoted = !Quoted;
@@ -1010,14 +1010,14 @@ PCHR MAILFOLDER::NameKey (PCHR buf, GDT_BOOLEAN wantName) const
     }
   else
     {
-      Quoted = GDT_FALSE;
+      Quoted = false;
       for (s = email; *s ; s++) 
 	{
 	  if (*s == '"') Quoted = !Quoted;
 	  else if (*s == '\\') s++; 
 	  else if (!Quoted && *s == b1) break; 
 	}
-      Quoted = GDT_FALSE;
+      Quoted = false;
       for (e = email; *e ; e++)  
 	{
 	  if (*e == '"') Quoted = !Quoted;
@@ -1055,7 +1055,7 @@ void MAILFOLDER::Mailto (const STRING &Value, const STRING &Subject, const STRIN
     {
       char buf[1024];
       Value.GetCString (buf, sizeof (buf) / sizeof (char) - 1);
-      CHR *addr = NameKey (buf, GDT_FALSE); // was false 31 Oct 2003
+      CHR *addr = NameKey (buf, false); // was false 31 Oct 2003
 
       STRING address (addr);
       *StringBufferPtr << "<A HREF=\"mailto:";
@@ -1091,7 +1091,7 @@ void MAILFOLDER::Mailto (const STRING &Value, const STRING &Subject, const STRIN
       /* Include NAME for mailto: */
       // Get name of target
       Value.GetCString (buf, sizeof (buf) / sizeof (char) - 1);
-      STRING name = NameKey (buf, GDT_TRUE);
+      STRING name = NameKey (buf, true);
       name.Replace ("\"", "");
       char sep = '?';
       if (Subject.GetLength())
@@ -1110,7 +1110,7 @@ void MAILFOLDER::Mailto (const STRING &Value, const STRING &Subject, const STRIN
       if (Subject.GetLength())
 	*StringBufferPtr << "\" TITLE=\"Re: " << Subject;
       StringBufferPtr->Cat("\">");
-      HtmlCat (name, StringBufferPtr, GDT_FALSE);
+      HtmlCat (name, StringBufferPtr, false);
       StringBufferPtr->Cat ("</A>");
     }
 }
@@ -1226,9 +1226,9 @@ DocPresent (const RESULT& ResultRecord, const STRING& ElementSet,
       DOCTYPE::XmlMetaPresent(ResultRecord, RecordSyntax, StringBufferPtr);
       return;
     }
-  GDT_BOOLEAN UseHtml = (RecordSyntax == HtmlRecordSyntax);
+  bool UseHtml = (RecordSyntax == HtmlRecordSyntax);
 
-  GDT_BOOLEAN Shrink = GDT_FALSE;
+  bool Shrink = false;
   if (UseHtml)
     {
       // NaviPress needs to be shrunk
@@ -1237,7 +1237,7 @@ DocPresent (const RESULT& ResultRecord, const STRING& ElementSet,
 	{
 	  // Don't shrink "NaviPress/1.1 AOLpress/1.2"
 	  if (strstr(tcp, "AOLpress") == NULL)
-	    Shrink = GDT_TRUE;
+	    Shrink = true;
 	}
     }
 
@@ -1282,20 +1282,20 @@ DocPresent (const RESULT& ResultRecord, const STRING& ElementSet,
 	References.Pack();
 
       STRING      Value;
-      GDT_BOOLEAN mailingList = GDT_FALSE;
+      bool mailingList = false;
 
 
       DOCTYPE::Present (ResultRecord, MailListId, &Value);
       if (Value.GetLength())
 	{
-          mailingList = GDT_TRUE;
+          mailingList = true;
 	  if (UseHtml)
 	    StringBufferPtr->Cat (colOpen);
 	  *StringBufferPtr << DescriptiveName(Language, MailListId, &tmp) << ": ";
 	  if (UseHtml)
 	    {
 	      StringBufferPtr->Cat ( "</TH><TD>" );
-	      HtmlCat(ResultRecord, Value.Trim(GDT_FALSE), StringBufferPtr);
+	      HtmlCat(ResultRecord, Value.Trim(false), StringBufferPtr);
 	      StringBufferPtr->Cat ( "</TD></TR>" );
 	    }
 	  else
@@ -1313,7 +1313,7 @@ DocPresent (const RESULT& ResultRecord, const STRING& ElementSet,
 	    {
 	      char buf[1024];
 	      Value.GetCString (buf, sizeof (buf) / sizeof (char) - 1);
-              STRING name = NameKey (buf, GDT_TRUE); // @@@@ 
+              STRING name = NameKey (buf, true); // @@@@ 
 
               // Encode Anchor per IETF URL Specification
               *StringBufferPtr << colOpen << "<A HREF=\"" <<
@@ -1380,7 +1380,7 @@ TARGET=\"From\">" << DescriptiveName(Language, MailFrom, &tmp) << ":</TH><TD>";
       Present (ResultRecord, MailDate, RecordSyntax, &Value);
       if (Value.GetLength ())
 	{
-	  GDT_BOOLEAN date_link = GDT_FALSE;
+	  bool date_link = false;
 	  SRCH_DATE date (ResultRecord.GetDate());
 	  if (UseHtml)
 	    {
@@ -1398,7 +1398,7 @@ TARGET=\"From\">" << DescriptiveName(Language, MailFrom, &tmp) << ":</TH><TD>";
 			<< d
 			<< "%22/RANK%3DC\" onMouseOver=\"\
 self.status='Search for date'; return true\" TARGET=\"" << MailDate << "\">";
-		      date_link = GDT_TRUE;
+		      date_link = true;
 		    }
 		}
 	    }
@@ -1569,24 +1569,24 @@ TARGET=\"Thread\">";
 	  DOCTYPE::Present (ResultRecord, MailSender, &Value);
 	}
 
-      GDT_BOOLEAN skip_item = GDT_FALSE;
+      bool skip_item = false;
       if (Recipient.GetLength() != 0 && (Value != Recipient))
         {
 	  // May still be same...
 	  char buf[512];
 	  Recipient.GetCString(buf, sizeof(buf)/sizeof(char) - 1);
-	  STRING to (NameKey(buf, GDT_FALSE));
+	  STRING to (NameKey(buf, false));
           Value.GetCString(buf, sizeof(buf)/sizeof(char) - 1);
-          STRING from (NameKey(buf, GDT_FALSE));
+          STRING from (NameKey(buf, false));
 
-	  GDT_BOOLEAN skip = (to ^= from);
+	  bool skip = (to ^= from);
 	  skip_item = skip;
 	  
 	  if (!skip)
 	    {
 	      // Check with reply address
 	      ReplyAddress.GetCString(buf, sizeof(buf)/sizeof(char) - 1);
-	      STRING reply (NameKey(buf, GDT_FALSE));
+	      STRING reply (NameKey(buf, false));
 	      skip = ((reply ^= from) || (reply ^= to));
 	    }
 
@@ -1806,7 +1806,7 @@ void MAILFOLDER::Present (const RESULT& ResultRecord,
 {
   if (ElementSet.Equals(BRIEF_MAGIC))
     {
-      GDT_BOOLEAN Html = (RecordSyntax == HtmlRecordSyntax);
+      bool Html = (RecordSyntax == HtmlRecordSyntax);
       STRING      rsyntax;
 
       if (Html)
@@ -1826,7 +1826,7 @@ void MAILFOLDER::Present (const RESULT& ResultRecord,
       if (Html)
 	{
 	  StringBuffer->Clear();
-	  HtmlCat(ResultRecord, Headline, StringBuffer, GDT_FALSE);
+	  HtmlCat(ResultRecord, Headline, StringBuffer, false);
 	}
       else
 	*StringBuffer = Headline;
@@ -1838,7 +1838,7 @@ void MAILFOLDER::Present (const RESULT& ResultRecord,
       if (StringBuffer->GetLength() == 0)
 	{
 	  STRING Val;
-	  GDT_BOOLEAN want_author;
+	  bool want_author;
 	  if ((want_author = (ElementSet ^=  MailAuthorName)) || (ElementSet ^= MailAuthorAddress) ||
 		(ElementSet ^= MailAuthor) )
 	    {
@@ -1922,7 +1922,7 @@ MAILFOLDER::~MAILFOLDER ()
  *    From foo@bar Fri Sep 30 21:15:05 EET -0100 1994
  *
  */
-GDT_BOOLEAN MAILFOLDER::IsMailFromLine (const char *line) const
+bool MAILFOLDER::IsMailFromLine (const char *line) const
 {
   const char magic[] = "From "; // Mail magic
 
@@ -1941,7 +1941,7 @@ GDT_BOOLEAN MAILFOLDER::IsMailFromLine (const char *line) const
 
   // Looking at a "magic" line?
   if (strncmp(line, magic, sizeof(magic)/sizeof(char) - 1) != 0)
-    return GDT_FALSE;
+    return false;
 
   // Move past magic
   lp = line + (sizeof(magic)/sizeof(char) - 1);
@@ -1967,7 +1967,7 @@ GDT_BOOLEAN MAILFOLDER::IsMailFromLine (const char *line) const
     }
 
   // Minimum number of fields?
-  if (n < 7) return GDT_FALSE;
+  if (n < 7) return false;
 
   fp = fields;
 
@@ -1986,7 +1986,7 @@ GDT_BOOLEAN MAILFOLDER::IsMailFromLine (const char *line) const
 
   if (n == 7)
     {
-      if (!isdigit(fp[6][0])) return GDT_FALSE;
+      if (!isdigit(fp[6][0])) return false;
       // From someone Tue Sep 19 15:33 1995
       fp[7] = fp[6]; // year
       fp[6] = (char *)"00"; // missing seconds
@@ -2006,7 +2006,7 @@ GDT_BOOLEAN MAILFOLDER::IsMailFromLine (const char *line) const
   for (i = 0; i < dlen; i += dtoklen)
     if (strncmp (*fp, &legal_day[i], dtoklen) == 0)
       break;
-  if (i == dlen) return GDT_FALSE; // Not a legal day
+  if (i == dlen) return false; // Not a legal day
 
   // Check the month (Field 2)-- 12 months in a year
   fp++;
@@ -2015,23 +2015,23 @@ GDT_BOOLEAN MAILFOLDER::IsMailFromLine (const char *line) const
   for (i = 0; i < mlen; i += mtoklen)
     if (strncmp (*fp, &legal_month[i], mtoklen) == 0)
       break;
-  if (i == mlen) return GDT_FALSE; // Not a legal month
+  if (i == mlen) return false; // Not a legal month
 
   // Check the numbers (bounds condition)-- field 3 to 7
   for (i = 0; i < (sizeof(legal_numbers)/sizeof(legal_numbers[0])); i += 2)
     {
       lp = *++fp;
       if (!isdigit (*lp)) {
-	return GDT_FALSE;
+	return false;
       }
       n = atoi (lp);
       if (n < legal_numbers[i] || legal_numbers[i + 1] < n) {
-	 return GDT_FALSE;
+	 return false;
       }
     }
 
   // Looks good
-  return GDT_TRUE;
+  return true;
 #undef MAX_FIELDS
 }
 
@@ -2039,40 +2039,40 @@ GDT_BOOLEAN MAILFOLDER::IsMailFromLine (const char *line) const
  * Start of News:
  * "Article <Number> of <Newsgroup>:"
  */
-GDT_BOOLEAN MAILFOLDER::IsNewsLine (const char *line) const
+bool MAILFOLDER::IsNewsLine (const char *line) const
 {
   const char magic[] = "Article ";
 
   // News folder Magic?
   if (strncmp (line, magic, sizeof(magic)/sizeof(char) - 1) != 0)
-    return GDT_FALSE;
+    return false;
 
   // Move past magic
   line += (sizeof(magic)/sizeof(char) - 1);
   /* Skip white space */
   while (isspace (*line)) line++;
 
-  if (!isdigit (*line)) return GDT_FALSE; // No #
-  if (atoi (line) < 1 ) return GDT_FALSE; // Illegal Number
+  if (!isdigit (*line)) return false; // No #
+  if (atoi (line) < 1 ) return false; // Illegal Number
   /* skip number data */
   while (isdigit (*line)) line++;
 
-  if (!isspace (*line)) return GDT_FALSE;
+  if (!isspace (*line)) return false;
   /* Skip white space */
   while (isspace (*line)) line++;
 
-  if (line[0] != 'o' || line[1] != 'f') return GDT_FALSE; // Missing "of"
+  if (line[0] != 'o' || line[1] != 'f') return false; // Missing "of"
   /* Skip the of */
   line += 2;
 
-  if (!isspace (*line)) return GDT_FALSE;
+  if (!isspace (*line)) return false;
   /* Skip white space */
   while (isspace (*line)) line++;
 
-  if (*line == '\0') return GDT_FALSE; // Missing newsgroup name
+  if (*line == '\0') return false; // Missing newsgroup name
 
   /* OK, if was "Article NNN of XXX.XXX.XXXXX:" */
-  return GDT_TRUE;
+  return true;
 }
 
 

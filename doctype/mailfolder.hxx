@@ -48,7 +48,7 @@ public:
   virtual STRING& DescriptiveName(const STRING& Language,
 	const STRING& FieldName, PSTRING Value) const;
   // To Manipulate the "acceptable" mail fields
-  virtual GDT_BOOLEAN accept_tag(const PCHR tag) const;
+  virtual bool accept_tag(const PCHR tag) const;
   // For children
   virtual const CHR *Seperator() const;
 
@@ -57,9 +57,9 @@ public:
 
 protected:
   // Utility functions
-  GDT_BOOLEAN IsMailFromLine(const char *line) const;
-  GDT_BOOLEAN IsNewsLine(const char *line) const;
-  PCHR NameKey(PCHR buf, GDT_BOOLEAN wantName) const;
+  bool IsMailFromLine(const char *line) const;
+  bool IsNewsLine(const char *line) const;
+  PCHR NameKey(PCHR buf, bool wantName) const;
   INT EncodeKey (STRING *Key, const CHR *line, size_t val_len) const;
   void Mailto (const STRING &Value, PSTRING StringBufferPtr) const;
   void Mailto (const STRING &Value, const STRING &Subject, PSTRING StringBufferPtr) const;
@@ -70,9 +70,9 @@ protected:
 
 private:
 
-  GDT_BOOLEAN  loadFieldTable;
-  GDT_BOOLEAN  RestrictFields;
-  GDT_BOOLEAN  ParseMessageStructure;
+  bool  loadFieldTable;
+  bool  RestrictFields;
+  bool  ParseMessageStructure;
   BUFFER       TagBuffer;
   BUFFER       tempBuffer;
 };

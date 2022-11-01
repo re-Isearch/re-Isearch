@@ -18,10 +18,10 @@ public:
   signed char   *c_str() const  { return (signed char *)Buffer; }
   unsigned char *c_ustr() const { return Buffer; }
 
-  GDT_BOOLEAN  Ok() const;
-  GDT_BOOLEAN  Free();
-  GDT_BOOLEAN  Free(const char *What);
-  GDT_BOOLEAN  Free(const char *Class, const char *What);
+  bool  Ok() const;
+  bool  Free();
+  bool  Free(const char *What);
+  bool  Free(const char *Class, const char *What);
 
   size_t   Size() const              { return Buffer_size;             }
   operator const char *() const      { return (const char *)Buffer;    }

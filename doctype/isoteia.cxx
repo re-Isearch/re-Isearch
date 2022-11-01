@@ -236,9 +236,9 @@ DATERANGE  IBDOC_ISOTEIA::ParseDateRange(const STRING& Buffer) const
 // Handy routine to make sure we always get back a numeric value where
 // appropriate and where expected.  It correctly handles the (obviously)
 // non-numeric value UNKNOWN by sending back a 0.
-static GDT_BOOLEAN GetNumericValue(const STRING& Buffer, const STRING& FieldName, DOUBLE *val)
+static bool GetNumericValue(const STRING& Buffer, const STRING& FieldName, DOUBLE *val)
 {
-  GDT_BOOLEAN result = GDT_FALSE;
+  bool result = false;
   STRING Hold (Buffer);
   STRING sTag;
 
@@ -268,10 +268,10 @@ static GDT_BOOLEAN GetNumericValue(const STRING& Buffer, const STRING& FieldName
 	  if (Hold.IsNumber())
 	    {
 	      *val = Hold;
-	      result = GDT_TRUE;
+	      result = true;
 	    }
 	  if (Hold ^= "UNKNOWN")
-	    result = GDT_TRUE;
+	    result = true;
 	}
     }
   return(result);

@@ -72,7 +72,7 @@ void ANTIHTML::BeforeIndexing()
   STRING S;
   STRLIST StrList;
   Db->GetDocTypeOptions (&StrList);
-  if (StrList.GetValue ("CONFIG-FILE", &S) == GDT_FALSE)
+  if (StrList.GetValue ("CONFIG-FILE", &S) == false)
     S = "/opt/BSN/conf/antihtml.ini";
   useBuiltin = (TagRegistry->ProfileLoadFromFile (S) == 0);
 */
@@ -480,7 +480,7 @@ Bogus use of <%s> found, using <%s> as end tag.", Doctype.c_str(), fn.c_str(),
       // Store the Attribute value if in our list 
       if ((IsHTMLAttributeTag (*tags_ptr)) > 0)
 	{
-	  store_attributes (/* Db, */ pdft, RecBuffer, *tags_ptr, GDT_TRUE,
+	  store_attributes (/* Db, */ pdft, RecBuffer, *tags_ptr, true,
 		&Key, &RecDate);
 	}
       else if (p == NULL)

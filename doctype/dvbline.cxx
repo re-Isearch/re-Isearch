@@ -361,8 +361,8 @@ DocPresent (const RESULT& ResultRecord,
          const STRING& ElementSet, const STRING& RecordSyntax,
          PSTRING StringBuffer) const
 {
-  GDT_BOOLEAN ShowAll = (RecordSyntax == DVBHtmlRecordSyntax);
-  GDT_BOOLEAN UseHtml = (ShowAll || (RecordSyntax == HtmlRecordSyntax));
+  bool ShowAll = (RecordSyntax == DVBHtmlRecordSyntax);
+  bool UseHtml = (ShowAll || (RecordSyntax == HtmlRecordSyntax));
 
   if (ElementSet.Equals (FULLTEXT_MAGIC))
     {
@@ -487,7 +487,7 @@ void DVBLINE::Present (const RESULT& ResultRecord,
 	 const STRING& ElementSet, const STRING& RecordSyntax,
 	 PSTRING StringBuffer) const
 {
-  GDT_BOOLEAN UseHtml = (RecordSyntax == HtmlRecordSyntax);
+  bool UseHtml = (RecordSyntax == HtmlRecordSyntax);
   *StringBuffer = "";
   STRING Tmp;
   if (ElementSet.Equals (BRIEF_MAGIC))
@@ -590,7 +590,7 @@ void DVBLINE::Present (const RESULT& ResultRecord,
 onMouseOver=\"self.status='Suche " << ElementSet << "'; return true\" \
 HREF=\"i.search?DATABASE%3D" << DBname << "/TERM%3D%22" << ElementSet
 		<< "/" << URLencode(Value, &Tmp) << "%22\">";
-	  HtmlCat(Value, StringBuffer, GDT_FALSE);
+	  HtmlCat(Value, StringBuffer, false);
 	  *StringBuffer << "</A>";
 	}
     }
@@ -625,7 +625,7 @@ HREF=\"i.search?DATABASE%3D" << DBname
 		}
 	      else URLencode(tp, &Tmp);
 	      *StringBuffer << Anchor << Tmp << "%22\">";
-	      HtmlCat(tp, StringBuffer, GDT_FALSE);
+	      HtmlCat(tp, StringBuffer, false);
 	      *StringBuffer << "</A>; ";
 	      tp = tp2;
             }
@@ -660,7 +660,7 @@ HREF=\"i.search?DATABASE%3D" << DBname
 	      *tp2++='\0';
 	      while (isspace(*tp)) tp++;
 	      *StringBuffer << Anchor << URLencode(tp, &Tmp) << "%22\">";
-	      HtmlCat(tp, StringBuffer, GDT_FALSE);
+	      HtmlCat(tp, StringBuffer, false);
 	      *StringBuffer << "</A>; ";
 	      tp = tp2;
 	    }
@@ -670,7 +670,7 @@ HREF=\"i.search?DATABASE%3D" << DBname
 	      *StringBuffer << Anchor
 		<< URLencode(tp, &Tmp)
 		<< "%22\">";
-	      HtmlCat(tp, StringBuffer, GDT_FALSE);
+	      HtmlCat(tp, StringBuffer, false);
 	      *StringBuffer << "</A>";
 	    }
 	  delete[]buf;
@@ -707,10 +707,10 @@ HREF=\"i.search?DATABASE%3D" << DBname
 	  STRING LongName;
 	  UCHR *buf = Temp.NewUCString ();	// Make Copy
 
-	  GDT_BOOLEAN SawItem = GDT_FALSE;
-	  GDT_BOOLEAN SawSpace = GDT_FALSE;
+	  bool SawItem = false;
+	  bool SawSpace = false;
 #if USE_TABLE
-	  GDT_BOOLEAN first_time = GDT_TRUE;
+	  bool first_time = true;
 	  STRING Caption;
 #endif
 	  for (UCHR * tcp = buf; *tcp; tcp++)
@@ -736,7 +736,7 @@ HREF=\"i.search?DATABASE%3D" << DBname
 			      *StringBuffer << "\n<DL COMPACT=\"COMPACT\">";
 #endif
 			    }
-			  SawItem = GDT_TRUE;
+			  SawItem = true;
 			}
 		      if (UseHtml)
 			{
@@ -752,7 +752,7 @@ HREF=\"i.search?DATABASE%3D" << DBname
 				}
 #endif
 			    }
-			  else first_time = GDT_FALSE;
+			  else first_time = false;
 			  *StringBuffer << "<TR>\
 <TH VALIGN=\"Top\" ALIGN=\"Left\">";
 			  HtmlCat (LongName, StringBuffer);
@@ -781,7 +781,7 @@ HREF=\"i.search?DATABASE%3D" << DBname
 		    {
 		      if (!SawSpace)
 			*StringBuffer << " ";
-		      SawSpace = GDT_TRUE;
+		      SawSpace = true;
 		    }
 		  else
 		    {
@@ -789,7 +789,7 @@ HREF=\"i.search?DATABASE%3D" << DBname
 			HtmlCat (*tcp, StringBuffer);
 		      else
 			*StringBuffer << (UCHR) (*tcp);
-		      SawSpace = GDT_FALSE;
+		      SawSpace = false;
 		    }
 		}
 	    }
@@ -915,7 +915,7 @@ static int DfdtCompare (const void *p1, const void *p2)
 }
 
 
-GDT_BOOLEAN DVBLINE::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
+bool DVBLINE::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
 {
   PMDT MainMdt = Db->GetMainMdt ();
   PDFDT MainDfdt = Db->GetMainDfdt ();
@@ -924,7 +924,7 @@ GDT_BOOLEAN DVBLINE::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
 
   MDTREC Mdtrec;
   if (!MainMdt->GetMdtRecord (Key, &Mdtrec))
-    return GDT_FALSE;
+    return false;
 
   const off_t MdtS = Mdtrec.GetGlobalFileStart () + Mdtrec.GetLocalRecordStart ();
   const off_t MdtE = Mdtrec.GetGlobalFileStart () + Mdtrec.GetLocalRecordEnd ();
@@ -964,7 +964,7 @@ GDT_BOOLEAN DVBLINE::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
 		  if (-1 == fseek (Fp, X * sizeof (FC), SEEK_SET))
 		    break;	// Error
 
-		  if (Fc.Read (Fp) == GDT_FALSE)
+		  if (Fc.Read (Fp) == false)
 		    {
 		      // Read Error
 		      if (++X >= Total) X = Total - 1;
@@ -1009,6 +1009,6 @@ GDT_BOOLEAN DVBLINE::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
     }
   delete[] Table;
 
-  return GDT_TRUE;
+  return true;
 }
 

@@ -42,13 +42,13 @@ class DB_STRING {
      return OpenFieldForAppend(Fieldname); // No difference with GDB
   }
 
-  GDT_BOOLEAN Close() {
+  bool Close() {
     if (dbp && *dbp) {
       gdbm_close(*dbp);
       *dbp = NULL;
-      return GDT_TRUE;
+      return true;
     }
-    return GDT_FALSE;
+    return false;
   }
 
   PIRSET Search(const STRING& Term, const STRING& Field) {

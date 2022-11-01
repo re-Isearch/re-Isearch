@@ -35,7 +35,7 @@ public:
   void           SetPriority(const _ib_priority_t newPriority) { Priority = newPriority; }
   _ib_priority_t GetPriority() const                           { return Priority;        }
 
-  GDT_BOOLEAN    SetKey(const STRING& NewKey);
+  bool    SetKey(const STRING& NewKey);
   STRING  GetKey() const { return STRING().Assign (Key, DocumentKeySize);}
   STRING& GetKey(PSTRING Buffer) const { return Buffer->Assign (Key, DocumentKeySize);}
 
@@ -139,19 +139,19 @@ public:
   int  TTL() const;
   int  TTL(const SRCH_DATE& Now) const;
 
-  void SetDeleted(const GDT_BOOLEAN Flag);
-  GDT_BOOLEAN GetDeleted() const;
+  void SetDeleted(const bool Flag);
+  bool GetDeleted() const;
 
   void FlipBytes();
 
   // In the structure read/write..
-  GDT_BOOLEAN Write(FILE *fp, INT Index = 0) const;
-  GDT_BOOLEAN Read(FILE *fp, INT Index = 0);
+  bool Write(FILE *fp, INT Index = 0) const;
+  bool Read(FILE *fp, INT Index = 0);
   SRCH_DATE   GetDate(FILE *fp, INT Index=0) const;
 
 
   // Is the MDT Index deleted?
-  GDT_BOOLEAN IsDeleted(FILE *fp, INT Index);
+  bool IsDeleted(FILE *fp, INT Index);
 
 
   STRING        Dump() const;
@@ -200,7 +200,7 @@ inline void Write(const MDTREC& Mdtrec, PFILE Fp)
 }
 
 
-inline GDT_BOOLEAN Read(PMDTREC MdtrecPtr, PFILE Fp)
+inline bool Read(PMDTREC MdtrecPtr, PFILE Fp)
 {
   return MdtrecPtr->Read(Fp);
 }

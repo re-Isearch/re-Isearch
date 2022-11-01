@@ -63,17 +63,17 @@ STRING HASH::GetValue(const STRING& a) const
   return NulString;
 }
 
-GDT_BOOLEAN HASH::GetValue(const STRING& a, STRING *b) const
+bool HASH::GetValue(const STRING& a, STRING *b) const
 {
   Item_type *r=Find( IndexStr2Num(a) );
 
   if(r==NULL){
     b->Clear();
-    return GDT_FALSE;
+    return false;
   }
   *b=r->Block;
   delete r;
-  return GDT_TRUE;
+  return true;
 }
 
 void HASH::AddEntry(const STRING& name, const STRING& value)

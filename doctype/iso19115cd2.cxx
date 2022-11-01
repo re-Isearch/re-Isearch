@@ -78,7 +78,7 @@ ISO19115CD2::ISO19115CD2 (PIDBOBJ DbParent): XMLBASE (DbParent)
   STRING DTDstring;
   STRLIST StrList;
 
-  CaseSensitive = GDT_TRUE;
+  CaseSensitive = true;
   XML_Header = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n<!DOCTYPE Metadata SYSTEM \"ISO_19115_CD2.dtd\">\n";
 
   // Now figure out where the DTD is actually located.
@@ -115,7 +115,7 @@ ISO19115CD2::ISO19115CD2 (PIDBOBJ DbParent): XMLBASE (DbParent)
 }
 
 
-GDT_BOOLEAN 
+bool 
 ISO19115CD2::UsefulSearchField(const STRING& Field)
 {
   STRING FieldName;
@@ -123,47 +123,47 @@ ISO19115CD2::UsefulSearchField(const STRING& Field)
   FieldName.UpperCase();
 
   if (FieldName.Search("RESTITLE"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("REFDATE"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("IDABS"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("RPORGNAME"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("KEYWORD"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("IDPURP"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("WESTBL"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("EASTBL"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("NORTHBL"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("SOUTHBL"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("GEOBOX"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("RESREFDATE"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("PERIOD"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("PROGCD"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("EXTENT"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("PRESFORMCD"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("MDDATEST"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("BEGIN"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("END"))
-    return GDT_TRUE;
+    return true;
   else if (FieldName.Search("MDFILEID"))
-    return GDT_TRUE;
+    return true;
   else
-    return GDT_FALSE;
+    return false;
 }
 
 
@@ -799,13 +799,13 @@ ISO19115CD2::ParseFields (RECORD* NewRecord, CHR *RecBuffer)
   IS_size_t LastEnd=(IS_size_t)0;
   DFT* pdft = new DFT ();
 
-  GDT_BOOLEAN InCustom;
+  bool InCustom;
   IS_size_t val_start;
   int val_len;
   IS_size_t val_end;
   IS_size_t tag_end;
 
-  InCustom = GDT_FALSE;
+  InCustom = false;
   for (CHR **tags_ptr = tags; *tags_ptr; tags_ptr++) {
     XML_Element *pTmp;
     if ((*tags_ptr)[0] == '/') {
@@ -1044,7 +1044,7 @@ ISO19115CD2::PresentBriefXml(const RESULT& ResultRecord,
   // This is the brief record XML encoding for ISO 19115 metadata
   STRLIST     Strlist;
   STRING      Key, TitleTag, Title, EntryIDTag, EntryID;
-  GDT_BOOLEAN Status;
+  bool Status;
 
   ResultRecord.GetKey(&Key);
   TitleTag = "METADATA|DATAIDINFO|IDCITATION|RESTITLE";
@@ -1093,7 +1093,7 @@ ISO19115CD2::PresentIsearchBriefXml(const RESULT& ResultRecord,
   STRINGINDEX colon,dot;
   STRLIST Strlist1,Strlist2;
   STRING TitleTag, Title, EntryIDTag, EntryID;
-  GDT_BOOLEAN Status1,Status2;
+  bool Status1,Status2;
   INT ndb;
   CHR ndb_string[8];
 
@@ -1153,7 +1153,7 @@ ISO19115CD2::PresentBriefSutrs(const RESULT& ResultRecord, STRING *StringBufferP
   STRLIST Strlist1,Strlist2,Strlist3;
   STRING TitleTag, Title, EntryIDTag, EntryID;
   STRING ParentTag, ParentEntryID;
-  GDT_BOOLEAN Status1,Status2,Status3;
+  bool Status1,Status2,Status3;
 
   TitleTag = "METADATA|DATAIDINFO|IDCITATION|RESTITLE";
   Status1 = Db->GetFieldData(ResultRecord, TitleTag, &Strlist1);
@@ -1204,7 +1204,7 @@ ISO19115CD2::PresentSummaryXml(const RESULT& ResultRecord,
   // This is the brief record XML encoding for ISO 19115 metadata
   STRLIST     Strlist;
   STRING      Key, Element, Value, FieldType;
-  GDT_BOOLEAN Status;
+  bool Status;
   STRING XML_Header = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>\n";
   STRING SGML_Header = "<!DOCTYPE METADATA PUBLIC \"-//FGDC//DTD METADATA 2.0//EN\">\n";
   ResultRecord.GetKey(&Key);

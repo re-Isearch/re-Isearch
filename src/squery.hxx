@@ -39,40 +39,40 @@ public:
 
   size_t GetTotalTerms() const;
 
-  GDT_BOOLEAN Equals(const SQUERY& Other);
+  bool Equals(const SQUERY& Other);
 
   // Is the query plain? No fields, rsets or operators other than OR?
-  GDT_BOOLEAN isPlainQuery (t_Operator Operator = OperatorOr) const;
-  GDT_BOOLEAN isPlainQuery (STRING *Words, t_Operator Operator = OperatorOr) const;
-  GDT_BOOLEAN isPlainQuery (STRLIST *Words, t_Operator Operator = OperatorOr) const;
+  bool isPlainQuery (t_Operator Operator = OperatorOr) const;
+  bool isPlainQuery (STRING *Words, t_Operator Operator = OperatorOr) const;
+  bool isPlainQuery (STRLIST *Words, t_Operator Operator = OperatorOr) const;
 
 
   // Are all the Ops the same? Example isOpQUery(OperatorAnd) for all AND
-  GDT_BOOLEAN isOpQuery (const t_Operator Operator) const;
+  bool isOpQuery (const t_Operator Operator) const;
 
   // Query is all ANDs, PEERs etc. But no ORs
-  GDT_BOOLEAN isIntersectionQuery() const;
+  bool isIntersectionQuery() const;
 
   // Covert the Ors in plain query to use Operator
   // example AND:field etc.
-  GDT_BOOLEAN SetOperator(const OPERATOR& Operator);
+  bool SetOperator(const OPERATOR& Operator);
   // Convienience of above, set to AND:<FieldName> or Peer
-  GDT_BOOLEAN SetOperatorAndWithin(const STRING& FieldName);
-  GDT_BOOLEAN SetOperatorNear(); // Near or Peer with Fielded
-  GDT_BOOLEAN SetOperatorPeer();
-  GDT_BOOLEAN SetOperatorOr();
+  bool SetOperatorAndWithin(const STRING& FieldName);
+  bool SetOperatorNear(); // Near or Peer with Fielded
+  bool SetOperatorPeer();
+  bool SetOperatorOr();
 
   // Set Or and Push REDUCE
-  GDT_BOOLEAN PushReduce(int Reduce=0);
-  GDT_BOOLEAN SetOperatorOrReduce(int Reduce = 0);
+  bool PushReduce(int Reduce=0);
+  bool SetOperatorOrReduce(int Reduce = 0);
 
-  GDT_BOOLEAN PushUnaryOperator(const OPERATOR& UnaryOperator);
+  bool PushUnaryOperator(const OPERATOR& UnaryOperator);
 
   // Replace means don't add to existing attributes   
   size_t AddAttributes(const ATTRLIST& Attrlist) {
-    return SetAttributes(Attrlist, GDT_FALSE);
+    return SetAttributes(Attrlist, false);
   }
-  size_t SetAttributes(const ATTRLIST& Attrlist, GDT_BOOLEAN Replace=GDT_TRUE);
+  size_t SetAttributes(const ATTRLIST& Attrlist, bool Replace=true);
 
   // Returns number of terms set, 0 ==> Error
   size_t SetRelevantTerm (const STRING& RelId);
@@ -106,7 +106,7 @@ public:
 
 
   size_t PhraseToProx (const STRING& Term, const STRING& Field = NulString,
-	GDT_BOOLEAN LeftTruncated = GDT_FALSE, GDT_BOOLEAN Case = GDT_FALSE);
+	bool LeftTruncated = false, bool Case = false);
 
   size_t SetTerm  (const STRING& NewTerm);  // old style
 
@@ -121,7 +121,7 @@ public:
   void        OpenThesaurus(const STRING& FullPath);
   void        CloseThesaurus();
   void        SetThesaurus(THESAURUS *Ptr);
-  GDT_BOOLEAN haveThesaurus() const; 
+  bool haveThesaurus() const; 
 
   void ExpandQuery();
 
@@ -132,17 +132,17 @@ public:
 
 
   void Write (PFILE Fp) const;
-  GDT_BOOLEAN Read (PFILE Fp);
+  bool Read (PFILE Fp);
 
   ~SQUERY();
 private:
-  size_t      SetTerm(const STRING&, GDT_BOOLEAN);
+  size_t      SetTerm(const STRING&, bool);
   t_Operator  GetOperator (const STRING& Operator, FLOAT *Metric = NULL,
 	STRING *StringArgs = NULL) const;
-  size_t      fetchTerm(PSTRING StringBuffer, GDT_BOOLEAN WantRpn) const;
+  size_t      fetchTerm(PSTRING StringBuffer, bool WantRpn) const;
   OPSTACK     Opstack;
   THESAURUS  *Thesaurus;
-  GDT_BOOLEAN expanded;
+  bool expanded;
   UINT8       Hash;
   STRING      ErrorMessage;
 };
@@ -150,7 +150,7 @@ private:
 typedef SQUERY* PSQUERY;
 
 void        Write(const SQUERY& SQuery, PFILE Fp);
-GDT_BOOLEAN Read(PSQUERY SQueryPtr, PFILE Fp);
+bool Read(PSQUERY SQueryPtr, PFILE Fp);
 
 
 class QUERY {
@@ -187,7 +187,7 @@ public:
     return *this;
   }
 
-  GDT_BOOLEAN Ok() { return Run() == 0; }
+  bool Ok() { return Run() == 0; }
   int         Run();
 
 
@@ -197,7 +197,7 @@ public:
   operator STRING() const { return Squery.GetRpnTerm(); }
 
   size_t        GetTotalTerms() const { return Squery.GetTotalTerms(); }
-  GDT_BOOLEAN   isPlainQuery (STRING *Words = NULL) { return Squery.isPlainQuery(Words); }
+  bool   isPlainQuery (STRING *Words = NULL) { return Squery.isPlainQuery(Words); }
 
   void          SetSQUERY(const SQUERY& newQuery) { Squery = newQuery; }
   const SQUERY& GetSQUERY() const                 { return Squery;     }
@@ -213,10 +213,10 @@ public:
   void    SetMaximumResults(size_t newMax) { MaxResults = newMax;}
 
   // Unlimited number of results OK?
-  GDT_BOOLEAN   isUnlimited() const {  return MaxResults == 0 || MaxResults > 0x7fffffff ; }
+  bool   isUnlimited() const {  return MaxResults == 0 || MaxResults > 0x7fffffff ; }
 
   void        Write (PFILE Fp) const;
-  GDT_BOOLEAN Read  (PFILE Fp);
+  bool Read  (PFILE Fp);
 
 private:
   SQUERY                    Squery;
@@ -227,7 +227,7 @@ private:
 
 
 void        Write(const QUERY& Query, PFILE Fp);
-GDT_BOOLEAN Read(QUERY *QueryPtr, PFILE Fp);
+bool Read(QUERY *QueryPtr, PFILE Fp);
 
 
 #endif

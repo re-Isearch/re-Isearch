@@ -51,10 +51,10 @@ public:
 
   off_t   GetLength () const       { return End-Start;}
 
-  GDT_BOOLEAN    Ok() const; // Check Inode
+  bool    Ok() const; // Check Inode
 
   void           Write(PFILE fp) const;
-  GDT_BOOLEAN    Read(PFILE fp);
+  bool    Read(PFILE fp);
 
   ~RESOURCE() {};
 
@@ -75,7 +75,7 @@ inline void Write (const RESOURCE& Resource, PFILE Fp)
   Resource.Write (Fp);
 }
 
-inline GDT_BOOLEAN Read (RESOURCE *Ptr, PFILE Fp)
+inline bool Read (RESOURCE *Ptr, PFILE Fp)
 {
   return Ptr->Read (Fp);
 }

@@ -53,7 +53,7 @@ FIELDTYPE  IDBOBJ::GetFieldType(const STRING& FieldName)
   return s.IsEmpty() ? FIELDTYPE::any : (BYTE)s.GetInt();
 }
 
-GDT_BOOLEAN IDBOBJ::_write_resource_path(const STRING& filepath, const RECORD& Filerecord, STRING *path) const
+bool IDBOBJ::_write_resource_path(const STRING& filepath, const RECORD& Filerecord, STRING *path) const
 {
   STRING mime;
   DOCTYPE *ptr = GetDocTypePtr ( Filerecord.GetDocumentType());
@@ -63,7 +63,7 @@ GDT_BOOLEAN IDBOBJ::_write_resource_path(const STRING& filepath, const RECORD& F
   return _write_resource_path (filepath, Filerecord, mime, path);
 }
 
-GDT_BOOLEAN IDBOBJ::_write_resource_path(const STRING& filepath,
+bool IDBOBJ::_write_resource_path(const STRING& filepath,
 	const RECORD& Filerecord, const STRING& mime, STRING *path) const
 {
   const STRING FullPath ( useRelativePaths ?
@@ -80,9 +80,9 @@ GDT_BOOLEAN IDBOBJ::_write_resource_path(const STRING& filepath,
       Fc.Write(fp);
       mime.Write(fp);
       fclose(fp);
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
          
 void IDBOBJ::_get_resource_path(STRING *fullPathPtr) const
@@ -132,20 +132,20 @@ void  IDBOBJ::SetWorkingDirectory(const STRING& Dir)
 };
   
 
-GDT_BOOLEAN IDBOBJ::ResolvePathname(STRING *Path) const
+bool IDBOBJ::ResolvePathname(STRING *Path) const
 {
   if (Path)
     {
       if (IsAbsoluteFilePath (*Path))
-        return GDT_TRUE;
+        return true;
       if (!WorkingDirectory.IsEmpty())
         {
           Path->Prepend( AddTrailingSlash(WorkingDirectory) );
          __Realpath(Path);
-          return GDT_TRUE;
+          return true;
         }
     }
-  return GDT_FALSE;
+  return false;
 }
   
     

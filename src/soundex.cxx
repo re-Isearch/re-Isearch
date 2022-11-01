@@ -187,12 +187,12 @@ static int BuildSoundexTable ()
 }
 #endif
 
-UINT8 SoundexEncodeName(const STRING& Name, GDT_BOOLEAN FirstThenLast)
+UINT8 SoundexEncodeName(const STRING& Name, bool FirstThenLast)
 {
   STRING name (Name);
 
   size_t  pos = name.Search(",");
-  if (pos == 0 && FirstThenLast == GDT_TRUE)
+  if (pos == 0 && FirstThenLast == true)
     pos = name.SearchReverse(" ");
   if (pos > 0)
     {
@@ -311,12 +311,12 @@ UINT8 SoundexEncode (const STRING& Word, PSTRING StringBuffer, const int HashLen
 }
 
 // Modified Soundex algorithm
-GDT_BOOLEAN SoundexMatch (const STRING& Word, const STRING& Hash)
+bool SoundexMatch (const STRING& Word, const STRING& Hash)
 {
   return SoundexMatch ((const char *)Word, Hash);
 }
 
-GDT_BOOLEAN SoundexMatch (const CHR *Word, const STRING& Hash)
+bool SoundexMatch (const CHR *Word, const STRING& Hash)
 {
 
 #ifndef ISO_8859_1
@@ -341,7 +341,7 @@ GDT_BOOLEAN SoundexMatch (const CHR *Word, const STRING& Hash)
       // Keep first element
       Key[Index++] = (LastLetter = toupper((UCHR)ch));
       if (Hash.GetChr(Index) != LastLetter)
-	return GDT_FALSE; // No match
+	return false; // No match
 
       // scan rest of string
       while ((Index < slen) && (ch = Word[++pos]))
@@ -360,7 +360,7 @@ GDT_BOOLEAN SoundexMatch (const CHR *Word, const STRING& Hash)
                     {
 		      ch = (UCHR) ('0' + code%(MODULO));
 		      if (Hash.GetChr(Index+1) != ch)
-			return GDT_FALSE;
+			return false;
 		      Key[Index++] = ch;
 		      old_code = (ch != 'e' ? code : 0);
 		    }

@@ -256,14 +256,14 @@ inline int Write(const UINT8 hostlonglong, PFILE Fp)
 }
 
 
-inline GDT_BOOLEAN Read(PCHR c, PFILE Fp)
+inline bool Read(PCHR c, PFILE Fp)
 {
   int ch = GETC(Fp);
   if (c) *c = (CHR)ch;
   return ch != EOF; 
 }
 
-inline GDT_BOOLEAN Read(PUCHR c, PFILE Fp)
+inline bool Read(PUCHR c, PFILE Fp)
 {
   int ch = GETC(Fp);
   if (c) *c = (UCHR)ch; 
@@ -358,7 +358,7 @@ inline int Write(const double c, FILE *Fp)
   return fwrite(&c, sizeof(double), 1, Fp);
 }
  
-inline GDT_BOOLEAN Read(double *c, FILE *Fp)
+inline bool Read(double *c, FILE *Fp)
 {
   return fread(c, sizeof(double), 1, Fp) != 0;
 }
@@ -369,7 +369,7 @@ inline int Write(const long double c, FILE *Fp)
   return fwrite(&c, sizeof(long double), 1, Fp);
 }
 
-inline GDT_BOOLEAN Read(long double *c, FILE *Fp)
+inline bool Read(long double *c, FILE *Fp)
 {
   return fread(c, sizeof(long double), 1, Fp) != 0;
 }

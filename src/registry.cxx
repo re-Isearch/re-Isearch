@@ -44,7 +44,7 @@ REGISTRY::REGISTRY (const CHR* Title)
   Child = 0;
 }
 
-GDT_BOOLEAN REGISTRY::Empty() const
+bool REGISTRY::Empty() const
 {
   return Next == 0 || Child == 0;
 }
@@ -224,7 +224,7 @@ static STRING EntityDeFix(const char *Input)
 }
 
 
-GDT_BOOLEAN REGISTRY::PrintSgml(const STRING& Filename) const
+bool REGISTRY::PrintSgml(const STRING& Filename) const
 {
   FILE *fp = fopen(Filename, "wb");
   if (fp)
@@ -232,9 +232,9 @@ GDT_BOOLEAN REGISTRY::PrintSgml(const STRING& Filename) const
        fprintf(fp, "<?xml version=\"1.0\"?>\n<!DOCTYPE INI SYSTEM \"ini.dtd\">\n");
        PrintSgml(fp);
        fclose(fp);
-       return GDT_TRUE;
+       return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -406,7 +406,7 @@ STRING REGISTRY::HtmlMeta(size_t level, size_t depth, const STRING& Tag) const
 	  if (value.Search(quote))
 	    {
 	      quote = '"';
-	      value.Replace("\"", "&quot;", GDT_TRUE);
+	      value.Replace("\"", "&quot;", true);
 	    }
 	}
       String.Cat ("\" VALUE="); String.Cat (quote); String.Cat (value); String.Cat (quote); String.Cat (">\n");
@@ -463,7 +463,7 @@ STRING REGISTRY::HtmlMeta(size_t level, size_t depth, const STRING& Tag) const
 	  if (value.Search(quote))
 	    {
 	      quote = '"';
-	      value.Replace("\"", "&quot;", GDT_TRUE);
+	      value.Replace("\"", "&quot;", true);
 	    }
 	}
       String.Cat ("\" VALUE="); String.Cat (quote); String.Cat (value); String.Cat (quote); String.Cat (">\n");
@@ -477,7 +477,7 @@ STRING REGISTRY::HtmlMeta(size_t level, size_t depth, const STRING& Tag) const
 #endif
 
 // SGML style
-GDT_BOOLEAN REGISTRY::ReadFromSgml(const STRING& Filename)
+bool REGISTRY::ReadFromSgml(const STRING& Filename)
 {
   FILE *Fp = fopen(Filename, "r");
   size_t count = 0;
@@ -490,14 +490,14 @@ GDT_BOOLEAN REGISTRY::ReadFromSgml(const STRING& Filename)
 }
 
 
-GDT_BOOLEAN REGISTRY::ReadFromSgml(FILE *fp)
+bool REGISTRY::ReadFromSgml(FILE *fp)
 {
   if (fp)
     {
       DeleteChildren ();
       return AddFromSgml (fp) != 0;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 static char *trimWhitespace(char* s)
@@ -640,7 +640,7 @@ size_t REGISTRY::AddFromSgml(const STRLIST& Position, FILE *fp)
 }
 
 
-GDT_BOOLEAN REGISTRY::ReadFromSgmlBuffer(const STRING& Buffer)
+bool REGISTRY::ReadFromSgmlBuffer(const STRING& Buffer)
 {
   DeleteChildren ();
   return AddFromSgmlBuffer (Buffer) != 0;
@@ -764,7 +764,7 @@ REGISTRY *parseMetaDefaults(const STRING& filename)
   return metadef;
 }
 
-void REGISTRY::GetEntryList(const STRING& Section, STRLIST *Ptr, GDT_BOOLEAN Cat) const
+void REGISTRY::GetEntryList(const STRING& Section, STRLIST *Ptr, bool Cat) const
 {
   if (Ptr)
    {
@@ -954,16 +954,16 @@ void REGISTRY::ProfileGetString (const STRING& Section, const STRING& Entry,
 #ifdef G_BOOL
 void REGISTRY::
 ProfileGetString (const STRING& Section, const STRING& Entry,
-		  const GDT_BOOLEAN Default, GDT_BOOLEAN *BoolBuffer)
+		  const bool Default, bool *BoolBuffer)
 {
   STRING StringBuffer;
   STRING DefaultString = Default;
   ProfileGetString (Section, Entry, DefaultString, &StringBuffer);
-  *BoolBuffer = (StringBuffer == GDT_TRUE) ? GDT_TRUE : GDT_FALSE;
+  *BoolBuffer = (StringBuffer == true) ? true : false;
 }
 #endif
 
-GDT_BOOLEAN REGISTRY::ProfileGetBoolean(const STRING& Section, const STRING& Entry)
+bool REGISTRY::ProfileGetBoolean(const STRING& Section, const STRING& Entry)
 {
   STRING StringBuffer;
   ProfileGetString (Section, Entry, NulString, &StringBuffer);
@@ -1060,7 +1060,7 @@ ProfileWriteString (const STRING& Section, const STRING& Entry,
 #ifdef G_BOOL
 void REGISTRY::
 ProfileWriteString (const STRING& Section, const STRING& Entry,
-		    const GDT_BOOLEAN BooleanData)
+		    const bool BooleanData)
 {
   ProfileWriteString (Section, Entry, STRING(BooleanData));
 }
@@ -1374,18 +1374,18 @@ void REGISTRY::ProfileWrite(ostream& os, const STRING&, const STRLIST&)
     Node->ProfilePrint(os,0);
 }
 
-static inline GDT_BOOLEAN __iniLineNeedsQuotes(const STRING& Data)
+static inline bool __iniLineNeedsQuotes(const STRING& Data)
 {
   const STRINGINDEX x = Data.GetLength();
   if (x )
     {
       UCHR ch;
       if ((ch = Data.GetChr(x)) == '\\' || isspace(ch))
-	return GDT_TRUE;
+	return true;
       if (Data.Search((char)','))
-	return GDT_TRUE;
+	return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 #if 1
@@ -1544,14 +1544,14 @@ void REGISTRY::DeleteChildren ()
 }
 
 // WIN.INI format
-GDT_BOOLEAN REGISTRY::Read(FILE *Fp)
+bool REGISTRY::Read(FILE *Fp)
 {
   if (Fp)
     {
       DeleteChildren ();
       return ProfileAddFromFile (Fp) != 0;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 // WIN.INI format
@@ -1577,7 +1577,7 @@ void Write(const REGISTRY& Registry, FILE *Fp)
   Registry.Write(Fp);
 }
 
-GDT_BOOLEAN Read(PREGISTRY RegistryPtr, FILE *Fp)
+bool Read(PREGISTRY RegistryPtr, FILE *Fp)
 {
   return RegistryPtr->Read(Fp);
 }

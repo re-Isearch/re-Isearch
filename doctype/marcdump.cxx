@@ -32,9 +32,9 @@ static CHR **parse_tags (CHR *b, GPTYPE len);
 int          usefulMarcDumpField(char *fieldStr);
 void         marcdumpFieldNumToName(STRING& fieldStr, STRING *fieldName);
 int          SplitLine(const STRING& TheLine, STRING* Tag, STRING* Buffer);
-GDT_BOOLEAN  HasSubfield(const STRING& TheContents, STRING* tag);
-GDT_BOOLEAN  HasSubfieldTag(const STRING& TheContents, STRING& tag);
-GDT_BOOLEAN  GetSubfield(const STRING& TheContents, const STRING& SubfieldTag,
+bool  HasSubfield(const STRING& TheContents, STRING* tag);
+bool  HasSubfieldTag(const STRING& TheContents, STRING& tag);
+bool  GetSubfield(const STRING& TheContents, const STRING& SubfieldTag,
 			 STRING* Buffer);
 INT          GetSubfields(const STRING& TheContents, STRLIST* TheSubfields);
 
@@ -317,7 +317,7 @@ MARCDUMP::Present(const RESULT& ResultRecord, const STRING& ElementSet,
 		     const STRING& RecordSyntax, STRING* StringBufferPtr) 
 {
   STRING FieldName;
-  GDT_BOOLEAN Status;
+  bool Status;
 
   if (RecordSyntax.CaseEquals(HtmlRecordSyntax)) {
     PresentHtml(ResultRecord,ElementSet,StringBufferPtr);
@@ -333,7 +333,7 @@ MARCDUMP::PresentSutrs(const RESULT& ResultRecord, const STRING& ElementSet,
 		   STRING *StringBufferPtr)
 {
   STRING FieldName;
-  GDT_BOOLEAN Status;
+  bool Status;
 
   if (ElementSet.CaseEquals("B")) {
     FieldName = "245"; // Brief headline is "title"
@@ -354,7 +354,7 @@ MARCDUMP::PresentHtml(const RESULT& ResultRecord, const STRING& ElementSet,
 		   STRING *StringBufferPtr)
 {
   STRING FieldName;
-  GDT_BOOLEAN Status;
+  bool Status;
 
   if (ElementSet.CaseEquals("B")) {
     FieldName = "245"; // Brief headline is "title"
@@ -635,7 +635,7 @@ SplitLine(const STRING& TheLine, STRING* Tag, STRING* Buffer)
 
 
 // Tests to see if the buffer contains any subtag ($) chars
-GDT_BOOLEAN
+bool
 HasSubfield(const STRING& TheContents, STRING* tag)
 {
   STRINGINDEX here;
@@ -653,27 +653,27 @@ HasSubfield(const STRING& TheContents, STRING* tag)
     if (here == 3) {
       tmp.EraseAfter(2);
       *tag = tmp;
-      return GDT_TRUE;
+      return true;
     }
   }
-  return GDT_FALSE;
+  return false;
 }
 
 
 // Tests to see if a particular subtag is present
-GDT_BOOLEAN
+bool
 HasSubfieldTag(const STRING& TheContents, STRING& tag)
 {
   STRINGINDEX here;
   STRING tmp;
   CHR *pTag, *pField, *ptr;
-  GDT_BOOLEAN status=GDT_FALSE;
+  bool status=false;
 
   pTag = tag.NewCString();
   pField = TheContents.NewCString();
 
   if (ptr=strstr(pField,pTag)) {
-    status = GDT_TRUE;
+    status = true;
   }
   delete [] pTag;
   delete [] pField;
@@ -681,14 +681,14 @@ HasSubfieldTag(const STRING& TheContents, STRING& tag)
 }
 
 
-GDT_BOOLEAN
+bool
 GetSubfield(const STRING& TheContents, const STRING& SubfieldTag,
 	    STRING* Buffer)
 {
   STRINGINDEX here;
   STRING tmp;
   CHR *pTag, *pField, *ptr;
-  GDT_BOOLEAN status=GDT_FALSE;
+  bool status=false;
 
   pTag = SubfieldTag.NewCString();
   pField = TheContents.NewCString();
@@ -696,7 +696,7 @@ GetSubfield(const STRING& TheContents, const STRING& SubfieldTag,
 
   if (ptr=strstr(pField,pTag)) {
     *Buffer = ptr+3;
-    status = GDT_TRUE;
+    status = true;
   }
   delete [] pTag;
   delete [] pField;

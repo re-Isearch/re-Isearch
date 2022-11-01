@@ -119,20 +119,20 @@ static int SortCmpGP(const void* x, const void* y)
   return 0;
 }
 
-GDT_BOOLEAN DATELIST::Expand(size_t Entries)
+bool DATELIST::Expand(size_t Entries)
 {
   if (Entries < MaxEntries)
-    return GDT_TRUE;
+    return true;
   return Resize(Entries +  (BASIC_CHUNK*Ncoords)); 
 }
 
 
-GDT_BOOLEAN DATELIST::Resize(size_t Entries)
+bool DATELIST::Resize(size_t Entries)
 {
   if (Entries == 0)
     {
       Clear();
-      return GDT_TRUE;
+      return true;
     }
 
   DATEFLD    *temp;
@@ -141,7 +141,7 @@ GDT_BOOLEAN DATELIST::Resize(size_t Entries)
     temp =new DATEFLD[Entries];
   } catch (...) {
     message_log (LOG_PANIC, "Memory allocation failure. Can't build Date field array!");
-    return GDT_FALSE;
+    return false;
   }
   size_t      CopyCount;
 
@@ -158,7 +158,7 @@ GDT_BOOLEAN DATELIST::Resize(size_t Entries)
 
   table=temp;
   MaxEntries=Entries;
-  return GDT_TRUE;
+  return true;
 }
 
 

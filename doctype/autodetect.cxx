@@ -68,7 +68,7 @@ AUTODETECT::AUTODETECT (PIDBOBJ DbParent, const STRING& Name):
 #if USE_LIBMAGIC
   magic_cookie = NULL;
 #endif
-  kludge = GDT_FALSE;
+  kludge = false;
   kludgeCount = 0;
   HostID = _IB_Hostid(); 
 
@@ -79,7 +79,7 @@ AUTODETECT::AUTODETECT (PIDBOBJ DbParent, const STRING& Name):
       ParseInfo = S.GetBool();
     }
   else
-    ParseInfo = GDT_TRUE;
+    ParseInfo = true;
 }
 
 const char *AUTODETECT::Description(PSTRLIST List) const
@@ -412,7 +412,7 @@ static void GetPDFTitle(const STRING& FileName, PSTRING Title)
   MMAP MemoryMap(FileName, MapSequential);
 
   Title->Clear();
-  if (MemoryMap.Ok() == GDT_FALSE)
+  if (MemoryMap.Ok() == false)
    return;
 
   const UCHR *Buffer = (UCHR *)MemoryMap.Ptr();
@@ -477,7 +477,7 @@ static void GetGIFTitle(const STRING& FileName, PSTRING Title)
   MMAP MemoryMap(FileName, MapSequential);
 
   Title->Clear();
-  if (MemoryMap.Ok() == GDT_FALSE)
+  if (MemoryMap.Ok() == false)
    return; 
 
   const UCHR *Buffer = (UCHR *)MemoryMap.Ptr();
@@ -1349,13 +1349,25 @@ message_log (LOG_DEBUG, "AFTER INDEXING");
 	{
 	  //message_log (LOG_DEBUG, "Looking at XML to see what kind");
 	  // Need to see what kind of XML
+	  //
+#ifdef NO_MMAP
+	  STRING contents;
+	  size_t checkL = ReadFile(s, &contents, 0, 4096);
+	  if (checkL)
+	  {
+
+            const char *ptr = (const char *)contents.data();
+
+#else
 	  MMAP   mmap(s, MapSequential);
 	  size_t checkL;
 	  if (mmap.Ok() && (checkL=mmap.Size()) > 100)
 	    {
-	      size_t pos    = 0;
 	      if (checkL > 4096) checkL = 4095; // Check only first page 
 	      const char *ptr = (const char *)mmap.Ptr();
+#endif
+	      size_t pos    = 0;
+
 	      while (pos < checkL)
 		{
 		  // Scan for <
@@ -1503,7 +1515,7 @@ message_log (LOG_DEBUG, "AFTER INDEXING");
 	      message_log (LOG_INFO, "Skipping '%s', Record already in Resource database?", (const char *)s );
 	      return;
 	    }
-	  else if (kludge == GDT_FALSE)
+	  else if (kludge == false)
 	    {
 	      Db->ComposeDbFn(&InfoPath, DbExtDesc);
 	      InfoPath.Cat (":");
@@ -1531,7 +1543,7 @@ D \010O \010N \010' \010T  \010E \010D \010I \010T\
 #endif
 		    }
 		}
-	      kludge = GDT_TRUE;
+	      kludge = true;
 	    }
 	  if (Fp == NULL)
 	    {
@@ -1592,12 +1604,12 @@ D \010O \010N \010' \010T  \010E \010D \010I \010T\
 		NewRecord.SetDocumentType ( subdoctype);
 	      else
 		NewRecord.SetDocumentType ( "RESOURCE" );
-	      NewRecord.SetBadRecord(GDT_FALSE); // Need to set OK
+	      NewRecord.SetBadRecord(false); // Need to set OK
 	      NewRecord.SetLanguage ("en");
 	      fclose (Fp);
 	      Db->DocTypeAddRecord(NewRecord);
 	      message_log(LOG_NOTICE, "Identified %s as %s, parsing info only (%s).", s.c_str(),
-		doctype.c_str(), NewRecord.GetDocumentType().ClassName(GDT_TRUE).c_str());
+		doctype.c_str(), NewRecord.GetDocumentType().ClassName(true).c_str());
 	      // doctype = "0";
 	      return; // 9 June 2003 edz, BUGFIX
 	    }
@@ -1610,7 +1622,7 @@ D \010O \010N \010' \010T  \010E \010D \010I \010T\
       else
 	{
 	  message_log(LOG_INFO, "Identified %s as %s", s.c_str(), doctype.c_str() );
-	  kludge = GDT_FALSE;
+	  kludge = false;
 	}
 
     }

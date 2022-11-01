@@ -66,7 +66,7 @@ void HTMLHEAD::Present (const RESULT& ResultRecord, const STRING& ElementSet,
       static const STRING Title ("title");
       DOCTYPE::Present (ResultRecord, Title, StringBuffer);
       if (StringBuffer->IsEmpty())
-	URL(ResultRecord, StringBuffer, GDT_FALSE);
+	URL(ResultRecord, StringBuffer, false);
       else
 	StringBuffer->Pack();
     }

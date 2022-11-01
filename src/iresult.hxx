@@ -34,10 +34,10 @@ public:
      q = QScore;
    }
   void          Write(FILE *fp) const;
-  GDT_BOOLEAN   Read(FILE *fp);
+  bool   Read(FILE *fp);
 
-  GDT_BOOLEAN Defined() const { return q>0 && t> 0;}
-  GDT_BOOLEAN Equals(const GEOSCORE& Val) const  {
+  bool Defined() const { return q>0 && t> 0;}
+  bool Equals(const GEOSCORE& Val) const  {
 	return Val.t == t && Val.q == q;
   }
   INT         Compare(const GEOSCORE& Val) const {
@@ -61,15 +61,15 @@ private:
 #undef K_QUERY
 };
 inline void Write(const GEOSCORE& Score, FILE *fp) { Score.Write(fp); }
-inline GDT_BOOLEAN Read(GEOSCORE *Score, FILE *fp) { return Score->Read(fp); }
+inline bool Read(GEOSCORE *Score, FILE *fp) { return Score->Read(fp); }
 
 // Operators
-inline GDT_BOOLEAN operator==(const GEOSCORE& s1, const GEOSCORE& s2) { return s1.Equals(s2);  }
-inline GDT_BOOLEAN operator!=(const GEOSCORE& s1, const GEOSCORE& s2) { return !s1.Equals(s2); }
-inline GDT_BOOLEAN operator< (const GEOSCORE& s1, const GEOSCORE& s2) { return s1.Compare(s2) < 0; }
-inline GDT_BOOLEAN operator<=(const GEOSCORE& s1, const GEOSCORE& s2) { return s1.Compare(s2) <= 0;}
-inline GDT_BOOLEAN operator> (const GEOSCORE& s1, const GEOSCORE& s2) { return s1.Compare(s2) > 0; }
-inline GDT_BOOLEAN operator>=(const GEOSCORE& s1, const GEOSCORE& s2) { return s1.Compare(s2) >= 0;}
+inline bool operator==(const GEOSCORE& s1, const GEOSCORE& s2) { return s1.Equals(s2);  }
+inline bool operator!=(const GEOSCORE& s1, const GEOSCORE& s2) { return !s1.Equals(s2); }
+inline bool operator< (const GEOSCORE& s1, const GEOSCORE& s2) { return s1.Compare(s2) < 0; }
+inline bool operator<=(const GEOSCORE& s1, const GEOSCORE& s2) { return s1.Compare(s2) <= 0;}
+inline bool operator> (const GEOSCORE& s1, const GEOSCORE& s2) { return s1.Compare(s2) > 0; }
+inline bool operator>=(const GEOSCORE& s1, const GEOSCORE& s2) { return s1.Compare(s2) >= 0;}
 
 
 #ifdef DEBUG_MEMORY
@@ -113,7 +113,7 @@ public:
      if ( gOther > gScore) gScore = gOther;
   }
   GEOSCORE GetGscore() const               { return gScore;              }
-  GDT_BOOLEAN HaveGscore() const           { return gScore.Defined();    }
+  bool HaveGscore() const           { return gScore.Defined();    }
 # if 0
   // Following two for compatibility
   DOUBLE   GetTscore() const               { return gScore.TScore();     }
@@ -128,7 +128,7 @@ public:
   void SetHitTable(const FCLIST& newHitTable)   { HitTable = newHitTable;           }
   void SetHitTable(const IRESULT& ResultRecord) { HitTable = ResultRecord.HitTable; }
   void SetHitTable(const FCT& newHitTable)      { HitTable = newHitTable;           }
-  GDT_BOOLEAN HitTableIsSorted() const          { return HitTable.IsSorted();       }
+  bool HitTableIsSorted() const          { return HitTable.IsSorted();       }
 
   const FCT GetHitTable(FCLIST *Table = NULL) const;
 
@@ -141,13 +141,13 @@ public:
   UINT IncAuxCount(const UINT AddCount)    { return AuxCount += AddCount;}
   UINT GetAuxCount() const                 { return AuxCount;            }
 
-  GDT_BOOLEAN  SetVectorTermHits (const UINT count);
+  bool  SetVectorTermHits (const UINT count);
 
   void       SetMdt(const MDT *NewMdt) { Mdt = NewMdt; }
   const MDT *GetMdt() const            { return Mdt;   }
 
 
-  GDT_BOOLEAN Read(FILE *fp);
+  bool Read(FILE *fp);
   void Write(FILE *fp) const;
   ~IRESULT();
 private:
@@ -234,7 +234,7 @@ public:
   const IRESULT& operator[](size_t n) const { return t_Data[n]; }
   const IRESULT* GetData() const { return t_Data; }
 
-  GDT_BOOLEAN    SetEntry(size_t n, const IRESULT& Record);
+  bool    SetEntry(size_t n, const IRESULT& Record);
   void           AddEntry(const IRESULT& Record);
 
   DOUBLE         GetMinScore() const { return MinScore; }
@@ -261,6 +261,6 @@ private:
 typedef IRESULT* PIRESULT;
 
 void Write(const IRESULT& Iresult, PFILE Fp);
-GDT_BOOLEAN Read(PIRESULT IresultPtr, PFILE Fp);
+bool Read(PIRESULT IresultPtr, PFILE Fp);
 
 #endif

@@ -87,8 +87,8 @@ static void GetPersGroup(const STRING& Input, PSTRING Output)
 
   STRING FirstName, MidName, LastName, Phone;
   STRING val;
-  GDT_BOOLEAN look = GDT_TRUE;
-  GDT_BOOLEAN inName = GDT_FALSE;
+  bool look = true;
+  bool inName = false;
 
   STRING lp;
 
@@ -104,10 +104,10 @@ static void GetPersGroup(const STRING& Input, PSTRING Output)
 	  tcp += 5;
 	  Output->Cat("<PRE>");
 	  while(isspace(*tcp)) tcp++;
-	  look = GDT_FALSE;
+	  look = false;
 	}
 
-	if (inName == GDT_FALSE) {
+	if (inName == false) {
 	  if (LastName.GetLength()) {
 	    Output->Cat (LastName);
 	    Output->Cat (", ");
@@ -130,31 +130,31 @@ static void GetPersGroup(const STRING& Input, PSTRING Output)
 	    tcp += strlen(LAST_NAME) + 2; 
 	    while(isspace(*tcp)) tcp++;
 	    LastName = tcp;
-	    inName = GDT_TRUE;
+	    inName = true;
 	} else if (strncasecmp(FIRST_NAME, tcp, strlen(FIRST_NAME)) == 0) {
 	    tcp += strlen(LAST_NAME) + 2; 
 	    while(isspace(*tcp)) tcp++;
 	    FirstName = tcp;
-	    inName = GDT_TRUE;
+	    inName = true;
 	} else if (strncasecmp(MID_NAME, tcp, strlen(MID_NAME)) == 0) {
 	    tcp += strlen(MID_NAME) + 2;
 	    while(isspace(*tcp)) tcp++;
 	    MidName = tcp;
-	    inName = GDT_TRUE;
+	    inName = true;
 	} else if (strncasecmp("Group: ", tcp, 7) == 0) {
 	  tcp += 7;
 	  while (isspace(*tcp)) tcp++;
 	  lp = tcp;
 	  lp.Cat(": ");
-	  inName = GDT_FALSE;
+	  inName = false;
 	} else if (strncasecmp("End_Group", tcp, 9) == 0 ) {
 	  tcp += 9;
 	  if (*tcp) lp = tcp;
-	  inName = GDT_FALSE;
+	  inName = false;
 	} else {
 	  lp = tcp;
 	  lp.Cat ("\n");
-	  inName = GDT_FALSE;
+	  inName = false;
 	}
     }
 

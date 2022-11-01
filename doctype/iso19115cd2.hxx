@@ -35,7 +35,7 @@ public:
   void        ParseGPoly(const CHR *Buffer, DOUBLE Vertices[]);
 
   DOUBLE      ParseComputed(const STRING& FieldName, const CHR *Buffer);
-  GDT_BOOLEAN HeadlineDb() { return GDT_TRUE; }
+  bool HeadlineDb() { return true; }
 
   void        ParseFields (RECORD *NewRecord) {};
   void        ParseFields (RECORD *NewRecord,CHR* RecBuffer);
@@ -55,7 +55,7 @@ public:
   ~ISO19115CD2 ();
 
 private:
-  GDT_BOOLEAN UsefulSearchField(const STRING& Field);
+  bool UsefulSearchField(const STRING& Field);
   void PresentBriefXml(const RESULT& ResultRecord, STRING *StringBufferPtr);
   void PresentIsearchBriefXml(const RESULT& ResultRecord, STRING *StringBufferPtr);
   void PresentBriefSutrs(const RESULT& ResultRecord, STRING *StringBufferPtr);
@@ -65,7 +65,7 @@ private:
   void PresentFullSutrs(const RESULT& ResultRecord, STRING *StringBufferPtr);
   void ParseExtent(const CHR* Buffer, DOUBLE* extent);
 
-  GDT_BOOLEAN CaseSensitive;
+  bool CaseSensitive;
   STRING      XML_Header;
   DB         *a_dbp;
   STRING      dbf_name;

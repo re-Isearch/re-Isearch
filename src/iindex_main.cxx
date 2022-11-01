@@ -151,7 +151,7 @@ protected:
 typedef IDBC *PIDBC;
 
 static STRING Separator;
-static GDT_BOOLEAN include_sep = GDT_TRUE;
+static bool include_sep = true;
 static STRING DocumentType;
 
 static LOCALE Locale;
@@ -194,7 +194,7 @@ static int addFile(const STRING& Fn)
         }
       Record.SetRecordStart (From);
       Record.SetRecordEnd (To);
-      if (pdb->AddRecord (Record) == GDT_FALSE)
+      if (pdb->AddRecord (Record) == false)
 	return -1;
     }
   else
@@ -235,7 +235,7 @@ static int addFile(const STRING& Fn)
  		Record.SetRecordStart(0);
  		CHR* Position = Buffer;
  		CHR* Found;
- 		GDT_BOOLEAN Done;
+ 		bool Done;
  		CHR* EndOfBuffer = Buffer + (To - From); // FileSize;
  		const CHR* Sep = Separator.c_str();
  		CHR SepChar = Sep[0];
@@ -243,25 +243,25 @@ static int addFile(const STRING& Fn)
  		const size_t SepLength = Separator.GetLength();
 		const size_t soffset = (include_sep ? 0 : SepLength);
 		do {
-	 		Done = GDT_FALSE;
- 			while (Done == GDT_FALSE) {
+	 		Done = false;
+ 			while (Done == false) {
  				while ( (Position < EndOfBuffer) &&
  						(*Position != SepChar) ) {
  					Position++;
  				}
  				if (Position >= EndOfBuffer) {
- 					Done = GDT_TRUE;
+ 					Done = true;
  					Found = 0;
  				} else {
  					if ((Position + SepLength) <= EndOfBuffer) {
 						// was strncmp()
  						if (memcmp(Sep, Position, SepLength) == 0) {
   							Found = Position;
-  							Done = GDT_TRUE;
+  							Done = true;
   						}
   					}
   				}
-  				if (Done == GDT_FALSE) {
+  				if (Done == false) {
   					Position++;
   				}
   			}
@@ -387,7 +387,7 @@ int _Iindex_main (int argc, char **argv)
     argv0 = "Iindex";
 
   prognam = RemovePath(argv0);
-  timeout = __Register_IB_Application(argv0,  stdout, GDT_FALSE);
+  timeout = __Register_IB_Application(argv0,  stdout, false);
   if (argc < 2)
     {
       std::cout << "IB indexer 2." << SRCH_DATE(__DATE__).ISOdate()  << "." << __IB_Version << " " <<
@@ -410,19 +410,19 @@ int _Iindex_main (int argc, char **argv)
   size_t      SisLimit = 0;
   off_t        common_words = 0;
   INT         MaximumRecordSize = 0;
-  GDT_BOOLEAN DebugFlag = GDT_FALSE;
-  GDT_BOOLEAN _signals  = GDT_TRUE;
-  GDT_BOOLEAN _core_dump= GDT_FALSE;
-  GDT_BOOLEAN Override = GDT_TRUE;
-  GDT_BOOLEAN Recursive = GDT_FALSE;
-  GDT_BOOLEAN autoRecursive = GDT_FALSE;
-  GDT_BOOLEAN Follow    = GDT_FALSE;
-  GDT_BOOLEAN AppendDb = GDT_FALSE;
-  GDT_BOOLEAN Synonyms = GDT_FALSE;
-  GDT_BOOLEAN createCentroid = GDT_FALSE;
-  GDT_BOOLEAN useRelativePaths = GDT_FALSE;
+  bool DebugFlag = false;
+  bool _signals  = true;
+  bool _core_dump= false;
+  bool Override = true;
+  bool Recursive = false;
+  bool autoRecursive = false;
+  bool Follow    = false;
+  bool AppendDb = false;
+  bool Synonyms = false;
+  bool createCentroid = false;
+  bool useRelativePaths = false;
   STRING      basePath;
-  GDT_BOOLEAN useIndexPath = GDT_FALSE;
+  bool useIndexPath = false;
 
   STRING  SynonymFileName;
   STRLIST  includeStrlist;
@@ -433,13 +433,13 @@ int _Iindex_main (int argc, char **argv)
 
   STRING Stoplist =  "<NULL>";
   UINT4 MemoryUsage = 0;
-  GDT_BOOLEAN ForceMem = GDT_FALSE; 
+  bool ForceMem = false; 
   const char *Lang = NULL;
   INT x = 0;
   INT LastUsed = 0;
 
   LOCALE NewLocale;
-  GDT_BOOLEAN CharsetSet = GDT_FALSE, LanguageSet = GDT_FALSE;
+  bool CharsetSet = false, LanguageSet = false;
 
 
   while (x < argc)
@@ -547,7 +547,7 @@ int _Iindex_main (int argc, char **argv)
 	    }
 	  else if (Flag.Equals ("-centroid"))
 	   {
-	     createCentroid = GDT_TRUE;
+	     createCentroid = true;
 	     LastUsed = x;
 	   }
 	  else if (Flag.Equals ("-stop"))
@@ -639,12 +639,12 @@ int _Iindex_main (int argc, char **argv)
             }
 	  else if (Flag.Equals("-override"))
 	    {
-	      Override = GDT_TRUE;
+	      Override = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals("-no-override"))
             {
-              Override = GDT_FALSE;
+              Override = false;
               LastUsed = x;
             }
           else if (Flag.Equals("-mdt"))
@@ -744,7 +744,7 @@ int _Iindex_main (int argc, char **argv)
 		}
 	      message_log(LOG_DEBUG, "Assuming document language '%s' (%d)", Id2Language(LanguageCode), LanguageCode);
 	      NewLocale.SetLanguage(LanguageCode);
-	      LanguageSet = GDT_TRUE;
+	      LanguageSet = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals ("-charset"))
@@ -767,7 +767,7 @@ int _Iindex_main (int argc, char **argv)
 		{
 		  message_log (LOG_DEBUG, "Using %s (%d) character set.", Id2Charset(CharsetCode), CharsetCode);
 		  NewLocale.SetCharset(CharsetCode);
-		  CharsetSet = GDT_TRUE;
+		  CharsetSet = true;
 		}
               LastUsed = x;
 	    }
@@ -784,7 +784,7 @@ int _Iindex_main (int argc, char **argv)
                   return 1;
                 }
 	      NewLocale = argv[x];
-	      CharsetSet = LanguageSet = GDT_TRUE;
+	      CharsetSet = LanguageSet = true;
 	      LastUsed = x;
 	    }
           else if (Flag.Equals ("-sort") || Flag.Equals("-qsort"))
@@ -834,7 +834,7 @@ int _Iindex_main (int argc, char **argv)
 		  message_log (LOG_FATAL, "Usage: No facility specified after %s.", Flag.c_str());
 		  return 2;
 		}
-	      if (set_syslog(argv[x]) == GDT_FALSE)
+	      if (set_syslog(argv[x]) == false)
 		message_log (LOG_ERROR, "Unknown syslog facility '%s' specified (-%s).", argv[x], Flag.c_str());
 	      LastUsed = x; 
 	    }
@@ -867,19 +867,19 @@ int _Iindex_main (int argc, char **argv)
 	    }
 	  else if (Flag.Equals ("-a"))
 	    {
-	      AppendDb = GDT_TRUE;
+	      AppendDb = true;
 	      Merge = iNothing;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals ("-add") || Flag.Equals ("-append"))
 	    {
-	      AppendDb = GDT_TRUE;
+	      AppendDb = true;
 	      Merge = iOptimize;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals("-incr"))
 	    {
-	      AppendDb = GDT_TRUE;
+	      AppendDb = true;
 	      Merge = iIncremental;
 	      LastUsed = x;
 	    }
@@ -890,18 +890,18 @@ int _Iindex_main (int argc, char **argv)
 	    }
 	  else if (Flag.Equals("-recursive"))
 	    {
-	      Recursive = GDT_TRUE;
+	      Recursive = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals("-r"))
 	    {
-	      Recursive = GDT_TRUE;
-	      autoRecursive = GDT_TRUE;
+	      Recursive = true;
+	      autoRecursive = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals("-follow"))
 	    {
-	      Follow = GDT_TRUE;
+	      Follow = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals("-include"))
@@ -951,25 +951,25 @@ int _Iindex_main (int argc, char **argv)
                   message_log (LOG_FATAL, "Usage: No pattern specified after %s.", Flag.c_str());
 		  return 2;
 		}
-	      Recursive = GDT_TRUE;
+	      Recursive = true;
 	      includeStrlist.AddEntry ( argv[x] );
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals ("-abs") || Flag.Equals ("-absolute_paths"))
 	   {
-	      useRelativePaths = GDT_FALSE;
+	      useRelativePaths = false;
 	      LastUsed = x;
 	   }
 	  else if (Flag.Equals ("-rel") ||  Flag.Equals("-relative_paths"))
 	    {
 	      if (Flag.Equals("-rel"))
-		useIndexPath = GDT_TRUE;
-	      useRelativePaths = GDT_TRUE;
+		useIndexPath = true;
+	      useRelativePaths = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals("-base"))
 	    {
-	      useRelativePaths = GDT_TRUE;
+	      useRelativePaths = true;
 	      if (++x >= argc)
 		{
 		  message_log (LOG_FATAL, "Usage: no path specified after %s.", Flag.c_str());
@@ -1145,7 +1145,7 @@ print_class_list:
 	    {
 	      char    *browser = getenv("WWW_BROWSER");
 	      STRING   s;
-	      STRING   index_html = ResolveHtdocPath("Welcome.html", GDT_TRUE);
+	      STRING   index_html = ResolveHtdocPath("Welcome.html", true);
 	      if (browser == NULL || *browser == '\0')
 		{
 		  if (!IsAbsoluteFilePath(s=ResolveBinPath("www") ))
@@ -1171,18 +1171,18 @@ Using '%s' as default.", browser);
 	    }
 	  else if (Flag.Equals ("-core"))
 	    {
-	      _signals = GDT_TRUE;
-	      _core_dump = GDT_TRUE;
+	      _signals = true;
+	      _core_dump = true;
 	    }
 	  else if (Flag.Equals ("-trap"))
 	    {
-	      _signals = GDT_FALSE;
+	      _signals = false;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals ("-debug"))
 	    {
 //cerr << "DEBUG Gla" << endl;
-	      DebugFlag = GDT_TRUE;
+	      DebugFlag = true;
 	      __Register_IB_Application(argv0, stdout, DebugFlag);
 	      log_init (LOG_ALL);
 	      LastUsed = x;
@@ -1198,7 +1198,7 @@ Using '%s' as default.", browser);
 
   x = LastUsed + 1;
 
-  if ((DebugFlag == GDT_FALSE || _core_dump == GDT_TRUE) && _signals == GDT_TRUE)
+  if ((DebugFlag == false || _core_dump == true) && _signals == true)
     {
 #ifdef SIGSEGV
       signal (SIGSEGV, seg_fault);
@@ -1372,7 +1372,7 @@ Using '%s' as default.", browser);
     THESAURUS MyThesaurus;
 
     message_log (LOG_INFO, "Building THESAURUS from %s", SynonymFileName.c_str());
-    MyThesaurus.Compile(SynonymFileName, DBName, GDT_TRUE);
+    MyThesaurus.Compile(SynonymFileName, DBName, true);
   }
 
   if (homeDirectory && chdir(homeDirectory) == -1)

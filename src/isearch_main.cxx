@@ -63,7 +63,7 @@ static void dumpXMLHitTable(FCLIST *HitTable, VIDB *vidb, const RESULT& Result)
   MDTREC mdtrec;
 
 
-  if ( idb->GetMainMdt()->GetEntry (Result.GetMdtIndex(), &mdtrec) == GDT_FALSE)
+  if ( idb->GetMainMdt()->GetEntry (Result.GetMdtIndex(), &mdtrec) == false)
     {
       cerr << "Can't resolve record!" << endl;
       return;
@@ -76,7 +76,7 @@ static void dumpXMLHitTable(FCLIST *HitTable, VIDB *vidb, const RESULT& Result)
       STRING Tag;
       STRING lastTag;
       FC     lastPeerFC;
-      GDT_BOOLEAN firstTime = GDT_TRUE;
+      bool firstTime = true;
       cout << "<HITS UNITS=\"characters\" NUMBER=\"" << z << "\">" << endl;
       for (INT i=1; i <=z ; i++)
         {
@@ -91,7 +91,7 @@ static void dumpXMLHitTable(FCLIST *HitTable, VIDB *vidb, const RESULT& Result)
 		  if (! firstTime)
 		    cout << ( lastTag.GetLength() ? "  </CONTAINER>" : "  </FULLTEXT>" ) << endl;
 		  else
-		    firstTime = GDT_FALSE;
+		    firstTime = false;
 		  if (Tag.GetLength())
 		    {
 			FIELDTYPE ft = idb->GetFieldType(Tag);
@@ -157,7 +157,7 @@ static void dumpJsonHitTable(FCLIST *HitTable, VIDB *vidb, const RESULT& Result)
   MDTREC mdtrec;
 
 
-  if ( idb->GetMainMdt()->GetEntry (Result.GetMdtIndex(), &mdtrec) == GDT_FALSE)
+  if ( idb->GetMainMdt()->GetEntry (Result.GetMdtIndex(), &mdtrec) == false)
     {
       cerr << "Can't resolve record!" << endl;
       return;
@@ -170,7 +170,7 @@ static void dumpJsonHitTable(FCLIST *HitTable, VIDB *vidb, const RESULT& Result)
       STRING Tag;
       STRING lastTag;
       FC     lastPeerFC;
-      GDT_BOOLEAN firstTime = GDT_TRUE;
+      bool firstTime = true;
       cout << "\
 \tHITS:{\n\
 \t@: {\n\
@@ -191,7 +191,7 @@ static void dumpJsonHitTable(FCLIST *HitTable, VIDB *vidb, const RESULT& Result)
 		  if (! firstTime)
 		    cout << "  }" << endl; // End Tag
 		  else
-		    firstTime = GDT_FALSE;
+		    firstTime = false;
 		  if (Tag.GetLength())
 		    {
 			FIELDTYPE ft = idb->GetFieldType(Tag);
@@ -474,8 +474,8 @@ int _Isearch_main (int argc, char **argv)
   STRING Before ("\033[7m");
   STRING After ("\033[m");
   DATERANGE DateRange;
-  GDT_BOOLEAN have_date = GDT_FALSE;
-  GDT_BOOLEAN ScanSearch = GDT_FALSE;
+  bool have_date = false;
+  bool ScanSearch = false;
   STRING      ScanSearchField;
   INT    startDoc = 0, endDoc = 0;
   size_t StartDoc = 0, EndDoc = 0;
@@ -489,7 +489,7 @@ int _Isearch_main (int argc, char **argv)
   DOUBLE DropAbsolute = 0;
   INT    DropScaled = 0;
   INT    DropHits = 0;
-  GDT_BOOLEAN Reduce = GDT_FALSE;
+  bool Reduce = false;
   INT DebugFlag = 0;
   INT ShowRusage = 0;
   INT QuitFlag = 0;
@@ -498,8 +498,8 @@ int _Isearch_main (int argc, char **argv)
   INT ByteRangeFlag = 0;
   INT KeyFlag = 0;
   INT DoctypeFlag = 0;
-  GDT_BOOLEAN DateFlag = GDT_FALSE;
-  GDT_BOOLEAN DateModifiedFlag = GDT_FALSE;
+  bool DateFlag = false;
+  bool DateModifiedFlag = false;
   INT RpnQuery = 0;
   INT InfixQuery = 0;
   INT SmartQuery = 1;
@@ -589,7 +589,7 @@ int _Isearch_main (int argc, char **argv)
                   return 0;
                 }
 	      ScanSearchField = argv[x];
-	      ScanSearch = GDT_TRUE;
+	      ScanSearch = true;
 	      LastUsed = x;
 	   }
 	  else if (Flag.Equals ("-scale"))
@@ -757,12 +757,12 @@ int _Isearch_main (int argc, char **argv)
             }
 	  else if (Flag.Equals ("-reduce"))
 	    {
-	      Reduce = GDT_TRUE;
+	      Reduce = true;
               LastUsed = x;
 	    }
 	  else if (Flag.Equals("-reduce0"))
 	    {
-	      Reduce = GDT_TRUE;
+	      Reduce = true;
 	      Sort = ByAuxCount;
 	      LastUsed = x;
 	    }
@@ -1005,12 +1005,12 @@ int _Isearch_main (int argc, char **argv)
 	    }
 	  else if (Flag.Equals ("-date"))
 	    {
-	      DateFlag = GDT_TRUE;
+	      DateFlag = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals("-datemodified"))
 	    {
-	      DateModifiedFlag = GDT_TRUE;
+	      DateModifiedFlag = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals ("-rpn"))
@@ -1320,7 +1320,7 @@ int _Isearch_main (int argc, char **argv)
   if (DateRange.Defined())
     {
       pdb->SetDateRange(DateRange);
-      have_date = GDT_TRUE;
+      have_date = true;
     }
 
   clock_t s_creat = clock();
@@ -1508,7 +1508,7 @@ again:
 	{
 	  // Save Session
 	  prset->Write (Fp);
-	  Write((BYTE)GDT_FALSE, Fp);
+	  Write((BYTE)false, Fp);
 	  DBName.Write (Fp);
 	  QueryString.Write (Fp);
 	  squery.Write (Fp);
@@ -1703,7 +1703,7 @@ again:
 	    }
           if (RecordSyntax == HtmlRecordSyntax)
             {
-              if (pdb->URL (result, &string, GDT_FALSE))
+              if (pdb->URL (result, &string, false))
 		{
 		  if (ShowXML)
 		    cout << "<URL>" << string << "</URL>" << endl;
@@ -1867,7 +1867,7 @@ again:
 	cout.flush();
 #ifdef LINUX
 	  { STRING s;
-	  if (s.FGet(stdin, sizeof(Selection)-1) == GDT_TRUE)
+	  if (s.FGet(stdin, sizeof(Selection)-1) == true)
 	    strcpy(Selection, s.c_str());
 	  else
 	    Selection[0] = '\0'; }
@@ -1911,9 +1911,9 @@ again:
 	      char *tcp = &Selection[5];
               while (isspace(*tcp)) tcp++;
               if (strncasecmp(tcp, "ht", 2) == 0)
-                PresentHtml = GDT_FALSE;
+                PresentHtml = false;
               else if (strncasecmp(tcp, "xml", 2) == 0)
-                ShowXML = PresentHtml = GDT_FALSE;
+                ShowXML = PresentHtml = false;
               else if (strncasecmp(tcp, "sho", 3) == 0)
                 ShowHit = 0;
               else
@@ -1940,9 +1940,9 @@ again:
 	      else if (strncasecmp(tcp, "wor", 3) == 0)
 		RpnQuery = InfixQuery = 0;
 	      else if (strncasecmp(tcp, "ht", 2) == 0)
-		PresentHtml = GDT_TRUE;
+		PresentHtml = true;
 	      else if (strncasecmp(tcp, "su", 2) == 0)
-		PresentHtml = GDT_FALSE;
+		PresentHtml = false;
 	      else if (strncasecmp(tcp, "xm", 2) == 0)
 		{
 		  if (!ShowXML) cout << "<!-- ";
@@ -2045,7 +2045,7 @@ again:
 	  cout.flush();
 #ifdef LINUX
 	  {STRING s;
-          if (s.FGet(stdin, sizeof(Selection)-1) == GDT_TRUE)
+          if (s.FGet(stdin, sizeof(Selection)-1) == true)
             strcpy(Selection, s.c_str());
           else
             Selection[0] = '\0'; }

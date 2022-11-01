@@ -19,7 +19,7 @@ VLIST::VLIST ()
   Next = Prev = this; // a circle of one
 }
 
-GDT_BOOLEAN VLIST::IsEmpty() const
+bool VLIST::IsEmpty() const
 {
   return (Next == NULL || Next == this);
 }

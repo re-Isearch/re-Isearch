@@ -320,7 +320,7 @@ const PCHR XML::find_end_tag (const char *const *t, const char *tag, size_t *off
 }
 
 
-GDT_BOOLEAN XML::StoreTagComplexAttributes(const char *tag_ptr) const
+bool XML::StoreTagComplexAttributes(const char *tag_ptr) const
 {
   return SGMLNORM::StoreTagComplexAttributes(tag_ptr);
 }

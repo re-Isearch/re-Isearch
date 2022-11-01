@@ -59,7 +59,7 @@ public:
   void     WriteIndex(const STRING& Fn);
   FILE    *OpenForAppend(const STRING& Fn);
 
-  GDT_BOOLEAN  Close(FILE *fp) { return (fp && fclose((FILE *)fp) == 0); };
+  bool  Close(FILE *fp) { return (fp && fclose((FILE *)fp) == 0); };
 
   ///
   BBOXFLD  operator[](signed n) const   {return table[n]; }

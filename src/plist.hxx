@@ -47,17 +47,17 @@ public:
   // Insertion
 
   //@ManMemo: Inserts item pointer 'a' before item at POSITION p
-  GDT_BOOLEAN 	InsertBefore(IPOSITION p, IATOM *a);
+  bool 	InsertBefore(IPOSITION p, IATOM *a);
   //@ManMemo: Inserts item pointer 'a' after item at POSITION p
-  GDT_BOOLEAN 	InsertAfter(IPOSITION p, IATOM *a);
+  bool 	InsertAfter(IPOSITION p, IATOM *a);
 
   // Operations
 
   //@ManMemo: Adds item 'a' to the end of the list
-  GDT_BOOLEAN 	AddTail(IATOM *a);
+  bool 	AddTail(IATOM *a);
   /*@ManMemo: Inserts item 'a' before the head of the list, making
     it the new head */
-  GDT_BOOLEAN 	AddHead(IATOM *a);
+  bool 	AddHead(IATOM *a);
   /*@ManMemo: Removes all item references in the list.  NOTE: caller
     is responsible for freeing any memory used by items in the list.
     Only the internal references to those items are deleted by this
@@ -99,7 +99,7 @@ public:
 	
   /*@ManMemo: Adds All the items in ListPtr to the right of
     POSITION p to the end of this.*/
-  GDT_BOOLEAN     Cat(PLIST* PlistPtr, IPOSITION p);
+  bool     Cat(PLIST* PlistPtr, IPOSITION p);
 
   /*@ManMemo: Copies the list by walking down the list and using
     Addtail to add the atoms onto the end of the new list. */
@@ -114,7 +114,7 @@ public:
   IATOM* 		GetAt(IPOSITION p);
   /*@ManMemo: Sets the list item pointer at POSITION p.  Caller is
     responsible for freeing the item previously at POSITION p. */
-  GDT_BOOLEAN 	SetAt(IPOSITION p, IATOM *a);
+  bool 	SetAt(IPOSITION p, IATOM *a);
   /*@ManMemo: Removes the reference to the list item at POSITION p.
     Caller is responsible for freeing the item previously at POSITION p. */
   void 		RemoveAt(IPOSITION p);
@@ -126,8 +126,8 @@ public:
 
   //@ManMemo: Returns the number of items currently in the list
   INT 		GetLength() { return Length; }
-  //@ManMemo: Returns GDT_TRUE if the list is empty, GDT_FALSE otherwise.
-  GDT_BOOLEAN 	IsEmpty();
+  //@ManMemo: Returns true if the list is empty, false otherwise.
+  bool 	IsEmpty();
 
 private:
   IPOSITION MergeSort(IPOSITION c, INT Len, INT (*compar)(void* a, void* b));

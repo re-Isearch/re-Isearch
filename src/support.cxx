@@ -339,7 +339,7 @@ STRING ResolveConfigPath(const STRING& Filename)
 #endif
 }
 
-GDT_BOOLEAN ResolveConfigPath(STRING *Filename)
+bool ResolveConfigPath(STRING *Filename)
 {
   if (Filename != NULL)
     {
@@ -347,14 +347,14 @@ GDT_BOOLEAN ResolveConfigPath(STRING *Filename)
       if (Exists(tmp))
 	{ 
 	  *Filename = tmp;
-	  return GDT_TRUE;
+	  return true;
 	}
     }
-  return GDT_FALSE;
+  return false;
 }
 
 #ifndef _WIN32
-STRING ResolveHtdocPath(const STRING& Filename, GDT_BOOLEAN AsUrl)
+STRING ResolveHtdocPath(const STRING& Filename, bool AsUrl)
 {
   if (Filename.IsEmpty())
     return Filename;

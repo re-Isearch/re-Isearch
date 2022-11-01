@@ -88,34 +88,34 @@ public:
   VIDB();
   VIDB(const STRING& DBName);
   VIDB(const STRING& DBName, REGISTRY *Registry);
-  VIDB(const STRING& DBName, GDT_BOOLEAN Searching);
+  VIDB(const STRING& DBName, bool Searching);
   VIDB(const STRING& DBName, const STRLIST& NewDocTypeOptions);
-  VIDB(const STRING& DBName, const STRLIST& NewDocTypeOptions, const GDT_BOOLEAN Searching);
+  VIDB(const STRING& DBName, const STRLIST& NewDocTypeOptions, const bool Searching);
   VIDB(const STRING& NewPathName, const STRING& NewFileName);
-  VIDB(const STRING& NewPathName, const STRING& NewFileName, GDT_BOOLEAN Searching);
+  VIDB(const STRING& NewPathName, const STRING& NewFileName, bool Searching);
   VIDB(const STRING& NewPathName, const STRING& NewFileName, const STRLIST& NewDocTypeOptions);
   VIDB(const STRING& NewPathName, const STRING& NewFileName,
-	const STRLIST& NewDocTypeOptions, const GDT_BOOLEAN Searching);
+	const STRLIST& NewDocTypeOptions, const bool Searching);
 
-  GDT_BOOLEAN  Open(const STRING& DBName, const STRLIST& NewDocTypeOptions, const GDT_BOOLEAN Searching);
-  GDT_BOOLEAN  Open(const STRING& NewPathName, const STRING& NewFileName, 
-		const STRLIST& NewDocTypeOptions, const GDT_BOOLEAN Searching);
-  GDT_BOOLEAN  Open(const STRING& NewPathName, const STRING& NewFileName,
-                const STRLIST& NewDocTypeOptions, const GDT_BOOLEAN Searching, const STRING& XMLBuffer);
-  GDT_BOOLEAN  Close(); // Close a VIDB
+  bool  Open(const STRING& DBName, const STRLIST& NewDocTypeOptions, const bool Searching);
+  bool  Open(const STRING& NewPathName, const STRING& NewFileName, 
+		const STRLIST& NewDocTypeOptions, const bool Searching);
+  bool  Open(const STRING& NewPathName, const STRING& NewFileName,
+                const STRLIST& NewDocTypeOptions, const bool Searching, const STRING& XMLBuffer);
+  bool  Close(); // Close a VIDB
 
   const STRLIST&  GetDocTypeOptions() const;
   const STRLIST  *GetDocTypeOptionsPtr() const;
   ~VIDB();
 
-  GDT_BOOLEAN  AddRecord(const RECORD& NewRecord); // 1st Queue
+  bool  AddRecord(const RECORD& NewRecord); // 1st Queue
   void         DocTypeAddRecord(const RECORD& NewRecord); // 2nd Queue
 
 #if USE_STD_MAP
   int         Segment(const STRING& Name)  { return Segments[Name]; }
 #endif
 
-  GDT_BOOLEAN  Index(GDT_BOOLEAN newIndex = GDT_FALSE);
+  bool  Index(bool newIndex = false);
 
   SRCH_DATE   GetTimestamp() const;
 
@@ -123,9 +123,9 @@ public:
 
   IDBOBJ     *GetIDB(size_t idx = 1) const;
   size_t      GetIDBCount() const { return c_dbcount; }
-  GDT_BOOLEAN IsDbVirtual() const { return c_dbcount > 1;}
+  bool IsDbVirtual() const { return c_dbcount > 1;}
 
-  virtual GDT_BOOLEAN SetSortIndexes(int Which, atomicIRSET *Irset);
+  virtual bool SetSortIndexes(int Which, atomicIRSET *Irset);
 
   void SetPriorityFactor(DOUBLE x, size_t Idx=0);
 
@@ -137,8 +137,8 @@ public:
   void SetDbSearchCacheSize(size_t NewCacheSize);
   void SetDbSearchCacheSize(size_t NewCacheSize, size_t idx);
 
-  void SetFindConcatWords(GDT_BOOLEAN Set=GDT_TRUE);
-  GDT_BOOLEAN GetFindConcatWords() const;
+  void SetFindConcatWords(bool Set=true);
+  bool GetFindConcatWords() const;
 
   void  BeforeSearching (QUERY*);
   QUERY BeforeSearching(const QUERY& Query) {
@@ -151,12 +151,12 @@ public:
   void BeforeIndexing ();
   void AfterIndexing ();
 
-  GDT_BOOLEAN KillAll();
-  GDT_BOOLEAN KillAll(size_t idx);
+  bool KillAll();
+  bool KillAll(size_t idx);
 
-  void SetDebugMode(GDT_BOOLEAN OnOff);
-  void DebugModeOn()      { SetDebugMode(GDT_TRUE);}; // Obsolete
-  void DebugModeOff()     { SetDebugMode(GDT_FALSE);}; // Obsolete
+  void SetDebugMode(bool OnOff);
+  void DebugModeOn()      { SetDebugMode(true);}; // Obsolete
+  void DebugModeOff()     { SetDebugMode(false);}; // Obsolete
 
   enum DbState GetDbState() const;
 
@@ -176,19 +176,19 @@ public:
   size_t GetTotalDocumentsDeleted() const;
   size_t GetTotalDocumentsDeleted(const INT Idx) const;
   size_t GetTotalDatabases() const;
-  GDT_BOOLEAN SetLocale(const CHR *LocaleName = NULL) const;
+  bool SetLocale(const CHR *LocaleName = NULL) const;
 
 
-  GDT_BOOLEAN IsDbCompatible() const;
-  GDT_BOOLEAN IsEmpty() const;
-  GDT_BOOLEAN Ok () const { return Opened && IsDbCompatible() && !IsEmpty(); }
+  bool IsDbCompatible() const;
+  bool IsEmpty() const;
+  bool Ok () const { return Opened && IsDbCompatible() && !IsEmpty(); }
 
   int BitVersion() const;
 
   void SetCommonWordsThreshold(long x);
 
   void SetStoplist(const STRING& Filename);
-  GDT_BOOLEAN IsStopWord (const STRING& Word) const;
+  bool IsStopWord (const STRING& Word) const;
 
 // Virtual Database Information
   STRING GetTitle(const INT Idx=0) const;
@@ -248,7 +248,7 @@ public:
   */
   // Scan for field contents according to a search
   size_t ScanSearch(SCANLIST *ListPtr, const QUERY& SearchQuery, const STRING& Fieldname,
-         size_t MaxRecordsThreshold = 0, GDT_BOOLEAN Cat = GDT_FALSE);
+         size_t MaxRecordsThreshold = 0, bool Cat = false);
   SCANLIST ScanSearch(const QUERY& Query, const STRING& Fieldname) {
     return ScanSearch(Query, Fieldname, 0);
   }
@@ -361,15 +361,15 @@ public:
 
   void BeginRsetPresent(const STRING& RecordSyntax);
 
-  GDT_BOOLEAN GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+  bool GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
 	PSTRING StringBuffer, const DOCTYPE *DoctypePtr = NULL);
-  GDT_BOOLEAN GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+  bool GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
 	PSTRLIST StrlistBuffer, const DOCTYPE *DoctypePtr = NULL);
 
   // Show Headline ("B")..
-  GDT_BOOLEAN Headline(const RESULT& ResultRecord, const STRING& RecordSyntax,
+  bool Headline(const RESULT& ResultRecord, const STRING& RecordSyntax,
 	PSTRING StringBuffer) const;
-  GDT_BOOLEAN Headline(const RESULT& ResultRecord, PSTRING StringBuffer) const;
+  bool Headline(const RESULT& ResultRecord, PSTRING StringBuffer) const;
   STRING      Headline(const RESULT& ResultRecord, const STRING& RecordSyntax = NulString) const {
     STRING headline;
     Headline(ResultRecord, RecordSyntax, &headline);
@@ -377,7 +377,7 @@ public:
   }
 
   // Context Match
-  GDT_BOOLEAN Context(const RESULT& ResultRecord, PSTRING Line, STRING *Term = NULL,
+  bool Context(const RESULT& ResultRecord, PSTRING Line, STRING *Term = NULL,
 	const STRING& Before = NulString, const STRING& After = NulString) const;
   STRING      Context(const RESULT& ResultRecord,
 	const STRING& Before = NulString, const STRING& After = NulString) const {
@@ -385,7 +385,7 @@ public:
     Context(ResultRecord, &line, NULL, Before, After);
     return line;
   }
-  GDT_BOOLEAN NthContext(size_t N, const RESULT& ResultRecord, PSTRING Line, STRING *Term = NULL,
+  bool NthContext(size_t N, const RESULT& ResultRecord, PSTRING Line, STRING *Term = NULL,
         const STRING& Before = NulString, const STRING& After = NulString) const;
   STRING      NthContext(size_t N, const RESULT& ResultRecord,
         const STRING& Before = NulString, const STRING& After = NulString) const {
@@ -396,11 +396,11 @@ public:
 
   STRING XMLHitTable(const RESULT& Result);
 
-  GDT_BOOLEAN XMLContext(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
+  bool XMLContext(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
         const STRING& Tag) const;
 
   // Record Summary (if available)
-  GDT_BOOLEAN Summary(const RESULT& ResultRecord,
+  bool Summary(const RESULT& ResultRecord,
 	const STRING& RecordSyntax, PSTRING StringBuffer) const;
   STRING      Summary(const RESULT& ResultRecord, const STRING& RecordSyntax = NulString) const {
     STRING summary;
@@ -409,10 +409,10 @@ public:
   }
 
   // Return URL to Source Document
-  GDT_BOOLEAN URL(const RESULT& ResultRecord, PSTRING StringBuffer,
-	GDT_BOOLEAN OnlyRemote = GDT_FALSE) const;
+  bool URL(const RESULT& ResultRecord, PSTRING StringBuffer,
+	bool OnlyRemote = false) const;
 
-  STRING  URL (const RESULT& ResultRecord, GDT_BOOLEAN OnlyRemote = GDT_FALSE) const {
+  STRING  URL (const RESULT& ResultRecord, bool OnlyRemote = false) const {
     STRING url;
     URL(ResultRecord, &url, OnlyRemote);
     return url;
@@ -480,13 +480,13 @@ public:
   DFDT *GetDfdt() { return GetDfdt(NULL, NULL); }
   DFDT *GetDfdt(DFDT *DfdtBuffer, const RESULT *ResultPtr = NULL);
 
-  GDT_BOOLEAN GetRecordDfdt(const RESULT& Result, DFDT *DfdtBuffer);
-  GDT_BOOLEAN GetRecordDfdt(const STRING& Key, DFDT *DfdtBuffer);
-  GDT_BOOLEAN KeyLookup(const STRING& Key, PRESULT ResultBuffer = NULL) const;
+  bool GetRecordDfdt(const RESULT& Result, DFDT *DfdtBuffer);
+  bool GetRecordDfdt(const STRING& Key, DFDT *DfdtBuffer);
+  bool KeyLookup(const STRING& Key, PRESULT ResultBuffer = NULL) const;
 
-  GDT_BOOLEAN SetDateRange(const DATERANGE& DateRange);
-  GDT_BOOLEAN SetDateRange(const SRCH_DATE& From, const SRCH_DATE& To);
-  GDT_BOOLEAN GetDateRange(DATERANGE *DateRange = NULL) const;
+  bool SetDateRange(const DATERANGE& DateRange);
+  bool SetDateRange(const SRCH_DATE& From, const SRCH_DATE& To);
+  bool GetDateRange(DATERANGE *DateRange = NULL) const;
 
   STRING Description() const;
 
@@ -510,8 +510,8 @@ public:
 
   size_t GetAncestorContent (RESULT& Result, const STRING& NodeName, STRLIST *StrlistPtr);
 
-  GDT_BOOLEAN GetDocumentInfo (const INT Idx, const INT Index, PRECORD RecordBuffer) const;
-  GDT_BOOLEAN GetDocumentInfo (const INT Index, PRECORD RecordBuffer) const;
+  bool GetDocumentInfo (const INT Idx, const INT Index, PRECORD RecordBuffer) const;
+  bool GetDocumentInfo (const INT Index, PRECORD RecordBuffer) const;
 
   SRCH_DATE DateCreated() const;
   SRCH_DATE DateLastModified() const;
@@ -526,7 +526,7 @@ public:
   STRING GetDbFileStem(const STRING& Key, PSTRING StringBuffer) const;
 
   const STRLIST& GetAllDocTypes ();
-  GDT_BOOLEAN ValidateDocType(const STRING& DocType) const;
+  bool ValidateDocType(const STRING& DocType) const;
 
   STRING GetVersionID() const;
   void   GetIsearchVersionNumber(PSTRING StringBuffer) const {
@@ -535,7 +535,7 @@ public:
 
   INT GetLocks() const;
 private:
-  GDT_BOOLEAN     Opened;
+  bool     Opened;
   size_t          VirtualSet(const STRING& Key, STRING *NewKey, char Ch='@') const;
   size_t          VirtualSet(const RESULT& ResultRecord, RESULT *Result) const;
   PDFDT           MainDfdt;
@@ -549,7 +549,7 @@ private:
   IRSET         **c_irsetlist;
   RSET          **c_rsetlist;
   size_t          c_dbcount;
-  GDT_BOOLEAN     c_inconsistent_doctypes;
+  bool     c_inconsistent_doctypes;
   BYTE            c_index[VolIndexCapacity]; // See above 
 
   struct strCmp {
@@ -586,8 +586,8 @@ public:
   // Create a New Session
   IRSET      *Create(const QUERY& Query);
   // Save this Session
-  GDT_BOOLEAN Save(const STRING& SearchSessionFn) const;
-  GDT_BOOLEAN Save(pid_t ProcessId) const;
+  bool Save(const STRING& SearchSessionFn) const;
+  bool Save(pid_t ProcessId) const;
 
   // Session Information
   QUERY       GetQuery() const { return Query; }

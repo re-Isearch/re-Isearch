@@ -112,9 +112,9 @@ public:
     if (newTimestamp.Ok())
       {
 	Timestamp = newTimestamp;
-	return GDT_TRUE;
+	return true;
       }
-    return GDT_FALSE;
+    return false;
   }
   SRCH_DATE GetTimestamp() const { return Timestamp; }
 

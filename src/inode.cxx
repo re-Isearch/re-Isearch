@@ -9,6 +9,15 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 #include "inode.hxx"
 #include "magic.hxx"
 
+
+// Inode = I$
+// IPFS  = F$ then binary!
+// Regular keys are without prefix
+
+static const char *inode_key_prefix = "I$";
+//static const char *ipfs_key_prefix  = "F$";
+
+
 #ifdef _WIN32
 #ifndef _HAVE_LSTAT
 # define _HAVE_LSTAT 0
@@ -154,7 +163,7 @@ INODE::INODE(const STRING& Path)
 }
 
 
-GDT_BOOLEAN INODE::Set(const STRING& Path)
+bool INODE::Set(const STRING& Path)
 {
 #ifdef _WIN32
   if (Path.GetLength() && access (Path, F_OK) == 0) 
@@ -188,7 +197,7 @@ GDT_BOOLEAN INODE::Set(const STRING& Path)
       st_nlink = FileInformation.nNumberOfLinks;
       st_size  = cons_UINT8( FileInformation.nFileSizeHigh, FileInformation.nFileSizeLow);
 
-      return GDT_TRUE;
+      return true;
     }
 #else
 
@@ -235,12 +244,12 @@ GDT_BOOLEAN INODE::Set(const STRING& Path)
 	  adate.Set(&atime);
 	  /* -------------*/
 	}
-      return GDT_TRUE;
+      return true;
     }
 #endif
 #endif
   else Clear();
-  return GDT_FALSE;
+  return false;
 }
 
 void INODE::Clear()
@@ -263,15 +272,15 @@ INODE::INODE(int fd)
   Set(fd);
 }
 
-GDT_BOOLEAN INODE::Set(FILE *fp)
+bool INODE::Set(FILE *fp)
 {
   if (fp) return Set(fileno(fp));
   else Clear();
-  return GDT_FALSE;
+  return false;
 }
 
 
-GDT_BOOLEAN INODE::Set(int fd)
+bool INODE::Set(int fd)
 {
   struct stat sb;
 
@@ -282,10 +291,10 @@ GDT_BOOLEAN INODE::Set(int fd)
       st_size  = sb.st_size;
       if ((st_nlink = sb.st_nlink) == 0)
 	st_nlink = 1;
-      return GDT_TRUE;
+      return true;
     }
   Clear();
-  return GDT_FALSE;
+  return false;
 }
 
 #ifndef NAMESPACE
@@ -309,7 +318,7 @@ void  INODE::Write(PFILE fp) const
   ::Write(adate, fp);
 }
 
-GDT_BOOLEAN INODE::Read(PFILE fp)
+bool INODE::Read(PFILE fp)
 {
   if ( getObjID(fp) == objINODE)
     {
@@ -322,11 +331,11 @@ GDT_BOOLEAN INODE::Read(PFILE fp)
       ::Read(&cdate, fp);
       ::Read(&mdate, fp);
       ::Read(&adate, fp);
-      return GDT_TRUE;
+      return true;
     }
   Clear();
   PushBackObjID(objINODE, fp);
-  return GDT_FALSE;
+  return false;
 }
 
 static char *encode64(char *ptr, size_t siz, UINT8 num)
@@ -358,10 +367,9 @@ static INT8 host = -1;
 
 STRING  INODE::Key() const
 {
-  STRING key;
+  STRING key ( inode_key_prefix );
   char ptr[10];
 
-  key = "I$";
   key +=  encode64(ptr, 9, st_ino);
   if (st_dev == 0 || st_dev == -1)
     {

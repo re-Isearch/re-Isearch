@@ -70,7 +70,7 @@ GILSXML::GILSXML (PIDBOBJ DbParent, const STRING& Name) : XMLBASE (DbParent, Nam
         toption, string.c_str(), value.c_str());
       value = string;
     }
-  if ((value.GetBool() == GDT_FALSE) || (value.GetChr(1) == '<' ))
+  if ((value.GetBool() == false) || (value.GetChr(1) == '<' ))
     value.Empty();
   typeKeyword = value;
   if (typeKeyword.GetLength() && (typeKeyword != DefaultTypeKeyword))
@@ -130,11 +130,11 @@ void NEWSML::LoadFieldTable()
 	"FirstCreated",
 	"ThisRevisionCreated",
 	NULL};
-      GDT_BOOLEAN DateField_notseen = ! DateField.IsEmpty();
+      bool DateField_notseen = ! DateField.IsEmpty();
       for (size_t i=0; date_fields[i]; i++)
 	{
 	  if (DateField_notseen)
-	    if (date_fields[i] ^= DateField) DateField_notseen = GDT_FALSE;
+	    if (date_fields[i] ^= DateField) DateField_notseen = false;
 	  Db->AddFieldType(date_fields[i], FIELDTYPE::date);
 	}
       if (DateField_notseen && DateField.GetLength())
@@ -272,9 +272,9 @@ XMLBASE::~XMLBASE ()
 }
 
 
-GDT_BOOLEAN XMLBASE::StoreTagComplexAttributes(const char *tag_ptr) const
+bool XMLBASE::StoreTagComplexAttributes(const char *tag_ptr) const
 {
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -340,7 +340,7 @@ PDFT XMLBASE::ParseStructure(FILE *fp, off_t Position, off_t Length)
   long  satzCount = 0;
   long  paraCount = 0;
   long  pageCount = 0;
-  GDT_BOOLEAN have_headline_field = !(headlineFieldName.IsEmpty());
+  bool have_headline_field = !(headlineFieldName.IsEmpty());
 
   int Ch;
   off_t pos = 0;
@@ -754,7 +754,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
           if (strchr (*tags_ptr, '='))
             {
 	      (*tags_ptr)[tag_len - 1] = 0; // edz 2021 addition
-              store_attributes (pdft, RecBuffer, *tags_ptr, GDT_FALSE, &Key, &Datum);
+              store_attributes (pdft, RecBuffer, *tags_ptr, false, &Key, &Datum);
             }
           continue; // No content
         }
@@ -921,7 +921,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 	}
       if (have_attribute_val)
 	{
-	  store_attributes (pdft, RecBuffer, *tags_ptr, GDT_FALSE, &Key, &Datum);
+	  store_attributes (pdft, RecBuffer, *tags_ptr, false, &Key, &Datum);
 	  // Store attributes as attributes of the whole tag path as well
 	  // if TagPath!=Tagname, ie. nestlevel!=0
 	  if(NestLevel) {
@@ -960,7 +960,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 	    }
 	    // ---- end added code of 9 Nov 2003
 	    store_attributes(pdft, RecBuffer,
-		(char *)(TagPathWithAttrs.c_str()), GDT_FALSE, &Key, &Datum);
+		(char *)(TagPathWithAttrs.c_str()), false, &Key, &Datum);
 	  }
 	}
       else if (p == NULL)
@@ -1024,7 +1024,7 @@ static int DfdtCompare (const void *p1, const void *p2)
 }
 
 
-GDT_BOOLEAN XMLBASE::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
+bool XMLBASE::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
 {
   PMDT MainMdt = Db->GetMainMdt ();
   PDFDT MainDfdt = Db->GetMainDfdt ();
@@ -1033,7 +1033,7 @@ GDT_BOOLEAN XMLBASE::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
 
   MDTREC Mdtrec;
   if (!MainMdt->GetMdtRecord (Key, &Mdtrec))
-    return GDT_FALSE;
+    return false;
 
   const GPTYPE MdtS = Mdtrec.GetGlobalFileStart () + Mdtrec.GetLocalRecordStart ();
   const GPTYPE MdtE = Mdtrec.GetGlobalFileStart () + Mdtrec.GetLocalRecordEnd ();
@@ -1049,7 +1049,7 @@ GDT_BOOLEAN XMLBASE::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
     {
       MainDfdt->GetEntry (x, &dfd);
       const STRING FieldName = dfd.GetFieldName ();
-      if (Db->DfdtGetFileName (FieldName, &Fn) == GDT_FALSE)
+      if (Db->DfdtGetFileName (FieldName, &Fn) == false)
 	continue;
       PFILE Fp = Fn.Fopen ("rb");
       if (Fp)
@@ -1069,7 +1069,7 @@ GDT_BOOLEAN XMLBASE::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
 		{
 		  OldX = X;
 		  if (-1 == fseek (Fp, X * sizeof (FC), SEEK_SET) ||
-			Fc.Read (Fp) == GDT_FALSE)
+			Fc.Read (Fp) == false)
 		    {
 		      // Read Error
 		      if (++X >= Total) X = Total - 1;
@@ -1081,7 +1081,7 @@ GDT_BOOLEAN XMLBASE::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
 		      if (X != 0)
 			{
 			  do {
-			    if (-1 == fseek(Fp, (--X)*sizeof(FC), SEEK_SET) || Fc.Read(Fp) == GDT_FALSE)
+			    if (-1 == fseek(Fp, (--X)*sizeof(FC), SEEK_SET) || Fc.Read(Fp) == false)
 			      break;
 			  } while (X > 0 && MdtFc.Compare(Fc) == 0);
 			  if (MdtFc.Compare(Fc) != 0)
@@ -1120,14 +1120,14 @@ GDT_BOOLEAN XMLBASE::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
 	continue;
       const GPTYPE start = Table[i].Fc.GetFieldStart();
       const GPTYPE end   = Table[i].Fc.GetFieldEnd();
-      GDT_BOOLEAN found = GDT_FALSE; 
+      bool found = false; 
       for (int j=1; j < count && !found; j++)
 	{
 	  if (i == j || Table[j].Dfd.GetFieldName().Search(levelCh) == 0)
 	    continue;
 	  if (start <= Table[j].Fc.GetFieldStart() && end >= Table[j].Fc.GetFieldEnd())
 	    {
-	      found = GDT_TRUE;
+	      found = true;
 	    }
 	}
       if (!found)
@@ -1137,7 +1137,7 @@ GDT_BOOLEAN XMLBASE::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
     }
   delete[] Table;
 
-  return GDT_TRUE;
+  return true;
 }
 
 

@@ -449,7 +449,7 @@ void SGMLNORM::ParseFields (PRECORD NewRecord)
 	{
 	  if (strchr (*tags_ptr, '='))
 	    {
-	      store_attributes (pdft, RecBuffer, *tags_ptr, GDT_FALSE, &Key, &Datum);
+	      store_attributes (pdft, RecBuffer, *tags_ptr, false, &Key, &Datum);
 	    }
 	  continue; // No content
 	}
@@ -488,7 +488,7 @@ void SGMLNORM::ParseFields (PRECORD NewRecord)
 	}
 
       const PCHR p = find_end_tag ((const char *const *)tags_ptr, (const char *)*tags_ptr);
-      GDT_BOOLEAN have_attribute_val = (NULL != strchr (*tags_ptr, '='));
+      bool have_attribute_val = (NULL != strchr (*tags_ptr, '='));
 
       if (p != NULL)
 	{
@@ -589,7 +589,7 @@ void SGMLNORM::ParseFields (PRECORD NewRecord)
 
       if (have_attribute_val)
 	{
-	  store_attributes (pdft, RecBuffer, *tags_ptr, GDT_FALSE, &Key, &Datum);
+	  store_attributes (pdft, RecBuffer, *tags_ptr, false, &Key, &Datum);
 	}
       else if (p == NULL)
 	{
@@ -638,7 +638,7 @@ No end tag for <%s> found, EMPTY or SHORTREF? skipping field.",
 		   // Already in database
 		   message_log (LOG_WARN, "'%s'[%ld-%ld] already in index.", fn.c_str(),
 			RecStart, RecEnd);
-		   NewRecord->SetBadRecord(GDT_TRUE);
+		   NewRecord->SetBadRecord(true);
 		}
 	    }
 	  else
@@ -900,10 +900,10 @@ SGMLNORM::~SGMLNORM ()
 //
 // returns TRUE if had a Type or Schema
 //
-static GDT_BOOLEAN grabSchema(PSTRING SchemeBuffer, PSTRING TypBuffer,
+static bool grabSchema(PSTRING SchemeBuffer, PSTRING TypBuffer,
 	PCHR val)
 {
-  GDT_BOOLEAN result = GDT_FALSE;
+  bool result = false;
   // TODO: Make this more modular for other keywords
   PCHR tcp = val;
   if (*tcp == '\'' || *tcp == '"') tcp++;
@@ -942,7 +942,7 @@ static GDT_BOOLEAN grabSchema(PSTRING SchemeBuffer, PSTRING TypBuffer,
 	      if (i)
 		{
 		  // Have something...
-		  result = GDT_TRUE;
+		  result = true;
 		  tmp[i] = '\0';
 		  if (haveS)
 		    {
@@ -1004,9 +1004,9 @@ static void sVal(PSTRING StringBuffer, PCHR val)
 /* Collect all the <tag foo=bar ..> stuff as tag@foo ...  */
 
 void SGMLNORM::store_attributes (PDFT pdft, PCHR base_ptr, PCHR tag_ptr,
-  GDT_BOOLEAN UseHTML, STRING* Key, SRCH_DATE *Datum) const
+  bool UseHTML, STRING* Key, SRCH_DATE *Datum) const
 {
-  const GDT_BOOLEAN storeIt = StoreComplexAttributes ? StoreComplexAttributes :
+  const bool storeIt = StoreComplexAttributes ? StoreComplexAttributes :
 		StoreTagComplexAttributes(tag_ptr);
 
 
@@ -1052,8 +1052,8 @@ void SGMLNORM::store_attributes (PDFT pdft, PCHR base_ptr, PCHR tag_ptr,
   STRING MetaName;
   STRING Schema, Typ;
   FC ContentFC;
-  GDT_BOOLEAN HaveContent = GDT_FALSE;
-  GDT_BOOLEAN sawSchema = GDT_FALSE;
+  bool HaveContent = false;
+  bool sawSchema = false;
 #endif
 
   while (*tag_ptr)
@@ -1149,7 +1149,7 @@ void SGMLNORM::store_attributes (PDFT pdft, PCHR base_ptr, PCHR tag_ptr,
 	      {
 		// <DC ELEMENT="..." VALUE="...">
 		ContentFC = fc;
-		HaveContent = GDT_TRUE;
+		HaveContent = true;
 	      }
 	   else if (StrCaseCmp(attribute, "element") == 0)
 	     {
@@ -1173,7 +1173,7 @@ void SGMLNORM::store_attributes (PDFT pdft, PCHR base_ptr, PCHR tag_ptr,
 		{
 		  // <META CONTENT="..." NAME="...">
 		  ContentFC = fc;
-		  HaveContent = GDT_TRUE;
+		  HaveContent = true;
 #if STORE_SCHEMAS
 		  if (!sawSchema)
 		    {
@@ -1199,7 +1199,7 @@ Sorry can only handle %s='%s' and not %s, ignoring",
 		}
 	      else if (StrCaseCmp(attribute, "scheme") == 0)
 		{
-		  sawSchema = GDT_TRUE;
+		  sawSchema = true;
 		  // Experimental Cougar DTD from W3O
 		  if (Schema.GetLength())
 		    message_log(LOG_WARN, "W30 Cougar/4.x DTD detected, \
@@ -1266,7 +1266,7 @@ Scheme overridding (Scheme=..) content");
               {
                 // <DC ELEMENT="..." VALUE="...">
                 ContentFC = fc;
-                HaveContent = GDT_TRUE;
+                HaveContent = true;
               }
            else if (StrCaseCmp(attribute, "element") == 0)
              {
@@ -1295,7 +1295,7 @@ Scheme overridding (Scheme=..) content");
 
 	  // Store coordinates
 	  ContentFC = fc;
-	  HaveContent = GDT_TRUE;
+	  HaveContent = true;
 #if STORE_SCHEMAS
 	  if (!sawSchema)
 	    {
@@ -1305,7 +1305,7 @@ Scheme overridding (Scheme=..) content");
 	}
       else if (StrCaseCmp(attribute, "scheme") == 0)
 	{
-	  sawSchema = GDT_TRUE;
+	  sawSchema = true;
 	  // Experimental Cougar DTD from W3O
 	  if (Schema.GetLength())
 	    message_log(LOG_WARN, "W30 Cougar DTD/4.x detected, Scheme overridding (Scheme=..) content");
@@ -1454,7 +1454,7 @@ PCHR *SGMLNORM::parse_tags (register PCHR b, const off_t len)
   size_t tc = 0;		// tag count
   size_t maxtags = growth;	// max num tags for which space is allocated
   signed short bracket = 0;	// Declaration bracket depth
-  GDT_BOOLEAN InComment = GDT_FALSE; // In a comment?
+  bool InComment = false; // In a comment?
   enum { OK, NEED_END, IN_DECL, QUOTE, SHORTHAND } State = OK; // State Info
   CHR qChar = 0; // Quote Character
 
@@ -1877,7 +1877,7 @@ MONETARYOBJ SGMLNORM::ParseCurrency(const STRING& FieldName, const STRING& Buffe
   return DOCTYPE::ParseCurrency(FieldName, _cleanBuffer(Buffer));
 }
 
-GDT_BOOLEAN SGMLNORM::ParseRange(const STRING& Buffer, const STRING& FieldName,
+bool SGMLNORM::ParseRange(const STRING& Buffer, const STRING& FieldName,
         DOUBLE* fStart, DOUBLE* fEnd) const
 {
   return DOCTYPE::ParseRange(_cleanBuffer(Buffer), FieldName, fStart, fEnd);

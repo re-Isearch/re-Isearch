@@ -40,7 +40,7 @@ public:
 
    void ParseFields(RECORD *RecordPtr);
 
-   GDT_BOOLEAN GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
+   bool GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
 
    void Present (const RESULT& ResultRecord,
          const STRING& ElementSet, const STRING& RecordSyntax,
@@ -56,7 +56,7 @@ protected:
    STRING      SetFilter(const STRING& Filter);
    STRING      GetFilter() const { return Filter; }
 
-   GDT_BOOLEAN SetOptions(const STRING& nOptions) {
+   bool SetOptions(const STRING& nOptions) {
       return (Options = nOptions).GetLength() != 0;
    } 
    STRING      GetOptions() const { return Options; }
@@ -65,7 +65,7 @@ protected:
    STRING      GetMIME_Type() const          { return MIME_Type; }
 
 private:
-   GDT_BOOLEAN GenRecord(const RECORD& FileRecord);
+   bool GenRecord(const RECORD& FileRecord);
 
    STRING Filter;
    STRING Options;

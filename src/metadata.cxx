@@ -91,18 +91,18 @@ METADATA& METADATA::operator =(const METADATA& Other)
   return *this;
 }
 
-GDT_BOOLEAN METADATA::SetCharset(const CHARSET& NewCharset)
+bool METADATA::SetCharset(const CHARSET& NewCharset)
 {
   if (NewCharset.Ok())
     {
       Charset = NewCharset;
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
-GDT_BOOLEAN METADATA::Load(const STRING& Type)
+bool METADATA::Load(const STRING& Type)
 {
   STRING temp (Type);
 
@@ -112,10 +112,10 @@ GDT_BOOLEAN METADATA::Load(const STRING& Type)
   const STRING path = ResolveConfigPath(temp);
   if (FileExists(path))
     return Load(Type, path);
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN METADATA::Load (const STRING& MdType, const STRING& DefaultsPath)
+bool METADATA::Load (const STRING& MdType, const STRING& DefaultsPath)
 {
   if (mdRegistry && (MdType != MdType))
     {
@@ -132,7 +132,7 @@ GDT_BOOLEAN METADATA::Load (const STRING& MdType, const STRING& DefaultsPath)
       message_log (LOG_DEBUG, "Loading Metadata from '%s'", (const char *)DefaultsPath);
       return mdRegistry->ReadFromSgml(DefaultsPath);
     }
-  return GDT_FALSE;
+  return false;
 }
 
 /*
@@ -173,8 +173,8 @@ void METADATA::Print(const STRING& Filename, const STRLIST& Position) const
 
 void METADATA::Append(const STRING& Filename) const
 {
-  GDT_BOOLEAN header = FileExists(Filename);
-  if (header == GDT_FALSE)
+  bool header = FileExists(Filename);
+  if (header == false)
     {
       Print(Filename);
     }
@@ -191,8 +191,8 @@ void METADATA::Append(const STRING& Filename) const
 
 void METADATA::Append(const STRING& Filename, const STRLIST& Position) const
 {
-  GDT_BOOLEAN header = FileExists(Filename);
-  if (header == GDT_FALSE)
+  bool header = FileExists(Filename);
+  if (header == false)
     {
       Print(Filename);
     }
@@ -279,11 +279,11 @@ STRING METADATA::Text(const STRLIST& Position) const
 STRING METADATA::Text(const REGISTRY* r, STRSTACK *Stack) const
 {
   STRING String, Value;
-  GDT_BOOLEAN Alloc = GDT_FALSE;
+  bool Alloc = false;
   if (Stack == NULL)
     {
       Stack = new STRSTACK();
-      Alloc = GDT_TRUE;
+      Alloc = true;
     }
   if (r->Child)
     {
@@ -404,7 +404,7 @@ STRING METADATA::HtmlMeta(REGISTRY *r, size_t level, size_t depth, const STRING&
 	  if (value.Search(quote))
 	    {
 	      quote = '"';
-	      value.Replace("\"", "&quot;", GDT_TRUE);
+	      value.Replace("\"", "&quot;", true);
 	    }
 	}
       String.Cat ("\" VALUE="); String.Cat (quote); String.Cat (value); String.Cat (quote); String.Cat (" />\n");
@@ -448,12 +448,12 @@ void METADATA::Write(PFILE Fp) const
   Print(Fp);
 }
 
-GDT_BOOLEAN METADATA::Read(FILE *Fp)
+bool METADATA::Read(FILE *Fp)
 {
   return mdRegistry->ReadFromSgml(Fp);
 }
 
-GDT_BOOLEAN METADATA::Add(FILE *Fp)
+bool METADATA::Add(FILE *Fp)
 {
   return mdRegistry->AddFromSgml(Fp);
 }
@@ -472,7 +472,7 @@ void Write(const METADATA& Registry, PFILE Fp)
   Registry.Write(Fp);
 }
 
-GDT_BOOLEAN Read(PMETADATA RegistryPtr, PFILE Fp)
+bool Read(PMETADATA RegistryPtr, PFILE Fp)
 {
   return RegistryPtr->Read(Fp);
 }
@@ -551,7 +551,7 @@ void LOCATOR::Add(const STRLIST& Position, const STRLIST& Value)
 }
 
 
-GDT_BOOLEAN LOCATOR::IsEmpty(const STRING& Name) const
+bool LOCATOR::IsEmpty(const STRING& Name) const
 {
   STRLIST Position;
   Position.AddEntry ("locator");
@@ -642,7 +642,7 @@ DBINFO::DBINFO(const PIDBOBJ DbParent, PSTRLIST DocTypeOptions)
 void DBINFO::init(const PIDBOBJ DbParent, PSTRLIST DocTypeOptions)
 {
   Parent = DbParent;
-  DbInfoChanged = GDT_FALSE;
+  DbInfoChanged = false;
   STRING DbInfoFn = Parent->ComposeDbFn (DbExtDbInfo);
   MainRegistry = new METADATA (RegistrationTitle);
   // Add .ini options
@@ -839,7 +839,7 @@ void DBINFO::SetMaintainerEmail(const STRING& Value)
 }
 
 
-GDT_BOOLEAN DBINFO::GetDatabaseList(PSTRLIST FilenameList) const
+bool DBINFO::GetDatabaseList(PSTRLIST FilenameList) const
 {
   MainRegistry->Metadata()->ProfileGetString(DbInfoSection, DatabasesEntry, FilenameList);
   return !FilenameList->IsEmpty();

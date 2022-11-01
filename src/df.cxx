@@ -41,7 +41,7 @@ void DF::Write(PFILE fp) const
   Fct.Write(fp);
 }
 
-GDT_BOOLEAN DF::Read(PFILE fp) {
+bool DF::Read(PFILE fp) {
   obj_t obj = getObjID (fp);
   if (obj != objDF)
     {

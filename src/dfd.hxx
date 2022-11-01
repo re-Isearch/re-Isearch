@@ -28,13 +28,13 @@ public:
   FIELDTYPE  GetFieldType() const {
     return Attributes.AttrGetFieldObj().GetFieldType();
   }
-  GDT_BOOLEAN GetFieldType(STRING *Typename) const {
+  bool GetFieldType(STRING *Typename) const {
     FIELDTYPE t = Attributes.AttrGetFieldObj().GetFieldType();
     if (t.Ok())
       *Typename = (STRING)t.c_str();
     else
-      return GDT_FALSE;
-    return GDT_TRUE;
+      return false;
+    return true;
   }
 
   void        SetFieldName(const STRING& fieldName) {
@@ -47,7 +47,7 @@ public:
   STRING      GetFieldName() const {
     return Attributes.AttrGetFieldObj().GetFieldName();
   }
-  GDT_BOOLEAN GetFieldName(STRING *StringBuffer) const {
+  bool GetFieldName(STRING *StringBuffer) const {
     return !(*StringBuffer = GetFieldName()).IsEmpty();
   }
 
@@ -59,7 +59,7 @@ public:
   void        SetFieldName(const STRING& NewFieldName) {
     Attributes.AttrSetFieldName(NewFieldName);
   }
-  GDT_BOOLEAN GetFieldName(STRING *StringBuffer) const;
+  bool GetFieldName(STRING *StringBuffer) const;
   STRING      GetFieldName() const {
     return Attributes.AttrGetFieldName();
   }
@@ -67,7 +67,7 @@ public:
   void        SetFieldType(const STRING& NewFieldType) {
     Attributes.AttrSetFieldType(NewFieldType);
   }
-  GDT_BOOLEAN GetFieldType(STRING *StringBuffer) const;
+  bool GetFieldType(STRING *StringBuffer) const;
   STRING      GetFieldType() const {
     return Attributes.AttrGetFieldType();
   }

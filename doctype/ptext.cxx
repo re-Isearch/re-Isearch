@@ -23,8 +23,8 @@ Author:      Edward C. Zimmermann, edz@nonmonotonic.net
 PTEXT::PTEXT(PIDBOBJ DbParent, const STRING& Name) :
 	DOCTYPE(DbParent, Name)
 {
-  ParseBody = GDT_TRUE;
-  allowZeroLengthPages = GDT_FALSE;
+  ParseBody = true;
+  allowZeroLengthPages = false;
   if (tagRegistry)
     {
       STRING S;
@@ -43,26 +43,26 @@ PTEXT::PTEXT(PIDBOBJ DbParent, const STRING& Name) :
 
     }
 
-  if (ParseBody == GDT_FALSE)
+  if (ParseBody == false)
     {
       message_log (LOG_INFO, "ParseBody of %s types is disabled", Doctype.c_str());
       return;
     }
   if (allowZeroLengthPages && Doctype.Search("PDF") == 0)
     message_log (LOG_INFO, "Allow Zero Length Pages for %s", Doctype.c_str());
-  initFields = GDT_FALSE;
-  initAutoFields = GDT_FALSE;
+  initFields = false;
+  initAutoFields = false;
 }
 
-GDT_BOOLEAN PTEXT::IsIgnoreMetaField(const STRING& FieldName) const
+bool PTEXT::IsIgnoreMetaField(const STRING& FieldName) const
 {
   STRING Name (FieldName);
   if (Name.ToUpper() == satzFieldName ||
      Name == paraFieldName || Name == lineFieldName || Name == pageFieldName ||
      Name == firstsatzFieldName || Name == firstparaFieldName  || Name == firstlineFieldName ||
      Name == paraPath || Name == satzPath ||  Name == linePath )
-    return GDT_TRUE;
-  return GDT_FALSE;
+    return true;
+  return false;
 }
 
 const char *PTEXT::Description(PSTRLIST List) const
@@ -90,7 +90,7 @@ Headline=<Fieldname>\n";
 
 void PTEXT::BeforeIndexing()
 {
-  initFields = GDT_FALSE;
+  initFields = false;
   DOCTYPE::BeforeIndexing();
 }
 
@@ -178,8 +178,8 @@ Should not map line and sentence to the same name, Sentence field disabled!");
 
   // Done
 
-  initFields = GDT_TRUE;
-  initAutoFields = GDT_TRUE;
+  initFields = true;
+  initAutoFields = true;
 }
 
 void PTEXT::InitFields()
@@ -221,11 +221,11 @@ void PTEXT::InitFields()
 
 #undef _f_init
 
-     initAutoFields = GDT_FALSE;
+     initAutoFields = false;
      if (count == 0) {
        message_log (LOG_INFO, "%s: All %d textual body autotag fields disabled.",
 		Doctype.c_str(), 6-count);
-       ParseBody = GDT_FALSE;
+       ParseBody = false;
      } else if (count == maxD)
        message_log (LOG_INFO, "%s: All %d textual body autotag fields enabled", Doctype.c_str(), count);
      else 
@@ -238,8 +238,8 @@ void PTEXT::InitFields()
 
 void PTEXT::AfterIndexing()
 {
-  initFields = GDT_FALSE;
-  initAutoFields = GDT_FALSE;
+  initFields = false;
+  initAutoFields = false;
   DOCTYPE::AfterIndexing();
 }
 
@@ -323,7 +323,7 @@ PDFT PTEXT::ParseStructure(FILE *fp, const off_t Position, const off_t Length)
   unsigned satzCount = 0;
   unsigned paraCount = 0;
   unsigned pageCount = 0;
-  const GDT_BOOLEAN have_headline_field = !(headlineFieldName.IsEmpty());
+  const bool have_headline_field = !(headlineFieldName.IsEmpty());
 
   int Ch;
   off_t pos = 0;

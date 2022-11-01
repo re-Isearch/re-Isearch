@@ -22,13 +22,13 @@ public:
   MMAP(int fd, off_t from =0, off_t to=0, enum mapping_access flag=MapNormal);
   MMAP(FILE *fp, off_t from =0, off_t to=0, enum mapping_access flag=MapNormal);
 
-  GDT_BOOLEAN Unmap();
-  GDT_BOOLEAN CreateMap(const STRING& fileName);
-  GDT_BOOLEAN CreateMap(const STRING& fileName, enum mapping_access flag);
-  GDT_BOOLEAN CreateMap(int fd, enum mapping_access flag);
-  GDT_BOOLEAN CreateMap(int fd, off_t from = 0, enum mapping_access flag = MapNormal);
-  GDT_BOOLEAN CreateMap(int fd, off_t from = 0, off_t to = 0, enum mapping_access flag = MapNormal);
-  GDT_BOOLEAN Ok() const;
+  bool Unmap();
+  bool CreateMap(const STRING& fileName);
+  bool CreateMap(const STRING& fileName, enum mapping_access flag);
+  bool CreateMap(int fd, enum mapping_access flag);
+  bool CreateMap(int fd, off_t from = 0, enum mapping_access flag = MapNormal);
+  bool CreateMap(int fd, off_t from = 0, off_t to = 0, enum mapping_access flag = MapNormal);
+  bool Ok() const;
   UCHR       *Ptr() const { return ptr; }
   UCHR       *Ptr(off_t offset) {
     if (offset > (off_t)(window+chunk))
@@ -38,7 +38,7 @@ public:
     return &ptr[offset % window];
   }
   size_t      Size() const;
-  GDT_BOOLEAN Advise(int flag = MapNormal, size_t from=0, size_t to = 0);
+  bool Advise(int flag = MapNormal, size_t from=0, size_t to = 0);
 
   operator const char*() const { return (const char *)Ptr(); }
   operator const unsigned char*() const { return (unsigned char *)Ptr(); }
@@ -64,11 +64,11 @@ public:
   MMAP_TABLE(size_t Elements);
   size_t      TotalElements() const { return MaxElements; };
   MMAP       *Map(size_t Element) const;
-  GDT_BOOLEAN CreateMap(size_t Element, const STRING& FileName);
-  GDT_BOOLEAN Ok(size_t Element) const;
+  bool CreateMap(size_t Element, const STRING& FileName);
+  bool Ok(size_t Element) const;
   PUCHR       Ptr(size_t Element) const;
   size_t      Size(size_t Element) const;
-  GDT_BOOLEAN Advise(size_t Element, int flag = MapNormal, size_t from=0, size_t to = 0);
+  bool Advise(size_t Element, int flag = MapNormal, size_t from=0, size_t to = 0);
   ~MMAP_TABLE();
 private:
   size_t MaxElements;

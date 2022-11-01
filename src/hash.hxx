@@ -96,7 +96,7 @@ NULL on failure.*/
 0 if not.
 */
 
-  GDT_BOOLEAN GetValue(const STRING& a, STRING *b) const;
+  bool GetValue(const STRING& a, STRING *b) const;
   STRING      GetValue(const STRING& a) const;
 
   void        AddEntry(const STRING& a);

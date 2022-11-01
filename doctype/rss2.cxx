@@ -55,7 +55,7 @@ STRING RSS2::UnifiedName (const STRING& Tag, PSTRING Value) const
     {"tt", 2},
     {"u", 1}
   } ;
-  GDT_BOOLEAN have_namespace = GDT_FALSE;
+  bool have_namespace = false;
   size_t len = Tag.GetLength();
   const char *tag = Tag.c_str();
   for (const char *tp = tag; *tp; tp++)
@@ -64,7 +64,7 @@ STRING RSS2::UnifiedName (const STRING& Tag, PSTRING Value) const
 	break;
       if (*tp == ':')
 	{
-	  have_namespace = GDT_TRUE;
+	  have_namespace = true;
 	  // Namespace
 	  int nlen = tp-tag;
 	  switch (nlen) {
@@ -178,7 +178,7 @@ void RSS2::ParseFields(PRECORD pRecord)
 //  message_log (LOG_DEBUG, "%s: ParseFields Done", Doctype.c_str());
 }
 
-GDT_BOOLEAN RSS2::StoreTagComplexAttributes(const char *tag_ptr) const
+bool RSS2::StoreTagComplexAttributes(const char *tag_ptr) const
 {
   if (tag_ptr && *tag_ptr)
     {
@@ -196,7 +196,7 @@ GDT_BOOLEAN RSS2::StoreTagComplexAttributes(const char *tag_ptr) const
 	{
 	  int diff = strncmp(rss_fields[i].tag, tag_ptr, rss_fields[i].len);
 	  if (diff == 0)
-	    return GDT_TRUE;
+	    return true;
 	  if (diff > 0)
 	    break;
 	}
@@ -204,14 +204,14 @@ GDT_BOOLEAN RSS2::StoreTagComplexAttributes(const char *tag_ptr) const
 	tag += 5; // HTML namespace
       // <IMG ..>
       if (strncasecmp(tag, "img", 3) == 0 && isspace(tag[3]))
-	return GDT_TRUE;
+	return true;
       // <A HREF= ..>
       if ((*tag == 'a' || *tag == 'A') && isspace(tag[1]))
-	return GDT_TRUE;
+	return true;
       return (XMLBASE::StoreTagComplexAttributes(tag_ptr)) ||
 	(XMLBASE::StoreTagComplexAttributes(tag));
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -234,8 +234,8 @@ RSSCOREARCHIVE::RSSCOREARCHIVE (PIDBOBJ DbParent, const STRING& Name) : RSSCORE 
   KeyField = "RSS\\CHANNEL\\ITEM\\ID";
 }
 
-GDT_BOOLEAN RSSCORE::URL(const RESULT& ResultRecord, PSTRING StringBuffer,  
-        GDT_BOOLEAN OnlyRemote) const
+bool RSSCORE::URL(const RESULT& ResultRecord, PSTRING StringBuffer,  
+        bool OnlyRemote) const
 {
   STRING url;
   DOCTYPE::Present(ResultRecord, linkField, RawRecordSyntax, &url);
@@ -260,7 +260,7 @@ GDT_BOOLEAN RSSCORE::URL(const RESULT& ResultRecord, PSTRING StringBuffer,
       if (url.Search("://"))
 	{
 	  if (StringBuffer) *StringBuffer = url;
-	  return GDT_TRUE;
+	  return true;
 	}
     }
   // Let it look at the saved structure (spider?)

@@ -45,34 +45,34 @@ public:
   virtual ~IDBOBJ() { }
   virtual size_t GetIndexingMemory() const { return 0; }
   virtual void DfdtAddEntry(const DFD&) { }
-  virtual GDT_BOOLEAN DfdtGetEntry(const size_t, PDFD) const { return GDT_FALSE; }
+  virtual bool DfdtGetEntry(const size_t, PDFD) const { return false; }
   virtual size_t DfdtGetTotalEntries() const { return 0; }
   virtual size_t GetTotalRecords() const { return 0; }
   virtual size_t GetTotalDocumentsDeleted() const { return 0; }
 
   virtual off_t   GetTotalWords() const   { return 0; }
   virtual off_t   GetTotalUniqueWords() const { return 0; }
-  virtual GDT_BOOLEAN GetRecordDfdt(const STRING&, PDFDT)  { return GDT_FALSE;}
-  GDT_BOOLEAN GetRecordDfdt(const RESULT& Result, DFDT *DfdtBuffer) {
+  virtual bool GetRecordDfdt(const STRING&, PDFDT)  { return false;}
+  bool GetRecordDfdt(const RESULT& Result, DFDT *DfdtBuffer) {
     return GetRecordDfdt(Result.GetKey(), DfdtBuffer);
   }
-  virtual GDT_BOOLEAN Ok () const { return GDT_FALSE; }
+  virtual bool Ok () const { return false; }
   virtual int BitVersion() const { return sizeof(GPTYPE)*8; }
 
-  GDT_BOOLEAN     ValidateDocType(const DOCTYPE_ID& Id) const { return Id.IsDefined(); }
+  bool     ValidateDocType(const DOCTYPE_ID& Id) const { return Id.IsDefined(); }
 
-  virtual GDT_BOOLEAN GetDateRange(DATERANGE *DateRange = NULL) const {
+  virtual bool GetDateRange(DATERANGE *DateRange = NULL) const {
      if (DateRange) DateRange->Clear();
-     return GDT_FALSE;
+     return false;
   }
 
 
-  virtual GDT_BOOLEAN ValidNodeName(const STRING& nodeName) const { return GDT_TRUE; }
+  virtual bool ValidNodeName(const STRING& nodeName) const { return true; }
 
-  virtual GDT_BOOLEAN DfdtGetFileName(const DFD&, STRING *)   { return GDT_FALSE; }
-  virtual GDT_BOOLEAN DfdtGetFileName(const STRING&, const FIELDTYPE&, STRING *) {
-    return GDT_FALSE; }
-  virtual GDT_BOOLEAN DfdtGetFileName(const STRING&, PSTRING) { return GDT_FALSE; }
+  virtual bool DfdtGetFileName(const DFD&, STRING *)   { return false; }
+  virtual bool DfdtGetFileName(const STRING&, const FIELDTYPE&, STRING *) {
+    return false; }
+  virtual bool DfdtGetFileName(const STRING&, PSTRING) { return false; }
 
   virtual DOUBLE GetPriorityFactor() const       { return 0; }
   virtual DOUBLE GetIndexBoostFactor() const     { return 0; }
@@ -81,39 +81,39 @@ public:
 
   virtual size_t GetDbSearchCutoff() const   { return 0; } 
 
-  virtual GDT_BOOLEAN UsePersistantCache() const { return GDT_FALSE; }
+  virtual bool UsePersistantCache() const { return false; }
   virtual STRING PersistantCacheName() const     { return NulString; }
 
   virtual STRING GetFieldData(const RESULT&, const STRING&, const DOCTYPE* = NULL)  { 
     return NulString;
   }
-  virtual GDT_BOOLEAN GetFieldData(const RESULT& Result, const STRING& RecSyntax,
+  virtual bool GetFieldData(const RESULT& Result, const STRING& RecSyntax,
 	PSTRING StringPtr, const DOCTYPE *DocPtr = NULL)  { 
     return !(*StringPtr = GetFieldData(Result, RecSyntax, DocPtr)).IsEmpty();
 
   }
-  virtual GDT_BOOLEAN GetFieldData(const RESULT&, const STRING&, PSTRLIST, const DOCTYPE * = NULL) { return GDT_FALSE; }
+  virtual bool GetFieldData(const RESULT&, const STRING&, PSTRLIST, const DOCTYPE * = NULL) { return false; }
 
-  virtual GDT_BOOLEAN GetFieldData(GPTYPE, DOUBLE*) {return GDT_FALSE; }
-  virtual GDT_BOOLEAN GetFieldData(GPTYPE, SRCH_DATE* ) {return GDT_FALSE; }
-  virtual GDT_BOOLEAN GetFieldData(GPTYPE, STRING*) {return GDT_FALSE; }
+  virtual bool GetFieldData(GPTYPE, DOUBLE*) {return false; }
+  virtual bool GetFieldData(GPTYPE, SRCH_DATE* ) {return false; }
+  virtual bool GetFieldData(GPTYPE, STRING*) {return false; }
 
-  virtual GDT_BOOLEAN GetFieldData(const FC&, const STRING&, STRING* Buffer) {
+  virtual bool GetFieldData(const FC&, const STRING&, STRING* Buffer) {
     if (Buffer) Buffer->Clear();
-    return GDT_FALSE;
+    return false;
   }
 
- virtual  GDT_BOOLEAN GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+ virtual  bool GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
         const FIELDTYPE& FieldType, STRING *StringBuffer, const DOCTYPE *DoctypePtr = NULL)
-    { return GDT_FALSE; }
+    { return false; }
 
 /*
-  virtual GDT_BOOLEAN GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
-        DOUBLE* Buffer) { return GDT_FALSE; }
-  virtual GDT_BOOLEAN GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
-        DATERANGE* Buffer) { return GDT_FALSE; }
-  virtual GDT_BOOLEAN GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
-        SRCH_DATE* Buffer) { return GDT_FALSE; }
+  virtual bool GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+        DOUBLE* Buffer) { return false; }
+  virtual bool GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+        DATERANGE* Buffer) { return false; }
+  virtual bool GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
+        SRCH_DATE* Buffer) { return false; }
 */
 
   virtual void GetDocTypeOptions(PSTRLIST) const { }
@@ -155,11 +155,11 @@ public:
   virtual STRING& ComposeDbFn(STRING *Ptr, const CHR*) const { return *Ptr; };
 
   // 1st Queue
-  virtual GDT_BOOLEAN  AddRecord(const RECORD&) { return GDT_FALSE; }
+  virtual bool  AddRecord(const RECORD&) { return false; }
   // 2nd Queue
   virtual void         DocTypeAddRecord(const RECORD&) { };
 
-  virtual GDT_BOOLEAN GetDebugMode() const { return GDT_TRUE; }
+  virtual bool GetDebugMode() const { return true; }
 
 
   virtual SRCH_DATE   GetTimestamp() const { return SRCH_DATE(); }
@@ -172,14 +172,14 @@ public:
 
   virtual DOCTYPE *GetDocTypePtr(const DOCTYPE_ID&) const { return NULL; }
 
-  virtual GDT_BOOLEAN KeyLookup (const STRING&, PRESULT = NULL) const { return GDT_FALSE;};
+  virtual bool KeyLookup (const STRING&, PRESULT = NULL) const { return false;};
 
   virtual STRING FirstKey() const             { return NulString; }
   virtual STRING LastKey() const              { return NulString; }
   virtual STRING NextKey(const STRING&) const { return NulString; }
   virtual STRING PrevKey(const STRING&) const { return NulString; }
 
-  virtual GDT_BOOLEAN GetDocumentInfo(const INT, RECORD *) const { return GDT_FALSE; }
+  virtual bool GetDocumentInfo(const INT, RECORD *) const { return false; }
 
   virtual FC GetPeerFc (const GPTYPE& HitGp, STRING *NodeNamePtr = NULL) {
     return GetPeerFc(FC(HitGp,HitGp), NodeNamePtr);
@@ -223,8 +223,8 @@ public:
 
   virtual t_merge_status GetMergeStatus() const { return iNothing; }
 
-  virtual GDT_BOOLEAN IsStopWord (const STRING&) const { return GDT_TRUE; };
-  virtual GDT_BOOLEAN IsStopWord (const UCHR *, STRINGINDEX, INT=0) const { return GDT_TRUE; };
+  virtual bool IsStopWord (const STRING&) const { return true; };
+  virtual bool IsStopWord (const UCHR *, STRINGINDEX, INT=0) const { return true; };
 
   virtual void   SetServerName(const STRING&) {};
   virtual STRING GetServerName() const { return NulString; }
@@ -241,8 +241,8 @@ public:
   virtual size_t MdtLookupKey (const STRING&) const { return 0; }
   virtual void   MdtSetUniqueKey(PRECORD, const STRING&) { }
 
-  virtual void   SetOverride(GDT_BOOLEAN) {  }
-  virtual GDT_BOOLEAN GetOverride() const { return GDT_FALSE; }
+  virtual void   SetOverride(bool) {  }
+  virtual bool GetOverride() const { return false; }
 
   virtual size_t Scan(PSTRLIST, const STRING&, const size_t = 0, const INT =-1) const { return 0;};
   virtual size_t Scan(PSTRLIST, const STRING&, const STRING&, const INT) const { return 0;};
@@ -250,7 +250,7 @@ public:
   virtual size_t Scan(SCANLIST *, const STRING&, const size_t = 0, const INT =-1) const { return 0;};
   virtual size_t Scan(SCANLIST *, const STRING&, const STRING&, const INT) const { return 0;};
 
-  virtual size_t ScanSearch(SCANLIST *, const QUERY&, const STRING&, size_t Max = 0, GDT_BOOLEAN Cat = GDT_FALSE) { return 0; }
+  virtual size_t ScanSearch(SCANLIST *, const QUERY&, const STRING&, size_t Max = 0, bool Cat = false) { return 0; }
 
   virtual atomicIRSET *FileSearch(const STRING&) { return NULL; }
   virtual atomicIRSET *KeySearch(const STRING&) { return NULL; }
@@ -258,7 +258,7 @@ public:
 
   virtual void AddTemplate (const STRING&) {}
 
-  virtual GDT_BOOLEAN FieldExists(const STRING& Fieldname) const { return GDT_FALSE; }
+  virtual bool FieldExists(const STRING& Fieldname) const { return false; }
 
   virtual void ParseRecords(RECORD&) { }
   virtual void ParseFields(PRECORD) { };
@@ -275,8 +275,8 @@ public:
   virtual FCACHE *GetFieldCache() { return NULL; }
   virtual FCACHE *GetFieldCache(INT) { return GetFieldCache(); }
 
-  virtual void SetFindConcatWords(GDT_BOOLEAN Set=GDT_TRUE) { ; }
-  virtual GDT_BOOLEAN GetFindConcatWords() const { return GDT_FALSE; } 
+  virtual void SetFindConcatWords(bool Set=true) { ; }
+  virtual bool GetFindConcatWords() const { return false; } 
 
   virtual INT GetVolume(PSTRING = NULL) const { return 0; }
 
@@ -287,11 +287,11 @@ public:
   virtual LOCALE GetLocale() const { return LOCALE(0); }
 
   // Headline
-  virtual GDT_BOOLEAN Headline(const RESULT&, const STRING&, PSTRING) const {
-    return GDT_FALSE;
+  virtual bool Headline(const RESULT&, const STRING&, PSTRING) const {
+    return false;
   }
-  virtual GDT_BOOLEAN Headline(const RESULT&, PSTRING) const {
-    return GDT_FALSE;
+  virtual bool Headline(const RESULT&, PSTRING) const {
+    return false;
   }
   virtual STRING      Headline(const RESULT& ResultRecord, const STRING& RecordSyntax) const {
     STRING Buffer;
@@ -300,9 +300,9 @@ public:
   }
 
   // Record Summary (if available)
-  virtual GDT_BOOLEAN Summary(const RESULT&, const STRING&, STRING *StringBuffer) const {
+  virtual bool Summary(const RESULT&, const STRING&, STRING *StringBuffer) const {
     StringBuffer->Clear();
-    return GDT_FALSE;
+    return false;
   }
   virtual STRING      Summary(const RESULT& ResultRecord, const STRING& RecordSyntax) const {
     STRING Buffer;
@@ -343,12 +343,12 @@ public:
   virtual STRING GetCopyright() const            { return NulString;      }
   virtual void   GetCopyright(STRING *Ptr) const { *Ptr = GetCopyright(); }
 
-  virtual GDT_BOOLEAN GetHTTP_server(PSTRING) const { return GDT_FALSE;};
-  virtual GDT_BOOLEAN GetHTTP_root(PSTRING= NULL, GDT_BOOLEAN * = NULL) const   { return GDT_FALSE;};
+  virtual bool GetHTTP_server(PSTRING) const { return false;};
+  virtual bool GetHTTP_root(PSTRING= NULL, bool * = NULL) const   { return false;};
 
   virtual METADATA *GetMetadefaults(const STRING&) { return NULL; }
 
-  virtual GDT_BOOLEAN DoctypePluginExists(const STRING&) const { return GDT_FALSE; } 
+  virtual bool DoctypePluginExists(const STRING&) const { return false; } 
 
 
   virtual FCT       GetFieldFCT (const MDTREC&, const STRING&) { return FCT(); };
@@ -360,11 +360,11 @@ public:
 
   virtual   FPT *GetMainFpt() { return NULL; }
 
-  virtual   GDT_BOOLEAN SetSortIndexes(int, atomicIRSET *) { return GDT_FALSE; }
+  virtual   bool SetSortIndexes(int, atomicIRSET *) { return false; }
 
-  GDT_BOOLEAN _write_resource_path (const STRING& file,
+  bool _write_resource_path (const STRING& file,
 	const RECORD& Filerecord, STRING *PathFilePath = NULL) const;
-  GDT_BOOLEAN _write_resource_path (const STRING& file,
+  bool _write_resource_path (const STRING& file,
 	const RECORD& Filerecord, const STRING& mime, STRING *PathFilePath = NULL) const;
   void        _get_resource_path(STRING *fullPathPtr) const;
   STRING      _get_resource_path (const RESULT& Result) const {
@@ -375,13 +375,13 @@ public:
   void       SetWorkingDirectory(const STRING& Dir);
   STRING     GetWorkingDirectory() const { return WorkingDirectory; }
 
-  virtual GDT_BOOLEAN getUseRelativePaths() const { return useRelativePaths; }
-  virtual GDT_BOOLEAN setUseRelativePaths(GDT_BOOLEAN val=GDT_TRUE) {
-	useRelativePaths = val; return (!WorkingDirectory.IsEmpty() || val == GDT_FALSE); }
+  virtual bool getUseRelativePaths() const { return useRelativePaths; }
+  virtual bool setUseRelativePaths(bool val=true) {
+	useRelativePaths = val; return (!WorkingDirectory.IsEmpty() || val == false); }
 
   STRING     RelativizePathname(const STRING& Path) const;
 
-  virtual GDT_BOOLEAN ResolvePathname(STRING *Path) const;
+  virtual bool ResolvePathname(STRING *Path) const;
   virtual STRING      ResolvePathname(const STRING& Path) const;
 
   virtual int         Segment(const STRING&) { return 0; }
@@ -396,7 +396,7 @@ protected:
 private:
   HASH    FieldTypes;
   STRING  WorkingDirectory;
-  GDT_BOOLEAN useRelativePaths;
+  bool useRelativePaths;
 //virtual PMDT GetMainMdt() { return 0; };
 //virtual PDFDT GetMainDfdt() { return 0; };
   virtual void SelectRegions(const RECORD&, FCT *) { };
@@ -438,13 +438,13 @@ public:
   STRING GetMaintainerName() const;
   void   SetMaintainerEmail(const STRING& Name);
   STRING GetMaintainerEmail() const;
-  GDT_BOOLEAN GetDatabaseList(PSTRLIST FilenameList) const;
+  bool GetDatabaseList(PSTRLIST FilenameList) const;
   ~DBINFO();
 private:
   void init(const PIDBOBJ DbParent, PSTRLIST DocTypeOptions);
   PIDBOBJ     Parent;
   DOCTYPE_ID  GlobalDoctype;
-  GDT_BOOLEAN DbInfoChanged;
+  bool DbInfoChanged;
   METADATA   *MainRegistry;
 };
 

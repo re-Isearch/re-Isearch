@@ -121,7 +121,7 @@ void RESOURCEDOC::Present (const RESULT& ResultRecord,
 	      else if (x)
 		S.Cat ("...");
 	      if (RecordSyntax == HtmlRecordSyntax)
-		HtmlCat(S, StringBuffer, GDT_FALSE);
+		HtmlCat(S, StringBuffer, false);
 	      else
 		StringBuffer->Cat(S);
 	    }

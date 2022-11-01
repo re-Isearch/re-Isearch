@@ -24,11 +24,11 @@ GLIST::GLIST()
    POST: Nonzero if empty
 	 Zero if not empty
 */
-GDT_BOOLEAN GLIST::IsEmpty(void)
+bool GLIST::IsEmpty(void)
 {
   if(Length==0)
-    return GDT_TRUE;
-  return GDT_FALSE;
+    return true;
+  return false;
 }
 
 /*
@@ -87,12 +87,12 @@ IPOSITION* GLIST::Prev(IPOSITION *c)
   return c->Prev;
 }
 
-GDT_BOOLEAN GLIST::InsertBefore(IPOSITION *c, IATOM *a, int Type)
+bool GLIST::InsertBefore(IPOSITION *c, IATOM *a, int Type)
 {
   IATOM *ta;
 
   if(a==NULL)
-    return GDT_FALSE;
+    return false;
 
   if(IsEmpty())
     InsertAfter(c,a,Type);
@@ -102,23 +102,23 @@ GDT_BOOLEAN GLIST::InsertBefore(IPOSITION *c, IATOM *a, int Type)
     Update(c,a);
     Update(Next(c), ta);
   }	
-  return GDT_TRUE;
+  return true;
 
 }
 
-GDT_BOOLEAN GLIST::InsertBefore(IPOSITION *c, IATOM *a)
+bool GLIST::InsertBefore(IPOSITION *c, IATOM *a)
 {
   return(InsertBefore(c,a,LIST_PTR));
 }
 
-GDT_BOOLEAN GLIST::Update(IPOSITION *c, IATOM *a)
+bool GLIST::Update(IPOSITION *c, IATOM *a)
 {
   if(a==NULL)
-    return GDT_FALSE;
+    return false;
 
   c->Atom = a;
 
-  return GDT_TRUE;
+  return true;
 }
 
 /*
@@ -128,14 +128,14 @@ GDT_BOOLEAN GLIST::Update(IPOSITION *c, IATOM *a)
    POST: 0 if out of memory condition.
 	 1 on success.  a is inserted in list after c.
 */
-GDT_BOOLEAN GLIST::InsertAfter(IPOSITION *c, IATOM *a, int Type)
+bool GLIST::InsertAfter(IPOSITION *c, IATOM *a, int Type)
 {
   IPOSITION *nc, *tc;
 
   if(Head == NULL) {
     // Inserting into empty list
     if((Head = new IPOSITION()) == NULL)
-      return GDT_FALSE;
+      return false;
     Head->Atom = a;
     Head->Type = Type;
     Head->Next = NULL;
@@ -144,7 +144,7 @@ GDT_BOOLEAN GLIST::InsertAfter(IPOSITION *c, IATOM *a, int Type)
   } else {
     // Inserting into non-empty list
     if((nc =  new IPOSITION()) == NULL)
-      return GDT_FALSE;
+      return false;
     nc->Atom = a;
     nc->Type = Type;
     tc = c->Next;
@@ -157,10 +157,10 @@ GDT_BOOLEAN GLIST::InsertAfter(IPOSITION *c, IATOM *a, int Type)
   }
   Length=Length+1;
 
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN GLIST::InsertAfter(IPOSITION *c, IATOM *a)
+bool GLIST::InsertAfter(IPOSITION *c, IATOM *a)
 {
   return(InsertAfter(c,a,LIST_PTR));
 }

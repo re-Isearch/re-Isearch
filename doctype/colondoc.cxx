@@ -31,7 +31,7 @@ METADOC::METADOC (PIDBOBJ DbParent, const STRING& Name):
   if (!S.IsEmpty())
     allowWhiteBeforeField = S.GetBool();
   else
-    allowWhiteBeforeField = GDT_TRUE;
+    allowWhiteBeforeField = true;
   SetPresentType(ListKeyword);
 
   autoFieldTypes  =  Getoption(AUTODETECT_FIELDTYPES, "Y").GetBool();
@@ -93,12 +93,12 @@ void METADOC::SetPresentType(const STRING& Default)
 {
   STRING S = DOCTYPE::Getoption("Style", Default);
   if (S ^= ListKeyword)
-    UseTable = GDT_FALSE;
+    UseTable = false;
   else if (S ^= TableKeyword)
-    UseTable = GDT_TRUE;
+    UseTable = true;
   // else default style
   else
-    UseTable = GDT_FALSE;
+    UseTable = false;
 }
 
 
@@ -240,7 +240,7 @@ GPTYPE METADOC::ParseWords(UCHR* DataBuffer, GPTYPE DataLength,
 }
 
 
-void METADOC::SetPresentStyle(GDT_BOOLEAN useTable)
+void METADOC::SetPresentStyle(bool useTable)
 {
   UseTable = useTable;
 }
@@ -292,11 +292,11 @@ void METADOC::ParseFields (RECORD *NewRecord)
   ffclose (fp);
   RecBuffer[ActualLength] = '\0';
 
-  GDT_BOOLEAN autodetect_Sepchar = GDT_FALSE;
+  bool autodetect_Sepchar = false;
 
   if (sepChar == '\0')
     {
-      autodetect_Sepchar = GDT_TRUE;
+      autodetect_Sepchar = true;
       // Try to guess
       int saw_alpha = 0;
       for (size_t i = 0; i <= (size_t)ActualLength && sepChar == '\0'; i++)
@@ -500,7 +500,7 @@ DocPresent (const RESULT& ResultRecord,
     }
 
   STRING Value;
-  GDT_BOOLEAN UseHtml = (RecordSyntax == HtmlRecordSyntax);
+  bool UseHtml = (RecordSyntax == HtmlRecordSyntax);
   if (UseHtml)
     HtmlHead (ResultRecord, ElementSet, StringBuffer);
 
@@ -513,13 +513,13 @@ DocPresent (const RESULT& ResultRecord,
       DFDT Dfdt;
       STRING Key ( ResultRecord.GetKey() );
 
-      if (GetRecordDfdt (Key, &Dfdt) == GDT_FALSE)
+      if (GetRecordDfdt (Key, &Dfdt) == false)
 	message_log (LOG_ERROR, "Could not find record with key \"%s\"", Key.c_str());
 
       STRING FieldName;
       DFD  Dfd;
       // Walth-though the DFD
-      GDT_BOOLEAN First_value = GDT_TRUE;
+      bool First_value = true;
       const size_t Total = Dfdt.GetTotalEntries();
 
 //cerr << "XXXXX Total = " << Total << endl;
@@ -545,7 +545,7 @@ DocPresent (const RESULT& ResultRecord,
 	      if (First_value && UseHtml)
 		{
 		  StringBuffer->Cat (UseTable ?  "<TABLE BORDER=\"0\">\n" : "<DL COMPACT=\"COMPACT\">\n");
-		  First_value = GDT_FALSE;
+		  First_value = false;
 		}
 
 	      STRING LongName;
@@ -580,7 +580,7 @@ DocPresent (const RESULT& ResultRecord,
 	    }
 	}			/* for */
 //cerr << "XXXXX Strings built" << endl;
-      if (First_value == GDT_TRUE)
+      if (First_value == true)
 	{
 	  StringBuffer->Clear();
 //cerr << "XXXXX First Value is true" << endl;
@@ -717,7 +717,7 @@ static int DfdtCompare (const void *p1, const void *p2)
 }
 
 
-GDT_BOOLEAN METADOC::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
+bool METADOC::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
 {
   PMDT MainMdt = Db->GetMainMdt ();
   PDFDT MainDfdt = Db->GetMainDfdt ();
@@ -726,7 +726,7 @@ GDT_BOOLEAN METADOC::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
 
   MDTREC Mdtrec;
   if (!MainMdt->GetMdtRecord (Key, &Mdtrec))
-    return GDT_FALSE;
+    return false;
 
   const GPTYPE MdtS = Mdtrec.GetGlobalFileStart () + Mdtrec.GetLocalRecordStart ();
   const GPTYPE MdtE = Mdtrec.GetGlobalFileStart () + Mdtrec.GetLocalRecordEnd ();
@@ -768,7 +768,7 @@ GDT_BOOLEAN METADOC::GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const
 		{
 		  OldX = X;
 		  if (-1 == fseek (Fp, X * sizeof (FC), SEEK_SET) ||
-			Fc.Read (Fp) == GDT_FALSE)
+			Fc.Read (Fp) == false)
 		    {
 		      // Read Error
 		      if (++X >= Total) X = Total - 1;
@@ -825,7 +825,7 @@ cerr << "lastEnd=" << lastEnd << endl;
     }
   delete[] Table;
 
-  return GDT_TRUE;
+  return true;
 }
 
 
@@ -905,7 +905,7 @@ STRING ERCDOC::UnifiedName (const STRING& tag) const
     {
       // Rewrite X/Y as X\Y 
       STRING newName (tag);
-      newName.Replace("/", "\\", GDT_TRUE);
+      newName.Replace("/", "\\", true);
       return newName;
     }
   return DOCTYPE::UnifiedName(tag);
@@ -977,7 +977,7 @@ ERCDOC::~ERCDOC()
 
 DIALOGB::DIALOGB(PIDBOBJ DbParent, const STRING& Name) : METADOC (DbParent, Name)
 {
-  allowWhiteBeforeField = GDT_FALSE;
+  allowWhiteBeforeField = false;
   SetSepChar(' ');
   SetPresentType(TableKeyword);
 }

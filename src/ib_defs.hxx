@@ -56,8 +56,8 @@ public:
     Direction = Other.Direction;
     return *this;
   }
-  GDT_BOOLEAN IsAscending() const  { return Direction == SortAscending; }
-  GDT_BOOLEAN IsDescending() const { return Direction != SortAscending; }
+  bool IsAscending() const  { return Direction == SortAscending; }
+  bool IsDescending() const { return Direction != SortAscending; }
 
   SortBy& operator =(int Value) {
     BYTE  Val = (BYTE)(((unsigned)Value) & 0xFF);
@@ -90,14 +90,14 @@ public:
   void Write(FILE *fp) const {
     ::Write((BYTE)*this, fp);
   }
-  GDT_BOOLEAN Read(FILE *fp) {
+  bool Read(FILE *fp) {
     BYTE          x;
     if (::Read(&x, fp))
       {
 	*this = x;
-	return GDT_TRUE;
+	return true;
       }
-    return GDT_FALSE;
+    return false;
      
   }
   enum SortBy_t        Sort;
@@ -129,16 +129,16 @@ class          DOCTYPE_ID {
   void          Set(const STRING& Value);
   STRING        Get() const;
 
-  STRING        ClassName(GDT_BOOLEAN Base = GDT_FALSE) const;
+  STRING        ClassName(bool Base = false) const;
 
   const char   *c_str() const    { return DocumentType().c_str(); }
 
   operator      STRING () const  { return DocumentType();         }
 //operator        INT () const   { return Id;                     }
 //operator   const char *() const{ return c_str();                }
-  GDT_BOOLEAN operator !() const { return Id <= 1; }
-  GDT_BOOLEAN  IsDefined() const { return Id > 1;  }
-  GDT_BOOLEAN  IsEmpty() const   { return Id <= 0; }
+  bool operator !() const { return Id <= 1; }
+  bool  IsDefined() const { return Id > 1;  }
+  bool  IsEmpty() const   { return Id <= 0; }
 
   void         Clear() {   Name.Clear(); Id = 0;   }
 
@@ -146,17 +146,17 @@ class          DOCTYPE_ID {
     return os << Id.ClassName() ;
   }
 
-  GDT_BOOLEAN   Equals(const DOCTYPE_ID& Other) const {
+  bool   Equals(const DOCTYPE_ID& Other) const {
     return (Id == Other.Id) &&
            (Name ^= Other.Name); 
   }
-  GDT_BOOLEAN   Equals(const STRING& name) const { return Name ^= name; }
-  GDT_BOOLEAN   Equals(const INT id) const       { return Id == id;     }
+  bool   Equals(const STRING& name) const { return Name ^= name; }
+  bool   Equals(const INT id) const       { return Id == id;     }
 
   ~DOCTYPE_ID();
 
   void          Write(FILE *fp) const;
-  GDT_BOOLEAN   Read(FILE *fp);
+  bool   Read(FILE *fp);
 
   UINT2         Id;   // Which Class (see dispatch)
   STRING        Name; // What we shall call it
@@ -167,18 +167,18 @@ extern const DOCTYPE_ID& ZeroDoctype;
 extern const DOCTYPE_ID& NilDoctype;
 
 // Operators
-inline GDT_BOOLEAN operator==(const DOCTYPE_ID& s1, const DOCTYPE_ID& s2) { return s1.Equals(s2);  }
-inline GDT_BOOLEAN operator==(const DOCTYPE_ID& s1, const STRING& s2)     { return s1.Equals(s2);  }
-inline GDT_BOOLEAN operator==(const STRING& s1, const DOCTYPE_ID& s2)     { return s2.Equals(s1);  }
-inline GDT_BOOLEAN operator==(const DOCTYPE_ID& s1, INT s2)               { return s1.Equals(s2);  }
-inline GDT_BOOLEAN operator!=(const DOCTYPE_ID& s1, const DOCTYPE_ID& s2) { return !s1.Equals(s2); }
-inline GDT_BOOLEAN operator!=(const DOCTYPE_ID& s1, const STRING& s2)     { return !s1.Equals(s2); }
-inline GDT_BOOLEAN operator!=(const STRING& s1, const DOCTYPE_ID& s2)     { return !s2.Equals(s1); }
-inline GDT_BOOLEAN operator!=(const DOCTYPE_ID& s1, INT s2)               { return !s1.Equals(s2); }
+inline bool operator==(const DOCTYPE_ID& s1, const DOCTYPE_ID& s2) { return s1.Equals(s2);  }
+inline bool operator==(const DOCTYPE_ID& s1, const STRING& s2)     { return s1.Equals(s2);  }
+inline bool operator==(const STRING& s1, const DOCTYPE_ID& s2)     { return s2.Equals(s1);  }
+inline bool operator==(const DOCTYPE_ID& s1, INT s2)               { return s1.Equals(s2);  }
+inline bool operator!=(const DOCTYPE_ID& s1, const DOCTYPE_ID& s2) { return !s1.Equals(s2); }
+inline bool operator!=(const DOCTYPE_ID& s1, const STRING& s2)     { return !s1.Equals(s2); }
+inline bool operator!=(const STRING& s1, const DOCTYPE_ID& s2)     { return !s2.Equals(s1); }
+inline bool operator!=(const DOCTYPE_ID& s1, INT s2)               { return !s1.Equals(s2); }
 
 // Read/Write
 inline void Write(const DOCTYPE_ID& Buffer, PFILE Fp) { Buffer.Write(Fp);     }
-inline GDT_BOOLEAN Read(DOCTYPE_ID *Ptr, PFILE Fp)    { return Ptr->Read(Fp); }
+inline bool Read(DOCTYPE_ID *Ptr, PFILE Fp)    { return Ptr->Read(Fp); }
 
 typedef UINT4   _ib_category_t; // Category Type
 typedef INT2    _ib_priority_t; // Priority
@@ -205,7 +205,7 @@ public:
   operator --() { Index = Index - 1; return *this; }
 */
 
-  GDT_BOOLEAN Equals(const INDEX_ID& Val) const  { return Val.Index == Index; }
+  bool Equals(const INDEX_ID& Val) const  { return Val.Index == Index; }
   INT         Compare(const INDEX_ID& Val) const { return Index - Val.Index;  }
 
   _index_id_t GetIndex() const { return Index; }
@@ -230,24 +230,24 @@ inline void Write(const INDEX_ID& Buffer, PFILE Fp) { Buffer.Write(Fp);     }
 inline void Read(INDEX_ID *Ptr, PFILE Fp)    { Ptr->Read(Fp); }
 
 // Operators
-inline GDT_BOOLEAN operator==(const INDEX_ID& s1, const INDEX_ID& s2)  { return s1.Equals(s2);      }
-inline GDT_BOOLEAN operator==(const _index_id_t s1, const INDEX_ID& s2){ return s2.Equals(s1);      }
-inline GDT_BOOLEAN operator==(const INDEX_ID& s1, _index_id_t s2)      { return s1.Equals(s2);      }
-inline GDT_BOOLEAN operator!=(const INDEX_ID& s1, const INDEX_ID& s2)  { return !s1.Equals(s2);     }
-inline GDT_BOOLEAN operator!=(const _index_id_t s1, const INDEX_ID& s2){ return !s2.Equals(s1);     }
-inline GDT_BOOLEAN operator!=(const INDEX_ID& s1, _index_id_t s2)      { return !s1.Equals(s2);     }
-inline GDT_BOOLEAN operator<(const INDEX_ID& s1, const INDEX_ID& s2)   { return s1.Compare(s2) < 0; }
-inline GDT_BOOLEAN operator<(const _index_id_t s1, const INDEX_ID& s2) { return s2.Compare(s1) < 0; }
-inline GDT_BOOLEAN operator<(const INDEX_ID& s1, _index_id_t s2)       { return s1.Compare(s2) < 0; }
-inline GDT_BOOLEAN operator<=(const INDEX_ID& s1, const INDEX_ID& s2)  { return s1.Compare(s2) <= 0;}
-inline GDT_BOOLEAN operator<=(const _index_id_t s1, const INDEX_ID& s2){ return s2.Compare(s1) <= 0;}
-inline GDT_BOOLEAN operator<=(const INDEX_ID& s1, _index_id_t s2)      { return s1.Compare(s2) <= 0;}
-inline GDT_BOOLEAN operator>(const INDEX_ID& s1, const INDEX_ID& s2)   { return s1.Compare(s2) > 0; }
-inline GDT_BOOLEAN operator>(const _index_id_t s1, const INDEX_ID& s2) { return s2.Compare(s1) > 0; }
-inline GDT_BOOLEAN operator>(const INDEX_ID& s1, _index_id_t s2)       { return s1.Compare(s2) > 0; }
-inline GDT_BOOLEAN operator>=(const INDEX_ID& s1, const INDEX_ID& s2)  { return s1.Compare(s2) >= 0;}
-inline GDT_BOOLEAN operator>=(const _index_id_t s1, const INDEX_ID& s2){ return s2.Compare(s1) >= 0;}
-inline GDT_BOOLEAN operator>=(const INDEX_ID& s1, _index_id_t s2)      { return s1.Compare(s2) >= 0;}
+inline bool operator==(const INDEX_ID& s1, const INDEX_ID& s2)  { return s1.Equals(s2);      }
+inline bool operator==(const _index_id_t s1, const INDEX_ID& s2){ return s2.Equals(s1);      }
+inline bool operator==(const INDEX_ID& s1, _index_id_t s2)      { return s1.Equals(s2);      }
+inline bool operator!=(const INDEX_ID& s1, const INDEX_ID& s2)  { return !s1.Equals(s2);     }
+inline bool operator!=(const _index_id_t s1, const INDEX_ID& s2){ return !s2.Equals(s1);     }
+inline bool operator!=(const INDEX_ID& s1, _index_id_t s2)      { return !s1.Equals(s2);     }
+inline bool operator<(const INDEX_ID& s1, const INDEX_ID& s2)   { return s1.Compare(s2) < 0; }
+inline bool operator<(const _index_id_t s1, const INDEX_ID& s2) { return s2.Compare(s1) < 0; }
+inline bool operator<(const INDEX_ID& s1, _index_id_t s2)       { return s1.Compare(s2) < 0; }
+inline bool operator<=(const INDEX_ID& s1, const INDEX_ID& s2)  { return s1.Compare(s2) <= 0;}
+inline bool operator<=(const _index_id_t s1, const INDEX_ID& s2){ return s2.Compare(s1) <= 0;}
+inline bool operator<=(const INDEX_ID& s1, _index_id_t s2)      { return s1.Compare(s2) <= 0;}
+inline bool operator>(const INDEX_ID& s1, const INDEX_ID& s2)   { return s1.Compare(s2) > 0; }
+inline bool operator>(const _index_id_t s1, const INDEX_ID& s2) { return s2.Compare(s1) > 0; }
+inline bool operator>(const INDEX_ID& s1, _index_id_t s2)       { return s1.Compare(s2) > 0; }
+inline bool operator>=(const INDEX_ID& s1, const INDEX_ID& s2)  { return s1.Compare(s2) >= 0;}
+inline bool operator>=(const _index_id_t s1, const INDEX_ID& s2){ return s2.Compare(s1) >= 0;}
+inline bool operator>=(const INDEX_ID& s1, _index_id_t s2)      { return s1.Compare(s2) >= 0;}
 
 inline INT operator-(const INDEX_ID& s1, const INDEX_ID& s2) { return s1.GetIndex()-s2.GetIndex();  }
 inline INT operator+(const INDEX_ID& s1, const INDEX_ID& s2) { return s1.GetIndex()+s2.GetIndex();  }
@@ -264,11 +264,11 @@ public:
 
   SORT_INDEX_ID& operator=(const SORT_INDEX_ID& Val) { Index = Val.Index; return *this; }
 
-  GDT_BOOLEAN    Ok() const { return Index != 0; }
+  bool    Ok() const { return Index != 0; }
 
   operator _index_id_t () const { return Index; }
 
-  GDT_BOOLEAN Equals(const SORT_INDEX_ID& Val) const  { return Val.Index == Index; }
+  bool Equals(const SORT_INDEX_ID& Val) const  { return Val.Index == Index; }
   INT         Compare(const SORT_INDEX_ID& Val) const { return Index - Val.Index;  }
 
   _index_id_t GetIndex() const { return Index; }
@@ -298,12 +298,12 @@ public:
 
 inline INT Compare(const SORT_INDEX_ID& s1, const SORT_INDEX_ID& s2)     { return s1.Compare(s2);         }
 // Operators
-inline GDT_BOOLEAN operator==(const SORT_INDEX_ID& s1, const SORT_INDEX_ID& s2){ return s1.Equals(s2);    }
-inline GDT_BOOLEAN operator!=(const SORT_INDEX_ID& s1, const SORT_INDEX_ID& s2){ return !s1.Equals(s2);   }
-inline GDT_BOOLEAN operator< (const SORT_INDEX_ID& s1, const SORT_INDEX_ID& s2){ return s1.Compare(s2)< 0;}
-inline GDT_BOOLEAN operator<=(const SORT_INDEX_ID& s1, const SORT_INDEX_ID& s2){ return s1.Compare(s2)<=0;}
-inline GDT_BOOLEAN operator> (const SORT_INDEX_ID& s1, const SORT_INDEX_ID& s2){ return s1.Compare(s2)> 0;}
-inline GDT_BOOLEAN operator>=(const SORT_INDEX_ID& s1, const SORT_INDEX_ID& s2){ return s1.Compare(s2)>=0;}
+inline bool operator==(const SORT_INDEX_ID& s1, const SORT_INDEX_ID& s2){ return s1.Equals(s2);    }
+inline bool operator!=(const SORT_INDEX_ID& s1, const SORT_INDEX_ID& s2){ return !s1.Equals(s2);   }
+inline bool operator< (const SORT_INDEX_ID& s1, const SORT_INDEX_ID& s2){ return s1.Compare(s2)< 0;}
+inline bool operator<=(const SORT_INDEX_ID& s1, const SORT_INDEX_ID& s2){ return s1.Compare(s2)<=0;}
+inline bool operator> (const SORT_INDEX_ID& s1, const SORT_INDEX_ID& s2){ return s1.Compare(s2)> 0;}
+inline bool operator>=(const SORT_INDEX_ID& s1, const SORT_INDEX_ID& s2){ return s1.Compare(s2)>=0;}
 
 class DOC_ID {
  public:
@@ -327,7 +327,7 @@ class DOC_ID {
     Index = NewId.Index;
     return *this;
   }
-  GDT_BOOLEAN Equals(const DOC_ID& OtherDoc) const {
+  bool Equals(const DOC_ID& OtherDoc) const {
     return ((Index == OtherDoc.Index) && (Key == OtherDoc.Key));
   }
   INT Compare(const DOC_ID& OtherDoc) const {
@@ -346,22 +346,22 @@ class DOC_ID {
   INT    Index;
 };
 // Inline comparison overloads...
-inline GDT_BOOLEAN operator==(const DOC_ID Id1, const DOC_ID Id2) {
+inline bool operator==(const DOC_ID Id1, const DOC_ID Id2) {
   return Id1.Equals(Id2);
 }
-inline GDT_BOOLEAN operator!=(const DOC_ID Id1, const DOC_ID Id2) {
+inline bool operator!=(const DOC_ID Id1, const DOC_ID Id2) {
   return !Id1.Equals(Id2);
 }
-inline GDT_BOOLEAN operator>=(const DOC_ID Id1, const DOC_ID Id2) {
+inline bool operator>=(const DOC_ID Id1, const DOC_ID Id2) {
   return Id1.Compare(Id2) >= 0;
 }
-inline GDT_BOOLEAN operator<=(const DOC_ID Id1, const DOC_ID Id2) {
+inline bool operator<=(const DOC_ID Id1, const DOC_ID Id2) {
   return Id1.Compare(Id2) <= 0;
 }
-inline GDT_BOOLEAN operator>(const DOC_ID Id1, const DOC_ID Id2) {
+inline bool operator>(const DOC_ID Id1, const DOC_ID Id2) {
   return Id1.Compare(Id2) > 0;
 }
-inline GDT_BOOLEAN operator<(const DOC_ID Id1, const DOC_ID Id2) {
+inline bool operator<(const DOC_ID Id1, const DOC_ID Id2) {
   return Id1.Compare(Id2) < 0;
 }
 
@@ -385,6 +385,7 @@ const INT IsearchWeightAttr	= 7;
 const INT IsearchTypeAttr	= 8;
 
 // Record Syntaxes
+#ifndef __RECORDSYNTAX
 extern const STRING SutrsRecordSyntax;
 extern const STRING UsmarcRecordSyntax;
 extern const STRING HtmlRecordSyntax;
@@ -392,6 +393,7 @@ extern const STRING SgmlRecordSyntax;
 extern const STRING XmlRecordSyntax;
 extern const STRING RawRecordSyntax;
 extern const STRING DVBHtmlRecordSyntax;
+#endif
 
 // Elements
 extern const STRING BRIEF_MAGIC;
@@ -504,7 +506,7 @@ enum ZComplete {
 
 
 // Configuration
-const size_t DocumentKeySize = 36;
+const size_t DocumentKeySize = 36; // Might need to bump up to 64 for IPFS
 const size_t DocumentTypeSize = 16-1;
 
 #if  !USE_MDTHASHTABLE

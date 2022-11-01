@@ -44,7 +44,7 @@ NUMERICOBJ::NUMERICOBJ(const STRING& s)
     val = BAD_NUMBER;
 }
 
-GDT_BOOLEAN NUMERICOBJ::Ok() const
+bool NUMERICOBJ::Ok() const
 {
   return val != BAD_NUMBER;
 }
@@ -54,17 +54,17 @@ void Write(const NUMERICOBJ& s, FILE *Fp)
   ::Write(s.val, Fp); 
 }
 
-GDT_BOOLEAN NUMERICOBJ::Read(FILE *Fp)
+bool NUMERICOBJ::Read(FILE *Fp)
 {
   if (::Read(&val, Fp))
-    return GDT_TRUE;
+    return true;
   val = BAD_NUMBER;
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN Read(NUMERICOBJ *p, FILE *Fp) {
+bool Read(NUMERICOBJ *p, FILE *Fp) {
   if (p) return p->Read(Fp);
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -160,7 +160,7 @@ NUMERICALRANGE::~NUMERICALRANGE()
 // where x,y are floating point numbers
 //
 
-GDT_BOOLEAN NUMERICALRANGE::SetRange(const STRING& RangeString)
+bool NUMERICALRANGE::SetRange(const STRING& RangeString)
 {
   int         fieldcount = 0;
   const char *tcp        = RangeString.c_str();
@@ -225,12 +225,12 @@ GDT_BOOLEAN NUMERICALRANGE::SetRange(const STRING& RangeString)
 }
 
 
-GDT_BOOLEAN NUMERICALRANGE::Ok() const
+bool NUMERICALRANGE::Ok() const
 {
   return d_start.val != BAD_NUMBER && d_end.val != BAD_NUMBER;
 }
 
-GDT_BOOLEAN NUMERICALRANGE::Defined() const
+bool NUMERICALRANGE::Defined() const
 {
   return d_start.val != BAD_NUMBER || d_end.val != BAD_NUMBER;
 }
@@ -256,7 +256,7 @@ MONETARYOBJ::MONETARYOBJ (const STRING& s)
   Set(s);
 }
 
-GDT_BOOLEAN MONETARYOBJ::Set(const STRING& s)
+bool MONETARYOBJ::Set(const STRING& s)
 {
   const char *ptr = s.c_str();
 
@@ -265,7 +265,7 @@ GDT_BOOLEAN MONETARYOBJ::Set(const STRING& s)
   const size_t len  = strlen(ptr);
 
   // Largest number: 18446744073709551615
-  if (len < 2 || len >= 64) return GDT_FALSE;
+  if (len < 2 || len >= 64) return false;
 
   char dup[64];
 
@@ -326,16 +326,16 @@ MONETARYOBJ::MONETARYOBJ (const NUMERICOBJ& x)
 }
 
 
-GDT_BOOLEAN MONETARYOBJ::Set (const NUMBER x)
+bool MONETARYOBJ::Set (const NUMBER x)
 {
   const long crowns = (long)x;
 
   Amount = (UINT4)crowns;
   Fract  = (UINT2)((x - crowns)*CURRENCY_MODULO);
   if (Amount == crowns) // It fits
-    return GDT_TRUE;
+    return true;
   Fract += BAD_CURRENCY_VAL;
-  return GDT_FALSE; // Does not fit
+  return false; // Does not fit
 }
 
 void MONETARYOBJ::Write(FILE *Fp) const
@@ -349,7 +349,7 @@ void Write(const MONETARYOBJ& s, FILE *Fp)
   s.Write(Fp);
 }
 
-GDT_BOOLEAN MONETARYOBJ::Read(FILE *Fp)
+bool MONETARYOBJ::Read(FILE *Fp)
 {
   Fract = BAD_CURRENCY_VAL;
   ::Read(&Amount, Fp);
@@ -358,10 +358,10 @@ GDT_BOOLEAN MONETARYOBJ::Read(FILE *Fp)
 }
   
 
-inline GDT_BOOLEAN Read(MONETARYOBJ *p, FILE *Fp)
+inline bool Read(MONETARYOBJ *p, FILE *Fp)
 {
   if (p) return p->Read(Fp);
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -382,7 +382,7 @@ BOOLEANOBJ::NUMERICOBJ(const STRING& s)
     val = BAD_BOOLEAN;
 }
 
-GDT_BOOLEAN BOOLEANOBJ::Ok() const
+bool BOOLEANOBJ::Ok() const
 {
   return val != BAD_BOOLEAN;
 }
@@ -392,10 +392,10 @@ void Write(const BOOLEANOBJ& s, FILE *Fp)
   Write(s.val, Fp);
 }
 
-inline GDT_BOOLEAN Read(BOOLEANOBJ *p, FILE *Fp)
+inline bool Read(BOOLEANOBJ *p, FILE *Fp)
 {
   BYTE x;
-  if (Read(&x, Fp) == GDT_FALSE)
+  if (Read(&x, Fp) == false)
     x = BAD_BOOLEAN;
   if (p) p->val = x;
   return x != BAD_BOOLEAN;

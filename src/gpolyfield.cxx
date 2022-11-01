@@ -137,14 +137,14 @@ DOUBLE GPOLYFLD::operator[](size_t n) const
 }
 
 
-GDT_BOOLEAN GPOLYFLD::GetVertexN(size_t x, DOUBLE* Value) const
+bool GPOLYFLD::GetVertexN(size_t x, DOUBLE* Value) const
 {
   if (x >= 0 && x < nVertices)
     {
       if (Value) *Value = Vertices[x];
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 // Store the Nth vertex

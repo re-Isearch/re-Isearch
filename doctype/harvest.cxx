@@ -17,20 +17,20 @@ const char *HARVEST::Description(PSTRLIST List) const
   return "SOIF format files and points to resource.";
 }
 
-GDT_BOOLEAN HARVEST::GetResourcePath(const RESULT& ResultRecord, PSTRING StringBuffer) const
+bool HARVEST::GetResourcePath(const RESULT& ResultRecord, PSTRING StringBuffer) const
 {
   StringBuffer->Clear();
   Present(ResultRecord, UnifiedName("URL"), "", StringBuffer);
   return StringBuffer->GetLength() != 0;
 }
 
-GDT_BOOLEAN HARVEST::URL(const RESULT& ResultRecord, PSTRING StringBuffer,
-        GDT_BOOLEAN OnlyRemote) const
+bool HARVEST::URL(const RESULT& ResultRecord, PSTRING StringBuffer,
+        bool OnlyRemote) const
 {
   if (GetResourcePath(ResultRecord, StringBuffer))
-    return GDT_TRUE;
+    return true;
   if (OnlyRemote)
-    return GDT_FALSE;
+    return false;
   return DOCTYPE::URL(ResultRecord, StringBuffer, OnlyRemote);
 }
 

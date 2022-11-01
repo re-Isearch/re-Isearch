@@ -45,8 +45,8 @@ public:
   OPOBJ& operator +=(const OPOBJ& OtherIrset);
   atomicIRSET& Concat (const atomicIRSET& OtherIrset); 
 
-  OPOBJ& Cat(const OPOBJ& OtherIrset, GDT_BOOLEAN AddHitCounts = GDT_FALSE);
-  OPOBJ& Cat (const OPOBJ& OtherIrset, size_t Total, GDT_BOOLEAN AddHitCounts = GDT_FALSE);
+  OPOBJ& Cat(const OPOBJ& OtherIrset, bool AddHitCounts = false);
+  OPOBJ& Cat (const OPOBJ& OtherIrset, size_t Total, bool AddHitCounts = false);
 
   t_Operand GetOperandType () const { return TypeRset; };
 
@@ -56,10 +56,10 @@ public:
   OPOBJ* Duplicate () const;
   atomicIRSET* Duplicate();
 
-  void MergeEntries(const GDT_BOOLEAN AddHitCounts = GDT_TRUE);
+  void MergeEntries(const bool AddHitCounts = true);
   void Adjust_Scores();
 
-  GDT_BOOLEAN GetMdtrec(size_t i, MDTREC *Mdtrec) const;
+  bool GetMdtrec(size_t i, MDTREC *Mdtrec) const;
  
   void SetMdt(const IDBOBJ *Idb);
   void SetMdt(const MDT *NewMdt);
@@ -71,10 +71,10 @@ public:
   void LoadTable (const STRING& FileName);
   void SaveTable (const STRING& FileName) const;
 
-  void AddEntry (const IRESULT& ResultRecord, const GDT_BOOLEAN AddHitCounts);
+  void AddEntry (const IRESULT& ResultRecord, const bool AddHitCounts);
   void FastAddEntry(const IRESULT& ResultRecord);
 
-  GDT_BOOLEAN GetEntry (const size_t Index, PIRESULT ResultRecord) const;
+  bool GetEntry (const size_t Index, PIRESULT ResultRecord) const;
   IRESULT     GetEntry (const size_t Index) const;
 
   const IRESULT operator[](size_t n) const { return Table[n]; }
@@ -85,12 +85,12 @@ public:
       return Table[i-1].GetIndex();
     return 0;
   }
-  GDT_BOOLEAN SetSortIndex(size_t i, const SORT_INDEX_ID& sort) {
+  bool SetSortIndex(size_t i, const SORT_INDEX_ID& sort) {
     if (i>0 && i<= TotalEntries)
       Table[i-1].SetSortIndex(sort);
     else
-      return GDT_FALSE;
-    return GDT_TRUE;
+      return false;
+    return true;
   }
 
   PRSET GetRset () const;
@@ -103,7 +103,7 @@ public:
   // Fill() or Fill(1) return the entire IRSET as RSET
   PRSET Fill(size_t Start=1, size_t End = 0, PRSET set = NULL) const; // Fill start count with 1
 
-  GDT_BOOLEAN IsEmpty() const { return TotalEntries == 0; }
+  bool IsEmpty() const { return TotalEntries == 0; }
 
   void Expand ();
   void Reserve (const size_t Entries) { if (Entries > MaxEntries) Resize(Entries); };
@@ -255,7 +255,7 @@ public:
   size_t GetMaxEntriesAdvice () const      { return MaxEntriesAdvice; }
 
   void Write (PFILE fp) const;
-  GDT_BOOLEAN Read (PFILE fp);
+  bool Read (PFILE fp);
 
   void Dump(INT Skip =0, ostream& os = cout) const {
    Fill (1, TotalEntries, NULL)->Dump(Skip, os);
@@ -263,10 +263,10 @@ public:
 
   ~atomicIRSET();
 private:
-  typedef  GDT_BOOLEAN (*peer_t) (const FC&, const FC&);
+  typedef  bool (*peer_t) (const FC&, const FC&);
   OPOBJ   *Peer (const OPOBJ& OtherIrset, peer_t Func);
   OPOBJ   *Within(const OPOBJ& OtherIrset, const STRING& Fieldname,  peer_t Func);
-  GDT_BOOLEAN FieldExists(const STRING& FieldName);
+  bool FieldExists(const STRING& FieldName);
   void     Clear();
   PIRESULT StealTable();
   size_t   FindByMdtIndex(size_t Index) const;
@@ -318,7 +318,7 @@ inline void Write(const atomicIRSET Irset, PFILE Fp)
 }
 
 
-inline GDT_BOOLEAN Read(PatomicIRSET IrsetPtr, PFILE Fp)
+inline bool Read(PatomicIRSET IrsetPtr, PFILE Fp)
 {
   return IrsetPtr->Read(Fp);
 }
@@ -411,7 +411,7 @@ public:
 
   void Resize (const size_t Entries)  { if (Entries >= GetTotalEntries()) p_->ptr_->Resize(Entries);
     else node()->Resize(Entries); }
-  void AddEntry (const IRESULT& ResultRecord, const GDT_BOOLEAN Add) {
+  void AddEntry (const IRESULT& ResultRecord, const bool Add) {
     node()->AddEntry(ResultRecord, Add); }
   void FastAddEntry(const IRESULT& ResultRecord) { node()->FastAddEntry(ResultRecord); }
 
@@ -420,9 +420,9 @@ public:
   OPOBJ *ComputeScores (const INT TermWeight, enum NormalizationMethods Method) {
 	return node()->ComputeScores(TermWeight, Method); }
 
-  void MergeEntries(GDT_BOOLEAN Add = GDT_TRUE)       { p_->ptr_->MergeEntries(Add);      }
+  void MergeEntries(bool Add = true)       { p_->ptr_->MergeEntries(Add);      }
   void Adjust_Scores()                                { p_->ptr_->Adjust_Scores();        }
-  GDT_BOOLEAN GetMdtrec(size_t i, MDTREC *m) const    { return p_->ptr_->GetMdtrec(i, m); }
+  bool GetMdtrec(size_t i, MDTREC *m) const    { return p_->ptr_->GetMdtrec(i, m); }
   void SetMdt(const IDBOBJ *Idb)                      { p_->ptr_->SetMdt(Idb);            }
   void SetMdt(const MDT *NewMdt)                      { p_->ptr_->SetMdt(NewMdt);         }
   const MDT *GetMdt(size_t i) const                   { return p_->ptr_->GetMdt(i);       }
@@ -447,7 +447,7 @@ public:
      return node()->CharProx(OtherIrset, Metric, dir);
    }
 
-  virtual GDT_BOOLEAN IsEmpty() const { return p_->ptr_->IsEmpty(); }
+  virtual bool IsEmpty() const { return p_->ptr_->IsEmpty(); }
 
   // Unary Functions
    virtual OPOBJ *Not ( )                             { return node()->Not ();                }
@@ -457,14 +457,14 @@ public:
 
   void SortBy(enum SortBy SortBy) { node()->SortBy(SortBy);     }
 
-  GDT_BOOLEAN GetEntry(const size_t Index, IRESULT* ResultRecord) const {
+  bool GetEntry(const size_t Index, IRESULT* ResultRecord) const {
     return p_->ptr_->GetEntry(Index, ResultRecord);
   }
   const IRESULT operator[](size_t n) const { return (*(p_->ptr_))[n]; }
   IRESULT& operator[](size_t n)            { return (*(p_->ptr_))[n]; }
 
   void Write(PFILE fp) const { p_->ptr_->Write(fp);     }
-  GDT_BOOLEAN Read(PFILE fp) { return nnode()->Read(fp); }
+  bool Read(PFILE fp) { return nnode()->Read(fp); }
   ~_IRSET() { unlock(); }
  private:
   void    lock() { p_->count_++; }

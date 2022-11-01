@@ -34,7 +34,7 @@ public:
    void ParseFields(RECORD *RecordPtr);
 
 
-   GDT_BOOLEAN GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
+   bool GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
 
    void Present (const RESULT& ResultRecord,
          const STRING& ElementSet, const STRING& RecordSyntax,
@@ -46,10 +46,10 @@ public:
 
    ~FILTER2HTMLDOC() { }
 protected:
-   GDT_BOOLEAN SetFilter(const STRING& Filter);
+   bool SetFilter(const STRING& Filter);
    STRING      GetFilter() const { return Filter; }
 
-   GDT_BOOLEAN SetArgs(const STRING& nArgs) {
+   bool SetArgs(const STRING& nArgs) {
       return (Args = nArgs).GetLength() != 0;
    }
    STRING      GetArgs() const { return Args; }
@@ -81,7 +81,7 @@ public:
    void ParseFields(RECORD *RecordPtr);
 
 
-   GDT_BOOLEAN GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
+   bool GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
 
    void Present (const RESULT& ResultRecord,
          const STRING& ElementSet, const STRING& RecordSyntax,
@@ -94,10 +94,10 @@ public:
    ~FILTER2XMLDOC() { }
 
 protected:
-   GDT_BOOLEAN SetFilter(const STRING& Filter);
+   bool SetFilter(const STRING& Filter);
    STRING      GetFilter() const { return Filter; }
 
-   GDT_BOOLEAN SetArgs(const STRING& nArgs) {
+   bool SetArgs(const STRING& nArgs) {
       return (Args = nArgs).GetLength() != 0;
    }
    STRING      GetArgs() const { return Args; }
@@ -128,7 +128,7 @@ public:
    void ParseFields(RECORD *RecordPtr);
 
 
-   GDT_BOOLEAN GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
+   bool GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
 
    void Present (const RESULT& ResultRecord,
          const STRING& ElementSet, const STRING& RecordSyntax,
@@ -141,10 +141,10 @@ public:
    ~FILTER2TEXTDOC() { }
 
 protected:
-   GDT_BOOLEAN SetFilter(const STRING& Filter);
+   bool SetFilter(const STRING& Filter);
    STRING      GetFilter() const { return Filter; }
 
-   GDT_BOOLEAN SetArgs(const STRING& nArgs) {
+   bool SetArgs(const STRING& nArgs) {
       return (Args = nArgs).GetLength() != 0;
    }
    STRING      GetArgs() const { return Args; }
@@ -176,7 +176,7 @@ public:
    void ParseFields(RECORD *RecordPtr);
 
 
-   GDT_BOOLEAN GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
+   bool GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
 
    void Present (const RESULT& ResultRecord,
          const STRING& ElementSet, const STRING& RecordSyntax,
@@ -189,11 +189,11 @@ public:
    ~FILTER2MEMODOC() { }
 
 protected:
-   GDT_BOOLEAN SetFilter(const STRING& Filter);
+   bool SetFilter(const STRING& Filter);
    STRING      GetFilter() const { return Filter; }
 
 
-   GDT_BOOLEAN SetArgs(const STRING& nArgs) {
+   bool SetArgs(const STRING& nArgs) {
       return (Args = nArgs).GetLength() != 0;
    }
    STRING      GetArgs() const { return Args; }

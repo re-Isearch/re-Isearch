@@ -39,28 +39,28 @@ public:
  MessageLogger();
  ~MessageLogger();
 
-  GDT_BOOLEAN Init (FILE *fp);
-  GDT_BOOLEAN Init (const char *prefix, const char *name=0);
-  GDT_BOOLEAN Init (const char *prefix, FILE *fp);
-  GDT_BOOLEAN Init (int level, FILE *fp);
-  GDT_BOOLEAN Init (int level, const char *prefix, FILE *fp);
-  GDT_BOOLEAN Init (int level, const char *prefix=0, const char *name=0);
+  bool Init (FILE *fp);
+  bool Init (const char *prefix, const char *name=0);
+  bool Init (const char *prefix, FILE *fp);
+  bool Init (int level, FILE *fp);
+  bool Init (int level, const char *prefix, FILE *fp);
+  bool Init (int level, const char *prefix=0, const char *name=0);
 
-  GDT_BOOLEAN Init (int level, const char *prefix, _MessageFunc_t newFunc) {
+  bool Init (int level, const char *prefix, _MessageFunc_t newFunc) {
     if (Init(level, prefix)) return Init(newFunc);
-    return GDT_FALSE;
+    return false;
   }
-  GDT_BOOLEAN Init (int level,_MessageFunc_t newFunc) {
+  bool Init (int level,_MessageFunc_t newFunc) {
     if (Init(level)) return Init(newFunc);
-    return GDT_FALSE;
+    return false;
   }
-  GDT_BOOLEAN  Init(_MessageFunc_t newOutputFunc) {
+  bool  Init(_MessageFunc_t newOutputFunc) {
      return ((OutputFunc = newOutputFunc) != 0);
   }
   
-  GDT_BOOLEAN use_syslog() { return Init((FILE *)syslog_stream); }
-  GDT_BOOLEAN set_syslog(const char *name);
-  GDT_BOOLEAN set_syslog(const int Ch);
+  bool use_syslog() { return Init((FILE *)syslog_stream); }
+  bool set_syslog(const char *name);
+  bool set_syslog(const int Ch);
 
 
   void        log (int level, const char *fmt, ...); // __attribute__((fmt(printf, 2, 3))) ; 
@@ -79,8 +79,8 @@ public:
   void        fatal_message(const STRING& String) { log_message(iLOG_FATAL, String.c_str());}
 #endif
 */
-  GDT_BOOLEAN to_syslog() const  { return l_file == syslog_stream; }
-  GDT_BOOLEAN to_console() const { return l_console;               }
+  bool to_syslog() const  { return l_file == syslog_stream; }
+  bool to_console() const { return l_console;               }
 protected:
   int         log_mask_str (const char *str);
 #ifdef USE_pThreadLocker
@@ -92,7 +92,7 @@ private:
   pthread_mutex_t   m_mutex;
 #endif
   int               l_level;
-  GDT_BOOLEAN       l_console;
+  bool       l_console;
   char              l_prefix[30];
   FILE             *l_file;
   _MessageFunc_t    OutputFunc;

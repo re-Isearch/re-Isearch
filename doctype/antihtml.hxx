@@ -32,7 +32,7 @@ class ANTIHTML:public HTML
   STRING UnifiedName (const STRING& Tag, PSTRING Value) const;
 private:
 //  REGISTRY *TagRegistry;
-//  GDT_BOOLEAN useBuiltin;
+//  bool useBuiltin;
   BUFFER tmpBuffer, tmpBuffer2;
 };
 

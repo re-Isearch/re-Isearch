@@ -166,7 +166,7 @@ off_t IBDOC_MSPOWERPOINT::RunPipe(FILE *fp, const STRING& Fn)
   tv.tv_sec =  MAX_TIME_BETWEEN_CHARS;
   tv.tv_usec = 0;
 
-  GDT_BOOLEAN   nonblocking =  (ioctl(fileno(pp), FIONBIO) == EINVAL) ? GDT_FALSE : GDT_TRUE;
+  bool   nonblocking =  (ioctl(fileno(pp), FIONBIO) == EINVAL) ? false : true;
   int           retval      = nonblocking ? select(1, &rfds, NULL, NULL, &tv) : 1;
 
 //cerr << "NonBlock = " << (int)nonblocking << " First retval = " << (int)retval << endl;

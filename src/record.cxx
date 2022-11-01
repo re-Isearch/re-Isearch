@@ -212,7 +212,7 @@ void RECORD::Write (PFILE fp) const
   ::Write (bMarker[ IsBadRecord() ? 1 : 0], fp);
 }
 
-GDT_BOOLEAN RECORD::Read (PFILE fp)
+bool RECORD::Read (PFILE fp)
 {
   obj_t obj = getObjID (fp);
   if (obj != objRECORD)
@@ -220,7 +220,7 @@ GDT_BOOLEAN RECORD::Read (PFILE fp)
       message_log (LOG_DEBUG, "Record:Read() failed: Not a record (id=%d!=%d)",
 	(int)obj, (int)objRECORD);
       PushBackObjID (obj, fp);
-      return GDT_FALSE;
+      return false;
     }
   ::Read (&Locale, fp);
   ::Read (&Key, fp);
@@ -243,9 +243,9 @@ GDT_BOOLEAN RECORD::Read (PFILE fp)
   ::Read(&b, fp);
   if ((b != bMarker[IsBadRecord() ? 1 : 0 ])) {
     message_log (LOG_ERROR, "Record fastload corrupt! // check=%c(%d)", (char)b, (int)b);
-    return GDT_FALSE;
+    return false;
   }
-  return GDT_TRUE;
+  return true;
 }
 
 RECORD::~RECORD ()

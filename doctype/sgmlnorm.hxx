@@ -39,7 +39,7 @@ public:
   virtual DATERANGE   ParseDateRange(const STRING& Buffer) const;
   virtual NUMERICOBJ  ParsePhonhash(const STRING& Buffer) const;
   virtual NUMERICOBJ  ParseNumeric(const STRING& Buffer) const;
-  virtual GDT_BOOLEAN ParseRange(const STRING& Buffer, const STRING& FieldName,
+  virtual bool ParseRange(const STRING& Buffer, const STRING& FieldName,
         DOUBLE* fStart, DOUBLE* fEnd) const;
   virtual int         ParseGPoly(const STRING& Buffer, GPOLYFLD* gpoly) const;
   virtual NUMERICOBJ  ParseComputed(const STRING& FieldName, const STRING& Buffer) const;
@@ -80,20 +80,20 @@ public:
    virtual const PCHR find_end_tag (const char *const *t, const char *tag, size_t *offset=NULL) const;
 
    // Parser hook
-   virtual GDT_BOOLEAN StoreTagComplexAttributes(const char *tag_ptr) const { return GDT_FALSE; }
+   virtual bool StoreTagComplexAttributes(const char *tag_ptr) const { return false; }
 
    void store_attributes (PDFT pdft, PCHR base_ptr, PCHR tag_ptr,
-	GDT_BOOLEAN UseHTML=GDT_FALSE, STRING *Key=NULL, SRCH_DATE *Datum = NULL) const;
+	bool UseHTML=false, STRING *Key=NULL, SRCH_DATE *Datum = NULL) const;
 
-   void SetStoreComplexAttributes(GDT_BOOLEAN x) { StoreComplexAttributes = x; }
+   void SetStoreComplexAttributes(bool x) { StoreComplexAttributes = x; }
 protected:
    void ExtractDTD(const STRING& Decl, PSTRING Dtd) const;
 private:
    STRING _cleanBuffer(const STRING& Buffer) const;
    const char *_cleanBuffer(char *DataBuffer, size_t DataLength) const;
 
-   GDT_BOOLEAN StoreComplexAttributes;
-   GDT_BOOLEAN IgnoreTagWords;
+   bool StoreComplexAttributes;
+   bool IgnoreTagWords;
    STRING  Headline, DTD;
    STRLIST EmptyTagList; // List of EMPTY tags we have seen
    HTMLEntities Entities;

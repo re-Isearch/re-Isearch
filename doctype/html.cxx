@@ -282,12 +282,12 @@ static inline int IsHTMLAttributeTag (const char *tag)
     // Odd stuff
     { "embed", 5 }
   };
-  static GDT_BOOLEAN sort = GDT_TRUE;
+  static bool sort = true;
   if (sort)
     {
       qsort ((void *)Taglist, (sizeof (Taglist) / sizeof (TagList_t)),
            sizeof (TagList_t), _taglistcomp);
-      sort = GDT_FALSE;
+      sort = false;
     }
 
   return tag_search(tag, Taglist, sizeof(Taglist)/sizeof(TagList_t));
@@ -394,18 +394,18 @@ static int IsHTMLFieldTag (const char *tag)
     /* Bogus HTML "extension" by popular demand */
     {"comment", 7} // <comment><!-- searchable words --></comment>
   };
-  static GDT_BOOLEAN sort = GDT_TRUE;
+  static bool sort = true;
   if (sort)
     {
       qsort (
            (void *)HtmlTagList, (sizeof (HtmlTagList) / sizeof (TagList_t)),
            sizeof (TagList_t), _taglistcomp);
-      sort = GDT_FALSE;
+      sort = false;
     }
 
   // Is this part of a "meaningful" tag?
   if (tag_search(tag, HtmlTagList, sizeof(HtmlTagList)/sizeof(TagList_t)))
-    return GDT_TRUE;
+    return true;
   // Is it a tag where we just want the attribute value?
   return IsHTMLAttributeTag (tag);
 }
@@ -434,14 +434,14 @@ static int IgnoreHTMLTag (const char *tag)
     { "font", 4 },
     { "overlay", 7}
   };
-  static GDT_BOOLEAN sort = GDT_TRUE;
+  static bool sort = true;
 
   if (sort)
     {
       qsort (
            (void *)IgnoreList, (sizeof (IgnoreList) / sizeof (TagList_t)),
            sizeof (TagList_t), _taglistcomp);
-      sort = GDT_FALSE;
+      sort = false;
     }
 
   // Is this part of a tag that we don't want?
@@ -590,11 +590,11 @@ void HTML::ParseFields (PRECORD NewRecord)
       // incorrect uses of DD, DT, LI, TL and TR
       if (p == NULL)
 	{
-	  GDT_BOOLEAN complain = GDT_TRUE;
+	  bool complain = true;
 	  if (StrCaseCmp  (*tags_ptr, "html") == 0)
 	    {
 eof:
-	      complain = GDT_FALSE;
+	      complain = false;
 	      // For <html>, <body> and <pre> its end-of-file
 	      p = RecBuffer + ActualLength; 
 #if BSN_EXTENSIONS
@@ -651,7 +651,7 @@ eof:
 		  p = find_next_tag (tags_ptr, tags);
 		}
 	      else
-		complain = GDT_FALSE;
+		complain = false;
 	    }
 	  else if (StrCaseCmp (*tags_ptr, "dt") == 0)
 	    {
@@ -665,27 +665,27 @@ eof:
 		  p = find_next_tag (tags_ptr, tags);
 		}
 	      else
-		complain = GDT_FALSE;
+		complain = false;
 	    }
 	  else if (StrCaseCmp (*tags_ptr, "li") == 0)
 	    {
 	      // look for next <LI>, </OL> or </UL>
 	      const char *tags[] = {"li", "/ol", "/ul", NULL};
 	      p = find_next_tag (tags_ptr, tags);
-	      complain = GDT_FALSE;
+	      complain = false;
 	    }
 	  else if (StrCaseCmp (*tags_ptr, "rb") == 0 || StrCaseCmp (*tags_ptr, "rt") == 0)
 	    {
 	      const char *tags[] = {"rb", "rt", "/ruby", NULL};
 	      p = find_next_tag (tags_ptr, tags);
-	      complain = GDT_FALSE;
+	      complain = false;
 	    }
 	  else if (StrCaseCmp (*tags_ptr, "tl") == 0)
 	    {
 	      // look for nearest <TL> or </TLI>
 	      const char *tags[] = {"tl", "/tli", NULL};
 	      p = find_next_tag (tags_ptr, tags);
-	      complain = GDT_FALSE;
+	      complain = false;
 	    }
 	  else if (StrNCaseCmp (*tags_ptr, "td", 2) == 0 ||
 		StrNCaseCmp (*tags_ptr, "th", 2) == 0 )
@@ -796,7 +796,7 @@ eof:
       // Store the Attribute value if in our list 
       if ((IsHTMLAttributeTag (*tags_ptr)) > 0)
 	{
-	  store_attributes (/* Db, */ pdft, RecBuffer, *tags_ptr, GDT_TRUE, &Key, &Datum);
+	  store_attributes (/* Db, */ pdft, RecBuffer, *tags_ptr, true, &Key, &Datum);
 	}
       else if (p == NULL)
 	{
@@ -835,7 +835,7 @@ void HTML::BeforeSearching(QUERY* SearchQueryPtr)
 }
 
 // Summary, e.g. Meta Description field
-GDT_BOOLEAN HTML::Summary(const RESULT& ResultRecord,
+bool HTML::Summary(const RESULT& ResultRecord,
   const STRING& RecordSyntax, PSTRING StringBuffer) const
 {
   const char *fields[] = {
@@ -854,8 +854,8 @@ GDT_BOOLEAN HTML::Summary(const RESULT& ResultRecord,
   return StringBuffer->GetLength() != 0;
 }
 
-GDT_BOOLEAN HTML::URL(const RESULT& ResultRecord, PSTRING StringBuffer,
-	GDT_BOOLEAN OnlyRemote) const
+bool HTML::URL(const RESULT& ResultRecord, PSTRING StringBuffer,
+	bool OnlyRemote) const
 {
   // <BASE HREF="xxx">
   STRING path;
@@ -871,7 +871,7 @@ GDT_BOOLEAN HTML::URL(const RESULT& ResultRecord, PSTRING StringBuffer,
 
   StringBuffer->Cat ( ResultRecord.GetFileName() );
   if (StringBuffer) *StringBuffer = path;
-  return GDT_TRUE;
+  return true;
 }
 
 void HTML::
@@ -924,7 +924,7 @@ void HTML::Present (const RESULT& ResultRecord, const STRING& ElementSet,
 
       if (RecordSyntax == HtmlRecordSyntax)
 	{
-	  HtmlCat(ResultRecord, Title, &Value, GDT_FALSE);
+	  HtmlCat(ResultRecord, Title, &Value, false);
 	}
       else
 	Value = Title;
@@ -938,7 +938,7 @@ void HTML::Present (const RESULT& ResultRecord, const STRING& ElementSet,
       if (ElementSet ^= baseHref)
 	{
 	  // Get the value even on local file system
-	  URL(ResultRecord, &Value, GDT_FALSE);
+	  URL(ResultRecord, &Value, false);
 	}
     }
   if (Value.IsEmpty())

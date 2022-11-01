@@ -91,9 +91,9 @@ public:
     Progression = Other.Progression;
     return *this;
   }
-  GDT_BOOLEAN  SetBaseDateLine(const SRCH_DATE& Date) {
+  bool  SetBaseDateLine(const SRCH_DATE& Date) {
     if (Date.Ok()) return (BaseDateLine = Date).Ok();
-    return GDT_FALSE;
+    return false;
   }
   SRCH_DATE GetBaseDateLine() const {
     return BaseDateLine;

@@ -111,7 +111,7 @@ void COLONGRP::ParseFields (PRECORD NewRecord)
   DFD dfd;
   STRING FieldName;
 
-  GDT_BOOLEAN first_tag = (KeyField.GetLength() == 0);
+  bool first_tag = (KeyField.GetLength() == 0);
   // Walk though tags, skipping the groups
   STRLIST FieldNames;
   for (PCHR * tags_ptr = tags; *tags_ptr; tags_ptr++)
@@ -152,7 +152,7 @@ void COLONGRP::ParseFields (PRECORD NewRecord)
 	      else
 		NewRecord->SetKey (entry_id);
 	      delete[]entry_id;
-	      first_tag = GDT_FALSE;
+	      first_tag = false;
 	    }
 #if BSN_EXTENSIONS
 	  else if (DateField ^= *tags_ptr)

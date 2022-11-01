@@ -151,7 +151,7 @@ void RESULT::Write(FILE *fp) const
   HitTable.Write(fp);
 }
 
-GDT_BOOLEAN RESULT::Read(FILE *fp)
+bool RESULT::Read(FILE *fp)
 {
   obj_t obj = getObjID(fp);
   if (obj != objRESULT)
@@ -239,13 +239,13 @@ FC RESULT::GetBestContextHit() const
   return Nth->Value();
 }
 
-GDT_BOOLEAN RESULT::PresentBestContextHit(STRING *StringBuffer, STRING *Term,
+bool RESULT::PresentBestContextHit(STRING *StringBuffer, STRING *Term,
   const STRING& BeforeTerm, const STRING& AfterTerm, DOCTYPE *DoctypePtr, STRING *TagPtr) const
 {
   return PresentHit(GetBestContextHit(), StringBuffer, Term, BeforeTerm, AfterTerm, DoctypePtr, TagPtr);
 }
 
-GDT_BOOLEAN RESULT::PresentNthHit(size_t N, STRING *StringBuffer, STRING *Term,
+bool RESULT::PresentNthHit(size_t N, STRING *StringBuffer, STRING *Term,
         const STRING& BeforeTerm, const STRING& AfterTerm, DOCTYPE *DoctypePtr, STRING *TagPtr) const
 {
   FC Fc;
@@ -260,7 +260,7 @@ GDT_BOOLEAN RESULT::PresentNthHit(size_t N, STRING *StringBuffer, STRING *Term,
     {
       return PresentHit(Fc, StringBuffer, Term, BeforeTerm, AfterTerm, DoctypePtr, TagPtr);
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -286,7 +286,7 @@ GDT_BOOLEAN RESULT::PresentNthHit(size_t N, STRING *StringBuffer, STRING *Term,
 */
 static const int PeerMinimumFieldLength = 5;
 
-GDT_BOOLEAN RESULT::PresentHit(const FC& Fc, STRING *StringBuffer, STRING *Term,
+bool RESULT::PresentHit(const FC& Fc, STRING *StringBuffer, STRING *Term,
         const STRING& BeforeTerm, const STRING& AfterTerm, DOCTYPE *DoctypePtr,
  	STRING *TagPtr) const
 {
@@ -305,8 +305,7 @@ GDT_BOOLEAN RESULT::PresentHit(const FC& Fc, STRING *StringBuffer, STRING *Term,
       GPTYPE       localEnd   = end + 60 + (end-start)/2;
       GPTYPE       peer_end   = RecordEnd;
  
-
-      GDT_BOOLEAN  skipToFirstWord = GDT_TRUE;
+      bool  skipToFirstWord = true;
 
 #if 1
       if (DoctypePtr && DoctypePtr->Db) {
@@ -321,31 +320,33 @@ GDT_BOOLEAN RESULT::PresentHit(const FC& Fc, STRING *StringBuffer, STRING *Term,
 	     if (TagPtr) *TagPtr = Tag;
 
 	     GPTYPE peer_start = PeerFC.GetFieldStart() - offset;
-	     peer_end   = PeerFC.GetFieldEnd() - offset + 1  /***** Added + 1 // 2022 ***/;
+	     peer_end   = PeerFC.GetFieldEnd() - offset ;  /***** Add + 1 ? // 2022 ***/;
 
 	     if (peer_end - peer_start < 200) {
+
 		// Min
 		if ((peer_end - peer_start) > (end - start + PeerMinimumFieldLength)) {
+
 		  localEnd = peer_end;
 		  localStart = peer_start;
-		  skipToFirstWord = GDT_FALSE;
+		  skipToFirstWord = false;
 		}
+		// else localEnd =   PeerFC.GetFieldEnd() ; // ???  2022
 	     } else {
 		if (peer_end < localEnd || ((peer_end - localEnd) < 200))
 		  localEnd = peer_end;
 		if (peer_start > localStart || (localStart - peer_start < 200)) {
 		  localStart = peer_start;
-		  skipToFirstWord = GDT_FALSE;
+		  skipToFirstWord = false;
 		}
 	     }
 	  }
       }
 #endif
 
-
       if (RecordEnd < RecordStart)
 	{
-	  return GDT_FALSE;
+	  return false;
 	}
 
       if ((localEnd + RecordStart) > RecordEnd)
@@ -355,16 +356,19 @@ GDT_BOOLEAN RESULT::PresentHit(const FC& Fc, STRING *StringBuffer, STRING *Term,
 
       if (localEnd <= localStart)
 	{
-	  return GDT_FALSE;
+	  return false;
 	}
 
       const size_t Length = localEnd - localStart + 1;
+
+
 //    if (Length > BUFSIZ) Length = BUFSIZ;
       STRING strPtr;
 
 
       if (::GetRecordData(GetFullFileName(), &strPtr, localStart + RecordStart, Length, DoctypePtr) == 0)
-	return GDT_FALSE;
+	return false;
+
       register unsigned char *ptr = (unsigned char *)(strPtr.c_str());
       if (StringBuffer)
 	{
@@ -420,12 +424,12 @@ cerr << "Term= \"" << tmp << "\"" << endl;
 	  term[end - start + 1] = '\0';
 	  *Term = term;
 	}
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN RESULT::XMLPresentNthHit(size_t N, STRING *StringBuffer, const STRING& Tag,
+bool RESULT::XMLPresentNthHit(size_t N, STRING *StringBuffer, const STRING& Tag,
    STRING *Term, DOCTYPE *DoctypePtr) const
 {
   FC      Fc;
@@ -442,7 +446,7 @@ GDT_BOOLEAN RESULT::XMLPresentNthHit(size_t N, STRING *StringBuffer, const STRIN
       GPTYPE       localStart = (start > 44 ? start - 40 : 0);
       GPTYPE       localEnd   = end + 60 + (end-start)/2;
       GPTYPE       peer_end = RecordEnd;
-      GDT_BOOLEAN  skipToFirstWord = GDT_TRUE;
+      bool  skipToFirstWord = true;
 
       if (DoctypePtr && DoctypePtr->Db) {
         IDBOBJ *idb = DoctypePtr->Db;
@@ -454,21 +458,21 @@ GDT_BOOLEAN RESULT::XMLPresentNthHit(size_t N, STRING *StringBuffer, const STRIN
 
              GPTYPE peer_start = PeerFC.GetFieldStart() - offset;
 
-             peer_end   = PeerFC.GetFieldEnd() - offset + 1 /* 2022 add +1 */;
+             peer_end   = PeerFC.GetFieldEnd() - offset ; /* 2022 add +1 ?? */;
 
              if (peer_end - peer_start < 200) {
 		// Min
 		if ((peer_end - peer_start) > (end - start + PeerMinimumFieldLength)) {
                   localEnd = peer_end;
                   localStart = peer_start;
-                  skipToFirstWord = GDT_FALSE;
+                  skipToFirstWord = false;
 		}
              } else {
                 if (peer_end < localEnd || ((peer_end - localEnd) < 200))
                   localEnd = peer_end;
                 if (peer_start > localStart || (localStart - peer_start < 200)) {
                   localStart = peer_start;
-                  skipToFirstWord = GDT_FALSE;
+                  skipToFirstWord = false;
                 }
              }
           }
@@ -480,7 +484,7 @@ GDT_BOOLEAN RESULT::XMLPresentNthHit(size_t N, STRING *StringBuffer, const STRIN
 	{
 	  message_log (LOG_PANIC, "Start after End in RESULT::XMLPresentNthHit()");
 StringBuffer->form("ERROR (%ld,%ld) not inside Record (%ld,%ld)",  start, end, RecordStart, RecordEnd);
-	  return GDT_FALSE;
+	  return false;
 	}
 
       const size_t Length = localEnd - localStart + 1;
@@ -488,7 +492,7 @@ StringBuffer->form("ERROR (%ld,%ld) not inside Record (%ld,%ld)",  start, end, R
 //    if (Length > BUFSIZ) Length = BUFSIZ;
       STRING strPtr;
       if (::GetRecordData(GetFullFileName(), &strPtr, localStart + RecordStart, Length, DoctypePtr) == 0)
-	return GDT_FALSE;
+	return false;
       register unsigned char *ptr = (unsigned char *)(strPtr.c_str());
       if (StringBuffer)
 	{
@@ -576,9 +580,9 @@ StringBuffer->form("ERROR (%ld,%ld) not inside Record (%ld,%ld)",  start, end, R
 	  term[end - start + 1] = '\0';
 	  *Term = term;
 	}
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 void RESULT::GetHighlightedRecord(const STRING& BeforeTerm, const STRING& AfterTerm,

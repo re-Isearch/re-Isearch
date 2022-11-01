@@ -61,7 +61,7 @@ public:
    void ParseRecords(const RECORD& FileRecord);
    void ParseFields(RECORD *RecordPtr);
 
-   GDT_BOOLEAN GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
+   bool GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
 
    void Present (const RESULT& ResultRecord,
          const STRING& ElementSet, const STRING& RecordSyntax,
@@ -83,8 +83,8 @@ static const char myDescription[] = "Adobe PDF Plugin";
 
 IBDOC_PDF::IBDOC_PDF(PIDBOBJ DbParent, const STRING& Name) : MEMODOC(DbParent, Name)
 {
-  AllowZeroLengthPages(GDT_TRUE);
-  SetParseMessageStructure(GDT_TRUE);
+  AllowZeroLengthPages(true);
+  SetParseMessageStructure(true);
   desc.form("%s. Uses an external filter to MEMODOC.\nOptions:\n\
    FILTER   Specifies the program to use (Default '%s')\n\
 If a <filename>.meta file is available (colon standard format) its used to\n\
@@ -184,7 +184,7 @@ void IBDOC_PDF::ParseRecords(const RECORD& FileRecord)
   message_log (LOG_DEBUG, "Key set to '%s'", key.c_str());
 
   Db->ComposeDbFn (&s, DbExtCat);
-  if (MkDir(s, 0, GDT_TRUE) == -1)
+  if (MkDir(s, 0, true) == -1)
     {
       message_log (LOG_ERRNO, "Can't create filter directory '%s'", s.c_str() );
       return;
@@ -192,7 +192,7 @@ void IBDOC_PDF::ParseRecords(const RECORD& FileRecord)
   // <db_ext>.cat/<Hash>/<Key>.memo
   outfile =  AddTrailingSlash(s);
   outfile.Cat (((long)key.CRC16()) % 1000);
-  if (MkDir(outfile, 0, GDT_TRUE) == -1)
+  if (MkDir(outfile, 0, true) == -1)
     outfile = s; // Can't make it
   AddTrailingSlash(&outfile);
   outfile.Cat (key);
@@ -309,7 +309,7 @@ static const STRING _pdfname(const STRING& Fullpath)
 #endif
 
 
-GDT_BOOLEAN IBDOC_PDF::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool IBDOC_PDF::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   if (StringBuffer)
     {
@@ -318,7 +318,7 @@ GDT_BOOLEAN IBDOC_PDF::GetResourcePath(const RESULT& ResultRecord, STRING *Strin
 //cerr << "ResourcePath = " << *StringBuffer << endl;
       return StringBuffer->GetLength() != 0;
     }
-  return GDT_TRUE;
+  return true;
 }
 
 

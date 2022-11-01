@@ -145,98 +145,98 @@ enum Doctypes {
 static const struct {
     const char    *name;
     enum Doctypes  id;
-    GDT_BOOLEAN    pub;
+    bool    pub;
 } builtin_doctypes[] = {
-  { "<NIL>",      _UNDEFINED,  GDT_FALSE},{ "0",          _NULL,       GDT_FALSE},
-  { "AUTODETECT", _AUTODETECT, GDT_TRUE}, { "AOLLIST",    _AOLLIST,    GDT_TRUE},
-  { "BIBCOLON",   _BIBCOLON,   GDT_TRUE}, { "BIBTEX",     _BIBTEX,     GDT_TRUE},
-  { "BINARY",     _BINARY,     GDT_TRUE}, { "COLONDOC",   _COLONDOC,   GDT_TRUE},
-  { "COLONGRP",   _COLONGRP,   GDT_TRUE}, { "DIALOG-B",   _DIALOGB,    GDT_TRUE},
+  { "<NIL>",      _UNDEFINED,  false},{ "0",          _NULL,       false},
+  { "AUTODETECT", _AUTODETECT, true}, { "AOLLIST",    _AOLLIST,    true},
+  { "BIBCOLON",   _BIBCOLON,   true}, { "BIBTEX",     _BIBTEX,     true},
+  { "BINARY",     _BINARY,     true}, { "COLONDOC",   _COLONDOC,   true},
+  { "COLONGRP",   _COLONGRP,   true}, { "DIALOG-B",   _DIALOGB,    true},
 
-  { "DIF",        _DIF,        GDT_TRUE}, { "DIGESTTOC",  _DIGESTTOC,  GDT_FALSE},
-  { "DOCTYPE",    _DOCTYPE,    GDT_FALSE},{ "DVBLINE",    _DVBLINE,    GDT_TRUE},
-  { "ENDNOTE",    _ENDNOTE,    GDT_TRUE}, { "EUROMEDIA",  _EUROMEDIA,  GDT_TRUE},
-  { "FILMLINE",   _FILMLINE,   GDT_TRUE}, { "FILTER2HTML",_FILTER2HTML,GDT_TRUE}, 
-  { "FILTER2MEMO",_FILTER2MEMO,GDT_TRUE}, { "FILTER2TEXT",_FILTER2TEXT,GDT_TRUE},
+  { "DIF",        _DIF,        true}, { "DIGESTTOC",  _DIGESTTOC,  false},
+  { "DOCTYPE",    _DOCTYPE,    false},{ "DVBLINE",    _DVBLINE,    true},
+  { "ENDNOTE",    _ENDNOTE,    true}, { "EUROMEDIA",  _EUROMEDIA,  true},
+  { "FILMLINE",   _FILMLINE,   true}, { "FILTER2HTML",_FILTER2HTML,true}, 
+  { "FILTER2MEMO",_FILTER2MEMO,true}, { "FILTER2TEXT",_FILTER2TEXT,true},
 
-  { "FILTER2XML", _FILTER2XML, GDT_TRUE}, { "FIRSTLINE",  _FIRSTLINE,  GDT_TRUE},
-  { "FTP",        _FTP,        GDT_TRUE}, { "GILS",       _GILS,       GDT_TRUE},
-  { "GILSXML",    _GILSXML,    GDT_TRUE}, { "HARVEST",    _HARVEST,    GDT_TRUE},
-  { "HTML",       _HTML,       GDT_TRUE}, { "HTML--",     _ANTIHTML,   GDT_TRUE},
-  { "HTMLCACHE",  _HTMLCACHE,  GDT_TRUE}, { "HTMLHEAD",   _HTMLHEAD,   GDT_TRUE},
+  { "FILTER2XML", _FILTER2XML, true}, { "FIRSTLINE",  _FIRSTLINE,  true},
+  { "FTP",        _FTP,        true}, { "GILS",       _GILS,       true},
+  { "GILSXML",    _GILSXML,    true}, { "HARVEST",    _HARVEST,    true},
+  { "HTML",       _HTML,       true}, { "HTML--",     _ANTIHTML,   true},
+  { "HTMLCACHE",  _HTMLCACHE,  true}, { "HTMLHEAD",   _HTMLHEAD,   true},
 
-  { "HTMLMETA",   _HTMLMETA,   GDT_TRUE}, { "HTMLREMOTE", _HTMLREMOTE, GDT_TRUE},
-  { "IAFADOC",    _IAFADOC,    GDT_TRUE}, { "IKNOWDOC",   _IKNOWDOC,   GDT_TRUE},
-  { "IRLIST",     _IRLIST,     GDT_TRUE}, { "LISTDIGEST", _LISTDIGEST, GDT_TRUE},
-  { "MAILDIGEST", _MAILDIGEST, GDT_TRUE}, { "MAILFOLDER", _MAILFOLDER, GDT_TRUE},
-  { "MAILMAN",    _MAILMAN,    GDT_FALSE},{ "MEDLINE",    _MEDLINE,    GDT_TRUE},
+  { "HTMLMETA",   _HTMLMETA,   true}, { "HTMLREMOTE", _HTMLREMOTE, true},
+  { "IAFADOC",    _IAFADOC,    true}, { "IKNOWDOC",   _IKNOWDOC,   true},
+  { "IRLIST",     _IRLIST,     true}, { "LISTDIGEST", _LISTDIGEST, true},
+  { "MAILDIGEST", _MAILDIGEST, true}, { "MAILFOLDER", _MAILFOLDER, true},
+  { "MAILMAN",    _MAILMAN,    false},{ "MEDLINE",    _MEDLINE,    true},
 
-  { "MEMO",       _MEMODOC,    GDT_TRUE}, { "METADOC",    _METADOC,    GDT_TRUE},
-  { "MISMEDIA",   _MISMEDIA,   GDT_TRUE}, { "NEWSFOLDER", _NEWSFOLDER, GDT_TRUE},
-  { "NULL",       _NULL,       GDT_FALSE},
-  { "OCR",        _TBINARY,    GDT_TRUE}, { "ONELINE",    _ONELINE,    GDT_TRUE},
-  { "OZSEARCH",   _OZSEARCH,   GDT_TRUE}, { "PANDOC",     _PANDOC,     GDT_TRUE},
+  { "MEMO",       _MEMODOC,    true}, { "METADOC",    _METADOC,    true},
+  { "MISMEDIA",   _MISMEDIA,   true}, { "NEWSFOLDER", _NEWSFOLDER, true},
+  { "NULL",       _NULL,       false},
+  { "OCR",        _TBINARY,    true}, { "ONELINE",    _ONELINE,    true},
+  { "OZSEARCH",   _OZSEARCH,   true}, { "PANDOC",     _PANDOC,     true},
 
-  { "PAPYRUS",    _PAPYRUS,    GDT_TRUE},
-  { "PARA",       _PARA,       GDT_TRUE}, { "PDF",        _PDFDOC,     GDT_TRUE},
-  { "PLAINTEXT",  _PLAINTEXT,  GDT_TRUE}, { "PS",         _PSDOC,      GDT_TRUE},
-  { "PTEXT",      _PTEXT,      GDT_TRUE}, { "RDF",        _RDF,        GDT_TRUE},
-  { "REFERBIB",   _REFERBIB,   GDT_TRUE},
+  { "PAPYRUS",    _PAPYRUS,    true},
+  { "PARA",       _PARA,       true}, { "PDF",        _PDFDOC,     true},
+  { "PLAINTEXT",  _PLAINTEXT,  true}, { "PS",         _PSDOC,      true},
+  { "PTEXT",      _PTEXT,      true}, { "RDF",        _RDF,        true},
+  { "REFERBIB",   _REFERBIB,   true},
 
-  { "RESOURCE",   _RESOURCEDOC,GDT_FALSE},{ "RIS",        _RIS,        GDT_TRUE},
-  { "ROADS++",    _ROADSDOC,   GDT_TRUE}, { "RSS.9x",     _RSS091,     GDT_TRUE},
-  { "RSS1",       _RSS1,       GDT_TRUE}, { "RSS2",       _RSS2,       GDT_TRUE},
-  { "SGML",       _SGML,       GDT_TRUE}, { "SGMLNORM",   _SGMLNORM,   GDT_TRUE},
-  { "SGMLTAG",    _SGMLTAG,    GDT_TRUE}, { "SIMPLE",     _SIMPLE,     GDT_TRUE},
+  { "RESOURCE",   _RESOURCEDOC,false},{ "RIS",        _RIS,        true},
+  { "ROADS++",    _ROADSDOC,   true}, { "RSS.9x",     _RSS091,     true},
+  { "RSS1",       _RSS1,       true}, { "RSS2",       _RSS2,       true},
+  { "SGML",       _SGML,       true}, { "SGMLNORM",   _SGMLNORM,   true},
+  { "SGMLTAG",    _SGMLTAG,    true}, { "SIMPLE",     _SIMPLE,     true},
 
-  { "SOIF",       _SOIF,       GDT_TRUE}, { "TSVDOC",     _TSLDOC,     GDT_TRUE},
-  { "TSV",        _TSVDOC,     GDT_TRUE}, { "XBINARY",    _XBINARY,    GDT_TRUE},
-  { "FILTER",     _FILTER,     GDT_TRUE}, { "XFILTER",    _XFILTER,    GDT_TRUE},
-  { "XML",         _XML,       GDT_TRUE}, { "XMLBASE",    _XMLBASE,    GDT_TRUE},
-  { "YAHOOLIST",  _YAHOOLIST,  GDT_TRUE}, { "ISOTEIA",    _ISOTEIA,    GDT_TRUE},
+  { "SOIF",       _SOIF,       true}, { "TSVDOC",     _TSLDOC,     true},
+  { "TSV",        _TSVDOC,     true}, { "XBINARY",    _XBINARY,    true},
+  { "FILTER",     _FILTER,     true}, { "XFILTER",    _XFILTER,    true},
+  { "XML",         _XML,       true}, { "XMLBASE",    _XMLBASE,    true},
+  { "YAHOOLIST",  _YAHOOLIST,  true}, { "ISOTEIA",    _ISOTEIA,    true},
 
-  { "CAP",        _CAPRSS,     GDT_TRUE}, { "RSSCORE",    _RSSCORE,    GDT_TRUE},
-  { "HTMLZERO",   _HTMLZERO,   GDT_TRUE}, { "RSSARCHIVE", _RSSCOREARCHIVE, GDT_TRUE},
-  { "ATOM",       _ATOM,       GDT_TRUE}, { "NEWSML",     _NEWSML,     GDT_TRUE},
-  { "XMLREC",     _XMLREC,     GDT_TRUE}, { "CSVDOC",     _CSVDOC,     GDT_TRUE},
+  { "CAP",        _CAPRSS,     true}, { "RSSCORE",    _RSSCORE,    true},
+  { "HTMLZERO",   _HTMLZERO,   true}, { "RSSARCHIVE", _RSSCOREARCHIVE, true},
+  { "ATOM",       _ATOM,       true}, { "NEWSML",     _NEWSML,     true},
+  { "XMLREC",     _XMLREC,     true}, { "CSVDOC",     _CSVDOC,     true},
 
   /* Image Formats */
-  { "GIF",        _IMAGEGIF,   GDT_FALSE}, { "PNG",        _IMAGEPNG,   GDT_FALSE},
-  { "TIFF",       _IMAGETIFF,  GDT_FALSE}, { "JPEG",       _IMAGEJPEG,  GDT_FALSE},
+  { "GIF",        _IMAGEGIF,   false}, { "PNG",        _IMAGEPNG,   false},
+  { "TIFF",       _IMAGETIFF,  false}, { "JPEG",       _IMAGEJPEG,  false},
 
   /* Aliases */
-  { "TBINARY",    _TBINARY,     GDT_FALSE},
-  { "MEMODOC",    _MEMODOC,     GDT_FALSE},
-  { "TEXT",       _PLAINTEXT,   GDT_FALSE},
-  { "IMAGE",      _RESOURCEDOC, GDT_FALSE},
-  { "MOVIE",      _RESOURCEDOC, GDT_FALSE},
-  { "OBJ",        _RESOURCEDOC, GDT_FALSE},
-  { "SOUND",      _RESOURCEDOC, GDT_FALSE},
-  { "XMLGILS",    _GILSXML,     GDT_FALSE},
-  { "RSS",        _RSS2,        GDT_FALSE},
-  { "RSS091",     _RSS091,      GDT_FALSE},
-  { "RSS.9",      _RSS091,      GDT_FALSE},
-  { "CORERSS",    _RSSCORE,     GDT_FALSE},
-  { "ALERT",      _CAPRSS,      GDT_FALSE},
-  { "ROADSDOC",   _ROADSDOC,    GDT_FALSE},
+  { "TBINARY",    _TBINARY,     false},
+  { "MEMODOC",    _MEMODOC,     false},
+  { "TEXT",       _PLAINTEXT,   false},
+  { "IMAGE",      _RESOURCEDOC, false},
+  { "MOVIE",      _RESOURCEDOC, false},
+  { "OBJ",        _RESOURCEDOC, false},
+  { "SOUND",      _RESOURCEDOC, false},
+  { "XMLGILS",    _GILSXML,     false},
+  { "RSS",        _RSS2,        false},
+  { "RSS091",     _RSS091,      false},
+  { "RSS.9",      _RSS091,      false},
+  { "CORERSS",    _RSSCORE,     false},
+  { "ALERT",      _CAPRSS,      false},
+  { "ROADSDOC",   _ROADSDOC,    false},
 
-  { "JPG",        _IMAGEJPEG,   GDT_FALSE},
-  { "TIF",        _IMAGETIFF,   GDT_FALSE},
+  { "JPG",        _IMAGEJPEG,   false},
+  { "TIF",        _IMAGETIFF,   false},
 
-  { "ODT",        _PANDOC,      GDT_TRUE},
-  { "DOCX",       _PANDOC,      GDT_TRUE},
-  { "LATEX",      _PANDOC,      GDT_TRUE},
-  { "MARKDOWN",   _PANDOC,      GDT_TRUE},
-  { "JIRA",      _PANDOC,      GDT_TRUE},
-  { "JSON",       _PANDOC,      GDT_FALSE}, // Supports ONLY Pandoc created JSON
-
-
-
-  { "CSLDOC",     _CSVDOC,      GDT_FALSE}, // Old name
-  { "TSLDOC",     _TSLDOC,      GDT_FALSE}, // Old name
+  { "ODT",        _PANDOC,      true},
+  { "DOCX",       _PANDOC,      true},
+  { "LATEX",      _PANDOC,      true},
+  { "MARKDOWN",   _PANDOC,      true},
+  { "JIRA",      _PANDOC,      true},
+  { "JSON",       _PANDOC,      false}, // Supports ONLY Pandoc created JSON
 
 
-  { "PLUGIN",     _PLUGIN,      GDT_FALSE}
+
+  { "CSLDOC",     _CSVDOC,      false}, // Old name
+  { "TSLDOC",     _TSLDOC,      false}, // Old name
+
+
+  { "PLUGIN",     _PLUGIN,      false}
 };
 
 // This is a dummy
@@ -303,16 +303,16 @@ DOCTYPE *DTREG::RegisterDocType (const STRING& name, DOCTYPE* Ptr)
 }
 
 
-GDT_BOOLEAN  DTREG::UnregisterDocType (const STRING& name)
+bool  DTREG::UnregisterDocType (const STRING& name)
 {
   DOCTYPE *Ptr = DoctypesRegistry ? DoctypesRegistry->Find(name) : NULL;
   if (Ptr)
     {
       DoctypesRegistry->Remove(name);
       delete Ptr;
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -467,13 +467,13 @@ STRING  DOCTYPE_ID::Get() const
 }
 
 
-STRING DOCTYPE_ID::ClassName(GDT_BOOLEAN Base) const
+STRING DOCTYPE_ID::ClassName(bool Base) const
 {
   STRING className (Name);
   if (Id < _MAX_ID && Id >= _NULL)
     {
       const char *myName = builtin_doctypes[Id].name;
-      if (Base == GDT_TRUE)
+      if (Base == true)
 	className = myName;
       else if (className != myName)
 	className << DocDefine << myName;
@@ -505,11 +505,11 @@ void DOCTYPE_ID::Write(FILE *fp) const
   ::Write(Id, fp);
 }
 
-GDT_BOOLEAN DOCTYPE_ID::Read(FILE *fp)
+bool DOCTYPE_ID::Read(FILE *fp)
 {
   ::Read(&Name, fp);
   ::Read(&Id, fp);
-  return GDT_TRUE;
+  return true;
 }
 
 
@@ -537,9 +537,9 @@ DTREG::DTREG(PIDBOBJ DbParent, const STRING& PluginsPath)
 }
 
 
-GDT_BOOLEAN DTREG::PluginExists(const STRING& Doctype) const
+bool DTREG::PluginExists(const STRING& Doctype) const
 {
-  GDT_BOOLEAN not_found = GDT_TRUE;
+  bool not_found = true;
   STRING name;
 
  if (Doctype.SearchReverse( DocDefine ) != Doctype.GetLength())
@@ -578,7 +578,7 @@ int    DTREG::Version() const
   return (int) (100.0 * atof(tmp));
 }
 
-GDT_BOOLEAN     DTREG::ValidateDocType(const STRING& DocType)
+bool     DTREG::ValidateDocType(const STRING& DocType)
 {
   int id = DoctypeId(DocType);
 
@@ -592,7 +592,7 @@ GDT_BOOLEAN     DTREG::ValidateDocType(const STRING& DocType)
   return id > 0;
 }
 
-GDT_BOOLEAN     DTREG::ValidateDocType(const DOCTYPE_ID& Id)
+bool     DTREG::ValidateDocType(const DOCTYPE_ID& Id)
 {
   const int id = Id.Id;
   if (id == _PLUGIN)

@@ -142,47 +142,47 @@ FC& FC::operator-=(const FC& Fc)
 
 #if 0
 
-GDT_BOOLEAN FC::Contains (const FC& Fc) const
+bool FC::Contains (const FC& Fc) const
 {
   return (Fc.FieldStart >= FieldStart && Fc.FieldEnd <= FieldEnd);
 }
 
-GDT_BOOLEAN FC::Contains (const GPTYPE Gp) const
+bool FC::Contains (const GPTYPE Gp) const
 {
   return (Gp >= FieldStart && Gp <= FieldEnd);
 }
 
-GDT_BOOLEAN FC::operator ==(const FC& Fc) const
+bool FC::operator ==(const FC& Fc) const
 {
   return (FieldStart == Fc.FieldStart && FieldEnd == Fc.FieldEnd);
 }
 
-GDT_BOOLEAN FC::operator <=(const FC& Fc) const
+bool FC::operator <=(const FC& Fc) const
 {
   return (FieldStart <= Fc.FieldStart && FieldEnd <= Fc.FieldEnd);
 }
 
-GDT_BOOLEAN FC::operator >=(const FC& Fc) const
+bool FC::operator >=(const FC& Fc) const
 {
   return (FieldStart >= Fc.FieldStart && FieldEnd >= Fc.FieldEnd);
 }
 
-GDT_BOOLEAN FC::operator <(const FC& Fc) const
+bool FC::operator <(const FC& Fc) const
 { 
   return (Fc.FieldStart < FieldStart && Fc.FieldEnd < FieldEnd);
 }
 
-GDT_BOOLEAN FC::operator <(const GPTYPE Gp) const
+bool FC::operator <(const GPTYPE Gp) const
 {
   return (Gp < FieldStart);
 }
 
-GDT_BOOLEAN FC::operator >(const FC& Fc) const
+bool FC::operator >(const FC& Fc) const
 { 
   return (Fc.FieldStart > FieldStart && Fc.FieldEnd > FieldEnd);
 }
 
-GDT_BOOLEAN FC::operator >(const GPTYPE Gp) const 
+bool FC::operator >(const GPTYPE Gp) const 
 { 
   return (Gp > FieldEnd); 
 }
@@ -201,12 +201,12 @@ INT FC::Compare (const FC& Fc) const
 
 #if 0
 
-GDT_BOOLEAN operator >(const GPTYPE Gp, const FC& Fc)
+bool operator >(const GPTYPE Gp, const FC& Fc)
 {
   return Gp > Fc.FieldEnd;
 }
 
-GDT_BOOLEAN operator <(const GPTYPE Gp, const FC& Fc)
+bool operator <(const GPTYPE Gp, const FC& Fc)
 {
   return Gp < Fc.FieldStart;
 }
@@ -257,15 +257,15 @@ void FC::Write (PFILE fp) const
 }
 
 
-GDT_BOOLEAN FC::Read (PFILE fp)
+bool FC::Read (PFILE fp)
 {
-  GDT_BOOLEAN result = GDT_FALSE;
+  bool result = false;
   FieldStart = FieldEnd = 0;
   if (!feof(fp))
     {
       ::Read(&FieldStart, fp);
       ::Read(&FieldEnd, fp);
-      result = GDT_TRUE;
+      result = true;
 //cerr << "XXXXXXX Value = " << *this << " fd=" << fileno(fp) << "  ftell=" << ftell(fp) << endl;
     }
   return result;
@@ -281,7 +281,7 @@ void Write(const FC& Fc, PFILE Fp)
   Fc.Write(Fp);
 }
 
-GDT_BOOLEAN Read(PFC FcPtr, PFILE Fp)
+bool Read(PFC FcPtr, PFILE Fp)
 {
   return FcPtr->Read(Fp);
 }

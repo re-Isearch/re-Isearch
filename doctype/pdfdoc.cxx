@@ -353,7 +353,7 @@ PDFDOC::PDFDOC (PIDBOBJ DbParent, const STRING& Name): METADOC (DbParent, Name)
     {
       HostID = _IB_Hostid(); 
     }
-  METADOC::SetPresentStyle(GDT_TRUE);
+  METADOC::SetPresentStyle(true);
   METADOC::SetSepChar('=');
 
   pdf2jpeg_Command = ResolveBinPath("pdf2jpeg.bin");
@@ -694,7 +694,7 @@ void PDFDOC::ParseFields (PRECORD NewRecord)
     }
 }
 
-GDT_BOOLEAN PDFDOC::GetResourcePath(const RESULT& ResultRecord, PSTRING StringBuffer) const
+bool PDFDOC::GetResourcePath(const RESULT& ResultRecord, PSTRING StringBuffer) const
 {
   StringBuffer->Clear();
   PDFDOC::Present(ResultRecord, SOURCE_PATH_ELEMENT, NulString, StringBuffer);
@@ -919,7 +919,7 @@ Present (const RESULT& ResultRecord,
     }
   else if (ElementSet.Equals (BRIEF_MAGIC))
     {
-      GDT_BOOLEAN UseHtml = (RecordSyntax == HtmlRecordSyntax);
+      bool UseHtml = (RecordSyntax == HtmlRecordSyntax);
       RESULT RsRecord;
       RsRecord = ResultRecord;
       RsRecord.GetKey(&S);
@@ -1021,7 +1021,7 @@ Present (const RESULT& ResultRecord,
     }
   else if (ElementSet == "URL")
     {
-      DOCTYPE::URL(ResultRecord, StringBuffer, GDT_TRUE); 
+      DOCTYPE::URL(ResultRecord, StringBuffer, true); 
     }
   else
     DOCTYPE::Present(ResultRecord, ElementSet, RecordSyntax, StringBuffer);

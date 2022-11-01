@@ -137,19 +137,19 @@ See also the MEMO doctype info\n";
 }
 
 
-GDT_BOOLEAN XBINARY::IsIgnoreMetaField(const STRING &Fieldname) const
+bool XBINARY::IsIgnoreMetaField(const STRING &Fieldname) const
 {
   if (Fieldname.CaseCompare(UnifiedName("title")))
-    return GDT_TRUE;
+    return true;
   DOCTYPE *ptr = Db->GetDocTypePtr(InfoDoctype);
   if (ptr != NULL && ptr != this)
     {
       return ptr->IsIgnoreMetaField(Fieldname);
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN TBINARY::IsIgnoreMetaField(const STRING &Fieldname) const
+bool TBINARY::IsIgnoreMetaField(const STRING &Fieldname) const
 {
   return XBINARY::IsIgnoreMetaField(Fieldname);
 }
@@ -414,7 +414,7 @@ void BINARY::ParseFields (PRECORD NewRecord)
 }
 
 
-GDT_BOOLEAN BINARY::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool BINARY::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   STRING Filename (ResultRecord.GetFullFileName() );
   STRINGINDEX x = Filename.SearchReverse(PostFix);
@@ -437,7 +437,7 @@ GDT_BOOLEAN BINARY::GetResourcePath(const RESULT& ResultRecord, STRING *StringBu
     }
   if (StringBuffer)
     *StringBuffer = Filename;
-  return Filename.IsEmpty() == GDT_FALSE;
+  return Filename.IsEmpty() == false;
 }
 
 
@@ -551,7 +551,7 @@ BINARY::~BINARY ()
 
 // ----------------------------------
 
-GDT_BOOLEAN XBINARY::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool XBINARY::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   return BINARY::GetResourcePath(ResultRecord, StringBuffer);
 }

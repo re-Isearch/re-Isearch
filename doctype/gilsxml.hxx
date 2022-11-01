@@ -31,7 +31,7 @@ public:
   void ParseFields (PRECORD NewRecord);
 
   // Parser hook
-  GDT_BOOLEAN StoreTagComplexAttributes(const char *tag_ptr) const;
+  bool StoreTagComplexAttributes(const char *tag_ptr) const;
 
   void Present (const RESULT& ResultRecord, const STRING& ElementSet, PSTRING StringBuffer) const {
     return XML::Present(ResultRecord, ElementSet, StringBuffer);
@@ -47,7 +47,7 @@ public:
   virtual void ParseRecords(const RECORD& FileRecord);
 
   // Lowest nodes
-  GDT_BOOLEAN GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const;
+  bool GetRecordDfdt (const STRING& Key, PDFDT DfdtBuffer) const;
 
   // STRING GetOption(const STRING& Option, const STRING& defaultValue = NulString);
 
@@ -119,7 +119,7 @@ public:
 
   virtual STRING UnifiedName (const STRING& Tag, PSTRING Value) const;
 
-  virtual GDT_BOOLEAN StoreTagComplexAttributes(const char *tag_ptr) const;
+  virtual bool StoreTagComplexAttributes(const char *tag_ptr) const;
 
   void Present (const RESULT& ResultRecord, const STRING& ElementSet, PSTRING StringBuffer) const;
 
@@ -165,7 +165,7 @@ public:
   RSSCORE (PIDBOBJ DbParent, const STRING& Name);
   ~RSSCORE();
 
-  GDT_BOOLEAN URL(const RESULT& ResultRecord, PSTRING StringBuffer, GDT_BOOLEAN OnlyRemote) const;
+  bool URL(const RESULT& ResultRecord, PSTRING StringBuffer, bool OnlyRemote) const;
   void Present (const RESULT& ResultRecord, const STRING& ElementSet, const STRING& RecordSyntax,
 	PSTRING StringBuffer) const;
 

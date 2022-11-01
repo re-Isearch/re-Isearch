@@ -408,11 +408,16 @@ STRINGData *STRING::AllocBuffer(size_t nLen)
 
 //cerr << "nLen=" << nLen << " want=" << want << endl;
 
+#ifdef __EXCEPTIONS
   try {
     pData = (STRINGData*)new char[sizeof(STRINGData) + (want+1)*sizeof(char)];
   } catch (...) {
     pData = NULL;
   }
+#else
+  pData = (STRINGData*)new char[sizeof(STRINGData) + (want+1)*sizeof(char)];
+#endif
+
   if (pData)
     {
       pData->nRefs        = 1;
@@ -469,14 +474,14 @@ void STRING::Clear()
 }
 
 // must be called before changing this string
-GDT_BOOLEAN STRING::CopyBeforeWrite()
+bool STRING::CopyBeforeWrite()
 {
   STRINGData* pData = GetStringData();
 
   if ( pData->IsShared() || pData->IsConstant() ) {
     pData->Unlock();                // memory not freed because shared
     if (AllocBuffer( pData->nDataLength ) == NULL)
-      return GDT_FALSE;
+      return false;
     memcpy(m_pchData, pData->data(), pData->nDataLength*sizeof(char));
   }
   wxASSERT( !pData->IsShared() );  // we must be the only owner
@@ -484,7 +489,7 @@ GDT_BOOLEAN STRING::CopyBeforeWrite()
 }
 
 // must be called before replacing contents of this string
-GDT_BOOLEAN STRING::AllocBeforeWrite(size_t nLen)
+bool STRING::AllocBeforeWrite(size_t nLen)
 {
   wxASSERT( nLen != 0 );  // doesn't make any sense
 
@@ -496,7 +501,7 @@ GDT_BOOLEAN STRING::AllocBeforeWrite(size_t nLen)
     if (AllocBuffer(nLen) == NULL)
       {
 	message_log (LOG_PANIC, "Can't allocate string space: %u KB", (unsigned)(nLen/1024));
-	return GDT_FALSE;
+	return false;
       }
   } else {
     GetStringData()->nDataLength = nLen;
@@ -526,11 +531,15 @@ void * STRING::Copy (void *buf, size_t len) const
     }
   if (ptr == NULL)
     {
+#ifdef __EXCEPTIONS
       try {
 	ptr = new char [ len + 1 ];
       } catch (...) {
 	ptr = NULL;
       }
+#else
+      ptr = new char [ len + 1 ];
+#endif
       if (ptr == NULL)
 	{
 	  message_log (LOG_ERRNO, "Could not allocate string space for %u characters.", (unsigned)len+1);
@@ -843,7 +852,7 @@ int STRING::RawRead(void *ptr, size_t i)
 }
 
 
-GDT_BOOLEAN STRING::Read(FILE *fp)
+bool STRING::Read(FILE *fp)
 {
   obj_t obj = getObjID(fp); // It it really a string?
   size_t length = 0;
@@ -1299,11 +1308,15 @@ STRING& STRING::Insert (const STRINGINDEX InsertionPt, const STRING& OtherString
   const size_t want      = HEADROOM(Nlength,32);
   STRINGData* pData      = NULL;
 
+#ifdef __EXCEPTIONS
   try {
     pData      = (STRINGData*)new char[sizeof(STRINGData) + (want+1)*sizeof(char)];
   } catch (...) {
     pData      = NULL;
   }
+#else
+   pData      = (STRINGData*)new char[sizeof(STRINGData) + (want+1)*sizeof(char)];
+#endif
   if (pData == NULL)
     {
       message_log (LOG_ERRNO|LOG_PANIC, "Could not allocate string space %ld", (long)want);
@@ -2054,7 +2067,7 @@ STRING STRING::Right(size_t nCount) const
 STRING STRING::Right(char ch) const
 {
   STRING str;
-  int iPos = Find(ch, GDT_TRUE);
+  int iPos = Find(ch, true);
   if ( iPos == NOT_FOUND )
     str = *this;
   else
@@ -2090,7 +2103,7 @@ STRING STRING::Left(char ch) const
 STRING STRING::Before(char ch) const
 {
   STRING str;
-  int iPos = Find(ch, GDT_TRUE);
+  int iPos = Find(ch, true);
   if ( iPos != NOT_FOUND && iPos != 0 )
     str = STRING(c_str(), iPos);
 
@@ -2099,7 +2112,7 @@ STRING STRING::Before(char ch) const
 
 /// get all characters after the first occurence of ch
 /// (returns empty string if ch not found)
-STRING STRING::After(char ch, GDT_BOOLEAN Last) const
+STRING STRING::After(char ch, bool Last) const
 {
   STRING str;
   int iPos = Find(ch, Last);
@@ -2110,7 +2123,7 @@ STRING STRING::After(char ch, GDT_BOOLEAN Last) const
 }
 
 // replace first (or all) occurences of some substring with another one
-UINT STRING::Replace(const char *szOld, const char *szNew, GDT_BOOLEAN bReplaceAll)
+UINT STRING::Replace(const char *szOld, const char *szNew, bool bReplaceAll)
 {
   UINT uiCount = 0;   // count of replacements made
 
@@ -2151,34 +2164,34 @@ UINT STRING::Replace(const char *szOld, const char *szNew, GDT_BOOLEAN bReplaceA
   return uiCount;
 }
 
-GDT_BOOLEAN STRING::IsAscii() const
+bool STRING::IsAscii() const
 {
   for (const unsigned char *s = (const unsigned char*) *this; *s; s++)
     {
       if(!_ib_isascii(*s))
-        return(GDT_FALSE);
+        return(false);
     }
-  return(GDT_TRUE);
+  return(true);
 }
   
-GDT_BOOLEAN STRING::IsWord() const
+bool STRING::IsWord() const
 {
   for (const unsigned char *s = (const unsigned char*) *this; *s; s++)
     {
       if(!_ib_isalpha(*s))
-	return(GDT_FALSE);
+	return(false);
     }
-  return(GDT_TRUE);
+  return(true);
 }
 
 // Plain Word. No numbers, spaces or .
-GDT_BOOLEAN STRING::IsPlainWord() const
+bool STRING::IsPlainWord() const
 {
   for (const unsigned char *s = (const unsigned char*) *this; *s; s++)
     {
-      if (!_ib_isalpha(*s)) return GDT_FALSE;
+      if (!_ib_isalpha(*s)) return false;
     }
-  return GDT_TRUE;
+  return true;
 }
 
 //
@@ -2191,7 +2204,7 @@ GDT_BOOLEAN STRING::IsPlainWord() const
 //         point character.
 //
 
-GDT_BOOLEAN STRING::IsNumber() const
+bool STRING::IsNumber() const
 {
   size_t               dots   = 0;
   size_t               digits = 0;
@@ -2213,7 +2226,7 @@ GDT_BOOLEAN STRING::IsNumber() const
 	  if (*s == '.')
 	    dots++;
 	  else if (!isspace(*s) || s[1]) // Don't be tricked by trailing space!
-	    return(GDT_FALSE);
+	    return(false);
 	}
        else digits++;
     }
@@ -2221,14 +2234,14 @@ GDT_BOOLEAN STRING::IsNumber() const
   return (dots < 2 && digits);
 }
 
-GDT_BOOLEAN STRING::IsNumberRange() const
+bool STRING::IsNumberRange() const
 {
   const NUMERICALRANGE Range(*this);
   return Range.Ok();
 }
 
 #if 0
-GDT_BOOLEAN STRING::IsTelephoneNumber() const
+bool STRING::IsTelephoneNumber() const
 {
   const size_t length = Len();
   size_t       saw_digit = 0;
@@ -2240,7 +2253,7 @@ GDT_BOOLEAN STRING::IsTelephoneNumber() const
 
 #endif
 
-GDT_BOOLEAN STRING::IsDotNumber() const
+bool STRING::IsDotNumber() const
 {
   const size_t length = Len();
   size_t       saw_digit = 0;
@@ -2258,26 +2271,26 @@ GDT_BOOLEAN STRING::IsDotNumber() const
       else if (ptr[i] == '.')
 	{
 	  if (i > 0 && ptr[i-1] == '.')
-	    return(GDT_FALSE); // .. is not allowed, probably is a range
+	    return(false); // .. is not allowed, probably is a range
 	  dots++;
 	}
       else if (!_ib_isxdigit(ptr[i]))
 	{
-	  if (i > 0) return(GDT_FALSE);
+	  if (i > 0) return(false);
 	}
       else saw_digit++;
     }
   if ((saw_digit > 1) && ((dots > 1) || (hex == dots)))
-    return GDT_TRUE;
-  return GDT_FALSE;
+    return true;
+  return false;
 }
 
-GDT_BOOLEAN STRING::IsCurrency() const
+bool STRING::IsCurrency() const
 {
   return MONETARYOBJ (m_pchData).Ok();  
 }
 
-GDT_BOOLEAN STRING::IsFilePath() const
+bool STRING::IsFilePath() const
 {
   const size_t len = Len();
   for (size_t i=0; i < len; i++)
@@ -2287,52 +2300,52 @@ GDT_BOOLEAN STRING::IsFilePath() const
 	  return FileExists(m_pchData);
 	}
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN STRING::IsDate() const
+bool STRING::IsDate() const
 {
   if ((Len() > 5 || Len() < 512) && !IsFilePath())
     {
       return SRCH_DATE(*this).Ok();
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN STRING::IsDateRange() const
+bool STRING::IsDateRange() const
 {
   if (Len() > 10)
     return DATERANGE(*this).Ok();
-  return GDT_FALSE;
+  return false;
 }
 
 
 // Look for RECT{ .. } 
-GDT_BOOLEAN STRING::IsGeoBoundedBox() const
+bool STRING::IsGeoBoundedBox() const
 {
   if (Len() < 512) // Max 512 byte long strings!
     {
        const STRINGINDEX pos =  SearchAny("RECT{");
        return (pos != 0 && SearchAny('}', pos + 4) != 0);
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN STRING::IsPrint() const
+bool STRING::IsPrint() const
 {
   for (const unsigned char *s = (const unsigned char*) *this; *s; s++)
     {
       if(!_ib_isprint(*s))
-	return(GDT_FALSE);
+	return(false);
     }
-  return(GDT_TRUE);
+  return(true);
 }
 
 
-GDT_BOOLEAN STRING::GetBool() const
+bool STRING::GetBool() const
 {
   // Tricky polymorphism guessing
-  GDT_BOOLEAN result = GDT_FALSE; // Nothing is false...
+  bool result = false; // Nothing is false...
   if (!IsEmpty())
     { 
       if (IsNumber())
@@ -2344,11 +2357,11 @@ GDT_BOOLEAN STRING::GetBool() const
 	  char ch = toupper(m_pchData[0]);
 	  // True if T[rue], T[ack], Y[es], J[a], S[i], E[in], D[a],.....
 	  if (ch == 'T' || ch == 'Y' || ch == 'J' || ch == 'S' || ch == 'E' || ch == 'D')
-	    result = GDT_TRUE;
+	    result = true;
 	  else if (ch == 'N' || ch == 'A') // No, Nein, Aus etc...
-	    result = GDT_FALSE;
+	    result = false;
 	  else if (CaseEquals("On") || CaseEquals("Oui")) // O case can be On or Off
-	    result = GDT_TRUE;
+	    result = true;
 	  // else Off, ...
 	}
     }
@@ -2359,8 +2372,8 @@ GDT_BOOLEAN STRING::GetBool() const
 STRING STRING::Strip(stripType w) const
 {
     STRING s = *this;
-    if ( w & leading ) s.Trim(GDT_FALSE);
-    if ( w & trailing ) s.Trim(GDT_TRUE);
+    if ( w & leading ) s.Trim(false);
+    if ( w & trailing ) s.Trim(true);
     return s;
 }
 
@@ -2368,16 +2381,16 @@ STRING STRING::Strip(stripType w) const
 // case conversion
 // ---------------------------------------------------------------------------
 
-GDT_BOOLEAN STRING::IsUpper() const
+bool STRING::IsUpper() const
 {
   const size_t len = Len();
  
   for (size_t i=0; i < len; i++)
     {
       if (! _ib_isupper(m_pchData[i] ))
-	return GDT_FALSE;
+	return false;
     } 
-  return GDT_TRUE;
+  return true;
 } 
 
 
@@ -2395,16 +2408,16 @@ STRING& STRING::MakeUpper()
   return *this;
 }
 
-GDT_BOOLEAN STRING::IsLower() const
+bool STRING::IsLower() const
 {
   const size_t len = Len();
  
   for (size_t i=0; i < len; i++)
     {
       if (! _ib_islower(m_pchData[i] ))
-	return GDT_FALSE;
+	return false;
     } 
-  return GDT_TRUE;
+  return true;
 } 
 
 
@@ -2448,7 +2461,7 @@ STRING& STRING::ToPrint ()
 // ---------------------------------------------------------------------------
 
 // trims spaces (in the sense of isspace) from left or right side
-STRING& STRING::Trim(GDT_BOOLEAN bFromRight)
+STRING& STRING::Trim(bool bFromRight)
 {
   if (GetStringData()->nDataLength < 1)
     return *this; // Nothing to do
@@ -2595,7 +2608,7 @@ STRING& STRING::Pack ()
   if (length)
     {
       size_t len = 0;
-      GDT_BOOLEAN SawSpace = GDT_TRUE;
+      bool SawSpace = true;
       UCHR Ch;
 
       CopyBeforeWrite();
@@ -2606,11 +2619,11 @@ STRING& STRING::Pack ()
 	    {
 	      if (!SawSpace)
 		 m_pchData[len++] = ' ';
-	      SawSpace = GDT_TRUE;
+	      SawSpace = true;
 	    }
 	  else
 	    {
-	      SawSpace = GDT_FALSE;
+	      SawSpace = false;
 	      if (len != x)
 		 m_pchData[len] = Ch;
 	      len++;
@@ -2688,7 +2701,7 @@ void STRING::SetChr (const STRINGINDEX Index, const UCHR NewChr)
 
 
 // adds nCount characters chPad to the string from either side
-STRING& STRING::Pad(size_t nCount, char chPad, GDT_BOOLEAN bFromRight)
+STRING& STRING::Pad(size_t nCount, char chPad, bool bFromRight)
 {
   STRING s(chPad, nCount);
 
@@ -2789,7 +2802,7 @@ size_t STRING::Count(const STRING& str) const
 }
 
 // find a character
-int STRING::Find(char ch, GDT_BOOLEAN bFromEnd) const
+int STRING::Find(char ch, bool bFromEnd) const
 {
   const size_t len = Len();
   if (bFromEnd)
@@ -2810,7 +2823,7 @@ int STRING::Find(char ch, GDT_BOOLEAN bFromEnd) const
 
 const char *strchr(const STRING& str, int ch)
 {
-  int i = str.Find((char)ch, GDT_FALSE);
+  int i = str.Find((char)ch, false);
   if (i == NOT_FOUND)
     return NULL;
   return str.GetData((size_t)i);
@@ -2818,7 +2831,7 @@ const char *strchr(const STRING& str, int ch)
 
 const char *strrchr(const STRING& str, int ch)
 {
-  int i = str.Find((char)ch, GDT_TRUE);
+  int i = str.Find((char)ch, true);
   if (i == NOT_FOUND)
     return NULL;
   return str.GetData((size_t)i);
@@ -3141,7 +3154,7 @@ STRINGINDEX STRING::SearchReverse (const CHR *CString) const
 
 STRINGINDEX STRING::SearchReverse (const CHR Character) const
 {
-  int found = Find((char)Character, GDT_TRUE);
+  int found = Find((char)Character, true);
   if (found >= 0)
     return found+1;
   return 0; // NOTFOUND
@@ -3149,7 +3162,7 @@ STRINGINDEX STRING::SearchReverse (const CHR Character) const
 
 STRINGINDEX STRING::SearchReverse (const UCHR Character) const
 {
-  int found = Find((char)Character, GDT_TRUE);
+  int found = Find((char)Character, true);
   if (found >= 0)
     return found+1;
   return 0; // NOTFOUND
@@ -3174,7 +3187,7 @@ INT STRING::IsWild () const
 }
 
 // No Wild characters..
-GDT_BOOLEAN STRING::IsPlain () const
+bool STRING::IsPlain () const
 {
   const size_t length = Len();
   for (size_t i=0; i<length; i++)
@@ -3182,32 +3195,32 @@ GDT_BOOLEAN STRING::IsPlain () const
       switch (m_pchData[i])
         {
           case '?': case '*': case '[': case '{':  /* } */
-            return GDT_FALSE; 
+            return false; 
         }        /* switch() */
     }          /* while() */
-  return GDT_TRUE;
+  return true;
 }
 
 
-GDT_BOOLEAN STRING::MatchWild(const STRING& OtherString) const
+bool STRING::MatchWild(const STRING& OtherString) const
 {
   return MatchWild(OtherString.m_pchData);
 }
 
 
-GDT_BOOLEAN STRING::Glob(const STRING& OtherString) const
+bool STRING::Glob(const STRING& OtherString) const
 {
   return ::Glob((const UCHR *)m_pchData, (const UCHR *)OtherString.m_pchData);
 }
 
-GDT_BOOLEAN STRING::Glob(const CHR *CString) const
+bool STRING::Glob(const CHR *CString) const
 {
   return ::Glob((const UCHR *)m_pchData, (const UCHR *)CString);
 }
 
-GDT_BOOLEAN STRING::MatchWild(const CHR *CString) const
+bool STRING::MatchWild(const CHR *CString) const
 {
-  GDT_BOOLEAN     match = GDT_FALSE;
+  bool     match = false;
   char           *argv[256]; // At most 256 patterns (hardwired)
 #ifdef __GNUC__
   const size_t    max_pat = Len()+1;
@@ -3325,7 +3338,7 @@ STRINGINDEX STRING::Fread(FILE *fp, size_t Len)
   return length;
 }
 
-GDT_BOOLEAN STRING::FGet (PFILE FilePointer)
+bool STRING::FGet (PFILE FilePointer)
 {
   int ch;
   Clear();
@@ -3345,10 +3358,10 @@ GDT_BOOLEAN STRING::FGet (PFILE FilePointer)
 }
 
 
-GDT_BOOLEAN STRING::FGet (PFILE FilePointer, const STRINGINDEX MaxCharacters)
+bool STRING::FGet (PFILE FilePointer, const STRINGINDEX MaxCharacters)
 {
   size_t length  = 0;
-  GDT_BOOLEAN Ok = GDT_FALSE;
+  bool Ok = false;
 
   AllocBeforeWrite(MaxCharacters+2); // Make buffer large enough
 
@@ -3358,7 +3371,7 @@ GDT_BOOLEAN STRING::FGet (PFILE FilePointer, const STRINGINDEX MaxCharacters)
       while (length > 0 && (m_pchData[length] == '\n' || m_pchData[length] == '\r') )
 	length--;
       length++;
-      Ok = GDT_TRUE;
+      Ok = true;
     }
 
   m_pchData[length] = '\0';
@@ -3367,14 +3380,14 @@ GDT_BOOLEAN STRING::FGet (PFILE FilePointer, const STRINGINDEX MaxCharacters)
 }
 
 
-GDT_BOOLEAN STRING::FGetMultiLine(PFILE FilePointer, const STRINGINDEX MaxCharacters)
+bool STRING::FGetMultiLine(PFILE FilePointer, const STRINGINDEX MaxCharacters)
 {
   STRING Temp;
   STRINGINDEX Max = MaxCharacters;
-  GDT_BOOLEAN res = (FilePointer != NULL); // a 0 length string is TRUE
+  bool res = (FilePointer != NULL); // a 0 length string is TRUE
 
   Clear();
-  while (Max && (res = Temp.FGet (FilePointer, Max)) == GDT_TRUE)
+  while (Max && (res = Temp.FGet (FilePointer, Max)) == true)
     {
       STRINGINDEX l = Temp.Len();
       if (Temp.GetChr(l) == '\\' && Temp.GetChr(l-1) != '\\')
@@ -3383,7 +3396,7 @@ GDT_BOOLEAN STRING::FGetMultiLine(PFILE FilePointer, const STRINGINDEX MaxCharac
 	  Cat (Temp);
 	  Max -= (l-1);
 	  if (Max == 0)
-	    return GDT_FALSE; // Have a continue but no more room!
+	    return false; // Have a continue but no more room!
 	}
       else
 	break; // We are done.. line not continued
@@ -3751,7 +3764,7 @@ void ArraySTRING::Alloc(size_t nSize)
 }
 
 // searches the array for an item (forward or backwards)
-int ArraySTRING::Index(const char *sz, GDT_BOOLEAN bCase, GDT_BOOLEAN bFromEnd) const
+int ArraySTRING::Index(const char *sz, bool bCase, bool bFromEnd) const
 {
   if ( bFromEnd ) {
     if ( m_nCount > 0 ) {
@@ -3910,12 +3923,12 @@ static int fCmpNoCaseReverse (const void *x, const void *y)
 }
 
 // sort array elements using passed comparaison function
-void ArraySTRING::Sort(GDT_BOOLEAN bCase, GDT_BOOLEAN bReverse)
+void ArraySTRING::Sort(bool bCase, bool bReverse)
 {
   Sort(0, bCase, bReverse);
 }
 
-void ArraySTRING::Sort(size_t offset, GDT_BOOLEAN bCase, GDT_BOOLEAN bReverse)
+void ArraySTRING::Sort(size_t offset, bool bCase, bool bReverse)
 {
   int (*Compare) (const void *, const void *);
 
@@ -3930,12 +3943,12 @@ void ArraySTRING::Sort(size_t offset, GDT_BOOLEAN bCase, GDT_BOOLEAN bReverse)
 
 
 // sort array elements using passed comparaison function
-void ArraySTRING::UniqueSort(GDT_BOOLEAN bCase, GDT_BOOLEAN bReverse)
+void ArraySTRING::UniqueSort(bool bCase, bool bReverse)
 {
   UniqueSort(0, bCase, bReverse);
 }
 
-void ArraySTRING::UniqueSort(size_t offset, GDT_BOOLEAN bCase, GDT_BOOLEAN bReverse)
+void ArraySTRING::UniqueSort(size_t offset, bool bCase, bool bReverse)
 {
   int (*Compare) (const void *, const void *);
 
@@ -3968,7 +3981,7 @@ int Strnicmp(const char *psz1, const char *psz2, size_t len)
 {
   return StrNCaseCmp(psz1, psz2, len);
 }
-GDT_BOOLEAN Read(STRING *s, FILE *fp) { return s->Read(fp); }
+bool Read(STRING *s, FILE *fp) { return s->Read(fp); }
 void Write(const STRING& s, FILE *fp) { s.Write(fp); }
 
 

@@ -171,28 +171,28 @@ ostream& operator <<(ostream& os, const FIELDTYPE& Ft)
  return  os << Ft.c_str();
 }
 
-GDT_BOOLEAN operator ==(const FIELDTYPE& s1, const FIELDTYPE& s2)
+bool operator ==(const FIELDTYPE& s1, const FIELDTYPE& s2)
 {
   return s1.Type == s2.Type;
 }
-GDT_BOOLEAN operator !=(const FIELDTYPE& s1, const FIELDTYPE& s2)
+bool operator !=(const FIELDTYPE& s1, const FIELDTYPE& s2)
 {
   return s1.Type != s2.Type;
 }
 
-GDT_BOOLEAN operator ==(const FIELDTYPE& s1, const BYTE s2)
+bool operator ==(const FIELDTYPE& s1, const BYTE s2)
 {
   return (BYTE)(s1.Type) == s2;
 }
-GDT_BOOLEAN operator !=(const FIELDTYPE& s1, const BYTE s2)
+bool operator !=(const FIELDTYPE& s1, const BYTE s2)
 {
   return (BYTE)(s1.Type) != s2;
 }
-GDT_BOOLEAN operator ==(const BYTE s1, const FIELDTYPE& s2)
+bool operator ==(const BYTE s1, const FIELDTYPE& s2)
 {
   return (BYTE)(s2.Type) == s1;
 }
-GDT_BOOLEAN operator !=(const BYTE s1, const FIELDTYPE& s2)
+bool operator !=(const BYTE s1, const FIELDTYPE& s2)
 {
   return (BYTE)(s2.Type) != s1;
 }
@@ -388,14 +388,14 @@ void ATTRLIST::AddEntry (const ATTR& AttrRecord)
   Table[TotalEntries++] = AttrRecord;
 }
 
-GDT_BOOLEAN ATTRLIST::GetEntry (const size_t Index, PATTR AttrRecord) const
+bool ATTRLIST::GetEntry (const size_t Index, PATTR AttrRecord) const
 {
   if ((Index > 0) && (Index <= TotalEntries))
     {
       *AttrRecord = Table[Index - 1];
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 void ATTRLIST::SetEntry (const size_t Index, const ATTR& AttrRecord)
@@ -510,7 +510,7 @@ void ATTRLIST::ClearAttr (const STRING& SetId, const INT AttrType, const INT Att
   DeleteEntry (y);
 }
 
-GDT_BOOLEAN ATTRLIST::GetValue (const STRING& SetId, const INT AttrType, PSTRING StringBuffer) const
+bool ATTRLIST::GetValue (const STRING& SetId, const INT AttrType, PSTRING StringBuffer) const
 {
   ATTR Attr;
   const INT y = Lookup (SetId, AttrType);
@@ -518,10 +518,10 @@ GDT_BOOLEAN ATTRLIST::GetValue (const STRING& SetId, const INT AttrType, PSTRING
     {
       GetEntry (y, &Attr);
       Attr.GetAttrValue (StringBuffer);
-      return GDT_TRUE;
+      return true;
     }
   StringBuffer->Clear();
-  return GDT_FALSE;
+  return false;
 }
 
 STRING ATTRLIST::GetValue (const STRING& SetId, const INT AttrType) const
@@ -532,10 +532,10 @@ STRING ATTRLIST::GetValue (const STRING& SetId, const INT AttrType) const
 }
 
 
-GDT_BOOLEAN ATTRLIST::GetValue (const STRING& SetId, const INT AttrType, INT *IntBuffer) const
+bool ATTRLIST::GetValue (const STRING& SetId, const INT AttrType, INT *IntBuffer) const
 {
   STRING      S;
-  GDT_BOOLEAN res = GetValue (SetId, AttrType, &S) ? GDT_TRUE : GDT_FALSE;
+  bool res = GetValue (SetId, AttrType, &S) ? true : false;
   if (IntBuffer && res)
     *IntBuffer = S.GetInt ();
   return res;
@@ -612,11 +612,11 @@ void  ATTRLIST::AttrSetFieldObj(const FIELDOBJ& FieldObj)
 #if 1
   if (FieldType.IsNumerical())
     {
-      AttrSetFieldNumerical(GDT_TRUE);
+      AttrSetFieldNumerical(true);
     }
   else if (FieldType.IsDate())
     {
-      AttrSetFieldDate(GDT_TRUE);
+      AttrSetFieldDate(true);
     }
 #endif
 }
@@ -638,7 +638,7 @@ void ATTRLIST::AttrSetFieldName (const STRING& FieldName)
   SetValue (IsearchAttributeSet, IsearchFieldAttr, Field.ToUpper());
 }
  
-GDT_BOOLEAN ATTRLIST::AttrGetFieldName (PSTRING StringBuffer) const
+bool ATTRLIST::AttrGetFieldName (PSTRING StringBuffer) const
 {
   return GetValue (IsearchAttributeSet, IsearchFieldAttr, StringBuffer);
 }
@@ -659,22 +659,22 @@ void ATTRLIST::AttrSetFieldType(const FIELDTYPE& FieldType)
 
   if (FieldType.IsNumerical())
     {
-      AttrSetFieldNumerical(GDT_TRUE);
+      AttrSetFieldNumerical(true);
     }
   else if (FieldType.IsDate())
     {
-      AttrSetFieldDate(GDT_TRUE);
+      AttrSetFieldDate(true);
     }
   else
     SetValue(IsearchAttributeSet, IsearchTypeAttr, Type);
 #endif
 }
 
-GDT_BOOLEAN ATTRLIST::AttrGetFieldType(PSTRING StringBuffer) const
+bool ATTRLIST::AttrGetFieldType(PSTRING StringBuffer) const
 {
   STRING s;
 
-  if (GDT_FALSE == GetValue(IsearchAttributeSet, IsearchTypeAttr, &s))
+  if (false == GetValue(IsearchAttributeSet, IsearchTypeAttr, &s))
     {
       FIELDTYPE ft = AttrGetFieldType();
       if (ft.Defined())
@@ -706,7 +706,7 @@ enum Objects {
   DateObject
 };
 
-void ATTRLIST::SetFieldType (enum StructureValues Typ, GDT_BOOLEAN Set)
+void ATTRLIST::SetFieldType (enum StructureValues Typ, bool Set)
 {
   if (Set)
     SetValue (Bib1AttributeSet, StructureAttribute,  Typ);
@@ -714,16 +714,16 @@ void ATTRLIST::SetFieldType (enum StructureValues Typ, GDT_BOOLEAN Set)
     ClearAttr (Bib1AttributeSet, StructureAttribute,  Typ);
 }
 
-void ATTRLIST::SetFieldType (enum StructureValues Typ, GDT_BOOLEAN Set)
+void ATTRLIST::SetFieldType (enum StructureValues Typ, bool Set)
 {
   return Lookup (Bib1AttributeSet, StructureAttribute,  NumericString) ?
-	GDT_TRUE :
-	GDT_FALSE;
+	true :
+	false;
 }
 #endif
 
 #if 1
-void ATTRLIST::AttrSetFieldNumerical (const GDT_BOOLEAN Set)
+void ATTRLIST::AttrSetFieldNumerical (const bool Set)
 {
   if (Set)
     SetValue (Bib1AttributeSet, StructureAttribute,  NumericString);
@@ -731,14 +731,14 @@ void ATTRLIST::AttrSetFieldNumerical (const GDT_BOOLEAN Set)
     ClearAttr (Bib1AttributeSet, StructureAttribute,  NumericString);
 }
 
-GDT_BOOLEAN ATTRLIST::AttrGetFieldNumerical () const
+bool ATTRLIST::AttrGetFieldNumerical () const
 {
   return Lookup (Bib1AttributeSet, StructureAttribute, NumericString) ?
-	GDT_TRUE :
-	GDT_FALSE;
+	true :
+	false;
 }
 
-void ATTRLIST::AttrSetFieldDate (const GDT_BOOLEAN Set)
+void ATTRLIST::AttrSetFieldDate (const bool Set)
 {
   if (Set)
     SetValue (Bib1AttributeSet, StructureAttribute,  Date);
@@ -746,16 +746,16 @@ void ATTRLIST::AttrSetFieldDate (const GDT_BOOLEAN Set)
     ClearAttr (Bib1AttributeSet, StructureAttribute,  Date);
 }
 
-GDT_BOOLEAN ATTRLIST::AttrGetFieldDate () const
+bool ATTRLIST::AttrGetFieldDate () const
 {
   return Lookup (Bib1AttributeSet, StructureAttribute, Date) ?
-        GDT_TRUE :
-        GDT_FALSE;
+        true :
+        false;
 }
 #endif
 
 
-void ATTRLIST::AttrSetFreeForm (const GDT_BOOLEAN Set)
+void ATTRLIST::AttrSetFreeForm (const bool Set)
 {
   if (Set)
     SetValue (Bib1AttributeSet, StructureAttribute,  FreeFormText);
@@ -763,17 +763,17 @@ void ATTRLIST::AttrSetFreeForm (const GDT_BOOLEAN Set)
     ClearAttr (Bib1AttributeSet, StructureAttribute, FreeFormText);
 }
  
-GDT_BOOLEAN ATTRLIST::AttrGetFreeForm () const
+bool ATTRLIST::AttrGetFreeForm () const
 {
   return Lookup (Bib1AttributeSet, StructureAttribute, FreeFormText) ?
-	GDT_TRUE :
-	GDT_FALSE;
+	true :
+	false;
 }
 
 
 // Search Term Attributes 
 
-void ATTRLIST::AttrSetPhrase(const GDT_BOOLEAN Set)
+void ATTRLIST::AttrSetPhrase(const bool Set)
 {
   if (Set)
     SetValue (Bib1AttributeSet, StructureAttribute, Phrase);
@@ -782,15 +782,15 @@ void ATTRLIST::AttrSetPhrase(const GDT_BOOLEAN Set)
 }
 
 
-GDT_BOOLEAN ATTRLIST::AttrGetPhrase() const
+bool ATTRLIST::AttrGetPhrase() const
 {
   return Lookup (Bib1AttributeSet, StructureAttribute,  Phrase) ?
-        GDT_TRUE :
-        GDT_FALSE;
+        true :
+        false;
 }
 
 
-void ATTRLIST::AttrSetRightTruncation (const GDT_BOOLEAN Set)
+void ATTRLIST::AttrSetRightTruncation (const bool Set)
 {
   if (Set)
     SetValue (Bib1AttributeSet, TruncationAttribute,  Right);
@@ -799,14 +799,14 @@ void ATTRLIST::AttrSetRightTruncation (const GDT_BOOLEAN Set)
 }
 
 
-GDT_BOOLEAN ATTRLIST::AttrGetRightTruncation () const
+bool ATTRLIST::AttrGetRightTruncation () const
 {
   return Lookup (Bib1AttributeSet, TruncationAttribute,  Right) ?
-	GDT_TRUE :
-	GDT_FALSE;
+	true :
+	false;
 }
 
-void ATTRLIST::AttrSetLeftTruncation (const GDT_BOOLEAN Set)
+void ATTRLIST::AttrSetLeftTruncation (const bool Set)
 {
   if (Set)
     SetValue (Bib1AttributeSet, TruncationAttribute,  Left);
@@ -815,15 +815,15 @@ void ATTRLIST::AttrSetLeftTruncation (const GDT_BOOLEAN Set)
 }
 
 
-GDT_BOOLEAN ATTRLIST::AttrGetLeftTruncation () const
+bool ATTRLIST::AttrGetLeftTruncation () const
 {
   return Lookup (Bib1AttributeSet, TruncationAttribute,  Left) ?
-        GDT_TRUE :
-        GDT_FALSE;
+        true :
+        false;
 }
 
 
-void ATTRLIST::AttrSetLeftAndRightTruncation (const GDT_BOOLEAN Set)
+void ATTRLIST::AttrSetLeftAndRightTruncation (const bool Set)
 {
   if (Set) {
     SetValue (Bib1AttributeSet, TruncationAttribute,  LeftAndRight);
@@ -833,14 +833,14 @@ void ATTRLIST::AttrSetLeftAndRightTruncation (const GDT_BOOLEAN Set)
 }
 
 
-GDT_BOOLEAN ATTRLIST::AttrGetLeftAndRightTruncation () const
+bool ATTRLIST::AttrGetLeftAndRightTruncation () const
 {
   return Lookup (Bib1AttributeSet, TruncationAttribute, LeftAndRight) ?
-        GDT_TRUE :
-        GDT_FALSE;
+        true :
+        false;
 }
 
-void ATTRLIST::AttrSetGlob (const GDT_BOOLEAN Set)
+void ATTRLIST::AttrSetGlob (const bool Set)
 {
   if (Set)
     SetValue (Bib1AttributeSet, StructureAttribute, Glob);
@@ -849,14 +849,14 @@ void ATTRLIST::AttrSetGlob (const GDT_BOOLEAN Set)
 }
 
 
-GDT_BOOLEAN ATTRLIST::AttrGetGlob () const
+bool ATTRLIST::AttrGetGlob () const
 {
   return Lookup (Bib1AttributeSet, StructureAttribute,  Glob) ?
-	GDT_TRUE :
-	GDT_FALSE;
+	true :
+	false;
 }
 
-void ATTRLIST::AttrSetPhonetic (const GDT_BOOLEAN Set)
+void ATTRLIST::AttrSetPhonetic (const bool Set)
 {
   if (Set)
     SetValue (Bib1AttributeSet, RelationAttribute, Phonetic);
@@ -864,14 +864,14 @@ void ATTRLIST::AttrSetPhonetic (const GDT_BOOLEAN Set)
     ClearAttr (Bib1AttributeSet,  RelationAttribute, Phonetic);
 }
 
-GDT_BOOLEAN ATTRLIST::AttrGetPhonetic () const
+bool ATTRLIST::AttrGetPhonetic () const
 {
   return Lookup (Bib1AttributeSet,  RelationAttribute, Phonetic) ?
-	GDT_TRUE :
-	GDT_FALSE;
+	true :
+	false;
 }
 
-void ATTRLIST::AttrSetExactTerm (const GDT_BOOLEAN Set)
+void ATTRLIST::AttrSetExactTerm (const bool Set)
 {
   if (Set)
     SetValue (Bib1AttributeSet, RelationAttribute, Exact);
@@ -879,15 +879,15 @@ void ATTRLIST::AttrSetExactTerm (const GDT_BOOLEAN Set)
     ClearAttr (Bib1AttributeSet,  RelationAttribute, Exact);
 }
 
-GDT_BOOLEAN ATTRLIST::AttrGetExactTerm () const
+bool ATTRLIST::AttrGetExactTerm () const
 {
   return Lookup (Bib1AttributeSet,  RelationAttribute, Exact) ?
-        GDT_TRUE :
-        GDT_FALSE;
+        true :
+        false;
 }
 
 
-void ATTRLIST::AttrSetAlwaysMatches (const GDT_BOOLEAN Set)
+void ATTRLIST::AttrSetAlwaysMatches (const bool Set)
 {
   if (Set)
     SetValue (Bib1AttributeSet,  RelationAttribute, AlwaysMatches);
@@ -895,11 +895,11 @@ void ATTRLIST::AttrSetAlwaysMatches (const GDT_BOOLEAN Set)
     ClearAttr (Bib1AttributeSet,  RelationAttribute, AlwaysMatches);
 }
 
-GDT_BOOLEAN ATTRLIST::AttrGetAlwaysMatches () const
+bool ATTRLIST::AttrGetAlwaysMatches () const
 {
   return Lookup (Bib1AttributeSet,  RelationAttribute, AlwaysMatches) ?
-	GDT_TRUE :
-	GDT_FALSE;
+	true :
+	false;
 }
 
 
@@ -916,10 +916,10 @@ INT ATTRLIST::AttrGetRelation() const
   return -1;
 }
 
-GDT_BOOLEAN ATTRLIST::AttrGetRelation(INT *IntBuffer) const
+bool ATTRLIST::AttrGetRelation(INT *IntBuffer) const
 {
   STRING S;
-  GDT_BOOLEAN res = GetValue(IsearchAttributeSet, ZRelationAttribute, &S);
+  bool res = GetValue(IsearchAttributeSet, ZRelationAttribute, &S);
   if (IntBuffer && res)
     *IntBuffer = S.GetInt();
   return res;
@@ -940,10 +940,10 @@ INT ATTRLIST::AttrGetStructure() const
   return -1;
 }
 
-GDT_BOOLEAN ATTRLIST::AttrGetStructure(INT *IntBuffer) const
+bool ATTRLIST::AttrGetStructure(INT *IntBuffer) const
 {
   STRING S;
-  GDT_BOOLEAN res = GetValue(IsearchAttributeSet, ZStructureAttribute, &S);
+  bool res = GetValue(IsearchAttributeSet, ZStructureAttribute, &S);
   if (IntBuffer && res)
     *IntBuffer = S.GetInt();
   return res;
@@ -983,7 +983,7 @@ void ATTRLIST::Write (PFILE Fp) const
     }
 }
 
-GDT_BOOLEAN ATTRLIST::Read (PFILE Fp)
+bool ATTRLIST::Read (PFILE Fp)
 {
 #if DFD_COMPAT_IO
   // Backward Compatible
@@ -1002,7 +1002,7 @@ GDT_BOOLEAN ATTRLIST::Read (PFILE Fp)
       Table[i].Read (Fp);
     }
   TotalEntries = Entries;
-  return GDT_TRUE;
+  return true;
 #else
   INT2 Entries = 0;
   obj_t obj = getObjID(Fp);

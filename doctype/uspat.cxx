@@ -1838,10 +1838,10 @@ USPAT::pato_HtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
       int code;
       FILE* USPN;
       long FSize;
-      GDT_BOOLEAN DoLookup=GDT_FALSE;
+      bool DoLookup=false;
       USPN=fopen("/pto7/USPN","rb");
       if(USPN){
-	DoLookup=GDT_TRUE;
+	DoLookup=true;
 	FSize=GetFileSize(USPN);
       }
       reissue_flag = 1;
@@ -1864,7 +1864,7 @@ USPAT::pato_HtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
 	  if ( pno[0] != '\0') {	// patent number cell with lookup
 	    PRESULT PResult= new RESULT;
 	    STRING PNString,TmpString;
-	    GDT_BOOLEAN hit;
+	    bool hit;
 	    char* p;
 	    
 	    strcpy(T,pno);
@@ -1875,17 +1875,17 @@ USPAT::pato_HtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
 	    PNString=p;
 	    while ( pno[0] == '0') strcpy(pno,pno+1);
 	    
-	    /* if(DoLookup==GDT_TRUE)
+	    /* if(DoLookup==true)
 	       hit=PntLookup(USPN,FSize,PNString);
 	       else*/
-	    hit=GDT_FALSE;
+	    hit=false;
 	    
 	    pato_Write(Output,"<TR><TD Valign=top align=left width=30%>Patent No.:");
 	    pato_Write(Output,"</TD><TD valign=top align=left width=30%>");
 	    
 	    
 	    pato_Write(Output, "<B>");
-	    if(hit==GDT_FALSE) {
+	    if(hit==false) {
 	      AddCommas(pno,T);
 	      pato_Write(Output, T);
 	    }
@@ -1946,10 +1946,10 @@ USPAT::pato_HtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
     if (Group != NULL) {   
       FILE* USPN;
       long FSize;
-      GDT_BOOLEAN DoLookup=GDT_FALSE;
+      bool DoLookup=false;
       USPN=fopen("/pto7/USPN","rb");
       if(USPN){
-	DoLookup=GDT_TRUE;
+	DoLookup=true;
 	FSize=GetFileSize(USPN);
       }
       if (reissue_flag == 0 ) {
@@ -2001,7 +2001,7 @@ USPAT::pato_HtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
 	  if ( pno[0] != '\0' ) {	// write patent number
 	    PRESULT PResult= new RESULT;
 	    STRING PNString,TmpString;
-	    GDT_BOOLEAN hit;
+	    bool hit;
 	    char* p;
 	    
 	    strcpy(T,pno);
@@ -2011,11 +2011,11 @@ USPAT::pato_HtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
 	    while ( !isdigit(*p) || (*p == '0') ) p++;
 	    PNString=p;
 	    
-	    /*  if(DoLookup==GDT_TRUE)
+	    /*  if(DoLookup==true)
 		hit=PntLookup(USPN,FSize,PNString);
 		else*/
-	    hit=GDT_FALSE;
-	    if(hit==GDT_FALSE) {
+	    hit=false;
+	    if(hit==false) {
 	      AddCommas(pno,T);
 	      pato_Write(Output, T);
 	    }
@@ -2341,17 +2341,17 @@ USPAT::pato_HtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
       FILE* USPN;
       long FSize;
       int UREF_xcl_flag = 0;
-      GDT_BOOLEAN DoLookup=GDT_FALSE;
+      bool DoLookup=false;
       USPN=fopen("/pto7/USPN","rb");
       if(USPN){
-	DoLookup=GDT_TRUE;
+	DoLookup=true;
 	FSize=GetFileSize(USPN);
       }
       
       while ( (Group != NULL) && (strcmp(Group->ID, "UREF") == 0) ) {
 	PRESULT PResult= new RESULT;
 	STRING PNString,TmpString;
-	GDT_BOOLEAN hit;
+	bool hit;
 	char* p;
 	pato_Write(Output,"<TR>");
 	pato_GetField(Group, "PNO", S);		
@@ -2366,14 +2366,14 @@ USPAT::pato_HtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
 	while ( !isdigit(*p) ) p++;
 	PNString=p;
 	
-	/* if(DoLookup==GDT_TRUE)
+	/* if(DoLookup==true)
 	   hit=PntLookup(USPN,FSize,PNString);
 	   else*/
-	hit=GDT_FALSE;
+	hit=false;
 	
 	pato_Write(Output,"<TD WIDTH=25%>");
 	PResult->GetKey(&TmpString);
-	if(hit==GDT_FALSE) {
+	if(hit==false) {
 	  AddCommas(S,T);
 	  pato_Write(Output, T);
 	}
@@ -2937,10 +2937,10 @@ USPAT::pato_TextHtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
       int code;
       FILE* USPN;
       long FSize;
-      GDT_BOOLEAN DoLookup=GDT_FALSE;
+      bool DoLookup=false;
       USPN=fopen("/pto7/USPN","rb");
       if(USPN){
-	DoLookup=GDT_TRUE;
+	DoLookup=true;
 	FSize=GetFileSize(USPN);
       }
       reissue_flag = 1;
@@ -2963,7 +2963,7 @@ USPAT::pato_TextHtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
 	  if ( pno[0] != '\0') {	// patent number cell with lookup
 	    PRESULT PResult= new RESULT;
 	    STRING PNString,TmpString;
-	    GDT_BOOLEAN hit;
+	    bool hit;
 	    char* p;
 	    
 	    strcpy(T,pno);
@@ -2974,14 +2974,14 @@ USPAT::pato_TextHtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
 	    PNString=p;
 	    while ( pno[0] == '0') strcpy(pno,pno+1);
 	    
-	    /* if(DoLookup==GDT_TRUE)
+	    /* if(DoLookup==true)
 	       hit=PntLookup(USPN,FSize,PNString);
 	       else*/
-	    hit=GDT_FALSE;
+	    hit=false;
 	    
 	    pato_Write(Output,"Patent No.: ");
 	    pato_Write(Output, "<B>");
-	    if(hit==GDT_FALSE) {
+	    if(hit==false) {
 	      AddCommas(pno,T);
 	      pato_Write(Output, T);
 	    }
@@ -3041,10 +3041,10 @@ USPAT::pato_TextHtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
       int Flag = 1;
       char mess[80], apn[10], apd[10], psc[10], pno[10], isd[10];
       int code;
-      GDT_BOOLEAN DoLookup=GDT_FALSE;
+      bool DoLookup=false;
       USPN=fopen("/pto7/USPN","rb");
       if(USPN){
-	DoLookup=GDT_TRUE;
+	DoLookup=true;
 	FSize=GetFileSize(USPN);
       }
       if (reissue_flag == 0 ) {
@@ -3092,7 +3092,7 @@ USPAT::pato_TextHtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
 	  if ( pno[0] != '\0' ) {	// write patent number
 	    PRESULT PResult= new RESULT;
 	    STRING PNString,TmpString;
-	    GDT_BOOLEAN hit;
+	    bool hit;
 	    char* p;
 	    
 	    strcpy(T,pno);
@@ -3102,11 +3102,11 @@ USPAT::pato_TextHtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
 	    while ( !isdigit(*p) || (*p == '0') ) p++;
 	    PNString=p;
 	    
-	    /*  if(DoLookup==GDT_TRUE)
+	    /*  if(DoLookup==true)
 		hit=PntLookup(USPN,FSize,PNString);
 		else*/
-	    hit=GDT_FALSE;
-	    if(hit==GDT_FALSE) {
+	    hit=false;
+	    if(hit==false) {
 	      AddCommas(pno,T);
 	      pato_Write(Output, T);
 	    }
@@ -3418,14 +3418,14 @@ USPAT::pato_TextHtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
       FILE* USPN;
       long FSize;
       STRING PNString,TmpString;
-      GDT_BOOLEAN hit;
+      bool hit;
       char* p;
       int UREF_xcl_flag = 0;
       int x = 0;
-      GDT_BOOLEAN DoLookup=GDT_FALSE;
+      bool DoLookup=false;
       USPN=fopen("/pto7/USPN","rb");
       if(USPN){
-	DoLookup=GDT_TRUE;
+	DoLookup=true;
 	FSize=GetFileSize(USPN);
       }
       
@@ -3444,13 +3444,13 @@ USPAT::pato_TextHtmlElement(PATO_OUTPUT* Output, PATO_PATENT* Patent,
 	while ( !isdigit(*p) ) p++;
 	PNString=p;
 	
-	/*  if(DoLookup==GDT_TRUE)
+	/*  if(DoLookup==true)
 	    hit=PntLookup(USPN,FSize,PNString);
 	    else*/
-	hit=GDT_FALSE;
+	hit=false;
 	
 	PResult->GetKey(&TmpString);
-	if(hit==GDT_FALSE) {
+	if(hit==false) {
 	  AddCommas(S,T);
 	  pato_Write(Output, T);
 	  pato_Write(Output, " ");
@@ -4860,11 +4860,11 @@ PDFT GB::BuildDft(PIDBOBJ Db, STRLIST& FieldNameList, STRLIST& HierarchiesList)
   STRING	Name, Entry;
   int32_t		Start=0,
   NextFieldStart;
-  GDT_BOOLEAN 	InH;
+  bool 	InH;
   STRING 		H;
   
   int Done=0;
-  InH = GDT_FALSE;
+  InH = false;
   Done = GetFieldName(Start, &Name, &NextFieldStart);
   while (!Done) {
     // Name is field name
@@ -4894,7 +4894,7 @@ PDFT GB::BuildDft(PIDBOBJ Db, STRLIST& FieldNameList, STRLIST& HierarchiesList)
 	
 	//cout << "Non-hierchical field detected...exiting " << H;
 	//cout << " Hierarchy" << endl;
-	InH = GDT_FALSE;
+	InH = false;
 	continue;
       }
       else if (HierarchiesList.SearchCase(Name) > 0) {
@@ -4902,7 +4902,7 @@ PDFT GB::BuildDft(PIDBOBJ Db, STRLIST& FieldNameList, STRLIST& HierarchiesList)
 	// grabbing the next field
 	//cout << "New Hierachy detected...exiting " << H;
 	//cout << " Hierachy." << endl;
-	InH = GDT_FALSE;
+	InH = false;
 	continue;
       } else if (FieldNameList.SearchCase(u) > 0) {
 	char *field_name;
@@ -4929,7 +4929,7 @@ PDFT GB::BuildDft(PIDBOBJ Db, STRLIST& FieldNameList, STRLIST& HierarchiesList)
       // Is this the top of a hierarchy?
       //
       if (HierarchiesList.SearchCase(Name) > 0) {
-	InH = GDT_TRUE;
+	InH = true;
 	//cout << "Starting Hierarchy "<< Name << endl;
 	H = Name;
       }

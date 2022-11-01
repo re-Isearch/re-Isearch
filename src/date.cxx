@@ -607,7 +607,7 @@ extern "C" {
 class DateFormats
 {
 public:
-  DateFormats() { loaded = GDT_FALSE; }
+  DateFormats() { loaded = false; }
 
   STRING& Item(size_t i) const { return Formats.Item(i);         }
   size_t  Count()              { Init(); return Formats.Count(); }
@@ -638,9 +638,9 @@ private:
 	fclose(fp);
       }
     }
-    loaded = GDT_TRUE; 
+    loaded = true; 
   }
-  GDT_BOOLEAN loaded;
+  bool loaded;
   ArraySTRING Formats; 
 };
 
@@ -689,7 +689,7 @@ static int Normalize_tm_year(int tm_year)
   return Normalize_year(tm_year, 68);
 }
 
-GDT_BOOLEAN SRCH_DATE::getdate(const char *string, struct tm *tm)
+bool SRCH_DATE::getdate(const char *string, struct tm *tm)
 {
 #if HAVE_STRPTIME
   const size_t count = Formats.Count();
@@ -698,11 +698,11 @@ GDT_BOOLEAN SRCH_DATE::getdate(const char *string, struct tm *tm)
       if (strptime(string, Formats.Item(i).c_str(), tm))
 	{
 	  tm->tm_year += TM_YEAR_BASE; 
-	  return GDT_TRUE;
+	  return true;
 	}
     }
 #endif
-  return GDT_FALSE;
+  return false;
 }
 
 /* recursive */
@@ -730,7 +730,7 @@ static int scan_year(const char *str, int *year)
 
 #define STRSIZ 128 /* was 500 */
 
-GDT_BOOLEAN SRCH_DATE::date_parse (const char *str)
+bool SRCH_DATE::date_parse (const char *str)
 {
   time_t now = time ((time_t *) 0); /* Get the current local time */
   const struct tm *now_tmP = localtime (&now);
@@ -770,13 +770,13 @@ GDT_BOOLEAN SRCH_DATE::date_parse (const char *str)
 	  d_rest = (tm_ptr->tm_hour)*HOUR_FACTOR + (tm_ptr->tm_min)*MIN_FACTOR + (tm_ptr->tm_sec)*SEC_FACTOR;
 	}
       SetPrecision( DAY_PREC );
-      return GDT_TRUE;
+      return true;
     }
   else if (strncasecmp(str, "Unknown", 7) == 0)
     {
       d_date = DATE_UNKNOWN;
       SetPrecision (UNKNOWN_DATE);
-      return GDT_TRUE; // Its parsed but unknown
+      return true; // Its parsed but unknown
     }
   else if (str[0] == 'D' && str[1] == ':' && strlen(str) >= 10)
     {
@@ -805,11 +805,11 @@ GDT_BOOLEAN SRCH_DATE::date_parse (const char *str)
 	Normalize_tm_year(now_tmP->tm_year)*YEAR_FACTOR;
       SetPrecision ();
 
-      return GDT_TRUE;
+      return true;
    }
   else if (*str == '/' && SetTimeOfFile(str))
    {
-      return GDT_TRUE;
+      return true;
    }
   else if (*str == '(')
    {
@@ -865,13 +865,13 @@ GDT_BOOLEAN SRCH_DATE::date_parse (const char *str)
 	      // BAD values
 	      d_date = DATE_ERROR;
 	      SetPrecision (BAD_DATE);
-	      return GDT_FALSE;
+	      return false;
 	    }
 	  // Now er have a good date
 	  d_date =  (tm_mday)*DAY_FACTOR + (tm_mon)*MONTH_FACTOR +
 		Normalize_tm_year(tm_year)*YEAR_FACTOR;
 	  SetPrecision ();
-	  return GDT_TRUE;
+	  return true;
 	}
    }
 
@@ -926,7 +926,7 @@ GDT_BOOLEAN SRCH_DATE::date_parse (const char *str)
       SetPrecision ();
       // Now Increment
       PlusNdays(tm_mday);
-      return GDT_TRUE;
+      return true;
       } else if (strncasecmp(str_mon, "Month", 5) == 0) {
       DP("+XX Months");
       // First set Today
@@ -936,7 +936,7 @@ GDT_BOOLEAN SRCH_DATE::date_parse (const char *str)
       SetPrecision ();
       // Now Increment
       PlusNmonths(tm_mday);
-      return GDT_TRUE;
+      return true;
       } else if (strncasecmp(str_mon, "Year", 4) == 0) {
       DP("+XX Years");
       // First set Today
@@ -946,7 +946,7 @@ GDT_BOOLEAN SRCH_DATE::date_parse (const char *str)
       SetPrecision ();
       // Now Increment
       PlusNyears(tm_mday);
-      return GDT_TRUE;
+      return true;
       }
 
     }
@@ -955,7 +955,7 @@ GDT_BOOLEAN SRCH_DATE::date_parse (const char *str)
      ** but be careful!  You can easily screw up the parsing of existing
      ** formats when you add new ones.
    */
-  if (getdate(cp, &tm) == GDT_TRUE)
+  if (getdate(cp, &tm) == true)
     {
       got_zone = 1;
     }
@@ -979,9 +979,9 @@ GDT_BOOLEAN SRCH_DATE::date_parse (const char *str)
 		  SetTime(tm_hour, tm_min, tm_sec);
 		}
 	    }
-	  return GDT_TRUE;
+	  return true;
 	}
-      return GDT_FALSE;
+      return false;
     }
   /* N mth CCYY HH:MM:SS ampm zone */
   else if (((sscanf (cp, "%d %[a-zA-Z] %[0-9] %d:%d:%d %[apmAPM] %[^: ]",
@@ -1466,9 +1466,9 @@ cerr << "GM offset = " << gmtoff << endl;
 	  if ((cp[8] == 'T' &&  sscanf (cp+9, "%d:%d:%d", &tm_hour, &tm_min, &tm_sec) > 1) ||
 		sscanf(cp+9, "%02d%02d%02d", &tm_hour, &tm_min, &tm_sec))
 	    SetTime(tm_hour, tm_min, tm_sec);
-	  return GDT_TRUE;
+	  return true;
 	}
-      return GDT_FALSE;
+      return false;
     }
   /* ISO Date    CCYYMMDDTHH:MM:SS[Z] */
   else if ( (sscanf (cp, "%4d%2d%2dT%d:%d:%2d%c%s",
@@ -1546,7 +1546,7 @@ zone_it:
 	  got_zone = 1;
         }
       else
-	return GDT_FALSE; /* OOPS */
+	return false; /* OOPS */
     }
   /* ANSI Date: CCYYMMDD or obsolete form YYMMDD and optional HH:MM ZONE */
   else if (isdigit (cp[0]) && isdigit (cp[1]) && isdigit (cp[2]) && isdigit (cp[3])
@@ -1571,7 +1571,7 @@ zone_it:
 	      d_date = year*YEAR_FACTOR + month*MONTH_FACTOR;
 	      d_rest = 0;
 	      SetPrecision( MONTH_PREC );
-	      return GDT_TRUE;
+	      return true;
 	    }
 	}
 
@@ -1641,14 +1641,14 @@ zone_it:
 	  DP("YYMM");
 	  d_date = (year_test+2000)*YEAR_FACTOR + month_test*MONTH_FACTOR;
 	  SetPrecision( MONTH_PREC );
-	  return GDT_TRUE;
+	  return true;
 	}
 
       DP("CCYY");
       d_date = (year_test*100 + month_test)*YEAR_FACTOR;
       d_rest = 0;
       SetPrecision( YEAR_PREC );
-      return GDT_TRUE;
+      return true;
     }
   /* YY Year format */
   else if (isdigit(cp[0]) && isdigit(cp[1]) && cp[2] == '\0')
@@ -1657,7 +1657,7 @@ zone_it:
       d_date = Normalize_tm_year(atol(cp))*YEAR_FACTOR;
       d_rest = 0;
       SetPrecision( YEAR_PREC );
-      return GDT_TRUE;
+      return true;
     }
   /* Stupid CCYY.MM.DD form */
   else if (isdigit (cp[0]) && isdigit (cp[1]) && isdigit(cp[2]) && isdigit(cp[3]) &&
@@ -1672,14 +1672,14 @@ zone_it:
 	}
       else if (cp[7] && !isspace(cp[7]))
 	{
-	  return GDT_FALSE; // ERROR
+	  return false; // ERROR
 	}
       else
 	tm.tm_mday = 0;
       gmtoff = 0; /* Don't adjust */
       if (tm.tm_mon < 0 || tm.tm_mon > 12 || tm.tm_mday < 0 || tm.tm_mday > 31)
 	{
-	  return GDT_FALSE; /* ERROR */
+	  return false; /* ERROR */
 	}
       tm.tm_hour = 0;
       tm.tm_min = 0;
@@ -1699,7 +1699,7 @@ zone_it:
 	tm.tm_year = Normalize_tm_year(tm.tm_year);
       /* Make sure it makes sense! */
       if (tm.tm_mon < 0 || tm.tm_mon > 12 || tm.tm_mday < 0 || tm.tm_mday > 31)
-	return GDT_FALSE;	/* ERROR */
+	return false;	/* ERROR */
       gmtoff = 0; /* Don't adjust */
       got_zone = 1;
       tm.tm_hour = 0;
@@ -1707,7 +1707,7 @@ zone_it:
       tm.tm_sec = 0;
     }
   else
-    return GDT_FALSE;
+    return false;
 
   d_date = (tm.tm_year)*YEAR_FACTOR + (tm.tm_mon+1)*MONTH_FACTOR + (tm.tm_mday)*DAY_FACTOR;
 
@@ -1742,8 +1742,8 @@ zone_it:
     }
   SetPrecision( DAY_PREC );
   if (IsBogusDate())
-    return GDT_FALSE;
-  return GDT_TRUE;
+    return false;
+  return true;
 }
 
 //-------------------------- C++ Interface ------------------------------------------------
@@ -1835,7 +1835,7 @@ void SRCH_DATE::Write(PFILE Fp) const
   ::Write((INT4)d_rest, Fp);
 }
 
-GDT_BOOLEAN SRCH_DATE::Read(PFILE Fp)
+bool SRCH_DATE::Read(PFILE Fp)
 {
 //  obj_t obj = getObjID(Fp);
 //  if (obj != objDATE)
@@ -1849,7 +1849,7 @@ GDT_BOOLEAN SRCH_DATE::Read(PFILE Fp)
       ::Read(&rest, Fp);
       d_date = date;
       d_rest = rest;
-return GDT_TRUE;
+return true;
  //   }
 //  return obj == objDATE;
 }
@@ -2267,18 +2267,18 @@ int SRCH_DATE::DayOfYear() const
   return GetJulianDate() - temp.GetJulianDate()+1;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetDayOfYear(int Year, int Day)
+bool SRCH_DATE::SetDayOfYear(int Year, int Day)
 {
   SRCH_DATE temp;
   temp.SetDate(Year, 1, 1);
   const long julian = Day + temp.GetJulianDate() - 1;
   d_date = _julian_to_date( julian);
   SetPrecision();
-  return GDT_TRUE;
+  return true;
 }
 
 
-GDT_BOOLEAN SRCH_DATE::SetDayOfYear(int Day)
+bool SRCH_DATE::SetDayOfYear(int Day)
 {
   return SetDayOfYear(_Year(d_date), Day);
 }
@@ -2304,21 +2304,21 @@ int SRCH_DATE::WeekOfYear() const
   return (DayOfYear()/7) + 1;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetWeekOfYear(int Week, int Day)
+bool SRCH_DATE::SetWeekOfYear(int Week, int Day)
 {
   return SetWeekOfYear(_Year(d_date), Week, Day);
 }
 
-GDT_BOOLEAN SRCH_DATE::SetWeekOfYear(int Year, int Week, int Day)
+bool SRCH_DATE::SetWeekOfYear(int Year, int Week, int Day)
 {
   if (Week > 53 || Week < 1)
-    return GDT_FALSE;
+    return false;
   const int day = (Week - 1)*7;
   SRCH_DATE date;
   date.SetDayOfYear(Year, day);
   int diff = 1 - date.DayOfWeek() + (Day%8);
   SetDayOfYear(Year, day + diff);
-  return GDT_TRUE;
+  return true;
 }
 
 
@@ -2359,7 +2359,7 @@ long SRCH_DATE::DaysDifference(const SRCH_DATE& Other) const
 }
 
 
-GDT_BOOLEAN SRCH_DATE::Set(const SRCH_DATE& OtherDate)
+bool SRCH_DATE::Set(const SRCH_DATE& OtherDate)
 {
   d_date = OtherDate.d_date;
   d_rest = OtherDate.d_rest;
@@ -2367,31 +2367,31 @@ GDT_BOOLEAN SRCH_DATE::Set(const SRCH_DATE& OtherDate)
 }
 
 
-GDT_BOOLEAN SRCH_DATE::Set(const long LongVal)
+bool SRCH_DATE::Set(const long LongVal)
 {
   if (LongVal == -1)
     {
       d_date = 0;
       SetPrecision(UNKNOWN_DATE); // Infinite Date
-      return GDT_FALSE;;
+      return false;;
     }
   d_date = LongVal;
   SetPrecision();
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN SRCH_DATE::Set(const DOUBLE FloatVal)
+bool SRCH_DATE::Set(const DOUBLE FloatVal)
 {
   if (FloatVal == DATE_PRESENT)
     {
       SetNow();
-      return GDT_TRUE;
+      return true;
     }
   else if (FloatVal == DATE_ERROR || FloatVal == UNKNOWN_DATE)
     {
       d_date = (UINT4)FloatVal;
       SetPrecision();
-      return GDT_FALSE;
+      return false;
     }
 
   // Passed as CCYYMMDD
@@ -2405,10 +2405,10 @@ GDT_BOOLEAN SRCH_DATE::Set(const DOUBLE FloatVal)
   return IsValidDate();
 }
 
-GDT_BOOLEAN SRCH_DATE::Set(const CHR *CStringVal)
+bool SRCH_DATE::Set(const CHR *CStringVal)
 {
-  GDT_BOOLEAN res;
-  if ((res = date_parse(CStringVal)) == GDT_FALSE)
+  bool res;
+  if ((res = date_parse(CStringVal)) == false)
     {
       d_date = 0;
       d_rest = 0;
@@ -2417,13 +2417,13 @@ GDT_BOOLEAN SRCH_DATE::Set(const CHR *CStringVal)
   return res;
 }
 
-GDT_BOOLEAN SRCH_DATE::Set(const STRING& str)
+bool SRCH_DATE::Set(const STRING& str)
 {
   return Set((const char *)str);
 }
 
 #ifdef WIN32
-GDT_BOOLEAN SRCH_DATE::Set(const SYSTEMTIME *sTime)
+bool SRCH_DATE::Set(const SYSTEMTIME *sTime)
 {
 /*
 {
@@ -2440,22 +2440,22 @@ GDT_BOOLEAN SRCH_DATE::Set(const SYSTEMTIME *sTime)
   if (sTime == NULL)
     {
       SetNow ();
-      return GDT_TRUE;
+      return true;
     }
   return Set(sTime->wYear, sTime->wMonth, sTime->wDay, sTime->wHour, sTime->wMinute, sTime->wSecond);
 }
 #endif
 
-GDT_BOOLEAN SRCH_DATE::SetYear(int nYear)
+bool SRCH_DATE::SetYear(int nYear)
 {
   int month= _Month(d_date);
   int day  = _Day(d_date);
         
   d_date = nYear*YEAR_FACTOR + month*MONTH_FACTOR + day*DAY_FACTOR;
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetMonth(int nMonth)
+bool SRCH_DATE::SetMonth(int nMonth)
 {
   if (nMonth < 13)
     {
@@ -2466,12 +2466,12 @@ GDT_BOOLEAN SRCH_DATE::SetMonth(int nMonth)
       if (day)         SetPrecision(DAY_PREC);
       else if (nMonth) SetPrecision(MONTH_PREC);
       else             SetPrecision(YEAR_PREC);
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetDay(int nDay)
+bool SRCH_DATE::SetDay(int nDay)
 {
   if (nDay < 32)
     {
@@ -2482,40 +2482,40 @@ GDT_BOOLEAN SRCH_DATE::SetDay(int nDay)
       if (nDay)       SetPrecision(DAY_PREC);
       else if (month) SetPrecision(MONTH_PREC);
       else            SetPrecision(YEAR_PREC);
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
-GDT_BOOLEAN SRCH_DATE::Set(int year, int mon, int day, int hour, int min, int sec)
+bool SRCH_DATE::Set(int year, int mon, int day, int hour, int min, int sec)
 {
-  GDT_BOOLEAN result = SetDate(year, mon, day);
+  bool result = SetDate(year, mon, day);
 
   SetTime(hour, min, sec);
   return result;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetTime(int hour, int min, int sec)
+bool SRCH_DATE::SetTime(int hour, int min, int sec)
 {
   if (hour >= 0 && hour < 24 && min >=0 && min < 60 && sec >=0 && sec < 60)
     {
       SetTime( (UINT4)(hour*HOUR_FACTOR + min*MIN_FACTOR + sec*SEC_FACTOR));
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetTime(DOUBLE Fraction)
+bool SRCH_DATE::SetTime(DOUBLE Fraction)
 {
   const long t = (long)(24*60*60*((long)Fraction-Fraction)+0.5);
 
   SetTime( (UINT4)( ((t / 3600 ) % 24 )*HOUR_FACTOR + ((t / 60) % 60 )*MIN_FACTOR +
 	( t % 60 )*SEC_FACTOR) );
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetDate(int year, int month, int day)
+bool SRCH_DATE::SetDate(int year, int month, int day)
 {
   if (month < 13 && day < 32)
     {
@@ -2523,9 +2523,9 @@ GDT_BOOLEAN SRCH_DATE::SetDate(int year, int month, int day)
       if (day)         SetPrecision(DAY_PREC);
       else if (month)  SetPrecision(MONTH_PREC);
       else if (year)   SetPrecision(YEAR_PREC);
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 /*
@@ -2572,7 +2572,7 @@ static time_t tm2sec(const struct tm * t)
 
 
 
-GDT_BOOLEAN SRCH_DATE::Set(struct tm *time_str)
+bool SRCH_DATE::Set(struct tm *time_str)
 {
   if (time_str)
     {
@@ -2585,13 +2585,13 @@ GDT_BOOLEAN SRCH_DATE::Set(struct tm *time_str)
 		(time_str->tm_min)*MIN_FACTOR +
 		(time_str->tm_sec)*SEC_FACTOR;
 	  SetPrecision();
-	  return GDT_TRUE;
+	  return true;
 	}
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetTimeOfFile(int fd)
+bool SRCH_DATE::SetTimeOfFile(int fd)
 {
   struct stat stbuf;
 
@@ -2600,15 +2600,15 @@ GDT_BOOLEAN SRCH_DATE::SetTimeOfFile(int fd)
       time_t mtime  = stbuf.st_mtime;
       return Set(&mtime);
     }
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetTimeOfFile(FILE *fp)
+bool SRCH_DATE::SetTimeOfFile(FILE *fp)
 {
-  return fp ? SetTimeOfFile(fileno(fp)) : GDT_FALSE;
+  return fp ? SetTimeOfFile(fileno(fp)) : false;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetTimeOfFile(const STRING& Pathname)
+bool SRCH_DATE::SetTimeOfFile(const STRING& Pathname)
 {
   struct stat stbuf;
 
@@ -2628,24 +2628,24 @@ GDT_BOOLEAN SRCH_DATE::SetTimeOfFile(const STRING& Pathname)
 #endif
       return Set(&mtime);
     }
-  return GDT_FALSE;
+  return false;
 }
 
 
-GDT_BOOLEAN SRCH_DATE::SetTimeOfFileCreation(int fd)
+bool SRCH_DATE::SetTimeOfFileCreation(int fd)
 {
   struct stat stbuf;
   if (fstat(fd, &stbuf) != -1)
     return Set(&stbuf.st_ctime);
-  return GDT_FALSE;
+  return false;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetTimeOfFileCreation(FILE *fp)
+bool SRCH_DATE::SetTimeOfFileCreation(FILE *fp)
 {
-  return fp ? SetTimeOfFileCreation(fileno(fp)) : GDT_FALSE;
+  return fp ? SetTimeOfFileCreation(fileno(fp)) : false;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetTimeOfFileCreation(const STRING& Pathname)
+bool SRCH_DATE::SetTimeOfFileCreation(const STRING& Pathname)
 {
   struct stat stbuf;
 
@@ -2666,11 +2666,11 @@ GDT_BOOLEAN SRCH_DATE::SetTimeOfFileCreation(const STRING& Pathname)
        Set(&ctime);
     }
 
-  return GDT_FALSE;
+  return false;
 }
 
 
-GDT_BOOLEAN SRCH_DATE::Set(const time_t *time)
+bool SRCH_DATE::Set(const time_t *time)
 {
   d_date = DATE_UNKNOWN;
 
@@ -2685,7 +2685,7 @@ GDT_BOOLEAN SRCH_DATE::Set(const time_t *time)
       struct tm *tm = localtime (time);
       return Set(tm);
     }
-  return GDT_TRUE;
+  return true;
 }
 
 time_t SRCH_DATE::MkTime() const
@@ -2709,16 +2709,16 @@ time_t SRCH_DATE::MkTime(struct tm *time_str, const SRCH_DATE& time) const
   return (time_t)-1;
 }
 
-GDT_BOOLEAN SRCH_DATE::ParseTm(struct tm *time_str) const
+bool SRCH_DATE::ParseTm(struct tm *time_str) const
 {
-  return ParseTm(time_str, *this, GDT_FALSE);
+  return ParseTm(time_str, *this, false);
 }
 
-GDT_BOOLEAN SRCH_DATE::ParseTm(struct tm *time_str, const SRCH_DATE& time,
-	GDT_BOOLEAN Validate) const
+bool SRCH_DATE::ParseTm(struct tm *time_str, const SRCH_DATE& time,
+	bool Validate) const
 {
   if (!time.Ok())
-    return GDT_FALSE; // ERROR
+    return false; // ERROR
 
   int Year  = _Year( time.d_date );
   int Month = _Month( time.d_date );
@@ -2737,7 +2737,7 @@ GDT_BOOLEAN SRCH_DATE::ParseTm(struct tm *time_str, const SRCH_DATE& time,
   if ((Day <= 0) || (Day > (mntb[Month-1] + ( ((Month==2) && _isLeapYear(Year)) ? 1 : 0))))
     {
       if (Validate)
-	return GDT_FALSE;
+	return false;
       Day = (mntb[Month-1] + (Month==2 && _isLeapYear(Year))); 
     }
   if (time_str)
@@ -2754,7 +2754,7 @@ GDT_BOOLEAN SRCH_DATE::ParseTm(struct tm *time_str, const SRCH_DATE& time,
       time_str->tm_sec        = _Seconds(rest);
       time_str->tm_isdst      = -1;
     }
-  return GDT_TRUE;
+  return true;
 }
 
 time_t SRCH_DATE::MkTime(struct tm *time_str) const
@@ -2823,7 +2823,7 @@ STRING SRCH_DATE::ISOdate() const
   return STRING (ISOdate(buf, sizeof(buf)-1));
 }
 
-GDT_BOOLEAN SRCH_DATE::ISO(PSTRING StringBuffer) const
+bool SRCH_DATE::ISO(PSTRING StringBuffer) const
 {
   *StringBuffer = ISOdate();
   return StringBuffer->IsEmpty();
@@ -2869,7 +2869,7 @@ STRING SRCH_DATE::ANSIdate() const
   return STRING(ANSIdate(buf, sizeof(buf)-1));
 }
 
-GDT_BOOLEAN SRCH_DATE::ANSI(PSTRING StringBuffer) const
+bool SRCH_DATE::ANSI(PSTRING StringBuffer) const
 {
   *StringBuffer = ANSIdate();
   return !StringBuffer->IsEmpty();
@@ -2913,7 +2913,7 @@ STRING SRCH_DATE::LCdate() const
 }
 
 // Locale date format
-GDT_BOOLEAN SRCH_DATE::Locale(PSTRING StringBuffer) const
+bool SRCH_DATE::Locale(PSTRING StringBuffer) const
 {
   *StringBuffer = LCdate();
   return !StringBuffer->IsEmpty();
@@ -2973,26 +2973,26 @@ STRING SRCH_DATE::RFCdate() const
   return STRING(RFCdate(buf, sizeof(buf)-1));
 }
 
-GDT_BOOLEAN SRCH_DATE::RFC(PSTRING StringBuffer) const
+bool SRCH_DATE::RFC(PSTRING StringBuffer) const
 {
   *StringBuffer = RFCdate();
   return !StringBuffer->IsEmpty();
 }
 
 
-GDT_BOOLEAN SRCH_DATE::Strftime(const char *format, PSTRING StringBuffer) const
+bool SRCH_DATE::Strftime(const char *format, PSTRING StringBuffer) const
 {
   char buf[BUFSIZ];
 
   struct tm tm;
-  if (ParseTm(&tm) == GDT_FALSE)
+  if (ParseTm(&tm) == false)
     {
       *StringBuffer = "";
-      return GDT_FALSE;
+      return false;
     }
   ::strftime (buf, sizeof (buf), format,  &tm);
   *StringBuffer = buf;
-  return GDT_TRUE;
+  return true;
 }
 
 ostream &operator << (ostream &os, const SRCH_DATE &dt)
@@ -3011,15 +3011,15 @@ STRING &operator << (STRING &String, const SRCH_DATE &dt)
 
 
 // Precision conversion routines
-GDT_BOOLEAN SRCH_DATE::TrimToMonth()
+bool SRCH_DATE::TrimToMonth()
 {
-  GDT_BOOLEAN status=GDT_TRUE;
+  bool status=true;
 
   switch (GetPrecision()) {
 
   case YEAR_PREC:
     // Can't convert from lower precision
-    status = GDT_FALSE;
+    status = false;
     break;
 
   case MONTH_PREC:
@@ -3035,7 +3035,7 @@ GDT_BOOLEAN SRCH_DATE::TrimToMonth()
 
   default:
     // Precision was probably unknown
-    status = GDT_FALSE;
+    status = false;
     break;
   }
 
@@ -3043,9 +3043,9 @@ GDT_BOOLEAN SRCH_DATE::TrimToMonth()
 }
 
 
-GDT_BOOLEAN SRCH_DATE::TrimToYear()
+bool SRCH_DATE::TrimToYear()
 {
-  GDT_BOOLEAN status=GDT_TRUE;
+  bool status=true;
 
   switch (GetPrecision()) {
 
@@ -3062,81 +3062,81 @@ GDT_BOOLEAN SRCH_DATE::TrimToYear()
 
   default:
     // Precision was probably unknown
-    status = GDT_FALSE;
+    status = false;
     break;
   }
 
   return(status);
 }
 
-GDT_BOOLEAN SRCH_DATE::SetToYearStart()
+bool SRCH_DATE::SetToYearStart()
 {
   // To 1 Jan
   const int  year  = _Year(d_date);
   d_date = 1*DAY_FACTOR + 1*MONTH_FACTOR + year*YEAR_FACTOR;
   SetPrecision(  DAY_PREC );
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetToYearEnd()
+bool SRCH_DATE::SetToYearEnd()
 {
   // To 31 Dec
   const int  year  = _Year(d_date);
 
   d_date = 31*DAY_FACTOR + 12*MONTH_FACTOR + year*YEAR_FACTOR;
   SetPrecision(  DAY_PREC );
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetToMonthStart()
+bool SRCH_DATE::SetToMonthStart()
 {
   // To 1 XXX
   const int  year  = _Year(d_date);
   const int  mon   = _Month(d_date);
 
   if (mon == 0)
-    return GDT_FALSE;
+    return false;
   d_date = 1*DAY_FACTOR + mon*MONTH_FACTOR + year*YEAR_FACTOR;
   SetPrecision(  DAY_PREC );
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetToMonthEnd()
+bool SRCH_DATE::SetToMonthEnd()
 {
   // To ? XXX (depends on month)
   const int  year  = _Year(d_date);
   const int  mon   = _Month(d_date);
 
   if (mon == 0)
-    return GDT_FALSE;
+    return false;
   d_date = GetDaysInMonth()*DAY_FACTOR + mon*MONTH_FACTOR + year*YEAR_FACTOR;
   SetPrecision(  DAY_PREC );
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetToDayStart()
+bool SRCH_DATE::SetToDayStart()
 {
   // To 00:00:00
   const int  day = _Day(d_date);
   if (day == 0)
-    return GDT_FALSE;
+    return false;
   SetTime(0,0,0);
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN SRCH_DATE::SetToDayEnd()
+bool SRCH_DATE::SetToDayEnd()
 {
   // To 23:59:59
   const int  day = _Day(d_date);
   if (day == 0)
-    return GDT_FALSE;
+    return false;
   SetTime(23, 25, 59);
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN SRCH_DATE::PromoteToMonthStart()
+bool SRCH_DATE::PromoteToMonthStart()
 {
-  GDT_BOOLEAN status=GDT_TRUE;
+  bool status=true;
 
   switch (GetPrecision()) {
 
@@ -3152,18 +3152,18 @@ GDT_BOOLEAN SRCH_DATE::PromoteToMonthStart()
 
   case DAY_PREC:
     // Can't promote from higher precision
-    status = GDT_FALSE;
+    status = false;
     break;
 
   default:
-    status = GDT_FALSE;
+    status = false;
     break;
   }
 
   return(status);
 }
 
-GDT_BOOLEAN SRCH_DATE::IsLeapYear() const
+bool SRCH_DATE::IsLeapYear() const
 {
   const int year = _Year(d_date);
   return  ( (year >= 1582) ?
@@ -3177,9 +3177,9 @@ int SRCH_DATE::GetDaysInMonth() const
   return month > 0 ?  mntb[month-1] + (month==2 && IsLeapYear()) : 0;
 }
 
-GDT_BOOLEAN SRCH_DATE::PromoteToMonthEnd()
+bool SRCH_DATE::PromoteToMonthEnd()
 {
-  GDT_BOOLEAN status=GDT_TRUE;
+  bool status=true;
 
   switch ( GetPrecision() ) {
 
@@ -3195,11 +3195,11 @@ GDT_BOOLEAN SRCH_DATE::PromoteToMonthEnd()
 
   case DAY_PREC:
     // Can't promote from higher precision
-    status = GDT_FALSE;
+    status = false;
     break;
 
   default:
-    status = GDT_FALSE;
+    status = false;
     break;
   }
 
@@ -3207,9 +3207,9 @@ GDT_BOOLEAN SRCH_DATE::PromoteToMonthEnd()
 }
 
 
-GDT_BOOLEAN SRCH_DATE::PromoteToDayStart()
+bool SRCH_DATE::PromoteToDayStart()
 {
-  GDT_BOOLEAN status=GDT_TRUE;
+  bool status=true;
 
   switch ( GetPrecision() ) {
 
@@ -3230,7 +3230,7 @@ GDT_BOOLEAN SRCH_DATE::PromoteToDayStart()
     break;
 
   default:
-    status = GDT_FALSE;
+    status = false;
     break;
   }
 
@@ -3238,9 +3238,9 @@ GDT_BOOLEAN SRCH_DATE::PromoteToDayStart()
 }
 
 
-GDT_BOOLEAN SRCH_DATE::PromoteToDayEnd()
+bool SRCH_DATE::PromoteToDayEnd()
 {
-  GDT_BOOLEAN status=GDT_TRUE;
+  bool status=true;
 
   switch ( GetPrecision() ) {
 
@@ -3261,7 +3261,7 @@ GDT_BOOLEAN SRCH_DATE::PromoteToDayEnd()
     break;
 
   default:
-    status = GDT_FALSE;
+    status = false;
     break;
   }
 
@@ -3270,44 +3270,44 @@ GDT_BOOLEAN SRCH_DATE::PromoteToDayEnd()
 
 
 // Boolean precision routines
-GDT_BOOLEAN SRCH_DATE::IsYearDate() const
+bool SRCH_DATE::IsYearDate() const
 {
   if (GetPrecision() >= YEAR_PREC)
-    return(GDT_TRUE);
-  return(GDT_FALSE);
+    return(true);
+  return(false);
 }
 
 
-GDT_BOOLEAN SRCH_DATE::IsMonthDate() const
+bool SRCH_DATE::IsMonthDate() const
 {
   if (GetPrecision() >= MONTH_PREC)
-    return(GDT_TRUE);
-  return(GDT_FALSE);
+    return(true);
+  return(false);
 }
 
 
-GDT_BOOLEAN SRCH_DATE::IsDayDate() const
+bool SRCH_DATE::IsDayDate() const
 {
   if (GetPrecision() >= DAY_PREC)
-    return(GDT_TRUE);
-  return(GDT_FALSE);
+    return(true);
+  return(false);
 }
 
-GDT_BOOLEAN SRCH_DATE::IsValidDate() const
+bool SRCH_DATE::IsValidDate() const
 {
   int d_prec = GetPrecision();
   if (d_prec == BAD_DATE || d_prec == UNKNOWN_DATE)
-    return(GDT_FALSE);
-  return(GDT_TRUE);
+    return(false);
+  return(true);
 }
 
-GDT_BOOLEAN SRCH_DATE::IsBogusDate() const
+bool SRCH_DATE::IsBogusDate() const
 {
   if (GetPrecision() == BAD_DATE)
-    return GDT_TRUE;
-  if (ParseTm(NULL, *this, GDT_TRUE))
-    return GDT_FALSE;
-  return GDT_TRUE;
+    return true;
+  if (ParseTm(NULL, *this, true))
+    return false;
+  return true;
 }
 
 void SRCH_DATE::SetNow()
@@ -3338,20 +3338,20 @@ void SRCH_DATE::GetTodaysDate()
   SetPrecision(DAY_PREC);
 }
 
-GDT_BOOLEAN SRCH_DATE::IsBefore(const SRCH_DATE& OtherDate) const
+bool SRCH_DATE::IsBefore(const SRCH_DATE& OtherDate) const
 {
   return (DateCompare(OtherDate) == BEFORE);
 }
 
 
-GDT_BOOLEAN SRCH_DATE::Equals(const SRCH_DATE& OtherDate) const
+bool SRCH_DATE::Equals(const SRCH_DATE& OtherDate) const
 {
   return (DateCompare(OtherDate) == DURING_EQUALS);
 }
 
 
 // During the same day..
-GDT_BOOLEAN SRCH_DATE::IsDuring(const SRCH_DATE& OtherDate) const
+bool SRCH_DATE::IsDuring(const SRCH_DATE& OtherDate) const
 {
   SRCH_DATE date1 (*this);
   SRCH_DATE date2 (OtherDate);
@@ -3363,7 +3363,7 @@ GDT_BOOLEAN SRCH_DATE::IsDuring(const SRCH_DATE& OtherDate) const
 }
 
 
-GDT_BOOLEAN SRCH_DATE::IsAfter(const SRCH_DATE& OtherDate) const
+bool SRCH_DATE::IsAfter(const SRCH_DATE& OtherDate) const
 {
   return (DateCompare(OtherDate) == AFTER);
 }
@@ -3515,12 +3515,12 @@ int operator <  (const SRCH_DATE &dt1, const SRCH_DATE &dt2)
     {
       case BEFORE:
       case BEFORE_DURING:
-	return 1; // GDT_TRUE;
+	return 1; // true;
       case DURING_EQUALS:
       case DURING_AFTER:
       case AFTER:
       default:
-	return 0; // GDT_FALSE;
+	return 0; // false;
     }
   return dt1.d_date < dt2.d_date; // NOT REACHED! 
 }
@@ -3538,10 +3538,10 @@ int operator >  (const SRCH_DATE &dt1, const SRCH_DATE &dt2)
       case BEFORE_DURING:
       case DURING_EQUALS:
       default:
-	return 0; // GDT_FALSE;
+	return 0; // false;
       case DURING_AFTER:
       case AFTER:
-	return 1; // GDT_FALSE;
+	return 1; // false;
     }
   // NOT REACHED
 }
@@ -3734,14 +3734,14 @@ DATERANGE::DATERANGE(const STRING& DateString)
 #ifdef DEBUG
       cerr << "ISO Sep not seen" << endl;
 #endif
-      GDT_BOOLEAN irange = GDT_FALSE; // Normally not
+      bool irange = false; // Normally not
       CHR         ch     = Single.GetChr(1);
       if (ch == '[' || ch == '{')
 	{
 	  // Ranges as {x,y} or [x,y]
 	  if (Single.Last() == ( ch == '[' ? ']' : '}'))
 	    {
-	      irange = GDT_TRUE; 
+	      irange = true; 
 	      Single.EraseBefore(2);
 	      Single.EraseAfter(Single.GetLength() - 1);
 	    }
@@ -3752,9 +3752,9 @@ DATERANGE::DATERANGE(const STRING& DateString)
 	  // , ranges
 	  // - is a special character not for ranges but we will
 	  // accept it as well...
-	  if (irange==GDT_FALSE || ((seperator = Single.Search(',')) == 0))
+	  if (irange==false || ((seperator = Single.Search(',')) == 0))
 	    if ((seperator = Single.Search('-')) == 0 &&
-		((irange=GDT_FALSE) || (seperator = Single.Search(',')) == 0))
+		((irange=false) || (seperator = Single.Search(',')) == 0))
 	    {
 #ifdef DEBUG
 	      cerr << "No seps so error" << endl;
@@ -3945,58 +3945,58 @@ DATERANGE& DATERANGE::operator-=(const DATERANGE& DateRange)
 }
 
   // Comparison operators
-GDT_BOOLEAN DATERANGE::operator ==(const DATERANGE& Other) const
+bool DATERANGE::operator ==(const DATERANGE& Other) const
 {
   return (d_start == Other.d_start) && (d_end == Other.d_end);
 }
 
-GDT_BOOLEAN DATERANGE::operator !=(const DATERANGE& Other) const
+bool DATERANGE::operator !=(const DATERANGE& Other) const
 {
   return (d_start != Other.d_start) && (d_end != Other.d_end);
 }
 
-GDT_BOOLEAN DATERANGE::operator  >(const DATERANGE& Other) const
+bool DATERANGE::operator  >(const DATERANGE& Other) const
 {
   return (d_start > Other.d_start) && (d_end > Other.d_end);
 }
 
-GDT_BOOLEAN DATERANGE::operator  <(const DATERANGE& Other) const
+bool DATERANGE::operator  <(const DATERANGE& Other) const
 {
   return (d_start < Other.d_start) && (d_end < Other.d_end);
 }
 
-GDT_BOOLEAN DATERANGE::operator >=(const DATERANGE& Other) const
+bool DATERANGE::operator >=(const DATERANGE& Other) const
 {
   return (d_start >= Other.d_start) && (d_end >= Other.d_end);
 }
 
-GDT_BOOLEAN DATERANGE::operator <=(const DATERANGE& Other) const
+bool DATERANGE::operator <=(const DATERANGE& Other) const
 {
   return (d_start <= Other.d_start) && (d_end <= Other.d_end);
 }
 
 
-GDT_BOOLEAN DATERANGE::Ok() const
+bool DATERANGE::Ok() const
 {
   return d_start.IsValidDate() && d_end.IsValidDate();
 }
 
-GDT_BOOLEAN DATERANGE::Defined() const
+bool DATERANGE::Defined() const
 {
   return (d_start.Ok() || d_end.Ok());
 }
 
-GDT_BOOLEAN DATERANGE::Contains(const SRCH_DATE& TestDate) const
+bool DATERANGE::Contains(const SRCH_DATE& TestDate) const
 {
-  GDT_BOOLEAN result;
-  if      (!Defined())     result = GDT_TRUE; // Underdefined Ranges contain everything
+  bool result;
+  if      (!Defined())     result = true; // Underdefined Ranges contain everything
   else if (! d_start.Ok()) result = (TestDate  <= d_end);
   else if (! d_end.Ok())   result = (TestDate  >= d_start);
   else                     result = ((TestDate >= d_start) && (TestDate <= d_end));
   return result;
 }
 
-GDT_BOOLEAN DATERANGE::Contains(const DATERANGE& OtherRange) const
+bool DATERANGE::Contains(const DATERANGE& OtherRange) const
 {
   return (Contains(OtherRange.d_start) && Contains(OtherRange.d_end));
 }
@@ -4009,7 +4009,7 @@ void DATERANGE::Write(PFILE Fp) const
   d_end.Write(Fp);
 }
 
-GDT_BOOLEAN DATERANGE::Read(PFILE Fp)
+bool DATERANGE::Read(PFILE Fp)
 {
   obj_t obj = getObjID(Fp);
   if (obj != objDATERANGE)
@@ -4024,11 +4024,11 @@ GDT_BOOLEAN DATERANGE::Read(PFILE Fp)
   return obj == objDATERANGE;
 }
 
-GDT_BOOLEAN DATERANGE::ISO(STRING *String) const
+bool DATERANGE::ISO(STRING *String) const
 {
   STRING start, end;
-  GDT_BOOLEAN res1 = d_start.ISO(&start);
-  GDT_BOOLEAN res2 = d_end.ISO(&end);
+  bool res1 = d_start.ISO(&start);
+  bool res2 = d_end.ISO(&end);
   if (String)
     {
       String->Clear();
@@ -4041,33 +4041,33 @@ GDT_BOOLEAN DATERANGE::ISO(STRING *String) const
   return res1 && res2;
 }
 
-GDT_BOOLEAN DATERANGE::ISO(STRING *From, STRING *To) const
+bool DATERANGE::ISO(STRING *From, STRING *To) const
 {
-  GDT_BOOLEAN res = GDT_TRUE;
+  bool res = true;
   if (From) res = d_start.ISO(From);
   if (To) res = res && d_end.ISO(To);
   return res;
 }
 
-GDT_BOOLEAN DATERANGE::RFC(STRING *From, STRING *To) const
+bool DATERANGE::RFC(STRING *From, STRING *To) const
 {
-  GDT_BOOLEAN res = GDT_TRUE;
+  bool res = true;
   if (From) res = d_start.RFC(From);
   if (To) res = res && d_end.RFC(To);
   return res;
 }
 
-GDT_BOOLEAN DATERANGE::Locale(STRING *From, STRING *To) const
+bool DATERANGE::Locale(STRING *From, STRING *To) const
 {
-  GDT_BOOLEAN res = GDT_TRUE;
+  bool res = true;
   if (From) res = d_start.Locale(From);
   if (To) res = res && d_end.Locale(To);
   return res;
 }
 
-GDT_BOOLEAN DATERANGE::Strftime(const char *fmt, STRING *From, STRING *To) const
+bool DATERANGE::Strftime(const char *fmt, STRING *From, STRING *To) const
 {
-  GDT_BOOLEAN res = GDT_TRUE;
+  bool res = true;
   if (From) res = d_start.Strftime(fmt, From);
   if (To) res = res && d_end.Strftime(fmt, To);
   return res;

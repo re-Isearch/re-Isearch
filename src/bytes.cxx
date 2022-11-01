@@ -211,14 +211,14 @@ inline void Write(const UINT8 hostlonglong, PFILE Fp)
 }
 
 
-inline GDT_BOOLEAN Read(PCHR c, PFILE Fp)
+inline bool Read(PCHR c, PFILE Fp)
 {
   int ch = GETC(Fp);
   if (c) *c = (CHR)ch;
   return ch != EOF; 
 }
 
-inline GDT_BOOLEAN Read(PUCHR c, PFILE Fp)
+inline bool Read(PUCHR c, PFILE Fp)
 {
   int ch = GETC(Fp);
   if (c) *c = (UCHR)ch; 
@@ -231,9 +231,9 @@ inline void Read(PINT2 hostshort, PFILE Fp)
 #if 0
   INT2  x;
   if (fread(&x, sizeof(INT2), 1, Fp) != 1) 
-    return GDT_FALSE; 
+    return false; 
   *hostshort = htons(x);
-  return GDT_TRUE;
+  return true;
 #else
   *hostshort = (INT2)getINT2 (Fp);
 #endif
@@ -244,9 +244,9 @@ inline void Read(PINT4 hostlong, PFILE Fp)
 #if 0
   INT4  x;
   if (fread(&x, sizeof(INT4), 1, Fp) != 1)
-    return GDT_FALSE;
+    return false;
   *hostlong = htonl(x);
-  return GDT_TRUE;
+  return true;
 #else
   *hostlong = (INT4)getINT4 (Fp); 
 #endif
@@ -258,9 +258,9 @@ inline void Read(PINT8 hostlonglong, PFILE Fp)
 #if 0
   INT8  x;
   if (fread(&x, sizeof(INT8), 1, Fp) != 1) 
-    return GDT_FALSE; 
+    return false; 
   *hostlonglong = htonll(x);
-  return GDT_TRUE;
+  return true;
 #else
   *hostlonglong = (INT8)getINT8 (Fp);
 #endif
@@ -333,7 +333,7 @@ inline void Write(const double c, FILE *Fp)
   fwrite(&c, sizeof(double), 1, Fp);
 }
  
-inline GDT_BOOLEAN Read(double *c, FILE *Fp)
+inline bool Read(double *c, FILE *Fp)
 {
   return fread(c, sizeof(double), 1, Fp) != 0;
 }
@@ -344,7 +344,7 @@ inline void Write(const long double c, FILE *Fp)
   fwrite(&c, sizeof(long double), 1, Fp);
 }
 
-inline GDT_BOOLEAN Read(long double *c, FILE *Fp)
+inline bool Read(long double *c, FILE *Fp)
 {
   return fread(c, sizeof(long double), 1, Fp) != 0;
 }

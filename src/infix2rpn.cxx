@@ -44,7 +44,7 @@ INFIX2RPN::INFIX2RPN (const STRING& StrInput, STRING *StrOutput)
 }
 
 
-GDT_BOOLEAN INFIX2RPN::Parse (const STRING& StrInput, STRING *StrOutput)
+bool INFIX2RPN::Parse (const STRING& StrInput, STRING *StrOutput)
 {
   STRSTACK TheStack;
   STRSTACK OperandStack;
@@ -55,7 +55,7 @@ GDT_BOOLEAN INFIX2RPN::Parse (const STRING& StrInput, STRING *StrOutput)
 
   StrOutput->Clear();
   TermsWithNoOps = 0;
-  GDT_BOOLEAN LastTokenWasTerm = GDT_FALSE;
+  bool LastTokenWasTerm = false;
   int  op;
 
   TokenList->DoParse();
@@ -145,13 +145,13 @@ GDT_BOOLEAN INFIX2RPN::Parse (const STRING& StrInput, STRING *StrOutput)
 	token.CaseCompare("xpeer:", 6) == 0 || token.Compare("WITH:", 5) == 0 ||
 	token.CaseCompare("after:", 6) == 0 || token.CaseCompare("before:", 7) == 0)
 	{
-	  LastTokenWasTerm = GDT_FALSE;
+	  LastTokenWasTerm = false;
 	  TheStack.Push (token.ToUpper());
 	  field = token.Right(':');
 	}
       else if ((op = string2op (token)) != NOP)
 	{
-	  LastTokenWasTerm = GDT_FALSE;
+	  LastTokenWasTerm = false;
 	  ProcessOp (op, TheStack, StrOutput);
 	}
       else
@@ -163,7 +163,7 @@ GDT_BOOLEAN INFIX2RPN::Parse (const STRING& StrInput, STRING *StrOutput)
 	      StrOutput->Cat (' ');
 	      OperandStack.Push (token);
 	      TermsWithNoOps++;
-	      LastTokenWasTerm = GDT_TRUE;
+	      LastTokenWasTerm = true;
 //cerr << "StrOut=" << *StrOutput << endl;
 	    }
 	  else
@@ -203,11 +203,11 @@ GDT_BOOLEAN INFIX2RPN::Parse (const STRING& StrInput, STRING *StrOutput)
   return InputParsedOK();
 }
 
-GDT_BOOLEAN INFIX2RPN::InputParsedOK () const
+bool INFIX2RPN::InputParsedOK () const
 {
   //with no unary not or other weird operators, 
   //you should have n-1 operators for n terms
-  return (TermsWithNoOps == 1 ? GDT_TRUE : GDT_FALSE);
+  return (TermsWithNoOps == 1 ? true : false);
 }
 
 void INFIX2RPN::RegisterError (const STRING& Error)
@@ -215,7 +215,7 @@ void INFIX2RPN::RegisterError (const STRING& Error)
   ErrorMessage = Error;
 }
 
-GDT_BOOLEAN INFIX2RPN::GetErrorMessage (STRING *Error) const
+bool INFIX2RPN::GetErrorMessage (STRING *Error) const
 {
   *Error = ErrorMessage;
   return (Error->GetLength() != 0);

@@ -32,8 +32,8 @@ sHASHTABLE::sHASHTABLE()
   Table       = NULL; 
   fd          = -1;
   file_length = 0;
-  loaded      = GDT_FALSE;
-  mmap_reads  = GDT_FALSE;
+  loaded      = false;
+  mmap_reads  = false;
 
 }
 
@@ -44,8 +44,8 @@ sHASHTABLE::sHASHTABLE(const STRING& fn, int size)
   Table       = NULL; 
   fd          = -1;
   file_length = 0;
-  loaded      = GDT_FALSE;
-  mmap_reads  = GDT_FALSE;
+  loaded      = false;
+  mmap_reads  = false;
 
   Init (fn, size);
 }
@@ -64,9 +64,9 @@ sHASHTABLE::~sHASHTABLE()
 }
 
 
-GDT_BOOLEAN sHASHTABLE::KillAll()
+bool sHASHTABLE::KillAll()
 {
-  GDT_BOOLEAN result = GDT_TRUE;
+  bool result = true;
 
   if(fd > 0)
     {
@@ -78,10 +78,10 @@ GDT_BOOLEAN sHASHTABLE::KillAll()
   if (UnlinkFile(filename) != 0)
     {
       if (EraseFileContents(filename) != 0)
-	result = GDT_FALSE;
+	result = false;
     }
   lastCache.Clear();
-  loaded = GDT_FALSE;
+  loaded = false;
   return result;
 }
 
@@ -122,7 +122,7 @@ void sHASHTABLE::DeleteTable()
   }
   else
      message_log (LOG_DEBUG, "sHASHTABLE table was empty (nothing to delete)");
-  loaded = GDT_FALSE;
+  loaded = false;
 }
 
 void sHASHTABLE::Init(const STRING& fn, int size)
@@ -182,7 +182,7 @@ static long s_polys[] =  {
     message_log (LOG_NOTICE, "Hashtable requested for %d>%d!", tableSize, 1000003);
 
   message_log (LOG_DEBUG, "Hashtable '%s': %d slots", fn.c_str(), tableSize);
-  loaded = GDT_FALSE;
+  loaded = false;
 }
 
 
@@ -197,9 +197,9 @@ void sHASHTABLE::AllocTable()
    }
 }
 
-GDT_BOOLEAN sHASHTABLE::LoadOnDiskHashTable()
+bool sHASHTABLE::LoadOnDiskHashTable()
 {
-  loaded = GDT_TRUE;
+  loaded = true;
   // Read a pre-existing on-disk hashtable into memory.
   // This is needed if you need to do Add()'s to an
   // existing hashtable.
@@ -211,16 +211,16 @@ GDT_BOOLEAN sHASHTABLE::LoadOnDiskHashTable()
 	  if (errno == ENOENT)
 	    {
 	      // Does not yet exist!
-	      return GDT_TRUE;
+	      return true;
 	    }
-	  return GDT_FALSE;
+	  return false;
 	}
     }
 
   // Memory Mapping disabled?
   if (tableSize == 0)
     {
-      return GDT_TRUE;
+      return true;
     }
 
   AllocTable();
@@ -233,7 +233,7 @@ GDT_BOOLEAN sHASHTABLE::LoadOnDiskHashTable()
     {
       message_log (LOG_ERRNO, "CreateMap (mmap) of '%s'[%d] FAILED!", filename.c_str(), -fd);
       fd = -1;
-      return GDT_FALSE;
+      return false;
     }
 
   file_length = DiskTable.Size();
@@ -259,7 +259,7 @@ GDT_BOOLEAN sHASHTABLE::LoadOnDiskHashTable()
 	    {
 	      message_log (LOG_PANIC, "'%s' is corrupt!", filename.c_str());
 	      DiskTable.Unmap();
-	      return GDT_FALSE;
+	      return false;
 	    }
 	}
     }
@@ -326,14 +326,14 @@ open_again:
       if ((fd = open(filename,  O_RDWR | O_APPEND | O_CREAT | O_BINARY, DEF_PERMIT)) == -1)
 	{
 	  message_log (LOG_ERRNO, "Can't open '%s' to add '%s'!", filename.c_str(), str.c_str());
-	  return GDT_FALSE;
+	  return false;
 	}
     }
   // append new string to the end of the file
   if ((newoffset = lseek(fd, 0, SEEK_END)) < 0)
     {
       message_log (LOG_ERRNO, "Can't lseek to end on handle %d. Can't add '%s'!", fd, str.c_str());
-      return GDT_FALSE;
+      return false;
     }
   else if (newoffset > 0)
     {
@@ -351,7 +351,7 @@ open_again:
       if ((newoffset = NulString.RawWrite(fd)) == -1)
 	{
 	  message_log (LOG_ERRNO, "Create '%s'.. Write error on handle %d.", filename.c_str(), fd);
-	  return GDT_FALSE;
+	  return false;
 	}
     }
 
@@ -396,13 +396,13 @@ STRING sHASHTABLE::Get(off_t i)
   // The file has to be mmap()'d for this to work.
   STRING         str;
 
-  if (fd == -1 && mmap_reads == GDT_FALSE)
+  if (fd == -1 && mmap_reads == false)
     {
       if ((fd = open(filename, O_RDWR|O_APPEND|O_BINARY /* was O_RDONLY */)) == -1)
 	fd = open(filename, O_RDONLY);
     }
 
-  if ((!DiskTable.Ok() || mmap_reads == GDT_FALSE) && fd >= 0)
+  if ((!DiskTable.Ok() || mmap_reads == false) && fd >= 0)
     {
       message_log (LOG_DEBUG, "Seeking in '%s'(%ld).", filename.c_str(), i);
       // the file is opened, but not mmapped.
@@ -522,7 +522,7 @@ MDTHASHTABLE::MDTHASHTABLE(const STRING& Stem)
 }
 
 
-MDTHASHTABLE::MDTHASHTABLE(const STRING& Stem, GDT_BOOLEAN Fast)
+MDTHASHTABLE::MDTHASHTABLE(const STRING& Stem, bool Fast)
 {
   if (Fast)
     Init(Stem, 0);
@@ -551,7 +551,7 @@ void MDTHASHTABLE::Init(const STRING& FileStem, size_t TableSize)
 }
 
 
-GDT_BOOLEAN MDTHASHTABLE::KillAll()
+bool MDTHASHTABLE::KillAll()
 {
   return StringTable.KillAll();
 }

@@ -246,20 +246,20 @@ void SOIF::ParseFields(RECORD *NewRecord)
   delete pdft;
 }
 
-GDT_BOOLEAN SOIF::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool SOIF::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   StringBuffer->Clear();
   Present(ResultRecord, UnifiedName("URL"), "", StringBuffer);
   return !StringBuffer->IsEmpty();
 }
 
-GDT_BOOLEAN SOIF::URL(const RESULT& ResultRecord, STRING *StringBuffer,
-        GDT_BOOLEAN OnlyRemote) const
+bool SOIF::URL(const RESULT& ResultRecord, STRING *StringBuffer,
+        bool OnlyRemote) const
 {
   if (GetResourcePath(ResultRecord, StringBuffer))
-    return GDT_TRUE;
+    return true;
   if (OnlyRemote)
-    return GDT_FALSE;
+    return false;
   return DOCTYPE::URL(ResultRecord, StringBuffer, OnlyRemote);
 }
 
@@ -270,7 +270,7 @@ void SOIF::Present(const RESULT& ResultRecord, const STRING& ElementSet,
 {
   if (ElementSet.Equals(BRIEF_MAGIC))
     {
-      GDT_BOOLEAN useHTML = (RecordSyntax == HtmlRecordSyntax);
+      bool useHTML = (RecordSyntax == HtmlRecordSyntax);
       STRING Value, Author, Object;
 
       StringBuffer->Clear();
@@ -298,7 +298,7 @@ void SOIF::Present(const RESULT& ResultRecord, const STRING& ElementSet,
     }
   else if (ElementSet.Equals(baseHref))
     {
-      URL(ResultRecord, StringBuffer, GDT_TRUE);
+      URL(ResultRecord, StringBuffer, true);
     } 
   else
     {

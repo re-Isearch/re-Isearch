@@ -26,7 +26,7 @@ OPSTACK::OPSTACK (const OPSTACK& OtherOpstack)
   Reverse ();
 }
 
-GDT_BOOLEAN OPSTACK::IsEmpty() const
+bool OPSTACK::IsEmpty() const
 {
   return Head == NULL;
 }

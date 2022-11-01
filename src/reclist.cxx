@@ -28,14 +28,14 @@ void RECLIST::AddEntry (const RECORD& RecordEntry)
   Table[TotalEntries++] = RecordEntry;
 }
 
-GDT_BOOLEAN RECLIST::GetEntry (const size_t Index, PRECORD RecordEntry) const
+bool RECLIST::GetEntry (const size_t Index, PRECORD RecordEntry) const
 {
   if ((Index > 0) && (Index <= TotalEntries))
     {
       *RecordEntry = Table[Index - 1];
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 void RECLIST::Expand ()
@@ -87,7 +87,7 @@ void RECLIST::Write(PFILE Fp) const
     }
 }
 
-GDT_BOOLEAN RECLIST::Read(PFILE Fp)
+bool RECLIST::Read(PFILE Fp)
 {
   UINT4 Entries = 0;
   obj_t obj = getObjID (Fp);

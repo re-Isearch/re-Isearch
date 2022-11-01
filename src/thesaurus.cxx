@@ -64,11 +64,17 @@ static INT ParentSearchCmp(const void* x, const void* y)
 TH_PARENT_LIST::TH_PARENT_LIST()
 {
   MaxEntries = 100;
+#ifdef __EXCEPTIONS
   try {
     table = new TH_PARENT[MaxEntries];
   } catch (...) {
     MaxEntries = 0;
   }
+#else
+   table = new TH_PARENT[MaxEntries];
+   if (table == NULL) MaxEntries = 0;
+#endif
+
   Count = 0;
 }
 
@@ -366,12 +372,12 @@ void THESAURUS::Init(const STRING& Path)
 
 // This is the index-time constructor.  It parses the input file and
 // creates the synonym table and the indexes for parents and children.
-THESAURUS::THESAURUS(const STRING& Source, const STRING& Target, GDT_BOOLEAN Force)
+THESAURUS::THESAURUS(const STRING& Source, const STRING& Target, bool Force)
 {
   Compile(Source, Target, Force);
 }
 
-GDT_BOOLEAN THESAURUS::Compile(const STRING& SourceFileName, const STRING& Target, GDT_BOOLEAN Force)
+bool THESAURUS::Compile(const STRING& SourceFileName, const STRING& Target, bool Force)
 {
   const STRING SynFile ( Target + DbExtDbSynonyms);
 
@@ -389,7 +395,7 @@ GDT_BOOLEAN THESAURUS::Compile(const STRING& SourceFileName, const STRING& Targe
         SrcFileDate.SetTimeOfFile(SourceFileName);
         SynParFileDate.SetTimeOfFile(SynParentFileName);
         if ((SynFileDate > SrcFileDate) && (SynParFileDate>=SynFileDate))
-          return GDT_TRUE; // Don't need to compile
+          return true; // Don't need to compile
       }
    }
 
@@ -417,7 +423,7 @@ GDT_BOOLEAN THESAURUS::Compile(const STRING& SourceFileName, const STRING& Targe
 
   FILE *Fp = OpenSynonymFile("wb");
   if (!Fp)
-    return GDT_FALSE;
+    return false;
 
   TH_PARENT TheParent;
   TH_ENTRY  TheChild;
@@ -511,7 +517,7 @@ GDT_BOOLEAN THESAURUS::Compile(const STRING& SourceFileName, const STRING& Targe
     Children.WriteTable(Fp);
     fclose(Fp);
   }
-  return GDT_TRUE;
+  return true;
 }
 
 
@@ -605,16 +611,16 @@ void THESAURUS::LoadChildren()
 }
 
 
-GDT_BOOLEAN THESAURUS::MatchParent(const STRING& ParentTerm,  TH_OFF_T *ptr)
+bool THESAURUS::MatchParent(const STRING& ParentTerm,  TH_OFF_T *ptr)
 {
   STRING TheTerm (ParentTerm);
   TheTerm.ToLower();
   TH_PARENT *p = (TH_PARENT*)Parents.Search( TheTerm );
   if (p) {
     if (ptr) *ptr = p->GetGlobalStart();
-    return GDT_TRUE;
+    return true;
   }
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -645,7 +651,7 @@ void THESAURUS::GetChildren(const STRING& ParentTerm, STRLIST* Children)
 
 
 // Tell the caller if there is a match in the list of children terms
-GDT_BOOLEAN THESAURUS::MatchChild(const STRING& Term,  TH_OFF_T *ptr)
+bool THESAURUS::MatchChild(const STRING& Term,  TH_OFF_T *ptr)
 {
   STRING TheTerm (Term);
   TheTerm.ToLower();
@@ -653,9 +659,9 @@ GDT_BOOLEAN THESAURUS::MatchChild(const STRING& Term,  TH_OFF_T *ptr)
   TH_ENTRY *p = (TH_ENTRY*)Children.Search( TheTerm );
   if (p) {
     if (ptr) *ptr = p->GetParentPtr();
-    return GDT_TRUE;
+    return true;
   }
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -687,7 +693,7 @@ main(int argc, char** argv) {
   INT x=0;
   STRING SynonymFileName;
   STRING DbPath,DbName;
-  GDT_BOOLEAN HaveSynonyms=GDT_FALSE;
+  bool HaveSynonyms=false;
   INT LastUsed = 0;
   STRLIST Children;
 
@@ -708,7 +714,7 @@ main(int argc, char** argv) {
           EXIT_ERROR;
         }
         SynonymFileName = argv[x];
-        HaveSynonyms = GDT_TRUE;
+        HaveSynonyms = true;
         LastUsed = x;
       }
     }

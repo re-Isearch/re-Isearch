@@ -79,37 +79,37 @@ extern void (*_IB_Qsort)(void *, size_t, size_t, int (*)(const void *, const voi
 
 #include "logger.hxx"
 extern MessageLogger _globalMessageLogger;
-inline GDT_BOOLEAN set_syslog(const char *name) {
+inline bool set_syslog(const char *name) {
   return _globalMessageLogger.set_syslog(name);
 }
-inline GDT_BOOLEAN set_syslog(const int Ch) {
+inline bool set_syslog(const int Ch) {
   return _globalMessageLogger.set_syslog(Ch);
 }
-inline GDT_BOOLEAN  log_init (FILE *fp) {
+inline bool  log_init (FILE *fp) {
   return _globalMessageLogger.Init(fp);
 }
-inline GDT_BOOLEAN  log_init (int level, const char *prefix, _MessageFunc_t fn) {
+inline bool  log_init (int level, const char *prefix, _MessageFunc_t fn) {
   return _globalMessageLogger.Init(level, prefix, fn);
 }
-inline GDT_BOOLEAN  log_init (int level, _MessageFunc_t fn) {
+inline bool  log_init (int level, _MessageFunc_t fn) {
   return _globalMessageLogger.Init(level, fn);
 }
-inline GDT_BOOLEAN  log_init (_MessageFunc_t fn) {
+inline bool  log_init (_MessageFunc_t fn) {
   return _globalMessageLogger.Init(fn);
 }
-inline GDT_BOOLEAN  log_init (const char *prefix, const char *name=0) {
+inline bool  log_init (const char *prefix, const char *name=0) {
   return _globalMessageLogger.Init(prefix, name);
 }
-inline GDT_BOOLEAN  log_init (const char *prefix, FILE *fp) {
+inline bool  log_init (const char *prefix, FILE *fp) {
   return _globalMessageLogger.Init(prefix, fp);
 }
-inline GDT_BOOLEAN  log_init (int level, FILE *fp) {
+inline bool  log_init (int level, FILE *fp) {
   return _globalMessageLogger.Init(level, fp);
 }
-inline GDT_BOOLEAN  log_init (int level, const char *prefix, FILE *fp) {
+inline bool  log_init (int level, const char *prefix, FILE *fp) {
   return _globalMessageLogger.Init(level, prefix, fp);
 }
-inline GDT_BOOLEAN  log_init (int level, const char *prefix=0, const char *name=0) {
+inline bool  log_init (int level, const char *prefix=0, const char *name=0) {
   return _globalMessageLogger.Init(level, prefix, name);
 }
 inline void         log_message(int level, const char *string) {
@@ -139,7 +139,7 @@ inline void  fatal_message(const STRING& String) { log_message(iLOG_FATAL, Strin
 */
 
 #define _IB_DEBUG  if (_ib_debug) message_log
-extern GDT_BOOLEAN _ib_debug;
+extern bool _ib_debug;
 
 
 ////////////////////////////////// Threads ///////////////////////////////////////
@@ -162,7 +162,7 @@ public:
   ~pThreadLocker() {
     if (locked) pthread_mutex_unlock(m_mutex);
   }
-  GDT_BOOLEAN Ok() const { return locked; }
+  bool Ok() const { return locked; }
 
 private:
   pthread_mutex_t* m_mutex;

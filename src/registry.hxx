@@ -25,7 +25,7 @@ public:
   REGISTRY(const STRING& Title);
   REGISTRY(const CHR *Title);
 
-  GDT_BOOLEAN Empty() const;
+  bool Empty() const;
 
   REGISTRY* clone() const;
   REGISTRY* Add (REGISTRY *Reg1);
@@ -46,10 +46,10 @@ public:
   // and GetData().
 
   void GetEntryList(const STRING& Section, STRLIST *Ptr,
-	GDT_BOOLEAN Cat=GDT_FALSE) const;
+	bool Cat=false) const;
 
 
-  GDT_BOOLEAN ProfileGetBoolean(const STRING& Section, const STRING& Entry);
+  bool ProfileGetBoolean(const STRING& Section, const STRING& Entry);
   int         ProfileGetInteger(const STRING& Section, const STRING& Entry);
   NUMBER      ProfileGetNumber(const STRING& Section, const STRING& Entry);
   STRING      ProfileGetString(const STRING& Section, const STRING& Entry);
@@ -73,7 +73,7 @@ public:
 
 #ifdef G_BOOL
   void ProfileGetString(const STRING& Section, const STRING& Entry,
-	const GDT_BOOLEAN Default, GDT_BOOLEAN *BoolBuffer);
+	const bool Default, bool *BoolBuffer);
 #endif
   void ProfileWriteString(const STRING& Section, const STRING& Entry,
 	const STRLIST& StringlistData);
@@ -81,7 +81,7 @@ public:
 	const STRING& StringData);
 #ifdef G_BOOL
   void ProfileWriteString(const STRING& Section, const STRING& Entry,
-	const GDT_BOOLEAN BooleanData);
+	const bool BooleanData);
 #endif
   void ProfileWriteString(const STRING& Section, const STRING& Entry,
 	const CHR *Data);
@@ -119,18 +119,18 @@ public:
   STRING HtmlMeta() const;
   STRING HtmlMeta(const STRLIST& Position) const;
 
-  GDT_BOOLEAN PrintSgml(const STRING& Filename) const;
+  bool PrintSgml(const STRING& Filename) const;
   void        PrintSgml(FILE* fp) const;
   void        PrintSgml(FILE* fp, const STRLIST& Position) const;
 
-  GDT_BOOLEAN ReadFromSgml(const STRING& Filename);
-  GDT_BOOLEAN ReadFromSgml(FILE *fp);
+  bool ReadFromSgml(const STRING& Filename);
+  bool ReadFromSgml(FILE *fp);
 
   size_t      AddFromSgml(FILE *fp);
   size_t      AddFromSgml(const STRING& Root, FILE *fp);
   size_t      AddFromSgml(const STRLIST& Position, FILE *fp);
 
-  GDT_BOOLEAN ReadFromSgmlBuffer(const STRING& Buffer);
+  bool ReadFromSgmlBuffer(const STRING& Buffer);
   size_t      AddFromSgmlBuffer(const STRING& Buffer);
   size_t      AddFromSgmlBuffer(const STRING& Root, const STRING& Buffer);
   size_t      AddFromSgmlBuffer(const STRLIST& Position, const STRING& Buffer);
@@ -138,7 +138,7 @@ public:
 //STRING      Value() const { return Child ? Child->Data : Data; }
 
   void Write(FILE *Fp) const;
-  GDT_BOOLEAN Read(FILE *Fp);
+  bool Read(FILE *Fp);
   ~REGISTRY();
 
 private:
@@ -173,6 +173,6 @@ private:
 typedef REGISTRY* PREGISTRY;
 
 void Write(const REGISTRY& Registry, FILE *Fp);
-GDT_BOOLEAN Read(PREGISTRY RegistryPtr, FILE *Fp);
+bool Read(PREGISTRY RegistryPtr, FILE *Fp);
 
 #endif

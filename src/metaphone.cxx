@@ -103,12 +103,12 @@ MString::MString(const STRING& in) : STRING(in)
 ////////////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
-GDT_BOOLEAN MString::SlavoGermanic()
+bool MString::SlavoGermanic()
 {
   if ((Find('W') > -1) OR (Find('K') > -1) OR (Find("CZ") > -1) OR (Find("WITZ") > -1))
-    return GDT_TRUE;
+    return true;
 
-  return GDT_FALSE;
+  return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -132,7 +132,7 @@ inline void MString::MetaphAdd(const char* main, const char* alt)
     primary += main;
   if (*alt)
     {
-      alternate = GDT_TRUE;
+      alternate = true;
       if (alt[0] != ' ')
         secondary += alt;
     }
@@ -144,24 +144,24 @@ inline void MString::MetaphAdd(const char* main, const char* alt)
 ////////////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
-GDT_BOOLEAN MString::IsVowel(int at)
+bool MString::IsVowel(int at)
 {
 
   if ((at < 0) OR (at >= length))
-    return GDT_FALSE;
+    return false;
 
   char it = GetAt(at);
 
   if ((it == 'A') OR (it == 'E') OR (it == 'I') OR (it == 'O') OR (it == 'U') OR (it == 'Y') )
-    return GDT_TRUE;
+    return true;
 
-  return GDT_FALSE;
+  return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 //
 ////////////////////////////////////////////////////////////////////////////////
-GDT_BOOLEAN MString::StringAt(int start, int length, ... )
+bool MString::StringAt(int start, int length, ... )
 {
 //  char    buffer[64];
   char     *test = NULL; // = buffer;
@@ -173,13 +173,13 @@ GDT_BOOLEAN MString::StringAt(int start, int length, ... )
   do
     {
       if ((test = va_arg(sstrings, char*)) != NULL && *test && (target == test))
-        return GDT_TRUE;
+        return true;
     }
   while (test && *test != '\0'); 
 
   va_end(sstrings);
 
-  return GDT_FALSE;
+  return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -209,7 +209,7 @@ UINT8 MString::DoubleMetaphone(STRING &metaph, STRING &metaph2)
     return 0;
   last = length - 1;//zero based index
 
-  alternate = GDT_FALSE;
+  alternate = false;
 
   MakeUpperAscii();
 
@@ -971,9 +971,9 @@ UINT8 MString::DoubleMetaphone(STRING &metaph, STRING &metaph2)
   return result;
 }
 
-GDT_BOOLEAN MetaphoneMatch(const UINT8 Hash1, const UINT8 Hash2)
+bool MetaphoneMatch(const UINT8 Hash1, const UINT8 Hash2)
 {
-  if (Hash1 == Hash2) return GDT_TRUE;
+  if (Hash1 == Hash2) return true;
 
 #define __Low32(_x)  (int)((_x) &  0x00000000FFFFFFFFLL)
 #define __High32(_x) (int)(((_x) & 0xFFFFFFFF00000000LL) >> 32)
@@ -984,13 +984,13 @@ GDT_BOOLEAN MetaphoneMatch(const UINT8 Hash1, const UINT8 Hash2)
 
   if (low1 && ((low1 == low2) || (low1 == high2)))
     {
-      return GDT_TRUE;
+      return true;
     }
   if (high1 && ((high1 == high2) || (high1 == low2)))
     {
-      return GDT_TRUE;
+      return true;
     }
-  return GDT_FALSE;
+  return false;
 }
 
 

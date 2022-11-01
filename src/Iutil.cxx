@@ -146,7 +146,7 @@ main(int argc, char **argv)
 
   if (argv0 == NULL) argv0 = "Iutil";
 
-   __Register_IB_Application(argv0,  stderr, GDT_FALSE);
+   __Register_IB_Application(argv0,  stderr, false);
 #define DEF_LOG (LOG_PANIC|LOG_FATAL|LOG_ERROR|LOG_ERRNO|LOG_WARN|LOG_NOTICE|LOG_INFO)
   log_init(DEF_LOG, argv[0], stderr);
   while (x < argc) {
@@ -620,7 +620,7 @@ main(int argc, char **argv)
   }
   if (Synonyms) {
     THESAURUS MyThesaurus;
-    if (MyThesaurus.Compile(SynonymFileName, DBName, GDT_TRUE))
+    if (MyThesaurus.Compile(SynonymFileName, DBName, true))
       message_log (LOG_INFO, "Thesaurus '%s' compiled.", SynonymFileName.c_str());
     else
       message_log (LOG_ERROR, "Compile of thesaurus '%s' failed.", SynonymFileName.c_str());
@@ -702,7 +702,7 @@ main(int argc, char **argv)
 	  } else {
 	    NewPath = s;
 	  }
-	  Record.SetPath(NewPath.Trim(GDT_TRUE));
+	  Record.SetPath(NewPath.Trim(true));
 	  OldPath += "=";
 	  OldPath += NewPath;
 	  PathList.AddEntry(OldPath);
@@ -726,7 +726,7 @@ main(int argc, char **argv)
       RootDir = pdb->GetWorkingDirectory();
 
     if (!IsRootDirectory(RootDir)) {
-      pdb->setUseRelativePaths(GDT_TRUE);
+      pdb->setUseRelativePaths(true);
       message_log (LOG_INFO, "Relativizing around '%s' (%d records)", RootDir.c_str(), y);
       for (INT x = 1; x <= y; x++) {
         pdb->GetDocumentInfo(x, &Record);

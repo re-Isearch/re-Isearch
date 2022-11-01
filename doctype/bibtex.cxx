@@ -654,7 +654,7 @@ DocPresent (const RESULT& ResultRecord,
     }
 
   STRING Value;
-  GDT_BOOLEAN UseHtml = (RecordSyntax == HtmlRecordSyntax);
+  bool UseHtml = (RecordSyntax == HtmlRecordSyntax);
   if (UseHtml)
     {
       HtmlHead (ResultRecord, ElementSet, StringBuffer);

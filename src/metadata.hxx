@@ -28,7 +28,7 @@ public:
 
   METADATA& operator=(const METADATA& OtherMetadata);
 
-  GDT_BOOLEAN SetCharset(const CHARSET& NewCharset);
+  bool SetCharset(const CHARSET& NewCharset);
 
   REGISTRY     *Metadata() const { return mdRegistry; };
   const STRING& MdType() const { return mdType; };
@@ -66,13 +66,13 @@ public:
 
   STRING HtmlMeta(const REGISTRY *r) const;
   void Write(PFILE Fp) const;
-  GDT_BOOLEAN Read(FILE *Fp);
-  GDT_BOOLEAN Add(FILE *Fp);
+  bool Read(FILE *Fp);
+  bool Add(FILE *Fp);
 
   ~METADATA();
 private:
-  GDT_BOOLEAN Load (const STRING& MdType);
-  GDT_BOOLEAN Load (const STRING& MdType, const STRING& DefaultsPath);
+  bool Load (const STRING& MdType);
+  bool Load (const STRING& MdType, const STRING& DefaultsPath);
   STRING Text(const REGISTRY* r, STRSTACK *Stack = NULL) const;
   STRING HtmlMeta(REGISTRY *r, size_t level, size_t depth, const STRING& Tag) const;
 
@@ -133,7 +133,7 @@ public:
   void Append(FILE *Fp) const {Metadata->Append(Fp); }
   void Append(const STRING& Filename) const {Metadata->Append(Filename); }
 
-  GDT_BOOLEAN IsEmpty(const STRING& Name) const;
+  bool IsEmpty(const STRING& Name) const;
 
   // Set the bits in the Attribute set
   void Set(const STRING& Name, const STRING& Value);
@@ -159,6 +159,6 @@ private:
 typedef METADATA* PMETADATA;
 
 void Write(const METADATA& Registry, PFILE Fp);
-GDT_BOOLEAN Read(PMETADATA RegistryPtr, PFILE Fp);
+bool Read(PMETADATA RegistryPtr, PFILE Fp);
 
 #endif

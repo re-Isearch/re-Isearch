@@ -77,8 +77,8 @@ typedef enum {
   OperatorFile,
 } t_Operator;
 
-inline GDT_BOOLEAN IsBinaryOperator(t_Operator Op) { return Op >= OperatorOr; }
-inline GDT_BOOLEAN IsUnaryOperator(t_Operator Op)   { return Op > OperatorNoop && Op < OperatorOr;  }
+inline bool IsBinaryOperator(t_Operator Op) { return Op >= OperatorOr; }
+inline bool IsUnaryOperator(t_Operator Op)   { return Op > OperatorNoop && Op < OperatorOr;  }
 
 class OPOBJ {
 friend class OPSTACK;
@@ -103,7 +103,7 @@ public:
   virtual STRING GetOperatorString() const { return NulString; }
   virtual size_t GetTotalEntries () const { return 0; }
 //virtual void AddEntry (const IRESULT&, const INT) { }
-  virtual GDT_BOOLEAN GetEntry (const size_t, PIRESULT) const { return GDT_FALSE; }
+  virtual bool GetEntry (const size_t, PIRESULT) const { return false; }
 
   virtual OPOBJ *Or (const OPOBJ&)        { return NULL; }
   virtual OPOBJ *Nor (const OPOBJ&)       { return NULL; }
@@ -158,7 +158,7 @@ public:
   virtual DOUBLE GetMaxScore () const {return 0;}
   virtual DOUBLE GetMinScore () const {return 0;}
 
-  virtual GDT_BOOLEAN IsEmpty() const { return GDT_TRUE; }
+  virtual bool IsEmpty() const { return true; }
 
   virtual ~OPOBJ();
 

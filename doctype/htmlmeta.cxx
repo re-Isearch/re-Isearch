@@ -155,7 +155,7 @@ HyperText Markup Language (W3C HTML)\n\
 
 STRING& HTMLMETA::DescriptiveName(const STRING& FieldName, PSTRING Value) const
 {
-  GDT_BOOLEAN http_equiv = (FieldName.GetChr(1) == '$');
+  bool http_equiv = (FieldName.GetChr(1) == '$');
 
   if (http_equiv)
     *Value = FieldName.c_str() + 1;
@@ -177,7 +177,7 @@ STRING& HTMLMETA::DescriptiveName(const STRING& FieldName, PSTRING Value) const
 }
 
 
-GDT_BOOLEAN HTMLMETA::Summary(const RESULT& ResultRecord, const STRING& RecordSyntax,
+bool HTMLMETA::Summary(const RESULT& ResultRecord, const STRING& RecordSyntax,
 	PSTRING StringBuffer) const
 {
   const char *fields[] = {
@@ -197,8 +197,8 @@ GDT_BOOLEAN HTMLMETA::Summary(const RESULT& ResultRecord, const STRING& RecordSy
   return summary.GetLength() != 0;
 }
 
-GDT_BOOLEAN HTMLMETA::URL(const RESULT& ResultRecord, PSTRING StringBuffer,
-	GDT_BOOLEAN OnlyRemote) const
+bool HTMLMETA::URL(const RESULT& ResultRecord, PSTRING StringBuffer,
+	bool OnlyRemote) const
 {
   // <BASE HREF="xxx"> -> $LOCATION like <META HTTP-EQUIV="LOCATION" VALUE="xxx">
   STRING url;
@@ -518,7 +518,7 @@ void HTMLMETA::ParseRecords (const RECORD& FileRecord)
       message_log (LOG_DEBUG, "%s: Key set to '%s'", Doctype.c_str(), key.c_str());
 
       Db->ComposeDbFn (&s, DbExtCat);
-      if (MkDir(s, 0, GDT_TRUE) == -1)
+      if (MkDir(s, 0, true) == -1)
 	{
 	  message_log (LOG_ERRNO, "%s: Can't create filter directory '%s'", Doctype.c_str(), s.c_str() );
 	  return;
@@ -526,7 +526,7 @@ void HTMLMETA::ParseRecords (const RECORD& FileRecord)
       // <db_ext>.cat/<Hash>/<Key>.html
       outfile =  AddTrailingSlash(s);
       outfile.Cat (((long)key.CRC16()) % 1000);
-      if (MkDir(outfile, 0, GDT_TRUE) == -1)
+      if (MkDir(outfile, 0, true) == -1)
 	outfile = s; // Can't make it
       AddTrailingSlash(&outfile);
       outfile.Cat (key);
@@ -569,7 +569,7 @@ void HTMLMETA::ParseRecords (const RECORD& FileRecord)
       NewRecord.SetDate ( mod_input );
 
       STRING urifile;
-      if (Db->_write_resource_path(outfile, FileRecord, &urifile) == GDT_FALSE)
+      if (Db->_write_resource_path(outfile, FileRecord, &urifile) == false)
 	message_log (LOG_ERRNO, "%s: Could not create '%s'", Doctype.c_str(), urifile.c_str());
 
       Db->DocTypeAddRecord(NewRecord);
@@ -1288,7 +1288,7 @@ void HTMLMETA::Present (const RESULT& ResultRecord, const STRING& ElementSet,
       DOCTYPE::Present (ResultRecord, "title", StringBuffer);
       if (StringBuffer->IsEmpty())
 	{
-	  URL(ResultRecord, StringBuffer, GDT_FALSE);
+	  URL(ResultRecord, StringBuffer, false);
 	}
       else
 	StringBuffer->Pack();
@@ -1338,7 +1338,7 @@ void HTMLMETA::Present (const RESULT& ResultRecord, const STRING& ElementSet,
       Position.AddEntry("NAME");
       Contents.AddEntry( ResultRecord.GetLanguageName() );
       Meta.SetData(Position, Contents);
-      if (URL(ResultRecord, &Value, GDT_TRUE))
+      if (URL(ResultRecord, &Value, true))
         {
 	  Position.Clear();
 	  Contents.Clear();

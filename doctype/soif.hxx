@@ -36,9 +36,9 @@ public:
   virtual void Present(const RESULT& ResultRecord, const STRING& ElementSet,
 	const STRING & RecordSyntax, STRING *StringBuffer) const;
 
-  virtual GDT_BOOLEAN GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
-  virtual GDT_BOOLEAN URL(const RESULT& ResultRecord, STRING *StringBuffer,
-   GDT_BOOLEAN OnlyRemote) const;
+  virtual bool GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
+  virtual bool URL(const RESULT& ResultRecord, STRING *StringBuffer,
+   bool OnlyRemote) const;
 
   ~SOIF();
 private:

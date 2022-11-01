@@ -43,7 +43,7 @@ void ATTR::Write(PFILE Fp) const {
   ::Write(AttrValue, Fp);
 }
 
-GDT_BOOLEAN ATTR::Read(PFILE Fp)
+bool ATTR::Read(PFILE Fp)
 {
   obj_t obj = getObjID (Fp);
   if (obj != objATTR)

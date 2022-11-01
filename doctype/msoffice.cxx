@@ -62,7 +62,7 @@ public:
 
    void ParseFields(RECORD *RecordPtr);
 
-   GDT_BOOLEAN GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
+   bool GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const;
 
    void Present (const RESULT& ResultRecord,
          const STRING& ElementSet, const STRING& RecordSyntax,
@@ -72,7 +72,7 @@ public:
 
 private:
    STRING desc;
-   GDT_BOOLEAN usingDefaultFilter;
+   bool usingDefaultFilter;
 };
 
 static const char myDescription[] = "M$ Office OOXML Plugin";
@@ -119,7 +119,7 @@ IBDOC_MSOFFICE::IBDOC_MSOFFICE(PIDBOBJ DbParent, const STRING& Name) : _VMEMODOC
 }
 
 
-GDT_BOOLEAN IBDOC_MSOFFICE::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
+bool IBDOC_MSOFFICE::GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
 {
   STRING fullpath (  Db->_get_resource_path(ResultRecord.GetFullFileName()) );
   if (StringBuffer)
@@ -194,8 +194,8 @@ off_t IBDOC_MSOFFICE::RunPipe(FILE *fp, const STRING& Fn)
   tv.tv_sec =  MAX_TIME_BETWEEN_CHARS;
   tv.tv_usec = 0;
 
-//  GDT_BOOLEAN   nonblocking =  (ioctl(fileno(pp), FIONBIO) == EINVAL) ? GDT_FALSE : GDT_TRUE;
-  GDT_BOOLEAN   nonblocking = GDT_FALSE;
+//  bool   nonblocking =  (ioctl(fileno(pp), FIONBIO) == EINVAL) ? false : true;
+  bool   nonblocking = false;
   int           retval      = nonblocking ? select(1, &rfds, NULL, NULL, &tv) : 1;
 
 //cerr << "NonBlock = " << (int)nonblocking << " First retval = " << (int)retval << endl;

@@ -129,25 +129,25 @@ int MDTREC::TTL(const SRCH_DATE& Now) const
 }
 
 
-void MDTREC::SetDeleted(const GDT_BOOLEAN Flag)
+void MDTREC::SetDeleted(const bool Flag)
 {
   Property = Property & 0x7F;
   if (Flag) Property = Property | 0x80;
 }
 
-GDT_BOOLEAN MDTREC::GetDeleted() const
+bool MDTREC::GetDeleted() const
 {
   return (Property & 0x7f) != Property;
 }
 
 
-GDT_BOOLEAN MDTREC::SetKey(const STRING& NewKey)
+bool MDTREC::SetKey(const STRING& NewKey)
 {
-  GDT_BOOLEAN Ok = GDT_TRUE;
+  bool Ok = true;
   if (NewKey.GetLength() > DocumentKeySize)
     {
       message_log (LOG_WARN, "Record Key too long (%d), truncated..", NewKey.GetLength());
-      Ok = GDT_FALSE;
+      Ok = false;
       NewKey.Right(DocumentKeySize).Copy(Key, DocumentKeySize);
     }
   else
@@ -304,55 +304,55 @@ SRCH_DATE MDTREC::GetDate(FILE *fp, INT Index) const
   return date;
 }
 
-GDT_BOOLEAN MDTREC::Write(FILE *fp, INT Index) const
+bool MDTREC::Write(FILE *fp, INT Index) const
 {
   if (fp == NULL)
     {
       message_log (LOG_PANIC, "Can't write MDT element: MDTREC::Write(NULL, %d)", Index);
-      return GDT_FALSE;
+      return false;
     }
   if (Index)
     {
       if (fseek (fp, (Index - 1) * sizeof (MDTREC) + SIZEOF_MAGIC, SEEK_SET) == -1)
 	{
 	  message_log (LOG_ERRNO, "Seek error to write MDT element %d", Index); 
-	  return GDT_FALSE; // ERROR
+	  return false; // ERROR
 	}
     }
   // Purify and Valgrind: Ignore Unitialized Memory Warning!
   return fwrite (this, sizeof (MDTREC),  1, fp) == 1;
 }
 
-GDT_BOOLEAN MDTREC::Read(FILE *fp, INT Index)
+bool MDTREC::Read(FILE *fp, INT Index)
 {
   MDTHASHTABLE  *ht = HashTable;
   if (fp == NULL)
     {
       message_log (LOG_PANIC, "Can't read MDT element: MDTREC::Read(NULL, %d)", Index);
-      return GDT_FALSE;
+      return false;
     }
   if (Index)
     {
       // Purify: Ignore Unitialized Memory Warning!
       if (-1 == fseek (fp, (Index - 1) * sizeof (MDTREC) + SIZEOF_MAGIC, SEEK_SET))
 	{
-	  SetDeleted(GDT_TRUE);
-	  return GDT_FALSE;
+	  SetDeleted(true);
+	  return false;
 	}
     }
   if (fread (this, sizeof (MDTREC), 1, fp) != 1)
-    return GDT_FALSE;
+    return false;
 
   HashTable = ht;
-  return GDT_TRUE;
+  return true;
 }
 
 
-GDT_BOOLEAN MDTREC::IsDeleted(FILE *fp, INT Index)
+bool MDTREC::IsDeleted(FILE *fp, INT Index)
 {
   BYTE deleted = 0xFF;
   if (-1 != fseek (fp, Index * sizeof (MDTREC) + SIZEOF_MAGIC - sizeof(BYTE), SEEK_SET))
-    if (fread (&deleted, sizeof (BYTE), 1, fp) != 1) return GDT_TRUE; // Error handle as deleted
+    if (fread (&deleted, sizeof (BYTE), 1, fp) != 1) return true; // Error handle as deleted
   return deleted & 0xF0;
 }
 

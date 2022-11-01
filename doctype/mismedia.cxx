@@ -153,7 +153,7 @@ void MISMEDIA::SourceMIMEContent(PSTRING sPtr) const
 
 static const char *URLencode(const STRING& Str, PSTRING Code)
 {
-  GDT_BOOLEAN quot = GDT_FALSE;
+  bool quot = false;
   static const char HEX[] = "0123456789ABCDEF";
   STRING q;
   for(const UCHR *tp = (const UCHR *)Str; *tp; tp++)
@@ -215,7 +215,7 @@ void MISMEDIA::Present (const RESULT& ResultRecord,
 	const STRING& ElementSet, const STRING& RecordSyntax,
 	PSTRING StringBuffer) const
 {
-  const GDT_BOOLEAN UseHtml = (RecordSyntax == HtmlRecordSyntax);
+  const bool UseHtml = (RecordSyntax == HtmlRecordSyntax);
   STRING Tmp;
   if (ElementSet == SOURCE_MAGIC)
     {
@@ -228,13 +228,13 @@ void MISMEDIA::Present (const RESULT& ResultRecord,
       DOCTYPE::Present (ResultRecord, UnifiedName(KeyField, &Tmp), &Call);
       DOCTYPE::Present (ResultRecord, UnifiedName(Title, &Tmp), &Titel);
       DOCTYPE::Present (ResultRecord, UnifiedName(DateOfIssue,&Tmp), &Year);
-      GDT_BOOLEAN got = GDT_FALSE;
+      bool got = false;
 
       StringBuffer->Clear();
       if (Call.GetLength())
 	{
 	  Headline.Cat (Call);
-	  got = GDT_TRUE;
+	  got = true;
 	}
       if (Titel.GetLength() == 0)
 	DOCTYPE::Present (ResultRecord, "Title", &Titel);
@@ -243,14 +243,14 @@ void MISMEDIA::Present (const RESULT& ResultRecord,
 	  if (got)
 	    Headline.Cat (": ");
 	  Headline.Cat (Titel);
-	  got = GDT_TRUE;
+	  got = true;
 	}
       if (Year.GetLength())
 	{
 	  if (got)
 	    Headline.Cat ("; ");
 	  Headline.Cat (Year);
-	  got = GDT_TRUE;
+	  got = true;
 	}
       if (! got)
 	{
@@ -258,7 +258,7 @@ void MISMEDIA::Present (const RESULT& ResultRecord,
 	  return;
 	}
       if (UseHtml)
-	HtmlCat(Headline, StringBuffer, GDT_FALSE);
+	HtmlCat(Headline, StringBuffer, false);
       else
 	StringBuffer->Cat (Headline);
     }
@@ -268,7 +268,7 @@ void MISMEDIA::Present (const RESULT& ResultRecord,
       DOCTYPE::Present (ResultRecord, ElementSet, "", &Tmp);
       if (Tmp.GetLength())
         {
-	  GDT_BOOLEAN showS = (UseHtml && StandortsURL.GetLength());
+	  bool showS = (UseHtml && StandortsURL.GetLength());
           // These are seperated by ';'
           UCHR *buf = Tmp.NewUCString();
           UCHR *tp2, *tp = buf;
@@ -365,7 +365,7 @@ HREF=\"i.search?DATABASE%3D" << DBname
 	      *tp2++='\0';
 	      while (isspace(*tp)) tp++;
 	      *StringBuffer << Anchor << URLencode(tp, &Tmp) << "%22\">";
-	      HtmlCat(tp, StringBuffer, GDT_FALSE);
+	      HtmlCat(tp, StringBuffer, false);
 	      *StringBuffer << "</A>; ";
 	      tp = tp2;
 	    }
@@ -375,7 +375,7 @@ HREF=\"i.search?DATABASE%3D" << DBname
 	      *StringBuffer << Anchor
 		<< URLencode(tp, &Tmp)
 		<< "%22\">";
-	      HtmlCat(tp, StringBuffer, GDT_FALSE);
+	      HtmlCat(tp, StringBuffer, false);
 	      *StringBuffer << "</A>";
 	    }
 	  delete[]buf;

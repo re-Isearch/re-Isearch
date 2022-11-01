@@ -42,53 +42,53 @@ public:
 
   void           Clear() { Type = any; }
 
-  GDT_BOOLEAN    Defined() const    { return Type >  0;          }
-  GDT_BOOLEAN    Ok() const         { return Type >= 0;          }
-  GDT_BOOLEAN    Equals(const FIELDTYPE Other) const {return Type == Other.Type; }
-  GDT_BOOLEAN    Equals(const BYTE Other) const      {return (BYTE)Type == Other;      }
+  bool    Defined() const    { return Type >  0;          }
+  bool    Ok() const         { return Type >= 0;          }
+  bool    Equals(const FIELDTYPE Other) const {return Type == Other.Type; }
+  bool    Equals(const BYTE Other) const      {return (BYTE)Type == Other;      }
 
-  GDT_BOOLEAN    IsBoolean() const  { return (Type == numerical) || (Type == boolean); }
+  bool    IsBoolean() const  { return (Type == numerical) || (Type == boolean); }
 
-  GDT_BOOLEAN    IsText() const     { return Type <= text || Type == isbn;      }
-  GDT_BOOLEAN    IsString() const   { return IsText() || IsPhonetic() || IsHash() ||
+  bool    IsText() const     { return Type <= text || Type == isbn;      }
+  bool    IsString() const   { return IsText() || IsPhonetic() || IsHash() ||
 			IsCaseHash() || IsPrivHash() || IsLexiHash(); }
-  GDT_BOOLEAN    IsNumeric() const { return Type == numerical || Type == computed || Type == currency || Type == dotnumber; }
-  GDT_BOOLEAN    IsNumerical() const{ return Type == numerical || Type == dotnumber || Type == ttl; }
-  GDT_BOOLEAN    IsComputed() const { return Type == computed;  }
-  GDT_BOOLEAN    IsNumericalRange() const { return Type == numericalrange; }
-  GDT_BOOLEAN    IsDate() const     { return Type == date || Type == time || Type == ttl_expires; }
-  GDT_BOOLEAN    IsDateRange() const{ return Type == daterange; }
-  GDT_BOOLEAN    IsGPoly() const    { return Type == gpoly;     }
-  GDT_BOOLEAN    IsISBN() const     { return Type == isbn;      }
-  GDT_BOOLEAN    IsIBAN() const     { return Type == iban;      }
-  GDT_BOOLEAN    isBIC() const      { return Type == bic;       }
-  GDT_BOOLEAN    isBankingnum() const  { return Type == iban || Type == bic || Type == creditcardnum;}
-  GDT_BOOLEAN    IsBox() const      { return Type == box;       }
-  GDT_BOOLEAN    IsCurrency() const { return Type == currency;  }
-  GDT_BOOLEAN    IsPhoneHash() const{ return Type == phonhash || Type == phonhash2; }
-  GDT_BOOLEAN    IsMetaphone() const{ return Type == metaphone || Type == metaphone2; }
-  GDT_BOOLEAN    IsPhonetic() const { return IsPhoneHash() || IsMetaphone(); }
-  GDT_BOOLEAN    IsHash() const     { return Type == hash;      }
-  GDT_BOOLEAN    IsCaseHash() const { return Type == casehash;  }
-  GDT_BOOLEAN    IsLexiHash() const { return Type == lexi;      }
-  GDT_BOOLEAN    IsPrivHash() const { return Type == privhash;  }
-  GDT_BOOLEAN    IsDBMStr() const   { return Type == db_string; }
-  GDT_BOOLEAN    IsCallback() const { return IsCallback(Type);  }
-  GDT_BOOLEAN    IsExternal() const { return IsExternal(Type);  }
+  bool    IsNumeric() const { return Type == numerical || Type == computed || Type == currency || Type == dotnumber; }
+  bool    IsNumerical() const{ return Type == numerical || Type == dotnumber || Type == ttl; }
+  bool    IsComputed() const { return Type == computed;  }
+  bool    IsNumericalRange() const { return Type == numericalrange; }
+  bool    IsDate() const     { return Type == date || Type == time || Type == ttl_expires; }
+  bool    IsDateRange() const{ return Type == daterange; }
+  bool    IsGPoly() const    { return Type == gpoly;     }
+  bool    IsISBN() const     { return Type == isbn;      }
+  bool    IsIBAN() const     { return Type == iban;      }
+  bool    isBIC() const      { return Type == bic;       }
+  bool    isBankingnum() const  { return Type == iban || Type == bic || Type == creditcardnum;}
+  bool    IsBox() const      { return Type == box;       }
+  bool    IsCurrency() const { return Type == currency;  }
+  bool    IsPhoneHash() const{ return Type == phonhash || Type == phonhash2; }
+  bool    IsMetaphone() const{ return Type == metaphone || Type == metaphone2; }
+  bool    IsPhonetic() const { return IsPhoneHash() || IsMetaphone(); }
+  bool    IsHash() const     { return Type == hash;      }
+  bool    IsCaseHash() const { return Type == casehash;  }
+  bool    IsLexiHash() const { return Type == lexi;      }
+  bool    IsPrivHash() const { return Type == privhash;  }
+  bool    IsDBMStr() const   { return Type == db_string; }
+  bool    IsCallback() const { return IsCallback(Type);  }
+  bool    IsExternal() const { return IsExternal(Type);  }
 
   FIELDTYPE& operator=(const FIELDTYPE& OtherType);
 
   friend ostream& operator <<(ostream&, const FIELDTYPE&);
-  friend GDT_BOOLEAN operator ==(const FIELDTYPE& s1, const FIELDTYPE& s2);
-  friend GDT_BOOLEAN operator !=(const FIELDTYPE& s1, const FIELDTYPE& s2);
-  friend GDT_BOOLEAN operator ==(const FIELDTYPE& s1, const BYTE s2);
-  friend GDT_BOOLEAN operator !=(const FIELDTYPE& s1, const BYTE s2);
-  friend GDT_BOOLEAN operator ==(const BYTE s1, const FIELDTYPE& s2);
-  friend GDT_BOOLEAN operator !=(const BYTE s1, const FIELDTYPE& s2);
+  friend bool operator ==(const FIELDTYPE& s1, const FIELDTYPE& s2);
+  friend bool operator !=(const FIELDTYPE& s1, const FIELDTYPE& s2);
+  friend bool operator ==(const FIELDTYPE& s1, const BYTE s2);
+  friend bool operator !=(const FIELDTYPE& s1, const BYTE s2);
+  friend bool operator ==(const BYTE s1, const FIELDTYPE& s2);
+  friend bool operator !=(const BYTE s1, const FIELDTYPE& s2);
 
 private:
-  GDT_BOOLEAN IsExternal(const BYTE& type) const { return type >= db_string && type <= callback7;}
-  GDT_BOOLEAN IsCallback(const BYTE& type) const { return type >= callback && type <= callback7; }
+  bool IsExternal(const BYTE& type) const { return type >= db_string && type <= callback7;}
+  bool IsCallback(const BYTE& type) const { return type >= callback && type <= callback7; }
   enum datatypes   Type;
 };
 
@@ -139,7 +139,7 @@ public:
   ATTRLIST&   Cat(const ATTRLIST& OtherAttrlist);
 
   void        AddEntry(const ATTR& AttrRecord);
-  GDT_BOOLEAN GetEntry(const size_t Index, PATTR AttrRecord) const;
+  bool GetEntry(const size_t Index, PATTR AttrRecord) const;
   void        SetEntry(const size_t Index, const ATTR& AttrRecord);
   void        DeleteEntry(const size_t Index);
   void        Expand();
@@ -151,8 +151,8 @@ public:
   void        SetValue(const STRING& SetId, const INT AttrType, const STRING& AttrValue);
   void        SetValue(const STRING& SetId, const INT AttrType, const INT AttrValue);
   void        ClearAttr(const STRING& SetId, const INT AttrType, const INT AttrValue);
-  GDT_BOOLEAN GetValue(const STRING& SetId, const INT AttrType, PSTRING StringBuffer) const;
-  GDT_BOOLEAN GetValue(const STRING& SetId, const INT AttrType, INT *IntBuffer) const;
+  bool GetValue(const STRING& SetId, const INT AttrType, PSTRING StringBuffer) const;
+  bool GetValue(const STRING& SetId, const INT AttrType, INT *IntBuffer) const;
   STRING      GetValue(const STRING& SetId, const INT AttrType) const;
 
 // Index Attributes (Features)
@@ -160,62 +160,62 @@ public:
   FIELDOBJ    AttrGetFieldObj() const;
 
   void        AttrSetFieldName(const STRING& FieldName);
-  GDT_BOOLEAN AttrGetFieldName(PSTRING StringBuffer) const;
+  bool AttrGetFieldName(PSTRING StringBuffer) const;
   STRING      AttrGetFieldName() const;
 
   void        AttrSetFieldType(const FIELDTYPE& FieldType);
-  GDT_BOOLEAN AttrGetFieldType(PSTRING StringBuffer) const;
+  bool AttrGetFieldType(PSTRING StringBuffer) const;
   FIELDTYPE   AttrGetFieldType() const;
 
 #if 1 /* These are now obsolete by the full blow type system */
-  void        AttrSetFieldNumerical (const GDT_BOOLEAN Set);
-  GDT_BOOLEAN AttrGetFieldNumerical () const;
+  void        AttrSetFieldNumerical (const bool Set);
+  bool AttrGetFieldNumerical () const;
 
-  void        AttrSetFieldDate (const GDT_BOOLEAN Set);
-  GDT_BOOLEAN AttrGetFieldDate () const;
+  void        AttrSetFieldDate (const bool Set);
+  bool AttrGetFieldDate () const;
 #endif
 
 // Search Term Attributes
-  void        AttrSetFreeForm (const GDT_BOOLEAN Set);
-  GDT_BOOLEAN AttrGetFreeForm () const;
+  void        AttrSetFreeForm (const bool Set);
+  bool AttrGetFreeForm () const;
 
-  void        AttrSetPhrase(const GDT_BOOLEAN Phrase);
-  GDT_BOOLEAN AttrGetPhrase() const;
+  void        AttrSetPhrase(const bool Phrase);
+  bool AttrGetPhrase() const;
 
-  void        AttrSetRightTruncation(const GDT_BOOLEAN RightTruncate);
-  GDT_BOOLEAN AttrGetRightTruncation() const;
+  void        AttrSetRightTruncation(const bool RightTruncate);
+  bool AttrGetRightTruncation() const;
 
-  void        AttrSetLeftTruncation(const GDT_BOOLEAN LeftTruncate);
-  GDT_BOOLEAN AttrGetLeftTruncation() const;
+  void        AttrSetLeftTruncation(const bool LeftTruncate);
+  bool AttrGetLeftTruncation() const;
 
-  void        AttrSetLeftAndRightTruncation(const GDT_BOOLEAN Truncate);
-  GDT_BOOLEAN AttrGetLeftAndRightTruncation() const;
+  void        AttrSetLeftAndRightTruncation(const bool Truncate);
+  bool AttrGetLeftAndRightTruncation() const;
 
-  void        AttrSetGlob(const GDT_BOOLEAN RightTruncate);
-  GDT_BOOLEAN AttrGetGlob() const;
+  void        AttrSetGlob(const bool RightTruncate);
+  bool AttrGetGlob() const;
 
-  void        AttrSetAlwaysMatches(const GDT_BOOLEAN AlwaysMatches);
-  GDT_BOOLEAN AttrGetAlwaysMatches() const;
+  void        AttrSetAlwaysMatches(const bool AlwaysMatches);
+  bool AttrGetAlwaysMatches() const;
 
-  void        AttrSetPhonetic(const GDT_BOOLEAN Phonetic);
-  GDT_BOOLEAN AttrGetPhonetic() const;
+  void        AttrSetPhonetic(const bool Phonetic);
+  bool AttrGetPhonetic() const;
 
-  void        AttrSetExactTerm(const GDT_BOOLEAN Exact);
-  GDT_BOOLEAN AttrGetExactTerm() const;
+  void        AttrSetExactTerm(const bool Exact);
+  bool AttrGetExactTerm() const;
 
   void        AttrSetRelation(const INT Relation);
-  GDT_BOOLEAN AttrGetRelation(INT *IntBuffer) const;
+  bool AttrGetRelation(INT *IntBuffer) const;
   INT         AttrGetRelation() const; // -1 means failed
 
   void        AttrSetStructure(const INT Structure);
-  GDT_BOOLEAN AttrGetStructure(INT *IntBuffer) const;
+  bool AttrGetStructure(INT *IntBuffer) const;
   INT         AttrGetStructure() const; // -1 means failed
 
   void        AttrSetTermWeight(const INT TermWeight);
   INT         AttrGetTermWeight() const;
 
   void        Write(PFILE Fp) const;
-  GDT_BOOLEAN Read(PFILE Fp);
+  bool Read(PFILE Fp);
 
   ~ATTRLIST();
 private:
@@ -233,7 +233,7 @@ inline void Write (const ATTRLIST& Attrlist, PFILE Fp)
   Attrlist.Write (Fp);
 }
 
-inline GDT_BOOLEAN Read (PATTRLIST AttrlistPtr, PFILE Fp)
+inline bool Read (PATTRLIST AttrlistPtr, PFILE Fp)
 {
   return AttrlistPtr->Read (Fp);
 }

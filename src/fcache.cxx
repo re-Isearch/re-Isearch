@@ -34,7 +34,7 @@ FCACHE::FCACHE(const PIDBOBJ parent)
   Fp = NULL;
 }
 
-FCACHE::FCACHE(const PIDBOBJ parent, const STRING& fieldName, GDT_BOOLEAN useDisk)
+FCACHE::FCACHE(const PIDBOBJ parent, const STRING& fieldName, bool useDisk)
 {
   Parent = parent;
   Fp = NULL;
@@ -48,20 +48,20 @@ FCACHE::~FCACHE ()
 
 
 
-GDT_BOOLEAN FCACHE::GetFieldName(STRING *fieldNamePtr) const
+bool FCACHE::GetFieldName(STRING *fieldNamePtr) const
 {
   if (fieldNamePtr)
     *fieldNamePtr = FieldName;
   return !(FieldTotal == 0 || FieldName.IsEmpty());
 }
 
-GDT_BOOLEAN FCACHE::SetFieldName(const STRING& fieldName, GDT_BOOLEAN useDisk)
+bool FCACHE::SetFieldName(const STRING& fieldName, bool useDisk)
 {
   return LoadFieldCache(fieldName, useDisk) != 0;
 }
 
 // Load the Attribute Cache..
-size_t FCACHE::LoadFieldCache(const STRING& fieldName, GDT_BOOLEAN useDisk)
+size_t FCACHE::LoadFieldCache(const STRING& fieldName, bool useDisk)
 {
   if (!FieldName.CaseEquals(fieldName)) {
     STRING          Fn;
@@ -72,7 +72,7 @@ size_t FCACHE::LoadFieldCache(const STRING& fieldName, GDT_BOOLEAN useDisk)
 	Fp = NULL;
       }
     FieldTotal = 0;
-    Disk = GDT_TRUE;
+    Disk = true;
     if (!(FieldName = fieldName).IsEmpty() && Parent->DfdtGetFileName(FieldName, &Fn))
       {
 	// Have the path to the field table
@@ -81,7 +81,7 @@ size_t FCACHE::LoadFieldCache(const STRING& fieldName, GDT_BOOLEAN useDisk)
 	    if (Cache.CreateMap(Fn, MapRandom))
 	      {
 		message_log (LOG_DEBUG, "Created Field Cache for %s", FieldName.c_str());
-		Disk = GDT_FALSE;
+		Disk = false;
 		FieldTotal =  Cache.Size() / sizeof (FC);
 	      }
 	    else
@@ -108,11 +108,11 @@ size_t FCACHE::LoadFieldCache(const STRING& fieldName, GDT_BOOLEAN useDisk)
   return FieldTotal;
 }
 
-GDT_BOOLEAN FCACHE::ValidateInField(const GPTYPE HitGp)
+bool FCACHE::ValidateInField(const GPTYPE HitGp)
 {
   if (FieldName.GetLength() == 0)
     {
-      return GDT_TRUE;
+      return true;
     }
   else if (Cache.Ok())
     {
@@ -125,10 +125,10 @@ GDT_BOOLEAN FCACHE::ValidateInField(const GPTYPE HitGp)
   return ValidateInField(HitGp, FieldName);
 }
 
-GDT_BOOLEAN FCACHE::ValidateInField(const FC& HitFc)
+bool FCACHE::ValidateInField(const FC& HitFc)
 {
   if (FieldName.GetLength() == 0)
-    return GDT_TRUE;
+    return true;
   else if (Cache.Ok())
     return ValidateInField(HitFc, (const void *)Cache.Ptr(), Cache.Size());
   else if (Fp)
@@ -138,10 +138,10 @@ GDT_BOOLEAN FCACHE::ValidateInField(const FC& HitFc)
 
 
 // Is the gp in the field..
-GDT_BOOLEAN FCACHE::ValidateInField(const GPTYPE HitGp, const STRING& fieldName, GDT_BOOLEAN useDisk)
+bool FCACHE::ValidateInField(const GPTYPE HitGp, const STRING& fieldName, bool useDisk)
 {
   if (fieldName.GetLength() == 0)
-    return GDT_TRUE;
+    return true;
   if (LoadFieldCache(fieldName, useDisk))
     {
       if (Cache.Ok())
@@ -151,14 +151,14 @@ GDT_BOOLEAN FCACHE::ValidateInField(const GPTYPE HitGp, const STRING& fieldName,
       else
 	return ValidateInField(HitGp, FieldName);
     }
-  return GDT_FALSE;
+  return false;
 }
 
 // Is a range in the field..
-GDT_BOOLEAN FCACHE::ValidateInField (const FC& HitFc, const STRING& fieldName, GDT_BOOLEAN useDisk)
+bool FCACHE::ValidateInField (const FC& HitFc, const STRING& fieldName, bool useDisk)
 {
   if (fieldName.GetLength() == 0)
-    return GDT_TRUE;
+    return true;
   if (LoadFieldCache(fieldName, useDisk))
     {
       if (Cache.Ok())
@@ -168,7 +168,7 @@ GDT_BOOLEAN FCACHE::ValidateInField (const FC& HitFc, const STRING& fieldName, G
       else
 	return ValidateInField(HitFc, FieldName);
     }
-  return GDT_FALSE;
+  return false;
 
 }
 
@@ -182,11 +182,11 @@ size_t FCACHE::GetZones (const GPTYPE HitGp, const STRING& fieldName, FCT *Zones
   size_t TotalZones = 0;
 
   if (i == 0 ||
-	LoadFieldCache(fieldName, GDT_FALSE) == 0 ||
+	LoadFieldCache(fieldName, false) == 0 ||
 	FieldTotal == 0 || !Cache.Ok())
     return TotalZones;
 
-  GDT_BOOLEAN result = GDT_FALSE;
+  bool result = false;
   size_t Low = 0;
   size_t High = FieldTotal - 1;
   INT X = High / 2, OX;
@@ -194,7 +194,7 @@ size_t FCACHE::GetZones (const GPTYPE HitGp, const STRING& fieldName, FCT *Zones
   GPTYPE GpS, GpE;
 
 
-  GDT_BOOLEAN found = GDT_FALSE;
+  bool found = false;
   // Find Any...
   do {
     OX = X;
@@ -202,7 +202,7 @@ size_t FCACHE::GetZones (const GPTYPE HitGp, const STRING& fieldName, FCT *Zones
     GpE=GpOf (Buffer[X*sizeof(FC)/sizeof(GPTYPE)+1]);
     if ( (HitGp >= GpS) && (HitGp <= GpE) )
       {
-	found = GDT_TRUE;
+	found = true;
 	break;
       }
     if (HitGp < GpS) High = X;
@@ -249,7 +249,7 @@ size_t FCACHE::GetZones (const GPTYPE HitGp, const STRING& fieldName, FCT *Zones
   return TotalZones;
 }
 
-GDT_BOOLEAN FCACHE::ValidateInField(const FC& HitFc, STRSTACK Stack, GDT_BOOLEAN useDisk)
+bool FCACHE::ValidateInField(const FC& HitFc, STRSTACK Stack, bool useDisk)
 {
   STRING fieldName;
 
@@ -259,17 +259,17 @@ GDT_BOOLEAN FCACHE::ValidateInField(const FC& HitFc, STRSTACK Stack, GDT_BOOLEAN
 	{
 	  if (!ValidateInField(HitFc, fieldName, useDisk))
 	    {
-	      return GDT_FALSE;
+	      return false;
 	    }
 	}
     }
-  return GDT_TRUE;
+  return true;
 }
 
 // Is the gp in the field structure..
-GDT_BOOLEAN FCACHE::ValidateInField(const GPTYPE HitGp, STRSTACK& Stack, GDT_BOOLEAN useDisk)
+bool FCACHE::ValidateInField(const GPTYPE HitGp, STRSTACK& Stack, bool useDisk)
 {
-  GDT_BOOLEAN result = GDT_TRUE;
+  bool result = true;
 
   if (!Stack.IsEmpty())
     {
@@ -278,12 +278,12 @@ GDT_BOOLEAN FCACHE::ValidateInField(const GPTYPE HitGp, STRSTACK& Stack, GDT_BOO
 	{
 	  FCT Zones;
 	  size_t count = GetZones (HitGp, fieldName, &Zones);
-	  result = GDT_FALSE;
+	  result = false;
 	  for (const FCLIST *p = Zones, *itor = p->Next(); itor != p; itor = itor->Next())	
 	    {
 	      if (ValidateInField(itor->Value(), Stack, useDisk))
 		{
-		  result = GDT_TRUE;
+		  result = true;
 		  break;
 		}
 	    }
@@ -293,16 +293,16 @@ GDT_BOOLEAN FCACHE::ValidateInField(const GPTYPE HitGp, STRSTACK& Stack, GDT_BOO
 }
 
 
-GDT_BOOLEAN FCACHE::ValidateInField (const GPTYPE HitGp, const STRING& fieldName) const
+bool FCACHE::ValidateInField (const GPTYPE HitGp, const STRING& fieldName) const
 {
   // Special case. Everyhing is in every "" field since we intrepret that to mean
   // full.
   if (fieldName.GetLength() == 0)
-    return GDT_TRUE;
+    return true;
 
-  GDT_BOOLEAN Status = GDT_FALSE; 
+  bool Status = false; 
   STRING      Fn;
-  if (GDT_TRUE == Parent->DfdtGetFileName (fieldName, &Fn))
+  if (true == Parent->DfdtGetFileName (fieldName, &Fn))
     {
       FILE *fp = Parent->ffopen (Fn, "rb");
       if (fp)
@@ -315,9 +315,9 @@ GDT_BOOLEAN FCACHE::ValidateInField (const GPTYPE HitGp, const STRING& fieldName
 }
 
 
-GDT_BOOLEAN FCACHE::ValidateInField (const GPTYPE HitGp, const void *Buffer, const size_t Length) const
+bool FCACHE::ValidateInField (const GPTYPE HitGp, const void *Buffer, const size_t Length) const
 {
-  GDT_BOOLEAN result = GDT_FALSE;
+  bool result = false;
   const GPTYPE *B = (const GPTYPE *)Buffer;
   const size_t Total = Length/sizeof(FC);
 
@@ -336,7 +336,7 @@ GDT_BOOLEAN FCACHE::ValidateInField (const GPTYPE HitGp, const void *Buffer, con
 
         if ( (HitGp >= GpS) && (HitGp <= GpE) )
           {
-            result = GDT_TRUE;
+            result = true;
           }
         else
           {
@@ -351,9 +351,9 @@ GDT_BOOLEAN FCACHE::ValidateInField (const GPTYPE HitGp, const void *Buffer, con
   return result;
 }
 
-GDT_BOOLEAN FCACHE::ValidateInField (const GPTYPE HitGp, const GPTYPE *Buffer, const size_t Total) const
+bool FCACHE::ValidateInField (const GPTYPE HitGp, const GPTYPE *Buffer, const size_t Total) const
 {
-  GDT_BOOLEAN result = GDT_FALSE;
+  bool result = false;
 
   if (Total > 0 && Buffer)
     {
@@ -368,7 +368,7 @@ GDT_BOOLEAN FCACHE::ValidateInField (const GPTYPE HitGp, const GPTYPE *Buffer, c
 	GpE=Buffer[X*sizeof(FC)/sizeof(GPTYPE)+1];
 	if ( (HitGp >= GpS) && (HitGp <= GpE) )
 	  {
-	    result = GDT_TRUE;
+	    result = true;
 	  }
 	else
 	  {
@@ -383,9 +383,9 @@ GDT_BOOLEAN FCACHE::ValidateInField (const GPTYPE HitGp, const GPTYPE *Buffer, c
   return result;
 }
 
-GDT_BOOLEAN FCACHE::ValidateInField (const GPTYPE HitGp, FILE *fp, const size_t total) const
+bool FCACHE::ValidateInField (const GPTYPE HitGp, FILE *fp, const size_t total) const
 {
-  GDT_BOOLEAN Status = GDT_FALSE;
+  bool Status = false;
   if (fp)
     {
       const size_t Total = total == 0 ? GetFileSize(fp) / sizeof (FC) : total;
@@ -408,7 +408,7 @@ GDT_BOOLEAN FCACHE::ValidateInField (const GPTYPE HitGp, FILE *fp, const size_t 
 	  else
 	    {
 	      ::Read(&Fc, fp);
-	      if ((Status = Fc.Contains(HitGp)) == GDT_TRUE)
+	      if ((Status = Fc.Contains(HitGp)) == true)
 		break;
 	      if (HitGp < Fc)
 		High = X;
@@ -427,11 +427,11 @@ GDT_BOOLEAN FCACHE::ValidateInField (const GPTYPE HitGp, FILE *fp, const size_t 
 // Have the field coordinates for a hit. Check that it is inside
 // another field coordinate (for another field).
 
-GDT_BOOLEAN FCACHE::ValidateInField (const FC& HitFc, const void *Buffer, const size_t Length) const
+bool FCACHE::ValidateInField (const FC& HitFc, const void *Buffer, const size_t Length) const
 {
   const GPTYPE *B = (const GPTYPE *)Buffer;
   const size_t Total = Length/sizeof(FC);
-  GDT_BOOLEAN result = GDT_FALSE;
+  bool result = false;
 
   if (Total && B)
     {
@@ -447,7 +447,7 @@ GDT_BOOLEAN FCACHE::ValidateInField (const FC& HitFc, const void *Buffer, const 
 	GpE=GpOf(B[X*sizeof(FC)/sizeof(GPTYPE)+1]);
 	if (GpS >= start && GpE <= end)
 	  {
-	    result = GDT_TRUE;
+	    result = true;
 	    break;
 	  }
 	else
@@ -465,12 +465,12 @@ GDT_BOOLEAN FCACHE::ValidateInField (const FC& HitFc, const void *Buffer, const 
   return result;
 }
 
-GDT_BOOLEAN FCACHE::ValidateInField (const FC& HitFc, const GPTYPE *Buffer, const size_t Total) const
+bool FCACHE::ValidateInField (const FC& HitFc, const GPTYPE *Buffer, const size_t Total) const
 {
   if (Total == 0 || Buffer == NULL)
-    return GDT_FALSE;
+    return false;
 
-  GDT_BOOLEAN result = GDT_FALSE;
+  bool result = false;
   size_t Low = 0, High = Total - 1;
   size_t X = High / 2, OX;
   const GPTYPE start = HitFc.GetFieldStart();
@@ -482,7 +482,7 @@ GDT_BOOLEAN FCACHE::ValidateInField (const FC& HitFc, const GPTYPE *Buffer, cons
     GPTYPE GpE=Buffer[X*sizeof(FC)/sizeof(GPTYPE)+1];
     if (GpS >= start && GpE <= end)
       {
-        result = GDT_TRUE;
+        result = true;
         break;
       }
     else
@@ -500,9 +500,9 @@ GDT_BOOLEAN FCACHE::ValidateInField (const FC& HitFc, const GPTYPE *Buffer, cons
 }
 
 
-GDT_BOOLEAN FCACHE::ValidateInField (const FC& HitFc, FILE *fp, const size_t total) const
+bool FCACHE::ValidateInField (const FC& HitFc, FILE *fp, const size_t total) const
 {
-  GDT_BOOLEAN Status = GDT_FALSE;
+  bool Status = false;
   size_t Total = total;
   if (Total == 0)
     Total =  GetFileSize(fp) / sizeof (FC);
@@ -526,7 +526,7 @@ GDT_BOOLEAN FCACHE::ValidateInField (const FC& HitFc, FILE *fp, const size_t tot
 	  else
 	    {
 	      ::Read(&Fc, fp);
-	      if ((Status = Fc.Contains(HitFc)) == GDT_TRUE)
+	      if ((Status = Fc.Contains(HitFc)) == true)
 		break;
 	      if (HitFc < Fc)
 		High = X;
@@ -543,13 +543,13 @@ GDT_BOOLEAN FCACHE::ValidateInField (const FC& HitFc, FILE *fp, const size_t tot
   return Status;
 }
 
-GDT_BOOLEAN FCACHE::ValidateInField (const FC& HitFc, const STRING& fieldName) const
+bool FCACHE::ValidateInField (const FC& HitFc, const STRING& fieldName) const
 {
-  if (fieldName.GetLength() == 0) return GDT_TRUE;
+  if (fieldName.GetLength() == 0) return true;
 
-  GDT_BOOLEAN Status = GDT_FALSE;
+  bool Status = false;
   STRING Fn;
-  if (GDT_TRUE == Parent->DfdtGetFileName (fieldName, &Fn))
+  if (true == Parent->DfdtGetFileName (fieldName, &Fn))
     {
       PFILE fp = Parent->ffopen (Fn, "rb");
       if (fp)

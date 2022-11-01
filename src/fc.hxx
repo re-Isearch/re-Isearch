@@ -24,7 +24,7 @@ public:
   GPTYPE GetFieldEnd() const { return FieldEnd;};
 
   GPTYPE      GetLength() const { return FieldEnd-FieldStart+1; }
-  GDT_BOOLEAN IsEmpty() const   { return FieldStart == FieldEnd && FieldStart == 0; }
+  bool IsEmpty() const   { return FieldStart == FieldEnd && FieldStart == 0; }
 
   operator STRING() const;
 
@@ -45,30 +45,30 @@ public:
 
 // Comparison
   INT Compare (const FC& Fc) const;
-  GDT_BOOLEAN Contains (const FC& Fc) const {
+  bool Contains (const FC& Fc) const {
 	return (Fc.FieldStart >= FieldStart && Fc.FieldEnd <= FieldEnd);};
-  GDT_BOOLEAN Contains (const GPTYPE Gp) const {
+  bool Contains (const GPTYPE Gp) const {
 	return (Gp >= FieldStart && Gp <= FieldEnd);};
-  GDT_BOOLEAN operator ==(const FC& Fc) const {
+  bool operator ==(const FC& Fc) const {
 	return (FieldStart == Fc.FieldStart && FieldEnd == Fc.FieldEnd);};
-  GDT_BOOLEAN operator !=(const FC& Fc) const {
+  bool operator !=(const FC& Fc) const {
         return (FieldStart != Fc.FieldStart || FieldEnd != Fc.FieldEnd);};
-  GDT_BOOLEAN operator <=(const FC& Fc) const {
+  bool operator <=(const FC& Fc) const {
 	return (FieldStart <= Fc.FieldStart && FieldEnd <= Fc.FieldEnd);};
-  GDT_BOOLEAN operator >=(const FC& Fc) const {
+  bool operator >=(const FC& Fc) const {
 	return (FieldStart >= Fc.FieldStart && FieldEnd >= Fc.FieldEnd);};
-  GDT_BOOLEAN operator <(const FC& Fc) const {
+  bool operator <(const FC& Fc) const {
 	return (FieldStart < Fc.FieldStart  && FieldEnd < Fc.FieldEnd) ;};
-  GDT_BOOLEAN operator >(const FC& Fc) const {
+  bool operator >(const FC& Fc) const {
 	 return (FieldStart > Fc.FieldStart && FieldEnd > Fc.FieldEnd);};
-  GDT_BOOLEAN operator <(const GPTYPE Gp) const {
+  bool operator <(const GPTYPE Gp) const {
 	return FieldStart < Gp;};
-  GDT_BOOLEAN operator >(const GPTYPE Gp) const {
+  bool operator >(const GPTYPE Gp) const {
 	return FieldEnd > Gp;};
 
-  friend GDT_BOOLEAN operator >(const GPTYPE Gp, const FC& Fc) {
+  friend bool operator >(const GPTYPE Gp, const FC& Fc) {
 	return Gp > Fc.FieldEnd;};
-  friend GDT_BOOLEAN operator <(const GPTYPE Gp, const FC& Fc) {
+  friend bool operator <(const GPTYPE Gp, const FC& Fc) {
 	return Gp < Fc.FieldStart;};
   friend INT Compare(const FC& Fc1, const FC& Fc2) {
 	 return Fc1.Compare(Fc2);}; 
@@ -76,7 +76,7 @@ public:
 // I/O
   void Write (PFILE fp, const GPTYPE Offset) const;
   void Write(PFILE fp) const;
-  GDT_BOOLEAN Read(PFILE fp);
+  bool Read(PFILE fp);
 
   friend ostream& operator<<(ostream& os, const FC& Fc);
 
@@ -92,7 +92,7 @@ private:
 typedef FC* PFC;
 
 void Write(const FC& Fc, PFILE Fp);
-GDT_BOOLEAN Read(PFC FcPtr, PFILE Fp);
+bool Read(PFC FcPtr, PFILE Fp);
 
 
 #endif

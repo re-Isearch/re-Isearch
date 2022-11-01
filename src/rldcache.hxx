@@ -83,7 +83,7 @@ public:
 /*@Doc: Cache location is specified in NewPath */
 
 //@ManMemo: RLDCACHE constructor
-  RLDCACHE(const STRING& NewPath, GDT_BOOLEAN ForceNew);
+  RLDCACHE(const STRING& NewPath, bool ForceNew);
 /*@Doc: Cache location is specified in NewPath */
 
 //@ManMemo: Close the RLDCACHE and delete the cache file from disk
@@ -108,7 +108,7 @@ public:
 /*@Doc: */
 
 //@ManMemo: 
-  GDT_BOOLEAN  EntryExists(const STRING& NAME);
+  bool  EntryExists(const STRING& NAME);
 /*@Doc: */
 
 //@ManMemo: 
@@ -142,8 +142,8 @@ private:
   RLD_State  CacheState;
 
   // Methods
-  void       CreateInit(const STRING& Path, GDT_BOOLEAN ForceNew);
-  void       CreateInit(const STRING& Path, const STRING& AppName, GDT_BOOLEAN ForceNew);
+  void       CreateInit(const STRING& Path, bool ForceNew);
+  void       CreateInit(const STRING& Path, const STRING& AppName, bool ForceNew);
   RLD_State  CacheOpenReadonly();
   RLD_State  CacheOpen(INT Mode);
   void       CacheClose();

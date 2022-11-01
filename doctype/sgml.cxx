@@ -112,7 +112,7 @@ void SGML::ParseRecords(const RECORD& FileRecord)
 
 
   Db->ComposeDbFn (&s, DbExtCat);
-  if (MkDir(s, 0, GDT_TRUE) == -1)
+  if (MkDir(s, 0, true) == -1)
     {
       message_log (LOG_ERRNO, "Can't create filter directory '%s'", (const char *)s );
       return;

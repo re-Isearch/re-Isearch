@@ -94,7 +94,7 @@ class TREENODELISTptr {
       unsorted_ = 1;
       table_ = new TREENODELIST(List);
     }
-    GDT_BOOLEAN IsEmpty() const {
+    bool IsEmpty() const {
       return table_->IsEmpty();
     }
     size_t GetTotalEntries() const {
@@ -182,9 +182,9 @@ public:
 	p_->unsorted_ = 0;
       }
   }
-  GDT_BOOLEAN IsSorted() const {
+  bool IsSorted() const {
     return p_ && p_->unsorted_ == 0; }
-  GDT_BOOLEAN IsEmpty() const  {
+  bool IsEmpty() const  {
     return p_ == NULL || p_->IsEmpty();    }
   size_t GetTotalEntries() const {
     return IsEmpty() ? 0 : p_->GetTotalEntries();

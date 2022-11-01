@@ -55,8 +55,8 @@ ADOBE_PDFDOC::ADOBE_PDFDOC(PIDBOBJ DbParent, const STRING& Name) : _VMEMODOC(DbP
 {
   out_ext = ".memo";
 
-  AllowZeroLengthPages(GDT_TRUE);
-  SetParseMessageStructure(GDT_TRUE);
+  AllowZeroLengthPages(true);
+  SetParseMessageStructure(true);
   desc.form("Adobe PDF: Uses an external filter to MEMODOC.\nOptions:\n\
    FILTER   Specifies the program to use (Default '%s')\n\
 If a <filename>.meta file is available (colon standard format) its used to\n\

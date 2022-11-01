@@ -1,6 +1,6 @@
 CC_ABI_VERSION=1
-#GCC_VERSION=-10
-GCC_VERSION=
+GCC_VERSION=-10
+#GCC_VERSION=
 #GCC_VERSION=-43
 #GCC_VERSION_X=4.2.1
 ############################################################################
@@ -11,7 +11,8 @@ GCC_VERSION=
 #
 .SUFFIXES: $(SUFFIXES) .c .cxx .sob .sob64
 
-# BERKELEY_DB_ROOT = /usr/local/BerkeleyDB.4.4/
+BERKELEY_DB_ROOT = /usr/local/BerkeleyDB.4.4/
+LIBBDB=-ldb
 
 EXTRA_INC= -I$(BERKELEY_DB_ROOT)/include
 DEFAULT_LIB_INSTALL_PATH="../lib:."
@@ -127,8 +128,8 @@ OPT= -m64
 #DEBUG=-g -fmudflap
 
 ## DEBUG OR NOT???
-OPT=-O3 -ftree-vectorize  -ffast-math -msse2
-OPT=-g 
+OPT=-O3 -ftree-vectorize  -ffast-math -msse2 
+# OPT=-g 
 PIC=-fpic
 
 CFLAGS= $(WARN) $(OPT) $(DEBUG) $(DEFINES) $(PROF)
@@ -157,10 +158,10 @@ SHARED = -shared $(PIC) $(DEBUG)
 
 
 ############### End Differences ######################################
-DEBUG=-g 
+# DEBUG=-g 
 LDFLAGS +=  $(DEBUG) $(PROF) -m64 
 #
-EXTRA= -lnsl -ldl -lm -lmagic
+EXTRA= -lnsl -ldl -lm -lmagic $(LIBBDB)
 #EXTRA=-lm -ldl -lstdc++ 
 #EXTRA= -lm -lz -lstdc++
 #EXTRA= -lm -lz -lstdc++ -lmudflap 
@@ -337,6 +338,7 @@ ENG_SRCS= \
 	$(SRC_DIR)/opstack.cxx \
 	$(SRC_DIR)/reclist.cxx \
 	$(SRC_DIR)/record.cxx \
+	$(SRC_DIR)/recordsyntax.cxx \
 	$(SRC_DIR)/result.cxx \
 	$(SRC_DIR)/rset.cxx \
 	$(SRC_DIR)/soundex.cxx \
@@ -485,7 +487,8 @@ all: $(MALLOC_OBJ) \
 	$(BIN_DIR)/Isearch$(LIBX)$(COMPILER) \
 	$(BIN_DIR)/Iutil$(LIBX)$(COMPILER) \
 	$(BIN_DIR)/Idelete$(LIBX)$(COMPILER) \
-	$(BIN_DIR)/Iwatch 
+	$(BIN_DIR)/Iwatch \
+	$(BIN_DIR)/zpresent
 
 
 dirs: ~/.ib/lib/plugins
@@ -508,15 +511,12 @@ gdt-sys.h:
 
 $(BIN_DIR)/date_parse: $(SRC_DIR)/date.cxx $(SRC_DIR)/date.hxx 
 	$(CC) $(DEFINES) -I ../src -I .  -DMAIN_STUB=1 -o $(BIN_DIR)/date_parse $(SRC_DIR)/date.cxx \
-	-L ../lib  $(LDOPTS) $(CORELIBS) -ldl -lmagic
+	-L ../lib  $(LDOPTS) $(CORELIBS) $(EXTRA)
 
 
-recordsyntax: $(SRC_DIR)/recordsyntax.cxx $(SRC_DIR)/recordsyntax.hxx \
-		$(SRC_DIR)/string.o $(SRC_DIR)/common.o $(SRC_DIR)/log.o \
-		$(SRC_DIR)/lang-codes.o $(SRC_DIR)/htmlcat.o $(SRC_DIR)/object.o $(SRC_DIR)/dictionary.o
-	$(CC) $(DEFINES) -DMAIN_STUB=1 -o recordsyntax $(SRC_DIR)/recordsyntax.cxx \
-		$(SRC_DIR)/string.o $(SRC_DIR)/common.o $(SRC_DIR)/log.o \
-		$(SRC_DIR)/lang-codes.o $(SRC_DIR)/htmlcat.o $(SRC_DIR)/object.o $(SRC_DIR)/dictionary.o 
+recordsyntax: $(SRC_DIR)/recordsyntax.cxx $(SRC_DIR)/recordsyntax.hxx
+	$(CC) $(DEFINES) -DMAIN_STUB=1 -o recordsyntax $(SRC_DIR)/recordsyntax.cxx $(LDOPTS) $(CORELIBS) $(EXTRA)
+	
 
 snap: $(SOURCES)
 	zip ../ib_src_`date "+%Y%m%d%H"` $(SOURCES) $(HEADERS)
@@ -530,6 +530,10 @@ $(BIN_DIR)/.wrapper: $(SRC_DIR)/wrapper.c
 
 $(BIN_DIR)/Iwatch: $(SRC_DIR)/Iwatch.c
 	$(cc) -s -o $@ $(SRC_DIR)/Iwatch.c
+
+
+$(BIN_DIR)/zpresent: $(SRC_DIR)/zpresent.cxx
+	$(CC) $(INC) $(LDFLAGS) -s -o $@ $(SRC_DIR)/zpresent.cxx $(LDLIBS) $(EXTRA)
 
 
 $(BIN_DIR)/siscompress: $(SRC_DIR)/siscompress.c

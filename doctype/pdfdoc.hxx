@@ -32,7 +32,7 @@ public:
   void DocPresent(const RESULT& ResultRecord, const STRING& ElementSet,
 	const STRING& RecordSyntax, PSTRING StringBuffer) const;
   void SourceMIMEContent(PSTRING StringBufferPtr) const;
-  GDT_BOOLEAN GetResourcePath(const RESULT& ResultRecord, PSTRING StringBuffer) const;
+  bool GetResourcePath(const RESULT& ResultRecord, PSTRING StringBuffer) const;
 
   ~PDFDOC();
 

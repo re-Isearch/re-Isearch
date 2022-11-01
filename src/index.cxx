@@ -264,7 +264,7 @@ static inline size_t TermExtract(UCHR *Buffer, size_t Length=StringCompLength)
 
 // Zap all non acceptable characters
 static inline size_t BufferClean(UCHR *Buffer, size_t Length=StringCompLength,
-                                 GDT_BOOLEAN ToLower = GDT_FALSE)
+                                 bool ToLower = false)
 {
   size_t len = Length;
   for (size_t z = 0; z<Length; z++)
@@ -282,7 +282,7 @@ static inline size_t BufferClean(UCHR *Buffer, size_t Length=StringCompLength,
 }
 
 
-static inline STRING TermClean(const STRING String, GDT_BOOLEAN ToLower = GDT_FALSE)
+static inline STRING TermClean(const STRING String, bool ToLower = false)
 {
   STRING Result;
   UCHR *Buffer = String.NewUCString();
@@ -301,12 +301,12 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
       return;
     }
 
-  OK            = GDT_TRUE;
-  ActiveIndexing= GDT_FALSE;
+  OK            = true;
+  ActiveIndexing= false;
   Parent        = DbParent;
   IndexFileName = NewFileName;
-  DebugMode     = GDT_FALSE;
-  useSoundex    = GDT_FALSE; // Use DoubleMetaphone for Phonetic
+  DebugMode     = false;
+  useSoundex    = false; // Use DoubleMetaphone for Phonetic
   TermAliases   = NULL;
   StopWords     = NULL;
   CommonWords   = NULL;
@@ -352,14 +352,14 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
     else
       findConcatWords = FIND_CONCAT_WORDS;
     Parent->ProfileGetString(FindConcatEntry, ForceEntry, NulString, &tmp);
-    forceConcatWords = tmp.GetLength() ? tmp.GetBool() : GDT_FALSE;
+    forceConcatWords = tmp.GetLength() ? tmp.GetBool() : false;
 
     Parent->ProfileGetString(Section, DontStoreHitCoordinatesEntry, NulString, &tmp);
-    storeHitCoordinates = tmp.IsEmpty() ? GDT_TRUE : !tmp.GetBool();
+    storeHitCoordinates = tmp.IsEmpty() ? true : !tmp.GetBool();
 
     Parent->ProfileGetString(Section, PhoneticAlgorithmEntry, NulString, &tmp);
     if (tmp.GetLength() && _ib_tolower(tmp.GetChr(1)) == 's')
-     useSoundex = GDT_TRUE;
+     useSoundex = true;
   }
 
   if (MaxCPU_ticks > CLOCKS_PER_SEC);
@@ -375,7 +375,7 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
   IndexingWordsLongestLength = Parent->ProfileGetGPTYPE(DbIndexingStatisticsSection, DbLongestWord);
 
 
-  const GDT_BOOLEAN host = IsBigEndian();
+  const bool host = IsBigEndian();
 
   const  int indexTypus = (sizeof(GPTYPE) == 4) ? 0 : 1;
 
@@ -409,7 +409,7 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
               message_log (LOG_INFO, "ERROR: %u indexes (%x) are not compatible with %u-bit libs",
                     (unsigned)(32*(indexTypus+1)), (unsigned)IndexMagic,  (unsigned)(8*sizeof(GPTYPE)));
               Parent->SetErrorCode(-8*(int)sizeof(GPTYPE));
-              OK = GDT_FALSE;
+              OK = false;
             }
           else
             {
@@ -423,7 +423,7 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
         {
           message_log (LOG_ERRNO, "Couldn't access '%s' (Index)", IndexFileName.c_str());
           Parent->SetErrorCode(2);
-          OK = GDT_FALSE;
+          OK = false;
         }
     }
   else
@@ -434,7 +434,7 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
     {
       message_log (LOG_ERROR, "Index magic is corrupt (%x)?", IndexMagic);
       Parent->SetErrorCode(1);
-      OK = GDT_FALSE;
+      OK = false;
     }
   else if (wrongEndian)
     {
@@ -659,9 +659,9 @@ size_t INDEX::GetMaxRecordsAdvice() const
 
 
 
-GDT_BOOLEAN INDEX::IsSystemFile (const STRING&) const
+bool INDEX::IsSystemFile (const STRING&) const
 {
-  return GDT_FALSE;
+  return false;
 }
 
 
@@ -676,14 +676,14 @@ INT INDEX::ffclose (PFILE FilePointer) const
 }
 
 
-GDT_BOOLEAN INDEX::SetDateRange(const DATERANGE& Range)
+bool INDEX::SetDateRange(const DATERANGE& Range)
 {
   DateRange = Range;
   if (DebugMode) message_log(LOG_DEBUG, "Date Range Set: %s", (const char *)((STRING)Range));
   return DateRange.Ok();
 }
 
-GDT_BOOLEAN INDEX::GetDateRange(DATERANGE *Range) const
+bool INDEX::GetDateRange(DATERANGE *Range) const
 {
   if (Range)
     *Range = DateRange;
@@ -691,26 +691,26 @@ GDT_BOOLEAN INDEX::GetDateRange(DATERANGE *Range) const
 }
 
 
-GDT_BOOLEAN INDEX::SetIndexNum(INT Num)
+bool INDEX::SetIndexNum(INT Num)
 {
   if (Parent == NULL)
     {
       message_log (LOG_ERROR, "Can't set the Index number in orphan'd INDEX");
-      return GDT_FALSE;
+      return false;
     }
   MDT *mdt = Parent->GetMainMdt();
   if (mdt == NULL)
     {
       message_log (LOG_ERROR, "Can't set the index number, lost MDT in INDEX?");
-      return GDT_FALSE;
+      return false;
     }
-  if (mdt->SetIndexNum(Num) == GDT_FALSE)
+  if (mdt->SetIndexNum(Num) == false)
     {
       message_log (LOG_ERRNO, "Couldn't set index number to %d.", Num);
       Parent->SetErrorCode(2);
-      return GDT_FALSE;
+      return false;
     }
-  return GDT_TRUE;
+  return true;
 }
 
 INT INDEX::GetIndexNum() const
@@ -730,7 +730,7 @@ PDOCTYPE INDEX::GetDocTypePtr() const
 
 
 
-GDT_BOOLEAN INDEX::IsWrongEndian() const
+bool INDEX::IsWrongEndian() const
 {
   return wrongEndian;
 }
@@ -748,7 +748,7 @@ INT INDEX::Version() const
 // Term, Buffer, Length
 static inline INT _strncasecmp(const UCHR *p1, const UCHR *p2, const INT n,
 // What's next, length of the second term/phrase
-                               GDT_BOOLEAN *look = NULL, size_t *length = NULL)
+                               bool *look = NULL, size_t *length = NULL)
 {
   const UCHR *p2_Start = p2;
   int         diff = 0, q = 0;
@@ -962,7 +962,7 @@ static int SisCompare2(const UCHR *p1, const UCHR *p2, int MaxLen = StringCompLe
 
 
 #if 0
-GDT_BOOLEAN INDEX::ExtractFieldTable(INT Number)
+bool INDEX::ExtractFieldTable(INT Number)
 {
   //
 }
@@ -1021,7 +1021,7 @@ FILE *INDEX::OpenForAppend(const STRING& FieldName, FIELDTYPE FieldType)
   if (Parent == NULL || FieldName.IsEmpty())
     return NULL;
 
-  if (Parent->DfdtGetFileName(FieldName, FieldType, &FileName) == GDT_FALSE)
+  if (Parent->DfdtGetFileName(FieldName, FieldType, &FileName) == false)
     {
       message_log (LOG_ERROR, "Could not get a filename for '%s' of type %s. DFD Defect?",
 	FieldName.c_str(), FieldType.c_str());
@@ -1074,7 +1074,7 @@ FILE *INDEX::OpenForAppend(const STRING& FieldName, FIELDTYPE FieldType)
 }
 
 
-GDT_BOOLEAN INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
+bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 {
   FILE  *fp;
   STRING FileName;
@@ -1094,9 +1094,9 @@ GDT_BOOLEAN INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
       const STRING    FieldName ( dftPtr->GetFieldName (x) );
       const FIELDTYPE FieldType ( Parent->GetFieldType(FieldName) );
 
-      GDT_BOOLEAN  res = Parent->DfdtGetFileName (FieldName, &FileName);
+      bool  res = Parent->DfdtGetFileName (FieldName, &FileName);
 
-      if (res == GDT_FALSE)
+      if (res == false)
         {
           message_log (LOG_ERROR, "Can't append '%s' field data, DFD Defect!", FieldName.c_str());
           errors++;
@@ -1487,7 +1487,7 @@ void INDEX::SetMergeStatus(t_merge_status a)
   MergeStatus=a;
 }
 
-GDT_BOOLEAN INDEX::IsEmpty() const
+bool INDEX::IsEmpty() const
   {
     // Like GetTotalWords() below but we just need 1 word
     STRING s;
@@ -1502,9 +1502,9 @@ GDT_BOOLEAN INDEX::IsEmpty() const
         else
           s = IndexFileName;
         if (GetFileSize(s) >= (off_t)sizeof(GPTYPE))
-          return GDT_FALSE;
+          return false;
       }
-    return GDT_TRUE;
+    return true;
   }
 
 off_t INDEX::GetTotalWords() const
@@ -1552,9 +1552,9 @@ off_t INDEX::GetTotalUniqueWords() const
   }
 
 
-GDT_BOOLEAN INDEX::CreateCentroid()
+bool INDEX::CreateCentroid()
 {
-  GDT_BOOLEAN result = GDT_FALSE;
+  bool result = false;
   STRING      fn ( Parent->ComposeDbFn(DbExtCentroid) );
   STRING      out_fn (fn);
 
@@ -1582,7 +1582,7 @@ GDT_BOOLEAN INDEX::CreateCentroid()
             {
               // The centroid is newer than the database so its done..
               message_log (LOG_INFO, "Existing Centroid \"%s\" is up-to-date.", fn.c_str());
-              return GDT_TRUE;
+              return true;
             }
         }
       if (fn != out_fn)
@@ -1599,7 +1599,7 @@ GDT_BOOLEAN INDEX::CreateCentroid()
 }
 
 
-GDT_BOOLEAN INDEX::WriteCentroid(FILE* fp)
+bool INDEX::WriteCentroid(FILE* fp)
 {
   int       len, pos, old_pos = 0;
   const int maxCompLength = StringCompLength*4 + 4096;
@@ -1665,7 +1665,7 @@ src=\"%s\" version=\"0.1\">\n",
               SCANLIST ScanList; // Need to scan for truncated words
               tmp[len] = '\0';
               // Scan can fail if, for example, the sources have been removed
-              truncated = Scan (&ScanList, NulString, tmp, -1, GDT_FALSE,
+              truncated = Scan (&ScanList, NulString, tmp, -1, false,
                                 /* Handle the specific subindex if given */
                                 (sub_indexes <= 1) ? 0 : i );
 
@@ -1815,19 +1815,19 @@ static char *encode64(char *ptr, size_t siz, unsigned long num)
 
 
 // Main Indexing Loop
-GDT_BOOLEAN INDEX::AddRecordList (FILE *RecordListFp)
+bool INDEX::AddRecordList (FILE *RecordListFp)
 {
   if (ActiveIndexing)
     {
       Parent->SetErrorCode(29); // Locked db
       message_log (LOG_ERROR, "Indexing already running on '%s' (Indexing or Importing).",
 	Parent->GetDbFileStem ().c_str());
-      return GDT_FALSE;
+      return false;
     }
   if (RecordListFp == NULL)
     {
       message_log (LOG_PANIC, "INDEX::AddRecordList(<NULL>)!");
-      return GDT_FALSE;
+      return false;
     }
   else
     {
@@ -1838,12 +1838,12 @@ GDT_BOOLEAN INDEX::AddRecordList (FILE *RecordListFp)
       if (qlen < (off_t)(sizeof(RECORD)/2))
         {
           message_log (LOG_WARN, "Record index queue empty (len=%d). Nothing to do!", (int)qlen);
-          return GDT_TRUE; // Nothing to do
+          return true; // Nothing to do
         }
       else if ((qlen - pos) < (off_t)(sizeof(RECORD)/2))
         {
           message_log (LOG_INFO, "Nothing new to process in record index queue!");
-          return GDT_TRUE;
+          return true;
         }
       if (DebugMode)
         message_log (LOG_INFO, "Adding to Index from Queue Stream (%lu bytes) from byte %lu",
@@ -1863,7 +1863,7 @@ memory_allocation: // This is where we try to get memory
     {
       Parent->SetErrorCode(2); // "Temporary system error";
       message_log (LOG_PANIC, "Can't get indexing memory. Giving up.");
-      return GDT_FALSE;
+      return false;
     }
   IndexingMemory /= tries;
 
@@ -1953,11 +1953,11 @@ memory_allocation: // This is where we try to get memory
   int   st_dev = -1;  
 #endif
 
-  GDT_BOOLEAN Break    = GDT_FALSE;
-  GDT_BOOLEAN Ok       = GDT_TRUE;
-  GDT_BOOLEAN checkKey = (Parent->GetMainMdt()->GetTotalEntries () != 0);
-  GDT_BOOLEAN isLinked = GDT_FALSE;
-  GDT_BOOLEAN Override =  Parent->GetOverride();
+  bool Break    = false;
+  bool Ok       = true;
+  bool checkKey = (Parent->GetMainMdt()->GetTotalEntries () != 0);
+  bool isLinked = false;
+  bool Override =  Parent->GetOverride();
   MMAP MyMemoryMap;
 
   {
@@ -1967,7 +1967,7 @@ memory_allocation: // This is where we try to get memory
   }
 
 
-  ActiveIndexing = GDT_TRUE;
+  ActiveIndexing = true;
 
   for (;;)
     {
@@ -2006,7 +2006,7 @@ memory_allocation: // This is where we try to get memory
 #endif
               if (!Break)
                 {
-                  if (record.Read (RecordListFp) == GDT_FALSE)
+                  if (record.Read (RecordListFp) == false)
                     {
                       message_log (LOG_PANIC, "Read error on indexer input record queue");
                       break;
@@ -2017,7 +2017,7 @@ memory_allocation: // This is where we try to get memory
                 {
                   if (DebugMode || record.GetDocumentType().IsDefined())
                     message_log(LOG_INFO, skipping_msg,
-                         record.GetDocumentType().ClassName(GDT_FALSE).c_str(),
+                         record.GetDocumentType().ClassName(false).c_str(),
                          record.GetFullFileName ().c_str(),
                          (long long)record.GetRecordStart (), (long long)record.GetRecordEnd ());
                   continue;
@@ -2039,7 +2039,7 @@ memory_allocation: // This is where we try to get memory
                   continue; // Its also a NULL
                 }
 
-              Break = GDT_FALSE;
+              Break = false;
 
               if (DebugMode)
                 message_log(LOG_DEBUG, "Parse %s fields in %s", Doctype.Name.c_str(), DataFileName.c_str());
@@ -2058,7 +2058,7 @@ memory_allocation: // This is where we try to get memory
 
                   Parent->IndexingStatus (IndexingStatusIndexingDocument, DataFileName);
                   MyMemoryMap.CreateMap(DataFileName, MapSequential);
-                  if ((Ok = MyMemoryMap.Ok()) == GDT_FALSE)
+                  if ((Ok = MyMemoryMap.Ok()) == false)
                     message_log (LOG_ERRNO|LOG_INFO, "Error accessing/mapping %s, skipping..", DataFileName.c_str());
                   Parent->ffdispose(OldDataFileName); // Don't cache anymore...
                   OldDataFileName = DataFileName;
@@ -2135,7 +2135,7 @@ memory_allocation: // This is where we try to get memory
                     }
                   if ((DataFileSize + MemoryDataLength) > DataMemorySize)
                     {
-                      Break = GDT_TRUE;
+                      Break = true;
                       break;
                     }
                   size_t bytes = DataFileSize;
@@ -2189,7 +2189,7 @@ memory_allocation: // This is where we try to get memory
                         if (DebugMode) message_log (LOG_DEBUG, "Indexed %d words (%s)", GpListSize, Doctype.c_str());
                         mdtrec.SetDocumentType ( Doctype );
                         if (record.IsBadRecord())
-                          mdtrec.SetDeleted( GDT_TRUE);
+                          mdtrec.SetDeleted( true);
                         else
                           mdtrec.SetDeleted( (Doctype.Name == NilDoctype) || GpListSize == 0); /* KLUDGE ALERT */
                         mdtrec.SetLocale  ( record.GetLocale()   );
@@ -2226,14 +2226,14 @@ memory_allocation: // This is where we try to get memory
 				if (Parent->GetMainMdt()->LookupByKey(Key))
 				  {
 				    message_log (LOG_PANIC, "Duplicate KEY '%s'. Inode defective?", Key.c_str());
-				    checkKey = GDT_TRUE;
+				    checkKey = true;
 				  }
 				else
 			          message_log (LOG_DEBUG, "Created key '%s'", Key.c_str());
 			      }
                           }
                         else
-                          checkKey = GDT_TRUE;
+                          checkKey = true;
                         if (checkKey || isLinked)
                           {
                             if (DebugMode)
@@ -2253,7 +2253,7 @@ memory_allocation: // This is where we try to get memory
                         Parent->IndexingStatus (IndexingStatusRecordAdded, Key, nr);
 
                         if (WriteFieldData (record, position) // edz: moved position to *before* AddEntry()
-                            == GDT_FALSE)
+                            == false)
                           {
                             message_log (LOG_ERROR, "Errors writing field data!");
                             Error++;
@@ -2293,7 +2293,7 @@ memory_allocation: // This is where we try to get memory
 //	      message_log (LOG_INFO, "Processed %.2f words/s (%.4f) CPU.",
 //		MemoryIndexLength*factor/(end/factor - start/factor), (end-start)/(double)CLOCKS_PER_SEC);
 
-              if (GDT_FALSE == FlushIndexFiles(MemoryData,
+              if (false == FlushIndexFiles(MemoryData,
                                                MemoryIndex,
 					       MemoryIndexLength,
 					       OldGlobalStart /* Added EDZ Sun Nov 16 --> */ + Offset))
@@ -2361,8 +2361,8 @@ memory_allocation: // This is where we try to get memory
         }
     }
 
-  ActiveIndexing = GDT_FALSE;
-  return Error? GDT_FALSE : GDT_TRUE;
+  ActiveIndexing = false;
+  return Error? false : true;
 }
 
 // Ship a "" to flush..
@@ -2401,12 +2401,12 @@ INT INDEX::SisWrite(const STRING Str, FILE *dp)
 
 
 /* NEW INDEXING STRATEGY */
-GDT_BOOLEAN INDEX::CollapseIndexFiles()
+bool INDEX::CollapseIndexFiles()
 {
   const int mypid = getpid();
 
   const INT LocalIndexNum=GetIndexNum();
-  if (LocalIndexNum <= 1) return GDT_TRUE; // Done;
+  if (LocalIndexNum <= 1) return true; // Done;
 
   const size_t First=LocalIndexNum-1;
   const size_t Second=LocalIndexNum;
@@ -2441,7 +2441,7 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
     for (size_t j=0, i=First; i<=Second; i++)
       {
         // MAP Inx
-        if (InxFiles[j].CreateMap(s.form("%s.%d", IndexFileName.c_str(), i), MapSequential) == GDT_FALSE)
+        if (InxFiles[j].CreateMap(s.form("%s.%d", IndexFileName.c_str(), i), MapSequential) == false)
           {
             // Can't map
             // Could call there some alternative method to fold via
@@ -2453,7 +2453,7 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
             message_log (((GetFileSize(s) >  (0x7fffffff-100)) ? LOG_INFO : LOG_ERRNO),
                   "CollapseIndexFiles: Could not Map '%s'. Won't collapse %d+%d->%d.",
                   s.c_str(), First, Second, First);
-            return GDT_FALSE;
+            return false;
           }
         total_words += ((GPTYPE)InxFiles[j].Size())/sizeof(GPTYPE);
 
@@ -2465,7 +2465,7 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
         if (Map == NULL)
           {
             message_log (LOG_ERRNO, "Collapse: Could not Map '%s'", s.c_str());
-            return GDT_FALSE;
+            return false;
           }
         if (DebugMode) message_log (LOG_DEBUG, "Mapped %s", s.c_str());
 
@@ -2492,7 +2492,7 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
 	message_log (LOG_ERROR, "Sorry can't merge %I64u words (Capacity with %d-bit files systems is %I64u)"
 		,total_words, sizeof(GPTYPE) *8, maxWordsCapacity);
 #endif
-        return GDT_FALSE;
+        return false;
       }
 #ifdef _WIN32
     message_log (LOG_INFO, "Merging %I64u words from %u indexes.", (UINT8)total_words, Second-First+1);
@@ -2505,7 +2505,7 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
     {
       message_log (LOG_WARN, "Can't collapse sub-indices with different base charsets (%d != %d) at this time.",
             SisInfo[0].charsetId, SisInfo[1].charsetId);
-      return GDT_FALSE;
+      return false;
     }
 
   // Name of the Temp Index (for output)
@@ -2517,7 +2517,7 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
   if (inx_fp == NULL)
     {
       message_log (LOG_ERRNO, "Couldn't open '%s' for writing (index).", TmpIndexFile.c_str());
-      return GDT_FALSE;
+      return false;
     }
 
   FILE *sis_fp = fopen(TmpSisFile, "wb");
@@ -2527,7 +2527,7 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
       if (UnlinkFile(TmpIndexFile) == -1) // Remove trash
         message_log (LOG_ERRNO, "Could not remove '%s' (Trash)", TmpIndexFile.c_str());
       message_log (LOG_ERRNO, "Couldn't open '%s' for writing (sis).", TmpSisFile.c_str());
-      return GDT_FALSE;
+      return false;
 
     }
   SetGlobalCharset( SisInfo[0].charsetId );
@@ -2675,10 +2675,10 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
   // We are finished and MS Windows really needs them unmaped before we can write!
   // in Unix it does not hurt.
   const char unmap_errmsg[] = "Could not unmap %s.%d";
-  if (InxFiles[0].Unmap() == GDT_FALSE) message_log (LOG_ERRNO, unmap_errmsg, IndexFileName.c_str(), First);
-  if (SisFiles[0].Unmap() == GDT_FALSE) message_log (LOG_ERRNO, unmap_errmsg, SisFileName.c_str(), First);
-  if (InxFiles[1].Unmap() == GDT_FALSE) message_log (LOG_ERRNO, unmap_errmsg, IndexFileName.c_str(), Second);
-  if (SisFiles[1].Unmap() == GDT_FALSE) message_log (LOG_ERRNO, unmap_errmsg, SisFileName.c_str(), Second);
+  if (InxFiles[0].Unmap() == false) message_log (LOG_ERRNO, unmap_errmsg, IndexFileName.c_str(), First);
+  if (SisFiles[0].Unmap() == false) message_log (LOG_ERRNO, unmap_errmsg, SisFileName.c_str(), First);
+  if (InxFiles[1].Unmap() == false) message_log (LOG_ERRNO, unmap_errmsg, IndexFileName.c_str(), Second);
+  if (SisFiles[1].Unmap() == false) message_log (LOG_ERRNO, unmap_errmsg, SisFileName.c_str(), Second);
 
   static const char err_msg[] =  "Could not remove '%s'(%s). Please remove by hand!";
   //////////////////////////////////////////////////////////////////////////
@@ -2690,13 +2690,13 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
       if (RenameFile(TmpIndexFile, IndexFileName) != 0) // Install new .inx
         {
           message_log(LOG_ERRNO, "Could not install '%'s as '%s'", TmpIndexFile.c_str(), IndexFileName.c_str());
-          return GDT_FALSE;
+          return false;
         }
       if (DebugMode) message_log(LOG_DEBUG, "Creating %s", SisFileName.c_str());
       if (RenameFile(TmpSisFile, SisFileName) != 0)
         {
           message_log(LOG_ERRNO, "Could not install '%s' as '%s'", TmpSisFile.c_str(), SisFileName.c_str());
-          return GDT_FALSE;
+          return false;
         }
       SetIndexNum(0);
 
@@ -2731,7 +2731,7 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
       if (RenameFile(TmpSisFile,Tmp) != 0)
         {
           message_log(LOG_ERRNO, "Could not install '%s' as '%s'", TmpSisFile.c_str(), Tmp.c_str());
-          return GDT_FALSE;
+          return false;
         }
       Tmp.form("%s.%d", SisFileName.c_str(), Second);
       if (DebugMode) message_log(LOG_DEBUG, "Deleting %s", Tmp.c_str());
@@ -2758,17 +2758,17 @@ GDT_BOOLEAN INDEX::CollapseIndexFiles()
       else
         {
           message_log(LOG_ERRNO, "Could not install '%s' as '%s'", TmpIndexFile.c_str(), Tmp.c_str());
-          return GDT_FALSE;
+          return false;
         }
     }
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN INDEX::MergeIndexFiles()
+bool INDEX::MergeIndexFiles()
 {
   if ((IndexNum=GetIndexNum()) < 1)
     {
-      return GDT_TRUE;
+      return true;
     }
   Parent->IndexingStatus (IndexingStatusMerging, IndexNum);
 
@@ -2795,7 +2795,7 @@ GDT_BOOLEAN INDEX::MergeIndexFiles()
           message_log(LOG_ERROR, "\
                There might be a merge of %s running on %s (owned by uid=%ld and pid=%ld). If its a stale lock \
                you can remove it (%s) by hand.", db.c_str(), tmp, uid, pid, lockName.c_str());
-          return GDT_FALSE;
+          return false;
         }
 
       if (IsRunningProcess(pid))
@@ -2811,7 +2811,7 @@ GDT_BOOLEAN INDEX::MergeIndexFiles()
             message_log (LOG_ERROR, "Index optimizer on %s already running by %s (pid=%ld). Check locks",
                   db.c_str(), ProcessOwner(uid).c_str(), pid);
 #endif
-          return GDT_FALSE;
+          return false;
         }
       else if (pid)
         {
@@ -2854,14 +2854,14 @@ GDT_BOOLEAN INDEX::MergeIndexFiles()
   // Collapse down to 1...
   do
     {
-      if (CollapseIndexFiles() == GDT_FALSE)
+      if (CollapseIndexFiles() == false)
         break;
     }
   while ((IndexNum=GetIndexNum()) > 1);
 
   if (UnlinkFile(lockName) == -1) // Zap the lock!
     message_log (LOG_ERRNO, "Could not remove optimizer lock '%s'!", lockName.c_str());
-  return GDT_TRUE;
+  return true;
 }				// end function
 
 #if 0
@@ -2912,7 +2912,7 @@ STRING INDEX::GetFlushIndexSlot()
 
 #endif
 
-GDT_BOOLEAN INDEX::FlushIndexFiles(PUCHR MemoryData,
+bool INDEX::FlushIndexFiles(PUCHR MemoryData,
                                    PGPTYPE NewMemoryIndex, GPTYPE MemoryIndexLength, GPTYPE GlobalStart)
 {
   Parent->ffGC();
@@ -2968,7 +2968,7 @@ GDT_BOOLEAN INDEX::FlushIndexFiles(PUCHR MemoryData,
   if (!fp)
     {
       message_log(LOG_ERRNO, "Can't write to %s!", TmpIndexFileName.c_str());
-      return GDT_FALSE;
+      return false;
     }
   // Mark index number for other processes (search engine would just skip it)
   SetIndexNum(IndexNum);
@@ -3046,7 +3046,7 @@ GDT_BOOLEAN INDEX::FlushIndexFiles(PUCHR MemoryData,
             }
         }
 
-      GDT_BOOLEAN includedTerm = GDT_TRUE; // OK to add to index
+      bool includedTerm = true; // OK to add to index
       if (repeat && dp)
         {
           // Write the SIS String.. See SisWrite() above..
@@ -3055,7 +3055,7 @@ GDT_BOOLEAN INDEX::FlushIndexFiles(PUCHR MemoryData,
           const size_t len = strlen(ptr); // We can do strlen since we zap to '\0' in ParseWords...
 
           if (_ib_IsExcludedIndexTerm && _ib_IsExcludedIndexTerm(ptr, len))
-            includedTerm = GDT_FALSE;
+            includedTerm = false;
 
           // We now have the length of the word = len
           IndexingTotalBytesCount += len;
@@ -3075,7 +3075,7 @@ GDT_BOOLEAN INDEX::FlushIndexFiles(PUCHR MemoryData,
             {
               if (!IsTermChr(ptr+len))
                 break;
-//	else if (isNumerical && !_ib_isdigit(ptr[len])) isNumerical = GDT_FALSE;
+//	else if (isNumerical && !_ib_isdigit(ptr[len])) isNumerical = false;
             } // for
           // Is the term numerical?
 //      if (isNumerical) number = atol((const char *)ptr);
@@ -3116,26 +3116,26 @@ GDT_BOOLEAN INDEX::FlushIndexFiles(PUCHR MemoryData,
     }
 
 
-  return GDT_TRUE;
+  return true;
 }
 
-GDT_BOOLEAN INDEX::SetStoplist (const LOCALE& Locale)
+bool INDEX::SetStoplist (const LOCALE& Locale)
 {
   return SetStoplist (Locale.LocaleName());
 }
 
-GDT_BOOLEAN INDEX::SetStoplist(const STRING& Value)
+bool INDEX::SetStoplist(const STRING& Value)
 {
   if (Value.IsEmpty() || Value.Equals("<NULL>"))
     {
 //cerr << "Stopwords Empty/NULL" << endl;
       if (StopWords) delete StopWords;
       StopWords = NULL;
-      return GDT_TRUE;
+      return true;
     }
 #if _WIN32
   message_log (LOG_WARN, "WIN32: '%s' Stoplists are not supported at this time.", Value.c_str());
-  return GDT_FALSE;
+  return false;
 #else
   if (StopWords == NULL)
     {
@@ -3147,12 +3147,12 @@ GDT_BOOLEAN INDEX::SetStoplist(const STRING& Value)
 #endif
 }
 
-GDT_BOOLEAN INDEX::IsStopWord (const STRING& Word) const
+bool INDEX::IsStopWord (const STRING& Word) const
   {
     return IsStopWord(NulString, Word);
   }
 
-GDT_BOOLEAN INDEX::IsStopWord (const STRING& Field, const STRING& Word) const
+bool INDEX::IsStopWord (const STRING& Field, const STRING& Word) const
   {
     STRINGINDEX len;
 
@@ -3161,26 +3161,26 @@ GDT_BOOLEAN INDEX::IsStopWord (const STRING& Field, const STRING& Word) const
     return IsStopWord(Field.c_str(), (const UCHR *)Word, len, 0);
   }
 
-GDT_BOOLEAN INDEX::IsStopWord (const UCHR *WordStart, STRINGINDEX WordMaximum, INT Limit) const
+bool INDEX::IsStopWord (const UCHR *WordStart, STRINGINDEX WordMaximum, INT Limit) const
   {
     return IsStopWord(NULL, WordStart, WordMaximum, Limit);
   }
 
 #if 0
-GDT_BOOLEAN INDEX::IsStopWord (const char *FieldName, const UCHR *WordStart, STRINGINDEX WordMaximum, INT Limit) const
+bool INDEX::IsStopWord (const char *FieldName, const UCHR *WordStart, STRINGINDEX WordMaximum, INT Limit) const
   {
     return IsStopWord(NULL, FieldName, WordStart, WordMaximum, Limit);
   }
 #endif
 
-GDT_BOOLEAN INDEX::IsStopWord (const char *FieldName, const UCHR *WordStart, STRINGINDEX WordMaximum, INT Limit) const
+bool INDEX::IsStopWord (const char *FieldName, const UCHR *WordStart, STRINGINDEX WordMaximum, INT Limit) const
 {
     STRINGINDEX WordLength = 0;
 
-    if (WordMaximum == 0) return GDT_TRUE; // 0 length words are always stoped!
+    if (WordMaximum == 0) return true; // 0 length words are always stoped!
 
     if (WordStart == NULL || *WordStart == '\0')
-      return GDT_TRUE;
+      return true;
 
     // ' and - can be in term!
     while ((WordLength < WordMaximum) &&
@@ -3193,23 +3193,23 @@ GDT_BOOLEAN INDEX::IsStopWord (const char *FieldName, const UCHR *WordStart, STR
 // Locale_id = Parent ? Parent->GetLocale().Id() : 0
 
     if ( _ib_IsExcludedSearchTerm && _ib_IsExcludedSearchTerm(FieldName, WordStart, WordLength))
-      return GDT_TRUE;
+      return true;
 
     if (_ib_IsSearchableTerm && _ib_IsSearchableTerm(FieldName, WordStart, WordLength))
-      return GDT_FALSE;
+      return false;
 
     // Special case .1 1.12 etc.
     if (_ib_ispunct(WordStart[WordLength]) && _ib_isalnum(WordStart[WordLength+1]))
-      return GDT_FALSE;
+      return false;
     // Another Special Case: C++, C&X etc.
     else if ( WordLength == 1 && _ib_ispunct(WordStart[1]))
-      return GDT_FALSE;
+      return false;
     // stuff..
     else if (Limit && ((Limit<0 && (WordLength+Limit==0)) || ((INT)WordLength > Limit)))
-      return GDT_TRUE;
+      return true;
 
     if (StopWords == NULL)
-      return GDT_FALSE;
+      return false;
 
     return StopWords->InList (WordStart, WordLength);
 }
@@ -3296,7 +3296,7 @@ PIRSET INDEX::Search (const QUERY& Query)
   ATTRLIST     Attrlist;
   STRING Term, FieldName;
   INT          Relation = -1,Structure=-1;
-  GDT_BOOLEAN  gotRelation;
+  bool  gotRelation;
   FIELDTYPE    FieldType;
   FIELDTYPE    aFieldType; // Advised Field Type
   INT          TermWeight;
@@ -3719,31 +3719,31 @@ PIRSET INDEX::Search (const QUERY& Query)
                 }
               else if (FieldType.IsDate() || (aFieldType.IsDate() && SRCH_DATE(Term).Ok()))
                 {
-                  if (gotRelation==GDT_FALSE) Relation=ZRelEQ;
+                  if (gotRelation==false) Relation=ZRelEQ;
                   NewIrset=DateSearch(Term, FieldName, Relation);
                 }
               else if (FieldType.IsDateRange())
                 {
-                  if (gotRelation==GDT_FALSE) Relation=ZRelEQ;
-                  if (Attrlist.AttrGetStructure(&Structure)==GDT_FALSE)
+                  if (gotRelation==false) Relation=ZRelEQ;
+                  if (Attrlist.AttrGetStructure(&Structure)==false)
                     Structure=ZStructDateRange;
                   NewIrset=DoDateSearch(Term,FieldName,Relation,Structure);
                 }
               else if (FieldType.IsNumerical() || FieldType.IsComputed() ||
                        ((aFieldType.IsNumerical() || aFieldType.IsComputed()) && gotRelation && Term.IsNumber()))
                 {
-                  if (gotRelation==GDT_FALSE) Relation=ZRelEQ;
+                  if (gotRelation==false) Relation=ZRelEQ;
 //cerr << "Numeric Search for: " << Term << " rel=" << Relation << endl;
                   NewIrset=NumericSearch(Term.GetDouble(), FieldName, Relation);
                 }
               else if (aFieldType.IsCurrency() || FieldType.IsCurrency()) // FIELDTYPE::currency
                 {
-                  if (gotRelation==GDT_FALSE) Relation=ZRelEQ;
+                  if (gotRelation==false) Relation=ZRelEQ;
                   NewIrset=MonetarySearch( MONETARYOBJ(Term), FieldName, Relation);
                 }
 	      else if (aFieldType.IsLexiHash() || FieldType.IsLexiHash()) // FIELDTYPE::lexi
 		{
-		  if (gotRelation==GDT_FALSE) Relation=ZRelEQ;
+		  if (gotRelation==false) Relation=ZRelEQ;
 		  NewIrset=LexiHashSearch( Term, FieldName, Relation);
 		}
               else if (Attrlist.AttrGetPhonetic ())
@@ -3802,17 +3802,17 @@ PIRSET INDEX::Search (const QUERY& Query)
                 }
 	      else if (aFieldType.IsHash() || FieldType.IsHash()) // FIELDTYPE::hash
 		{
-		  if (gotRelation==GDT_FALSE) Relation=ZRelEQ;
-		  NewIrset=HashSearch( Term, FieldName, Relation, GDT_FALSE);
+		  if (gotRelation==false) Relation=ZRelEQ;
+		  NewIrset=HashSearch( Term, FieldName, Relation, false);
 		}
               else if (aFieldType.IsCaseHash() || FieldType.IsCaseHash()) // FIELDTYPE::casehash
                 {
-                  if (gotRelation==GDT_FALSE) Relation=ZRelEQ;
-                  NewIrset=HashSearch( Term, FieldName, Relation, GDT_TRUE);
+                  if (gotRelation==false) Relation=ZRelEQ;
+                  NewIrset=HashSearch( Term, FieldName, Relation, true);
                 }
                else if (aFieldType.IsPrivHash() && _IB_private_hash) // FIELDTYPE::privhash
                 {
-                  if (gotRelation==GDT_FALSE) Relation=ZRelEQ;
+                  if (gotRelation==false) Relation=ZRelEQ;
 		  const NUMERICOBJ val = _IB_private_hash(FieldName, Term, Term.Len());
 		  message_log (LOG_DEBUG, "Numeric search \"%s\"->%F", Term.c_str(), (double)val);
                   NewIrset=NumericSearch( val, FieldName, Relation);
@@ -3830,7 +3830,7 @@ PIRSET INDEX::Search (const QUERY& Query)
 
 		  NewIrset = NULL;
 
-		  if (gotRelation==GDT_FALSE) Relation=ZRelEQ;
+		  if (gotRelation==false) Relation=ZRelEQ;
 		  for (WORDSLIST *ptr = Names.Next(); ptr != &Names; ptr = ptr->Next())
 		    {
 		      UINT8 hash1 = 0;
@@ -4085,7 +4085,7 @@ INT INDEX::GetIndirectTerm(const GPTYPE Gp, PUCHR Buffer, INT MaxLength) const
     INT length = GetIndirectBuffer(Gp, Buffer, 0, MaxLength);
     if (length > 0)
       {
-        length = BufferClean(Buffer, length, GDT_TRUE);
+        length = BufferClean(Buffer, length, true);
         Buffer[length] = '\0';
         return length;
       }
@@ -4114,7 +4114,7 @@ static int gpcomp(const void* x, const void* y)
   return(*((GPTYPE *)x)-*((GPTYPE *)y));
 }
 
-PIRSET INDEX::MetaphoneSearch (const STRING& QueryTerm, const STRING& FieldName, GDT_BOOLEAN useCase)
+PIRSET INDEX::MetaphoneSearch (const STRING& QueryTerm, const STRING& FieldName, bool useCase)
 {
   int num_hits = 0;
   PGPTYPE  gplist = NULL;
@@ -4144,7 +4144,7 @@ PIRSET INDEX::MetaphoneSearch (const STRING& QueryTerm, const STRING& FieldName,
   MDTREC mdtrec;
   size_t old_w = 0;
 
-  GDT_BOOLEAN IsDeleted = GDT_FALSE;
+  bool IsDeleted = false;
   SRCH_DATE   rec_date;
 
   iresult.SetVirtualIndex( (UCHR)( Parent->GetVolume(NULL) ) );
@@ -4153,8 +4153,8 @@ PIRSET INDEX::MetaphoneSearch (const STRING& QueryTerm, const STRING& FieldName,
   iresult.SetAuxCount (1);
   iresult.SetScore (0);
 
-  const GDT_BOOLEAN CheckField= (FieldName.GetLength() != 0);
-// GDT_BOOLEAN      Disk = GDT_TRUE;
+  const bool CheckField= (FieldName.GetLength() != 0);
+// bool      Disk = true;
   int      FirstTime = 1;
 
   // Loop through all sub-indexes
@@ -4301,7 +4301,7 @@ PIRSET INDEX::MetaphoneSearch (const STRING& QueryTerm, const STRING& FieldName,
                                   rec_date = mdtrec.GetDate();
                                 }
                               else
-                                IsDeleted = GDT_TRUE; // Could not find record
+                                IsDeleted = true; // Could not find record
                             }
                           if (IsDeleted)
                             continue; // Is deleted
@@ -4332,7 +4332,7 @@ PIRSET INDEX::MetaphoneSearch (const STRING& QueryTerm, const STRING& FieldName,
 #if AWWW
                       pirset->FastAddEntry (iresult);
 #else
-                      pirset->AddEntry (iresult, GDT_TRUE);
+                      pirset->AddEntry (iresult, true);
 #endif
                       if (ClippingThreshold > 0 && pirset->GetTotalEntries() > ClippingThreshold)
                         break;
@@ -4348,14 +4348,14 @@ PIRSET INDEX::MetaphoneSearch (const STRING& QueryTerm, const STRING& FieldName,
   if (gplist) delete[] gplist; // Clean-up
 
 #if AWWW
-  pirset->MergeEntries(GDT_TRUE);
+  pirset->MergeEntries(true);
 #endif
 
   return pirset;
 }
 
 
-PIRSET INDEX::SoundexSearch (const STRING& QueryTerm, const STRING& FieldName, GDT_BOOLEAN useCase)
+PIRSET INDEX::SoundexSearch (const STRING& QueryTerm, const STRING& FieldName, bool useCase)
 {
   int num_hits = 0;
   PGPTYPE  gplist = NULL;
@@ -4387,7 +4387,7 @@ PIRSET INDEX::SoundexSearch (const STRING& QueryTerm, const STRING& FieldName, G
   MDTREC mdtrec;
   size_t old_w = 0;
 
-  GDT_BOOLEAN IsDeleted = GDT_FALSE;
+  bool IsDeleted = false;
   SRCH_DATE   rec_date;
 
   iresult.SetVirtualIndex( (UCHR)( Parent->GetVolume(NULL) ) );
@@ -4396,8 +4396,8 @@ PIRSET INDEX::SoundexSearch (const STRING& QueryTerm, const STRING& FieldName, G
   iresult.SetAuxCount (1);
   iresult.SetScore (0);
 
-  const GDT_BOOLEAN CheckField= (FieldName.GetLength() != 0);
-// GDT_BOOLEAN      Disk = GDT_TRUE;
+  const bool CheckField= (FieldName.GetLength() != 0);
+// bool      Disk = true;
   int      FirstTime = 1;
 
   // Loop through all sub-indexes
@@ -4538,7 +4538,7 @@ PIRSET INDEX::SoundexSearch (const STRING& QueryTerm, const STRING& FieldName, G
                                   rec_date = mdtrec.GetDate();
                                 }
                               else
-                                IsDeleted = GDT_TRUE; // Could not find record
+                                IsDeleted = true; // Could not find record
                             }
                           if (IsDeleted)
                             continue; // Is deleted
@@ -4569,7 +4569,7 @@ PIRSET INDEX::SoundexSearch (const STRING& QueryTerm, const STRING& FieldName, G
 #if AWWW
                       pirset->FastAddEntry (iresult);
 #else
-                      pirset->AddEntry (iresult, GDT_TRUE);
+                      pirset->AddEntry (iresult, true);
 #endif
                       if (ClippingThreshold > 0 && pirset->GetTotalEntries() > ClippingThreshold)
                         break;
@@ -4585,7 +4585,7 @@ PIRSET INDEX::SoundexSearch (const STRING& QueryTerm, const STRING& FieldName, G
   if (gplist) delete[] gplist; // Clean-up
 
 #if AWWW
-  pirset->MergeEntries(GDT_TRUE);
+  pirset->MergeEntries(true);
 #endif
 
   return pirset;
@@ -4595,7 +4595,7 @@ PIRSET INDEX::SoundexSearch (const STRING& QueryTerm, const STRING& FieldName, G
 //
 // TODO:
 // To handle the phrase *"ubular bicycle wheels" --> *"ubular" "bicycle wheels" PRECEDES
-PIRSET INDEX::LeftTruncatedSearch(const STRING& QueryTerm, const STRING& FieldName, GDT_BOOLEAN useCase)
+PIRSET INDEX::LeftTruncatedSearch(const STRING& QueryTerm, const STRING& FieldName, bool useCase)
 {
   int             num_hits = 0;
   PGPTYPE         gplist = NULL;
@@ -4605,7 +4605,7 @@ PIRSET INDEX::LeftTruncatedSearch(const STRING& QueryTerm, const STRING& FieldNa
   INT             NumberOfIndexes = GetIndexNum();
   FILE           *fpi = NULL;
 
-  const GDT_BOOLEAN CheckField= (FieldName.GetLength() != 0);
+  const bool CheckField= (FieldName.GetLength() != 0);
 
   FC              Fc;
   IRESULT         iresult;
@@ -4624,8 +4624,8 @@ PIRSET INDEX::LeftTruncatedSearch(const STRING& QueryTerm, const STRING& FieldNa
   iresult.SetAuxCount (1);
   iresult.SetScore (0);
 
-// GDT_BOOLEAN      Disk = GDT_TRUE;
-  GDT_BOOLEAN      FirstTime = GDT_TRUE;
+// bool      Disk = true;
+  bool      FirstTime = true;
 
   // Loop through all sub-indexes
   MMAP MemoryMap;
@@ -4712,13 +4712,13 @@ PIRSET INDEX::LeftTruncatedSearch(const STRING& QueryTerm, const STRING& FieldNa
               if (CheckField && FirstTime)
                 {
                   FieldCache->SetFieldName(FieldName); // Note: Here we can adise we Disk
-                  FirstTime = GDT_FALSE;
+                  FirstTime = false;
                 }
 
               for (INT j = 0; j < num_hits; j++)
                 {
 
-                  GDT_BOOLEAN     ok = GDT_TRUE;
+                  bool     ok = true;
                   if (CheckField)
                     ok = FieldCache->ValidateInField(gplist[j]);
                   if (!ok)
@@ -4767,7 +4767,7 @@ PIRSET INDEX::LeftTruncatedSearch(const STRING& QueryTerm, const STRING& FieldNa
 #if AWWW
                   pirset->FastAddEntry(iresult);
 #else
-                  pirset->AddEntry(iresult, GDT_TRUE);
+                  pirset->AddEntry(iresult, true);
 #endif
                   if (ClippingThreshold > 0 && pirset->GetTotalEntries() > ClippingThreshold)
                     break;
@@ -4782,7 +4782,7 @@ PIRSET INDEX::LeftTruncatedSearch(const STRING& QueryTerm, const STRING& FieldNa
   if (gplist) delete[] gplist;	// Clean-up
 
 #if AWWW
-  pirset->MergeEntries(GDT_TRUE);
+  pirset->MergeEntries(true);
 #endif
 
   return pirset;
@@ -4801,7 +4801,7 @@ void INDEX::CPU_ResourcesExhausted()
 
 
 #if 1
-PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& fieldName, GDT_BOOLEAN useCase)
+PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& fieldName, bool useCase)
 {
   if ( QueryTerm.IsWild () == 0)
     {
@@ -4862,7 +4862,7 @@ PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& fieldName, GDT_B
   INT             NumberOfIndexes = GetIndexNum();
   FILE           *fpi = NULL;
 
-  const GDT_BOOLEAN CheckField= (FieldName.GetLength() != 0);
+  const bool CheckField= (FieldName.GetLength() != 0);
 
   FC              Fc;
   IRESULT         iresult;
@@ -4880,8 +4880,8 @@ PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& fieldName, GDT_B
   iresult.SetAuxCount (1);
   iresult.SetScore (0);
 
-// GDT_BOOLEAN      Disk = GDT_TRUE;
-  GDT_BOOLEAN      FirstTime = GDT_TRUE;
+// bool      Disk = true;
+  bool      FirstTime = true;
 
   // Loop through all sub-indexes
   MMAP MemoryMap;
@@ -4970,7 +4970,7 @@ PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& fieldName, GDT_B
               if (CheckField && FirstTime)
                 {
                   FieldCache->SetFieldName(FieldName); // Note: Here we can adise we Disk
-                  FirstTime = GDT_FALSE;
+                  FirstTime = false;
                 }
 
               for (INT j = 0; j < num_hits; j++)
@@ -4983,7 +4983,7 @@ PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& fieldName, GDT_B
 		      break; // Timeout
 		    }
 
-                  GDT_BOOLEAN     ok = GDT_TRUE;
+                  bool     ok = true;
                   if (CheckField)
                     ok = FieldCache->ValidateInField(gplist[j]);
                   if (!ok)
@@ -5033,7 +5033,7 @@ PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& fieldName, GDT_B
 #if AWWW
                   pirset->FastAddEntry(iresult);
 #else
-                  pirset->AddEntry(iresult, GDT_TRUE);
+                  pirset->AddEntry(iresult, true);
 #endif
                   if (ClippingThreshold > 0 && pirset->GetTotalEntries() > ClippingThreshold)
                     break;
@@ -5048,7 +5048,7 @@ PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& fieldName, GDT_B
   if (gplist) delete[] gplist;	// Clean-up
 
 #if AWWW
-  pirset->MergeEntries(GDT_TRUE);
+  pirset->MergeEntries(true);
 #endif
 
   return pirset;
@@ -5056,7 +5056,7 @@ PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& fieldName, GDT_B
 
 #else
 
-PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& FieldName, GDT_BOOLEAN useCase)
+PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& FieldName, bool useCase)
 {
   int             num_hits = 0;
   PGPTYPE         gplist = NULL;
@@ -5066,7 +5066,7 @@ PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& FieldName, GDT_B
   INT             NumberOfIndexes = GetIndexNum();
   FILE           *fpi = NULL;
 
-  const GDT_BOOLEAN CheckField= (FieldName.GetLength() != 0);
+  const bool CheckField= (FieldName.GetLength() != 0);
 
   FC              Fc;
   IRESULT         iresult;
@@ -5084,8 +5084,8 @@ PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& FieldName, GDT_B
   iresult.SetAuxCount (1);
   iresult.SetScore (0);
 
-// GDT_BOOLEAN      Disk = GDT_TRUE;
-  GDT_BOOLEAN      FirstTime = GDT_TRUE;
+// bool      Disk = true;
+  bool      FirstTime = true;
 
   // Loop through all sub-indexes
   MMAP MemoryMap;
@@ -5177,13 +5177,13 @@ PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& FieldName, GDT_B
         {
           FieldCache->SetFieldName(FieldName); // Note: Here we can adise we Disk
 
-          FirstTime = GDT_FALSE;
+          FirstTime = false;
         }
 
       for (INT j = 0; j < num_hits; j++)
         {
 
-          GDT_BOOLEAN     ok = GDT_TRUE;
+          bool     ok = true;
           if (CheckField)
             ok = FieldCache->ValidateInField(gplist[j]);
           if (!ok)
@@ -5235,7 +5235,7 @@ PIRSET INDEX::GlobSearch(const STRING& QueryTerm, const STRING& FieldName, GDT_B
         }			// for()
     }				/* for */
 done:
-  pirset->MergeEntries(GDT_TRUE);
+  pirset->MergeEntries(true);
   // Close dangling handles..
   if (fpi) ffclose(fpi);
 
@@ -5282,7 +5282,7 @@ static inline INT TermCompareSpecial(const UCHR *term, const UCHR *ptr, const si
 static inline INT TermCompare(const UCHR *term, const UCHR *ptr, const size_t n,
                               size_t *length = NULL)
 {
-  GDT_BOOLEAN x;
+  bool x;
   INT diff = _strncasecmp(term, ptr, n, &x, length);
   if (diff == 0 && x)
     diff = -1; // Not a match
@@ -5373,8 +5373,8 @@ return (right - left + 1);
 
 
 
-int INDEX::findIt(MMAP *MemoryMap, const UCHR *Term, size_t TermLength, GDT_BOOLEAN Truncate,
-                  off_t *start, GDT_BOOLEAN *overflow)
+int INDEX::findIt(MMAP *MemoryMap, const UCHR *Term, size_t TermLength, bool Truncate,
+                  off_t *start, bool *overflow)
 {
   int             num_hits = -1;
 
@@ -5435,12 +5435,12 @@ int INDEX::findIt(MMAP *MemoryMap, const UCHR *Term, size_t TermLength, GDT_BOOL
       if (maxLength < TermLength)
         {
           n[0] = '\0';
-          *overflow = GDT_TRUE;
+          *overflow = true;
         }
       else
         {
           n[0] = Truncate ? 0 : (unsigned char) length;
-          *overflow = GDT_FALSE;
+          *overflow = false;
         }
 
       num_hits = 0;		// Start off with No hits..
@@ -5496,16 +5496,16 @@ int INDEX::findIt(MMAP *MemoryMap, const UCHR *Term, size_t TermLength, GDT_BOOL
   return num_hits;
 }
 
-int INDEX::findIt(GDT_BOOLEAN Truncate, const STRING& Index,
-                  const UCHR *Term, size_t TermLength, off_t *start, GDT_BOOLEAN *overflow)
+int INDEX::findIt(bool Truncate, const STRING& Index,
+                  const UCHR *Term, size_t TermLength, off_t *start, bool *overflow)
 {
   MMAP MemoryMap(Index, MapRandom);
 
   return findIt (&MemoryMap, Term, TermLength, Truncate, start, overflow);
 }
 
-INT INDEX::find(const STRING& SisFn, const INT Slot, const STRING& Word, GDT_BOOLEAN Truncate,
-                off_t *start, GDT_BOOLEAN *overflow)
+INT INDEX::find(const STRING& SisFn, const INT Slot, const STRING& Word, bool Truncate,
+                off_t *start, bool *overflow)
 {
   size_t TermLength = Word.GetLength();
   const UCHR *Term = (const UCHR *)Word;
@@ -5529,8 +5529,8 @@ INT INDEX::find(const STRING& SisFn, const INT Slot, const STRING& Word, GDT_BOO
 }
 
 
-INT INDEX::find(INT Index, const STRING& Word, GDT_BOOLEAN Truncate,
-                off_t *start, GDT_BOOLEAN *overflow)
+INT INDEX::find(INT Index, const STRING& Word, bool Truncate,
+                off_t *start, bool *overflow)
 {
   INT Slot = 0;
   STRING SisFn (SisFileName);
@@ -5543,7 +5543,7 @@ INT INDEX::find(INT Index, const STRING& Word, GDT_BOOLEAN Truncate,
   return find(SisFn, Slot, Word, Truncate, start, overflow);
 }
 
-long INDEX::TermFreq(const STRING& Word, GDT_BOOLEAN Truncate)
+long INDEX::TermFreq(const STRING& Word, bool Truncate)
 {
   const INT       NumberOfIndexes = GetIndexNum();
   long            total = 0;
@@ -5552,7 +5552,7 @@ long INDEX::TermFreq(const STRING& Word, GDT_BOOLEAN Truncate)
 
   for (INT jj = NumberOfIndexes ? 1 : 0; jj <= NumberOfIndexes; jj++)
     {
-      if ((ip = find(jj, Word, Truncate, (off_t *)NULL, (GDT_BOOLEAN *)NULL)) > 0)
+      if ((ip = find(jj, Word, Truncate, (off_t *)NULL, (bool *)NULL)) > 0)
 	{
           total += ip;
 	}
@@ -5567,20 +5567,20 @@ long INDEX::TermFreq(const STRING& Word, GDT_BOOLEAN Truncate)
 }
 
 
-GDT_BOOLEAN INDEX::IsSpecialTerm( const UCHR *Term) const
+bool INDEX::IsSpecialTerm( const UCHR *Term) const
   {
-    if (Term == NULL) return GDT_FALSE;
+    if (Term == NULL) return false;
 
-    GDT_BOOLEAN result = GDT_FALSE;
+    bool result = false;
     if ( _ib_isalnum(*(Term)))
       {
         // Handle things like C++
         while (*++Term)
           {
             if (_ib_isspace(*Term))
-              return GDT_FALSE;
+              return false;
             else if (!result)
-              result = GDT_TRUE;
+              result = true;
           };
       }
     else
@@ -5589,9 +5589,9 @@ GDT_BOOLEAN INDEX::IsSpecialTerm( const UCHR *Term) const
         do
           {
             if (_ib_isspace(*Term))
-              return GDT_FALSE;
+              return false;
             if (!result && _ib_ispunct(*Term) && _ib_isalnum(*(Term+1)))
-              result = GDT_TRUE;
+              result = true;
           }
         while (*++Term);
       }
@@ -5615,22 +5615,22 @@ class HITLIST {
       if (GpTable)  delete[] GpTable;
       if (LenTable) delete[] LenTable;
     }
-    GDT_BOOLEAN Add (GPTYPE gp, short length)
+    bool Add (GPTYPE gp, short length)
     {
       if ( TotalElements >= maxHits )
-        if (Expand() == GDT_FALSE)
-          return GDT_FALSE;
+        if (Expand() == false)
+          return false;
       if (GpTable == NULL || LenTable == NULL)
         {
           message_log (LOG_PANIC, "Hitlist got zapped to NIL!!!?");
-          return GDT_FALSE;
+          return false;
         }
       GpTable[TotalElements] = gp;
       LenTable[TotalElements++] = length;
-      return GDT_TRUE;
+      return true;
     }
 
-    GDT_BOOLEAN Expand()
+    bool Expand()
     {
       // Expand (4 x current + 1024)
       size_t          newMax;
@@ -5646,20 +5646,20 @@ class HITLIST {
           message_log (LOG_PANIC, "Result record capacity exceeded %d>%ld!", maxHits, INT_MAX);
         }
       if (newMax <= maxHits)
-        return GDT_TRUE; // Already got enough!
+        return true; // Already got enough!
 
       GPTYPE    *newGpTable = new GPTYPE[newMax];
       if (newGpTable == NULL)
         {
           message_log (LOG_PANIC|LOG_ERRNO, "Could not get %ld bytes for hit lists.", newMax*sizeof(GPTYPE));
-          return GDT_FALSE;
+          return false;
         }
       short     *newLenTable = new short[newMax];
       if (newLenTable == NULL)
         {
           delete[] newGpTable; // Don't need it since we failed!
           message_log (LOG_PANIC|LOG_ERRNO, "Could not get %ld bytes for hit lists.", newMax*sizeof(GPTYPE));
-          return GDT_FALSE;
+          return false;
         }
       if (GpTable)
         {
@@ -5674,7 +5674,7 @@ class HITLIST {
         }
       LenTable = newLenTable;
       maxHits = newMax;
-      return GDT_TRUE;
+      return true;
     }
 
     GPTYPE      operator[](size_t n) const {return GpTable[n]; }
@@ -5807,7 +5807,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
       while ( _ib_isspace ( FullTerm[x] ) )
         x--;
     }
-  GDT_BOOLEAN     myStoreHitCoordinates = storeHitCoordinates;
+  bool     myStoreHitCoordinates = storeHitCoordinates;
 
   if ( SetCache && (ClippingThreshold == 0 || ClippingThreshold > 1) )
     {
@@ -5819,11 +5819,11 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
     }
   INT ( *Compare ) ( const UCHR *, const UCHR *, const size_t, size_t *);
 
-  const GDT_BOOLEAN Special = IsSpecialTerm ( FullTerm );
+  const bool Special = IsSpecialTerm ( FullTerm );
   switch ( Typ )
     {
     case FreeForm:
-      myStoreHitCoordinates = GDT_FALSE;
+      myStoreHitCoordinates = false;
       // Fall into...
     case Exact:
     case ExactTerm:
@@ -5837,15 +5837,15 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
     case PhoneticCase:
     case Phonetic:
       if (useSoundex)
-	return SoundexSearch ( FullTerm, FieldName, Typ == PhoneticCase ? GDT_TRUE : GDT_FALSE );
-      return MetaphoneSearch ( FullTerm, FieldName, Typ == PhoneticCase ? GDT_TRUE : GDT_FALSE );
+	return SoundexSearch ( FullTerm, FieldName, Typ == PhoneticCase ? true : false );
+      return MetaphoneSearch ( FullTerm, FieldName, Typ == PhoneticCase ? true : false );
     }
 
   clock_t         startClock = clock();
 
   STRING          RealTerm ( FullTerm, x );	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  STRING          SearchTerm ( TermClean ( RealTerm, GDT_TRUE ) );
+  STRING          SearchTerm ( TermClean ( RealTerm, true ) );
 
   FullTerm = (const UCHR *) SearchTerm.c_str ();
 
@@ -5928,12 +5928,12 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
     }
 
   size_t Term_length = x; // First word length
-  // GDT_BOOLEAN Disk = GDT_TRUE;
-  GDT_BOOLEAN     FirstTime = GDT_TRUE;
+  // bool Disk = true;
+  bool     FirstTime = true;
 
   // size_t Total = 0;
   // FC *Cache;
-  const GDT_BOOLEAN CheckField = ( FieldName.GetLength () != 0 );
+  const bool CheckField = ( FieldName.GetLength () != 0 );
 
   const INT       NumberOfIndexes = GetIndexNum ();
 #define HEADROOM(_x,_y) ( ((_x)/(_y) + 1)*(_y))
@@ -5992,7 +5992,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
         GPTYPE          gp;
         off_t           ip;
         off_t           first, last;
-        GDT_BOOLEAN     overflow;
+        bool     overflow;
 
 #if 1
         if (DebugMode) message_log (LOG_DEBUG, "Find '%s' in %s", Word.c_str(), SisFn.c_str());
@@ -6013,7 +6013,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
               {
                 const UCHR     *tp = &Term[Term_length];
                 int             alt_count = -1;
-                GDT_BOOLEAN     heuristic = GDT_TRUE;
+                bool     heuristic = true;
                 unsigned        looks = 0;
 
                 do
@@ -6047,7 +6047,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
                           }
                       }
                     else
-                      heuristic = GDT_FALSE;
+                      heuristic = false;
                     tp += new_length;	// Next word...
 
                   }
@@ -6124,7 +6124,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
             // find any match
             //----------------------------------------------------------------------------
             INT             z = 0;
-            GDT_BOOLEAN     hit = GDT_FALSE;
+            bool     hit = false;
             do
               {
                 oip = ip;
@@ -6135,7 +6135,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
                     if ( ( z = first_char - ( UCHR ) _ib_tolower ( Buffer[0] ) ) == 0 &&
                          ( z = Compare ( Term, Buffer, Term_length, NULL) ) == 0 )
                       {
-                        hit = GDT_TRUE;	// Got a match
+                        hit = true;	// Got a match
 
                         break;
                       }
@@ -6345,7 +6345,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
         if ( CheckField && FirstTime )
           {
             FieldCache->SetFieldName ( FieldName ); // Note: Here we can adise we Disk
-            FirstTime = GDT_FALSE;
+            FirstTime = false;
           }
         // sort gplist
 // clock_t xx = clock();
@@ -6446,7 +6446,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
   }
 
   // Now we add all the hits...
-  GDT_BOOLEAN     isDeleted = GDT_FALSE;
+  bool     isDeleted = false;
   const PMDT      MainMdt = Parent->GetMainMdt ();
   size_t          old_w = 0;
   SRCH_DATE       rec_date;
@@ -6506,7 +6506,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
                 }
               else
                 {
-                  isDeleted = GDT_TRUE;
+                  isDeleted = true;
                 }
               old_w = w;
             }
@@ -6537,7 +6537,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
 #if AWWW
       pirset->FastAddEntry ( iresult );
 #else
-      pirset->AddEntry ( iresult, GDT_TRUE );
+      pirset->AddEntry ( iresult, true );
 #endif
       if ( ClippingThreshold > 0 && pirset->GetTotalEntries () > ClippingThreshold )
         break;
@@ -6546,7 +6546,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
   // Cleanup
 #if AWWW
   // pirset->SortByIndex();
-  pirset->MergeEntries ( GDT_TRUE );
+  pirset->MergeEntries ( true );
 #endif
   if ( SetCache )
     {
@@ -6562,11 +6562,11 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
 
 void INDEX::Dump(ostream& os)
 {
-  Dump(0, os, GDT_FALSE);
+  Dump(0, os, false);
   return;
 }
 
-long INDEX::Dump (INT Skip, ostream& os, GDT_BOOLEAN OnlyErrors)
+long INDEX::Dump (INT Skip, ostream& os, bool OnlyErrors)
 {
   INT NumberOfIndexes = GetIndexNum();
   PFILE fpi;
@@ -6578,7 +6578,7 @@ long INDEX::Dump (INT Skip, ostream& os, GDT_BOOLEAN OnlyErrors)
   MDTREC mdtrec;
   INT x;
   long errors = 0;
-  GDT_BOOLEAN haveDeleted = (Parent->GetTotalDocumentsDeleted() > 0);
+  bool haveDeleted = (Parent->GetTotalDocumentsDeleted() > 0);
   long notFound = 0;
 
   for (INT jj = 1; (jj <= NumberOfIndexes) || (NumberOfIndexes == 0); jj++)
@@ -6641,7 +6641,7 @@ long INDEX::Dump (INT Skip, ostream& os, GDT_BOOLEAN OnlyErrors)
             {
               if (x > (int)StringCompLength)
                 x = StringCompLength;
-              INT j = BufferClean(Buffer, x, GDT_FALSE);
+              INT j = BufferClean(Buffer, x, false);
               if (x < (int)StringCompLength)
                 memset(&Buffer[x], ' ', StringCompLength-x);
               memcpy (Term, Buffer, StringCompLength);
@@ -6725,7 +6725,7 @@ cerr << "ERR: x=" << x << " " << mdtrec.GetFileName() << "(" << pos << "): \"" <
   return errors;
 }
 
-GDT_BOOLEAN INDEX::CheckIntegrity() const
+bool INDEX::CheckIntegrity() const
 {
   return OK;
 }
@@ -6794,7 +6794,7 @@ INDEX::~INDEX ()
 
 //////////////////////////////////////////////////////////////////////////////
 
-GDT_BOOLEAN INDEX::KillAll ()
+bool INDEX::KillAll ()
 {
   long pid = 0;
   STRING s;
@@ -6876,7 +6876,7 @@ GDT_BOOLEAN INDEX::KillAll ()
             }
         }
     }
-  return GDT_TRUE;
+  return true;
 }
 
 #if 0
@@ -6928,7 +6928,7 @@ size_t INDEX::SisCheck()
 INT INDEX::Cleanup ()
 {
   // First Merge
-  if (MergeIndexFiles() == GDT_FALSE)
+  if (MergeIndexFiles() == false)
     return 0; // Failed
 
   message_log (LOG_DEBUG, "INDEX::Cleanup() [Right now does nothing]");
@@ -6943,7 +6943,7 @@ INT INDEX::Cleanup ()
   for (size_t x = 1; x <= MdtTotalEntries; x++)
     {
       Parent->GetMainMdt ()->GetEntry (x, &Mdtrec);
-      if (Mdtrec.GetDeleted () == GDT_TRUE)
+      if (Mdtrec.GetDeleted () == true)
         {
           Offset += Mdtrec.GetLocalRecordEnd () - Mdtrec.GetLocalRecordStart () + 1;
         }
@@ -7004,21 +7004,21 @@ INT INDEX::Cleanup ()
 
           GPTYPE Gp;
           long pos = 0;
-          GDT_BOOLEAN deleted;
+          bool deleted;
           while (GpFread (&Gp, Fpo))
             {
               const size_t g = Parent->GetMainMdt ()->LookupByGp (Gp);
-              deleted = GDT_TRUE;
+              deleted = true;
               if (g)
                 {
                   Parent->GetMainMdt ()->GetEntry (g, &Mdtrec);
-                  if (Mdtrec.GetDeleted () == GDT_FALSE)
+                  if (Mdtrec.GetDeleted () == false)
                     {
                       Gp -= GpList[g - 1];
                       GpFwrite (Gp, Fpn);
                     }
                   else
-                    deleted = GDT_TRUE;
+                    deleted = true;
                 }
               if (FileNum == 0 && deleted)
                 {
@@ -7045,7 +7045,7 @@ INT INDEX::Cleanup ()
   for (size_t i=1; i<=MdtTotalEntries; i++)
     {
       Parent->GetMainMdt ()->GetEntry(i, &Mdtrec);
-      if (Mdtrec.GetDeleted() == GDT_FALSE)
+      if (Mdtrec.GetDeleted() == false)
         {
           Mdtrec.SetGlobalFileStart(Mdtrec.GetGlobalFileStart () - GpList[i-1]);
 //	    Mdtrec.SetGlobalFileEnd(Mdtrec.GetGlobalFileEnd () - GpList[i-1]);
@@ -7201,7 +7201,7 @@ loop:   SWAPINIT(a);
 
 
 
-size_t INDEX::ScanSearch(SCANLIST *ListPtr, const QUERY& Query, const STRING& Fieldname, size_t MaxRecordsThreshold, GDT_BOOLEAN Cat)
+size_t INDEX::ScanSearch(SCANLIST *ListPtr, const QUERY& Query, const STRING& Fieldname, size_t MaxRecordsThreshold, bool Cat)
 {
   message_log (LOG_DEBUG, "ScanSearch in Field '%s'", Fieldname.c_str());
   if (ListPtr)
@@ -7242,7 +7242,7 @@ SCANLIST INDEX::ScanSearch(const QUERY& SearchQuery, const STRING& Fieldname, /*
       return Scanlist; // Sorry need parents
     }
   const size_t      d_pos = Fieldname.SearchReverse( __AncestorDescendantSeperator );
-  const GDT_BOOLEAN WantNode = (d_pos != 0);
+  const bool WantNode = (d_pos != 0);
   const STRING      scanField ((WantNode ? Fieldname.Right(Fieldname.GetLength() - d_pos) : Fieldname) + "/");
 
   if (Fieldname.IsEmpty() || !Parent->ValidNodeName(Fieldname))
@@ -7383,7 +7383,7 @@ PIRSET INDEX::DoctypeSearch (const STRING& DoctypeSpec)
   iresult.SetAuxCount (1);
   iresult.SetScore (0);
 
-  GDT_BOOLEAN isWild = DoctypeSpec.IsWild();
+  bool isWild = DoctypeSpec.IsWild();
 
   const size_t     total_records = MdtPtr->GetTotalEntries();
   for (size_t i=1; i<= total_records; i++)
@@ -7408,7 +7408,7 @@ PIRSET INDEX::DoctypeSearch (const STRING& DoctypeSpec)
 }
 
 
-// This method is also used by the unary operator KEY:keyspec
+// This method is also used by the unary operator WITHKEY:keyspec
 PIRSET INDEX::KeySearch(const STRING& KeySpec)
 {
   IRSET           *pirset = NULL;
@@ -7467,7 +7467,7 @@ PIRSET INDEX::KeySearch(const STRING& KeySpec)
           if (MdtPtr->GetEntry (i, &mdtrec))
             {
               STRING key (mdtrec.GetKey());
-              if (::Glob(KeySpec,key, GDT_FALSE) == GDT_TRUE)
+              if (::Glob(KeySpec,key, false) == true)
                 {
                   SRCH_DATE date (mdtrec.GetDate());
                   // Have a match
@@ -7564,8 +7564,8 @@ PIRSET INDEX::FileSearch(const STRING& FileSpec)
   MDTREC           mdtrec;
   IRESULT          iresult;
   FC               Fc;
-  GDT_BOOLEAN      isWild = FileSpec.IsWild();
-  GDT_BOOLEAN      noPath = !ContainsPathSep(FileSpec);
+  bool      isWild = FileSpec.IsWild();
+  bool      noPath = !ContainsPathSep(FileSpec);
 
   iresult.SetMdt (MdtPtr);
   iresult.SetHitCount (1);
@@ -7631,8 +7631,8 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
 		IndexPtr->Parent->GetDbFileStem ().c_str());
       return 0;
     }
-  IndexPtr->ActiveIndexing = GDT_TRUE;
-  ActiveIndexing = GDT_TRUE;
+  IndexPtr->ActiveIndexing = true;
+  ActiveIndexing = true;
 
 #if 1
   int          count = GetIndexNum();
@@ -7672,7 +7672,7 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
   message_log (LOG_DEBUG, "Importing records (offset=%lu)..", offset);
   for (size_t i=1; i<=oTotal; i++)
     {
-      if (oMdtPtr->GetEntry (i, &Mdtrec) == GDT_TRUE)
+      if (oMdtPtr->GetEntry (i, &Mdtrec) == true)
 	{
 	  STRING fn =  Mdtrec.GetFullFileName();
 	  message_log (LOG_DEBUG, "Adding '%s' [%s]..", fn.c_str(), Mdtrec.GetKey().c_str());
@@ -7707,7 +7707,7 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
           STRING      fieldName;
           FIELDTYPE   fieldType;
 	  STRING      in_fn, out_fn;
-	  GDT_BOOLEAN newField;
+	  bool newField;
 	  GPTYPE      objects = 0;
           for (size_t x=1; x<=fields; x++)
             {
@@ -7717,10 +7717,10 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
 	      if (!Dfdtptr->FieldExists(fieldName))
 		{
 		  Dfdtptr->AddEntry(Dfd);
-		  newField = GDT_TRUE;
+		  newField = true;
 		}
 	       else
-		newField = GDT_FALSE;
+		newField = false;
 	      // Append Text field
 	      IndexPtr->Parent->DfdtGetFileName (fieldName, &in_fn); // TEXT
 	      Parent->DfdtGetFileName(fieldName, &out_fn);
@@ -7936,8 +7936,8 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
     MergeIndexFiles();
 #endif
 
-  IndexPtr->ActiveIndexing = GDT_FALSE;
-  ActiveIndexing = GDT_FALSE;
+  IndexPtr->ActiveIndexing = false;
+  ActiveIndexing = false;
 
   return recordsAdded;
 }
