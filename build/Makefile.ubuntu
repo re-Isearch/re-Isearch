@@ -14,8 +14,17 @@ GCC_VERSION=-10
 BERKELEY_DB_ROOT = /usr/local/BerkeleyDB.4.4/
 LIBBDB=-ldb
 
+#
+# Install Directory
+#
+# Where should I install executables (make install)?
+#
+INSTALL=/usr/local/bin
+INSTALL_LIBS=/usr/local/lib/ib
+
+
 EXTRA_INC= -I$(BERKELEY_DB_ROOT)/include
-DEFAULT_LIB_INSTALL_PATH="../lib:."
+DEFAULT_LIB_INSTALL_PATH="../lib:.:$(INSTALL_LIBS)"
 
 #MALLOC_OBJ = malloc.o
 
@@ -165,12 +174,6 @@ EXTRA= -lnsl -ldl -lm -lmagic $(LIBBDB)
 #EXTRA=-lm -ldl -lstdc++ 
 #EXTRA= -lm -lz -lstdc++
 #EXTRA= -lm -lz -lstdc++ -lmudflap 
-#
-# Install Directory
-#
-# Where should I install executables (make install)?
-#
-INSTALL=/usr/local/bin
 
 #
 # Executables Directory
@@ -667,5 +670,26 @@ install:
 	cp $(BIN_DIR)/Iindex $(INSTALL)/.
 	cp $(BIN_DIR)/Isearch $(INSTALL)/.
 	cp $(BIN_DIR)/Iutil $(INSTALL)/.
+	cp $(BIN_DIR)/Idelete $(INSTALL)/.
+	cp $(BIN_DIR)/zpresent  $(INSTALL)/.
+	cp $(BIN_DIR)/Iwatch $(INSTALL)/.
+	@echo "*** Copying Isearch shared libs to $(INSTALL_LIBS)/. ***"
+	-mkdir $(INSTALL_LIBS)
+	cp $(LIB_DIR)/$(CO_LIB).$(VERSION)  $(INSTALL_LIBS)/.
+	ln -s $(INSTALL_LIBS)/$(CO_LIB).$(VERSION) $(INSTALL_LIBS)/$(CO_LIB)
+	cp $(LIB_DIR)/$(SO_LIB).$(VERSION)  $(INSTALL_LIBS)/.
+	ln -s $(INSTALL_LIBS)/$(SO_LIB).$(VERSION) $(INSTALL_LIBS)/$(SO_LIB)
+	cp $(LIB_DIR)/$(SH_LIB).$(VERSION)  $(INSTALL_LIBS)/.
+	ln -s $(INSTALL_LIBS)/$(SH_LIB).$(VERSION) $(INSTALL_LIBS)/$(SH_LIB)
+	cp $(LIB_DIR)/$(SO_LIB).$(VERSION)  $(INSTALL_LIBS)/.
+	ln -s $(INSTALL_LIBS)/$(SO_LIB).$(VERSION) $(INSTALL_LIBS)/$(SO_LIB)
+	cp $(LIB_DIR)/$(CI_LIB).$(VERSION)  $(INSTALL_LIBS)/.
+	ln -s $(INSTALL_LIBS)/$(CI_LIB).$(VERSION) $(INSTALL_LIBS)/$(CI_LIB)
+	cp $(LIB_DIR)/$(CT_LIB).$(CTYPE_VERSION)  $(INSTALL_LIBS)/.
+	ln -s $(INSTALL_LIBS)/$(CT_LIB).$(CTYPE_VERSION) $(INSTALL_LIBS)/$(CT_LIB)
+	cp $(LIB_DIR)/$(PR_LIB).$(VERSION)  $(INSTALL_LIBS)/.
+	ln -s $(INSTALL_LIBS)/$(PR_LIB).$(VERSION) $(INSTALL_LIBS)/$(PR_LIB)
+	cp $(LIB_DIR)/$(AP_LIB).$(APPS_VERSION)  $(INSTALL_LIBS)/.
+	ln -s $(INSTALL_LIBS)/$(AP_LIB).$(APPS_VERSION) $(INSTALL_LIBS)/$(AP_LIB)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it. 
