@@ -16,7 +16,6 @@ int ProcessGopherRequest(char *Host, int Port, char *Request, FILE *fp, size_t *
 int ProcessHTTPRequest(char *Host, int Port, char *Request, FILE *fp, size_t *Len);
 int ProcessIPFSRequest(char *Host, int Port, char *Request,FILE *fp,size_t *Len);
 
-void StripURLsToStream(char *InBuf, FILE *Stream, char *Separator);
 void PrintOtherHosts(char *InBuf);
 int GopherWalk(char *Host, int Port, char *Selector, FILE *fp, LPBSTNODE Tree);
 int gsscanf(char *src, char *type, char *title, char *sel, char *host, 

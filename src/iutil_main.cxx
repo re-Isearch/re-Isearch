@@ -474,13 +474,13 @@ int _Iutil_main(int argc, char **argv)
   }
 
 
-
- //IO remote("http://www.bsn.com/");
- //char buff[1026];
- //int result = remote.read(buff, 1024, 1);
- //cerr << ">" << result << endl;
- //IO remote2("http://www.bsn.com/");
-
+#if 0
+ IO remote("http://www.bsn.com/");
+ char buff[1026];
+ int result = remote.read(buff, 1024, 1);
+ cerr << ">" << result << endl;
+ IO remote2("http://www.bsn.com/");
+#endif
 
 
   message_log (LOG_INFO, "Iutil %s (%s)", __IB_Version, __HostPlatform);

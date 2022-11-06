@@ -100,10 +100,10 @@ static const char KeyFile[] = "/opt/nonmonotonic/lib/license";
 const char * const __CopyrightData = "\
 Portions Copyright (c) 1995 MCNC/CNDIR; 1995-2011 BSn/Munich and its NONMONOTONIC Lab;\n\
 1995-2000 Archie Warnock; and a host of other contributors;\n\
-Copyright (c) 2021 NONMONOTONIC Networks for the re.Isearch Project.\n\n\
-This software has been made available through a grant 2020/21 from NLnet Foundation and EU NGI0.";
-
-
+Copyright (c) 2020-2022 NONMONOTONIC Networks for the re.Isearch Project.\n\
+Copyright (c) 2022 Project Exodus 3.0 and the ExoDAO Society.\n\n\
+This software has been made available by generous public support including a grant\n\
+from the EU's NGI0 Discovery Fund through NLnet, grant agreement No 825322.";
 
 const char * const __CompilerUsed = HOST_COMPILER;
 const char * const __HostPlatform = HOST_PLATFORM;
@@ -114,7 +114,7 @@ const STRING __IB_DefaultDbName ("IB");
 const STRING __IB_DefaultDbName (".IB");
 #endif
 
-const char *__IB_Version = "4.9a";
+const char *__IB_Version = "4.10b";
 
 // Special Elements
 const STRING BRIEF_MAGIC    (ELEMENT_Brief); /* CNIDR "hardwires" this */
@@ -324,9 +324,9 @@ int __IB_CheckUserRegistration(const char *file)
 	{
 	  char Version[32];
 	  long l;
-	  fscanf(fp, "IB v%s %lo", Version, &l);
+	  int result = fscanf(fp, "IB v%s %lo", Version, &l);
 	  fclose(fp);
-	  if (strcmp(Version, __IB_Version) == 0 && l == timeout)
+	  if (result < 2 || (strcmp(Version, __IB_Version) == 0 && l == timeout))
 	    Register = false;
 	}
       action = "Update";
@@ -612,6 +612,10 @@ static void bkgrnd_read (int)
 }
 #endif
 
+#ifndef NO_RLDCACHE
+RLDCACHE* Cache = NULL;
+#endif
+
 long __Register_IB_Application(const char *Appname, FILE *output, int DebugFlag)
 {
 #ifndef NO_RLDCACHE
@@ -688,9 +692,8 @@ Please update or install a permanent license key.",
 #ifndef NO_RLDCACHE
   if (Cache == NULL)
     {
-      const char *location = "/tmp/ib_cache.rld";
-      Cache = new RLDCACHE( location );
-      message_log (iLOG_DEBUG, "Opened an RLDCACHE %s", location );
+      Cache = new RLDCACHE(  );
+      message_log (iLOG_DEBUG, "Opened an RLDCACHE", Cache->GetCacheFilename().c_str());
     }
 #endif
 

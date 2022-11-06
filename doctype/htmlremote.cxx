@@ -37,13 +37,16 @@ HyperText Markup Language (W3C HTML) Documents\n\
 
 void HTMLREMOTE::ParseRecords(const RECORD& FileRecord)
 {
+  // If the document root has not been defined in the INI we
+  // define it here...
   if (DocumentRoot.IsEmpty())
     {
       STRING fn = FileRecord.GetPath();
       STRINGINDEX pos = fn.Search("/http/");
       if (pos)
 	{
-	  fn.EraseBefore(pos);
+	  fn.EraseAfter(pos); // fn.EraseBefore(pos);
+
 	  Db->ProfileWriteString(Doctype, "BASE", fn);
 	  DocumentRoot = fn;
 	}
@@ -69,7 +72,7 @@ bool HTMLREMOTE::URL(const RESULT& ResultRecord, PSTRING StringBuffer, bool Only
   if (root_len)
     {
 	  // Is the document in the WWW tree?
-//	  message_log (LOG_DEBUG, "Looking for %s in %s", (const char *)DocumentRoot, (const char *)Path);
+	  message_log (LOG_DEBUG, "Looking for %s (ROOT) in %s", DocumentRoot.c_str(), Path.c_str());
 	  if (Path.SubString(1, root_len) ==  DocumentRoot)
 	    {
 	      Path.EraseBefore(root_len + 1);
@@ -84,6 +87,7 @@ bool HTMLREMOTE::URL(const RESULT& ResultRecord, PSTRING StringBuffer, bool Only
 			{"urn",     3, true},
 			{"file",    4, true},
 			{"http",    4, true},
+			{"ipfs",   4, true}, 
 			{"news",    4, false},
 			{"nntp",    4, true},
                         {"ldap",    4, true},
@@ -99,19 +103,29 @@ bool HTMLREMOTE::URL(const RESULT& ResultRecord, PSTRING StringBuffer, bool Only
 			{NULL, 0, false}
 		  };
 #endif
-		  //  http/furball.nonmonotonic.net_80/ --> http://furball.nonmonotonic.net:80/
+
+		  //  http/furball.nonmonotonic.net_81/ --> http://furball.nonmonotonic.net:81/
 		  STRINGINDEX x = Path.Search("/");
 		  if (x > 3) // The shortest method
 		    {
+
+			    
 		      Path.Insert(x, ":/"); // turn / --> ://
 		      if ((x = Path.Search("_", x+1)) != 0 && isdigit (Path.GetChr(x+1)))
 			{
+			  // we turn _ back into : for port.. We could look to see if 80
+			  // and zap it.. but won't bother
 			  Path.SetChr(x, ':'); 
-			  if (Path.Right ((size_t)9) == "/_._.html")
-			    Path.EraseAfter(Path.GetLength() - 9);
-			  *StringBuffer = Path;
-			  return true;
 			}
+
+		      // default page names
+		      size_t trim;
+		      if ((Path.Right (trim = 9)) == "/_._.html" ||
+			   (Path.Right(trim = 11)) == "/index.html" ) {
+		         Path.EraseAfter(Path.GetLength() - trim );
+		       }
+		      *StringBuffer = Path;
+		      return true;
 		    }
 		  return false; // Bad Mirror
 	  }

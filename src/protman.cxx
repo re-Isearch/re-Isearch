@@ -24,6 +24,7 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 #define HOSTNAME "doright.stsci.edu"
 #endif
 
+#define MAX_FILE_LENGTH 10000000
 
 // Use ISO date/time format (alternative is RFCdate )
 #define DATE_STRING ::ISOdate(0)
@@ -96,6 +97,8 @@ FILE *message_logp;
 
 int ResolveURL(const STRING& URL, FILE *fp, size_t *Len) 
 {
+
+cerr << "RESOLVE " << URL << endl;
   char Host[64], Protocol[64];
   char *P, *Q, *S;
   int ProtTabEntry, Port,err;
@@ -161,6 +164,9 @@ int ResolveURL(const STRING& URL, FILE *fp, size_t *Len)
   }
   strcpy(Command, P+1);
   Command[strlen(Command)] = '\0';
+
+cerr << "PROTOCOL: " << Protocol << endl;
+
   if(!strcmp(Protocol, "gopher")) {
     if(Command[strlen(Command)-1] == '*') {
      // Walk the tree
@@ -209,7 +215,7 @@ int
 ProcessGopherRequest(char *Host, int Port, char *Request,FILE *fp,size_t *Len)
 {
   char *NewRequest =(char *) calloc(1,strlen(Request)+2);
-  int MaxLen = 10000;
+  int MaxLen = MAX_FILE_LENGTH;
   char *Buf = (char *)calloc(1,MaxLen+1);
   char Temp[256];
   int err;
@@ -269,14 +275,6 @@ ProcessGopherRequest(char *Host, int Port, char *Request,FILE *fp,size_t *Len)
 }
 
 
-void StripURLsToStream(char *InBuf, FILE *Stream, char *Separator)
-{
-  char *P,*T;
-  char S[256];
-
-}
-
-
 void PrintOtherHosts(char *InBuf) { printf("%s\n",InBuf); }
 
 
@@ -285,6 +283,7 @@ int ProcessIPFSRequest(char *Host, int Port, char *Request,FILE *fp,size_t *Len)
   // Rewrite ipfs://hash into https://gateway/hash
   // https://ipfs.io/api/v0/dag/get?arg=bafyreiah7uhzdxbuik6sexirej22iyi5nau3d4nnfhv6ux33ogtdpeznpm
   // bafyreiah7 uhzdxbuik6 sexirej22i yi5nau3d4 nnfhv6ux3 3ogtdpeznp m // 61 byte hash
+  return 0;
 }
 
 
@@ -296,6 +295,8 @@ int ProcessHTTPRequest(char *Host, int Port, char *Request,FILE *fp,size_t *Len)
   char Temp[256];
   int err;
   int Binary=0,i;
+
+  cerr << "HTTP REquest" << endl;
 
   //  sprintf(NewRequest, "GET /%s\r\n", Request);
   sprintf(NewRequest, "GET /%s HTTP/1.0\r\n\r\n", Request);

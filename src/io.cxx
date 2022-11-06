@@ -198,6 +198,15 @@ bool IO::open(const STRING& Fname, const STRING& mmode)
 #ifndef NO_RLDCACHE
       if (Cache == NULL)
 	message_log (LOG_ERROR, "IO:open() Failed, Cache is NULL");
+      else {
+        ptr.fp=Cache->Fopen(id,mmode.c_str());
+	if (ptr.fp) {
+	  if (debug) message_log (LOG_DEBUG, "Open %s Succeeded", id.c_str());
+	  type = URL;
+	  return true;
+	}
+      }
+/*      
       else if((Buf = Cache->GetFile(id, 0,-1,(size_t*)&BufLength, (time_t)360,0))==NULL)
 	message_log(LOG_ERROR, "IO:open():Cache->GetFile() failed!");
       else
@@ -206,6 +215,7 @@ bool IO::open(const STRING& Fname, const STRING& mmode)
 	  if(debug) message_log(LOG_DEBUG,"Open of '%s' Succeeded", id.c_str());
 	  return true; // Success
 	}
+*/
 #else
       message_log (LOG_ERROR, "IO:open() Failed, Cache is NULL");
 #endif

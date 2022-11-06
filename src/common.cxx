@@ -821,6 +821,32 @@ STRING RemoveFileName (const STRING& PathName)
 }
 
 
+
+/*********************************************************
+ * Convert a URL to a local file path by changing some characters in the
+ * URL, and prepending a local file root, so
+ *
+ * http://www.exodao.net:81/foo/bar.html
+ *
+ * becomes
+ *
+ * /local/http/www.exodao.net_81/foo/bar.html
+ *********************************************************/
+STRING UrlToFile(const STRING& LocalPath,const STRING& URL)
+{
+  const char seperator[] = { SEP, 0};
+  STRING sURL = URL;
+
+  sURL.Replace("://", seperator);
+  sURL.Replace(":", "_");
+  // Does the URL have a trailing / ?
+  if (sURL[sURL.GetLength()-1] == '/')
+    sURL.Cat("index.html");
+  return AddTrailingSlash(LocalPath) + sURL;
+}
+
+
+
 #if 0
 // Make a temporary file name, opens it to write
 // whhen OK, closes it and returns the name...
@@ -1759,22 +1785,31 @@ bool MkDirs(const STRING& Path, int Mask)
   ExpandFileSpec(&Scratch);
 
   PCHR fname = Scratch.NewCString ();
+
+cerr << "Mkdir " << fname << endl;
+
   for(PCHR ptr=strchr(fname,'/');ptr;ptr=strchr(ptr+1,'/'))
     {
       *ptr='\0';
       if (*fname) {
+
+cerr << "Looking at " << fname << endl;	      
       if ((res=stat((const char *)fname, &st_buf)) < 0)
 	{
+cerr << "CREATE " <<endl;
 	  if ((res = MKDIR(fname,mask|S_IEXEC)) < 0)
 	    {
+cerr << "XXXXXXX COULD NOT CREATE" << endl;
 	      break; // Could not create
 	    }
          }
       else if (! S_ISDIR(st_buf.st_mode))
 	{
+cerr << "NOT A DIR" <<endl;
 	  res = -1; // Not a directory so can't continue
 	  break;
 	}
+      else cerr << "Have it.. " << endl;
       }
       *ptr='/';
    }

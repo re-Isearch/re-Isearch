@@ -5,9 +5,9 @@ Description:    Class HTMLMETA - HTML documents, <HEAD> only
 Author:         Edward C. Zimmermann <edz@nonmonotonic.net>, Nassib Nassar <nassar@etymon.com>
 @@@*/
 
-#pragma ident  "@(#)htmlmeta.cxx  1.17 04/20/01 20:09:54 BSN"
+#pragma ident  "@(#)htmlmeta.cxx"
 
-#define HTMLMETA_MAX_TOKEN_LENGTH 16383
+static const int HTMLMETA_MAX_TOKEN_LENGTH=16383;
 
 
 //#include <stdio.h>
@@ -703,10 +703,106 @@ void HTMLMETA::ParseFields(RECORD *NewRecord)
       return;
     }
 
+  // Handle Web Server response here
+  /*
+HTTP/1.1 200 OK
+Date: Thu, 03 Nov 2022 09:08:26 GMT
+Server: Apache
+Last-Modified: Wed, 06 Feb 2019 13:33:00 GMT
+ETag: "a3-58139c3bbbd2e"
+Accept-Ranges: bytes
+Content-Length: 163
+Connection: close
+Content-Type: text/html
+
+*/
+
+  // For now we skip to start of HTML but later we want to parse
+  // metadata header
+  // 2022 Edward Zimmermann
+  //
+  // Will be mainly interested in ETag, Last-Modified and Expires data
+  //
+ 
+  int ch;
+  if ((ch = fgetc(fp)) == 'H') {
+    bool first_line = true;
+    long parse_start = position; // The original start of the record to parse
+    // we can use the token buffer since it is not being used yet!
+    char *line;
+    char *tp;
+    // NOTE: 1024 is much less than the size of token (HTMLMETA_MAX_TOKEN_LENGTH)
+    while ((line = fgets(token,  1024, fp)) != NULL) {
+cerr << "LINE: " << line << endl;
+       if (*line == '\0' || *line == '\r' || *line == '\n') // Back line seperating META from HTML
+	    break;
+       if (first_line) {
+	  // NOTE: We ate the H so looking at TTP/ for HTTP/
+	  if (memcmp(line, "TTP/", 4) != 0) { // Not really a HTTP response head
+	     fseek(fp, parse_start ,SEEK_SET);
+	     break; // Just garbage at the top so ...
+	  }
+	  first_line = false;
+       } else if ( (tp = strchr(line, ':')) != NULL &&  (tp != line) ) {
+	 // search for : as in key: value
+	 // :vvv is not key: value
+         long field_start = (tp - line) + position;
+	 long field_end   = strlen(line) + position - 1; //  -1
+	 *tp = '\0';
+
+	 bool   add_field = true;
+
+	 const STRING  fieldname (line);
+
+	 if (fieldname.CaseEquals("ETag")) {
+	   Key = tp + 1;
+	   Key.removeWhiteSpace(); // No spaces are ever to be expected !!!!
+           dfd.SetFieldType( FIELDTYPE::text ); // Key is just text 
+	 } else if (fieldname.CaseEquals("Expires")) {
+	   // Expires: <http-date>
+	   dfd.SetFieldType( FIELDTYPE::ttl_expires ); // TTL 
+	 } else if (fieldname.CaseEquals("Last-Modified")) {
+	   // What the server things the date of the resource is
+	   STRING value = tp + 1;
+	   NewRecord->SetDate( value );
+	   dfd.SetFieldType( FIELDTYPE::date);
+	 } else if (fieldname.SearchAny("Date")) { // Some date field?
+	   dfd.SetFieldType( FIELDTYPE::date ); // No date ranges in meta
+	 } else if (fieldname.CaseEquals("Content-Language")) {
+	    // Set the language	
+	    STRING value = tp + 1;
+	    value.removeWhiteSpace(); // No spaces are ever to be expected !!!!
+	    NewRecord->SetLanguage (value);
+	    dfd.SetFieldType( FIELDTYPE::text );
+	 } else if (fieldname.CaseEquals("Content-Type")) {
+	    // Content-Type: text/html; charset=utf-8
+	    // TODO: Read charset and set !
+	    dfd.SetFieldType( FIELDTYPE::text );
+	 } else dfd.SetFieldType( FIELDTYPE::text );
+
+
+	 // Question: Do we index all the meta headers? 
+	 // For now we do but we may want to restrict which ones we accept...
+	 // Want, of course, things like Digest ...
+	 if (add_field) {
+	   dfd.SetFieldName( fieldname );
+           Db->DfdtAddEntry(dfd);
+           fc.SetFieldStart( field_start );
+           fc.SetFieldEnd( field_end );
+           df.SetFct(fc);
+           df.SetFieldName( fieldname );
+           dft.AddEntry(df);
+	 }
+	}
+       else break; // No key:value ...
+       position = ftell(fp); // keep track of where we are
+    } // while
+  } else ungetc(ch, fp);
+
   // main parsing loop
 
   while (!done && position < RecordEnd) {
-    int           ch;
+    // int           ch;
 
     // get next token (i.e. the next HTML tag)
     tokenLength = 0;
@@ -815,6 +911,8 @@ void HTMLMETA::ParseFields(RECORD *NewRecord)
 
 	dfd.SetFieldName(fieldName);
 	dfd.SetFieldType( FIELDTYPE::text ); // Get the type added 30 Sep 2003
+
+
 	Db->DfdtAddEntry(dfd);
 	fc.SetFieldStart(titlePosition);
 	fc.SetFieldEnd(tokenPosition - 1);

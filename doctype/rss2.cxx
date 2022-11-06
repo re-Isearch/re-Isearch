@@ -29,7 +29,7 @@ skipDays
 #include "doc_conf.hxx"
 
 static const STRING  ttl   ("ttl"); // TTL Field Name
-static const STRING  cdate ("pubDate");
+static const STRING  cdate  ("RSS\\CHANNEL\\PUBDATE") ; // ("pubDate");
 static const STRING  mdate ("lastBuildDate");
 static const STRING  eTag  ("eTag");
 static const STRING  lang  ("language");

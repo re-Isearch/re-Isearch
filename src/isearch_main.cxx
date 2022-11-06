@@ -22,6 +22,8 @@ Description:	Command-line search utility
 #include <locale.h>
 #endif
 
+static const int _isearch_main_version = 3;
+
 #ifndef _WIN32
 # define SHOW_RUSAGE 1
 #else
@@ -259,7 +261,7 @@ static void HelpUsage(const char *progname)
 	"  -id (X)          // Request document(s) with docid (X)." << endl <<
 	"  -D (X)           // Load Result Set from file (X)." << endl <<
 	"  -p (X)           // Present element set (X) with results." << endl <<
-	"  -P (X)           // Present Ancestor (X) content for hits." << endl <<
+	"  -P (X)           // Present Ancestor (X) content for hits (may be used multiple)." << endl <<
 	"                   // where X may be as (X)/(Y) where (X) is an ancestor" << endl <<
         "                   // and (Y) is a descendant of that ancestor." << endl << 
 	"  -c               // Sort results Chronologically." << endl <<
@@ -459,8 +461,8 @@ int _Isearch_main (int argc, char **argv)
 #endif
   if (argc < 2)
     {
-      cout << endl << "IB Search, v." << __IB_Version
-	<< " " << __DATE__ << " (" << __HostPlatform << ")" << endl
+      cout << endl << "IB Search v." <<  _isearch_main_version << "." << SRCH_DATE(__DATE__).ISOdate() << "."
+	      <<  __IB_Version << " (" << __HostPlatform << ")" << endl
         << __CopyrightData  << endl << endl;
       HelpUsage(  RemovePath(argv[0]).c_str() );
       return 0;
@@ -469,7 +471,9 @@ int _Isearch_main (int argc, char **argv)
   STRING Flag;
   STRING DBName;
   STRING RecordID;
-  STRING ElementSet, AncestorElementSet;
+  STRING ElementSet;
+  // STRING AncestorElementSet;
+  STRLIST AncestorElementList;
   STRING TermPrefix, TermSuffix;
   STRING Before ("\033[7m");
   STRING After ("\033[m");
@@ -523,7 +527,7 @@ int _Isearch_main (int argc, char **argv)
   INT ShowXML = 0;
   INT ShowSummary = 0;
   INT ShowHit = 0;
-  ElementSet = "B";
+  ElementSet = BRIEF_MAGIC;
   INT first = 1;
   INT last =  0;
   INT base_score = 100; 
@@ -742,7 +746,8 @@ int _Isearch_main (int argc, char **argv)
 		  message_log (LOG_FATAL, "Usage: No element set specified after -P.");
 		  return 0;
 		}
-	      AncestorElementSet = argv[x];
+	      // AncestorElementSet = argv[x];
+	      AncestorElementList.AddEntry(argv[x]);
 	      LastUsed = x;
 	    }
           else if (Flag.Equals ("-max"))
@@ -1803,6 +1808,7 @@ again:
 		}
 	      }
 	    }
+#if 0
 	  if (AncestorElementSet.GetLength())
 	    {
 	      STRLIST list;
@@ -1820,6 +1826,32 @@ again:
 		    }
 		}
 	    }
+#else
+
+	  // TODO: align the elements !!!
+         if (!AncestorElementList.IsEmpty()) {
+	    for (const STRLIST *p = AncestorElementList.Next(); p != &AncestorElementList; p = p->Next()) {
+              STRLIST list;
+	      STRING AncestorElementSet = p->Value();
+              int     count = pdb->GetAncestorContent(result, AncestorElementSet, &list);
+              if (count)
+                {
+                  STRING content;
+                  for (int i=1; i<= count; i++)
+                    {
+                      if (ShowXML) cout << "<!-- ";
+		      if (!Terse)
+                      	cout << "** '" <<  AncestorElementSet << "' Fragment: " << endl;
+		      else
+			cout << "\t\t" << "[" << i << "] " << AncestorElementSet << ": ";
+                      list.GetEntry(i, &content);
+                      cout << content << endl;
+                      if (ShowXML) cout << "-->" << endl; 
+                    }
+                }
+             }
+	  }
+#endif
 	  if (ShowHit && result.GetHitTotal())
             {
 	      if (ShowXML)
@@ -1885,7 +1917,7 @@ again:
 	    }
 	  if (strncmp(Selection, "hel", 3) == 0 || *Selection == '?')
 	    {
-	       cout << "# Help: set/unset or NNN[,<ELEMENT>], NNN,<Ancestor>/<Descendant> or =<Query Expression>" << endl;
+	       cout << "# Help: set/unset or NNN[,<ELEMENT>], NNN,<Ancestor>/<Descendant>, range nnn-mmm or =<Query Expression>" << endl;
 	       goto newline;
 	    }
 	  if (strncmp(Selection, "range", 5) == 0)
@@ -1912,12 +1944,18 @@ again:
               while (isspace(*tcp)) tcp++;
               if (strncasecmp(tcp, "ht", 2) == 0)
                 PresentHtml = false;
+	      else if (strncasecmp(tcp, "dat", 3) == 0)
+		DateFlag = false;
               else if (strncasecmp(tcp, "xml", 2) == 0)
                 ShowXML = PresentHtml = false;
               else if (strncasecmp(tcp, "sho", 3) == 0)
                 ShowHit = 0;
+	      else if (strncasecmp(tcp, "anc", 3) == 0)
+		AncestorElementList.Clear(); // Clear List
+	      else if (strncasecmp(tcp, "pres", 4) == 0)
+		ElementSet = BRIEF_MAGIC; // reset to Brief 
               else
-                cout << endl << "Only unset XML, HTML or Show supported!";
+                cout << endl << "Only unset Ancestor, Present, Date, XML, HTML or Show supported!";
 	      strcpy(Selection, "set");
 	    }
 	  if (strncmp(Selection, "set", 3) == 0)
@@ -1932,7 +1970,12 @@ again:
 		  if (PresentHtml) cout << " HTML";
 		  if (ShowXML)     cout << " XML";
 		  if (ShowHit)     cout << " SHOW";
+		  if (DateFlag)    cout << " DATE";
+		  if (!ElementSet.IsEmpty() && ElementSet != BRIEF_MAGIC)  cout << " Present:{" << ElementSet << "}"; 
+		  if (!AncestorElementList.IsEmpty()) cout << " Ancestors:{" << AncestorElementList << "}";
 		}
+	      else if (strncasecmp(tcp, "dat", 3) == 0)
+		DateFlag = true;
 	      else if (strncasecmp(tcp, "inf", 3) == 0)
 		InfixQuery = 1, RpnQuery = 0;
 	      else if (strncasecmp(tcp, "rpn", 3) == 0) 
@@ -1948,6 +1991,18 @@ again:
 		  if (!ShowXML) cout << "<!-- ";
 		  ShowXML = PresentHtml = 1; 
 		}
+	      else if (strncasecmp(tcp, "anc", 3) == 0 || strncasecmp(tcp, "pres", 3) == 0)
+	      {
+		  char *tp = tcp + 3;
+		  // skip rest of option....
+	          while (*tp && !isspace(*tp)) tp++;
+		  while (*tp && isspace(*tp)) tp++;
+		  // Now pointing to value
+		  if (*tcp == 'p' || *tcp == 'P')
+		     ElementSet = tp;
+		  else if (*tp) 
+		     AncestorElementList.AddEntry(tp); 
+	      }
 	      else if (strncasecmp(tcp, "cac", 3) == 0)
 		{
 		  char *tp = tcp + 3;
@@ -1963,7 +2018,7 @@ again:
 	      else if (strncasecmp(tcp, "sho", 3) == 0)
 		ShowHit = 1;
 	      else
-		cout << endl << "Only set Infix, RPN, Words, XML, HTML, SUTRS, cachesize, Show, Noshow supported!";
+		cout << endl << "Only set Ancestor <value>, Present [<element>], date, Infix, RPN, Words, XML, HTML, SUTRS, cachesize nnn, Show, Noshow supported!";
 	      goto newline;
 	    }
           else if (*Selection == '=')

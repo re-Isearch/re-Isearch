@@ -1054,6 +1054,7 @@ bool IDB::KeyLookup (const STRING& Key, PRESULT ResultBuffer) const
 #endif
 	  ResultBuffer->SetRecordStart (Mdtrec.GetLocalRecordStart ());
 	  ResultBuffer->SetRecordEnd (Mdtrec.GetLocalRecordEnd ());
+
 	  ResultBuffer->SetDate (Mdtrec.GetDate());
 	  ResultBuffer->SetDateCreated (Mdtrec.GetDateCreated());
 	  ResultBuffer->SetDateModified (Mdtrec.GetDateModified());

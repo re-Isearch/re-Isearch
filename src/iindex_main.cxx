@@ -12,6 +12,8 @@ Version:	4.0
 Description:	Command-line indexer
 @@@-*/
 
+static const int _iindex_main_version = 3;
+
 /*-
   TODO:
 
@@ -390,7 +392,7 @@ int _Iindex_main (int argc, char **argv)
   timeout = __Register_IB_Application(argv0,  stdout, false);
   if (argc < 2)
     {
-      std::cout << "IB indexer 2." << SRCH_DATE(__DATE__).ISOdate()  << "." << __IB_Version << " " <<
+      std::cout << "IB indexer " <<  _iindex_main_version  << "." << SRCH_DATE(__DATE__).ISOdate()  << "." << __IB_Version << " " <<
 	sizeof(GPTYPE)*8 << "-bit edition (" << __HostPlatform << ")";
 #if EVALULATION
       if (timeout > 0) std::cout << " Try-and-Buy.";
@@ -1064,7 +1066,7 @@ int _Iindex_main (int argc, char **argv)
 	      char tmp[64];
 	      if (!_IB_GetPlatformName(tmp, sizeof(tmp)))
 		tmp[0] = '\0';
-	      cout << "IB indexer 2." << SRCH_DATE(__DATE__).ISOdate()  << "."
+	      cout << "IB indexer v" <<  _iindex_main_version  <<  "." << SRCH_DATE(__DATE__).ISOdate()  << "."
 		<< __IB_Version << " " << sizeof(GPTYPE)*8 << "-bit edition (" << __HostPlatform << ")" ;
 	      if (tmp[0])
 		cout << "  [" << tmp << "]";
