@@ -10,6 +10,10 @@ void main()
 	exit(1);
   }
 
+  fprintf(f, "#ifndef CONF_H_INC\n#define CONF_H_INC\n#ifdef __cplusplus\n\n\
+extern \"C\" {\n\n#endif\n\n");
+
+
   /* signed and unsigned char need to be same size */
   fprintf(f, "#define SIZEOF_CHAR %u\n", (unsigned int)sizeof(signed char));
   fprintf(f, "#define SIZEOF_UCHAR %u\n", (unsigned int)sizeof(unsigned char));
@@ -21,6 +25,6 @@ void main()
 
   fprintf(f, "#define SIZEOF_FLOAT %u\n", (unsigned int)sizeof(float));
   fprintf(f, "#define SIZEOF_DOUBLE %u\n", (unsigned int)sizeof(double));
-  fprintf(f, "#define SIZEOF_LONG_DOUBLE %u\n", (unsigned int)sizeof(long double));
+  fprintf(f, "#define SIZEOF_LONG_DOUBLE %u\n\n", (unsigned int)sizeof(long double));
   exit(0);
 }
