@@ -2582,10 +2582,13 @@ void DOCTYPE::HandleSpecialFields(RECORD* NewRecord, const STRING& FieldName, co
       if (strncasecmp(Buffer, "urn:uuid:", 9) == 0 && strlen(Buffer)>(DocumentKeySize-8))
 	Buffer += 10;
       STRING Key (Buffer);
-      if (Db->KeyLookup (Key))
-        Db->MdtSetUniqueKey(NewRecord, Key);
-      else
-        NewRecord->SetKey (Key);
+      // URLs are NOT persistent so we don't use as keys
+      if (!Key.SearchAny("://")) {
+        if (Db->KeyLookup (Key))
+          Db->MdtSetUniqueKey(NewRecord, Key);
+        else
+          NewRecord->SetKey (Key);
+      }
     }
   else if (FieldName ^= LanguageField) 
     {

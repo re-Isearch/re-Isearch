@@ -360,6 +360,10 @@ IETF_ATOM::IETF_ATOM (PIDBOBJ DbParent, const STRING& Name): XMLBASE(DbParent,Na
   if (DateCreatedField.IsEmpty())  DateCreatedField  = "created";
   if (DateModifiedField.IsEmpty()) DateModifiedField = "modified";
   if (LanguageField.IsEmpty())     LanguageField     = "xml:lang";
+
+  // Id identifies the feed using a universally unique and permanent URI.
+  // If you have a long-term, renewable lease on your Internet domain name,
+  // then you can feel free to use your website's address
   if (KeyField.IsEmpty())          KeyField          = "feed\\id";
   if (DateField.IsEmpty())         DateField         = "issued";
 
