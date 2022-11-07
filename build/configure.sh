@@ -1,7 +1,7 @@
 #!/bin/sh
 
-gcc-10 -o configure configure.c
-echo ./configure.bin
+gcc-10 -o configure.bin configure.c
+./configure.bin
 
 
 
