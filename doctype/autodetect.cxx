@@ -1478,7 +1478,7 @@ message_log (LOG_DEBUG, "AFTER INDEXING");
 
 	  if (doctype != S)
 	    {
-	      if (S ^= "NULL")
+	      if ((S ^= "NULL") || (S  ^= "<Ignore>")) // <Ignore> is for fields (see doctype.cxx) but we'll look for it here too
 		{
 		  message_log(LOG_INFO, "Identified %s as %s, Skipping ([Use] Request).",
 			s.c_str(), doctype.c_str());

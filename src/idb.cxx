@@ -2760,6 +2760,14 @@ bool IDB::DfdtGetFileName (const STRING& FieldName, const FIELDTYPE& FieldType,
       return false; // No Field...
     }
 
+#if 1 /* WORKAROUND */
+    // Handle mangeled Fieldnames
+   int pos;
+   if ((pos = FieldName.Search("\\![CDATA")) > 0) {
+     return DfdtGetFileName( FieldName.Left((size_t)(pos-1)), FieldType, StringBuffer);
+  }
+#endif
+
   if (!FieldType.IsText())
     {
       typ  = FieldType.datatype();
@@ -4082,7 +4090,7 @@ bool IDB::Index2()
   if (DebugMode) message_log(LOG_INFO, "Pass(2) Queue contains %lu records. Total Records Queued = %lu",
 	Queue2Add, TotalRecordsQueued);
 
-  bool result;
+  bool result = true;
   FILE       *fp;
 
   ffdispose(IqFn); // Don't want a cache, make sure closed

@@ -934,7 +934,7 @@ cerr << "LINE: " << line << endl;
 	    object = "LINK.REV:";
 	    name = (const char *)cstrstr(token + nlen+1, "REV=");
 	  }
-
+	
         if (name && content) {
           char             nameq = name[nlen];  // quote?
           char             contq = content[clen];
@@ -952,6 +952,7 @@ cerr << "LINE: " << line << endl;
               break;
           }
           name += nlen + (nameq ? 1 : 0);
+	  
           if (contentEndQuote && *contentEndQuote) {
             // extract NAME value
             int             x = 0;
@@ -963,7 +964,11 @@ cerr << "LINE: " << line << endl;
 	    STRING          fieldName (object);
 	    STRING          subField (name, x); // Fieldname with x characters from name
 
-	    fieldName.Cat (subField);
+	    // Avoid URLs here (character violation anyway)
+	    if (subField.Contains("://"))
+		fieldName.Cat("X-URI");
+	    else
+		fieldName.Cat (subField);
             // now build the position data
             long            contentStart = tokenPosition + (content - token) + clen + (contq ? 1 : 0);
             long            contentEnd = tokenPosition + (contentEndQuote - token) - 1;

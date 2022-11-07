@@ -1830,6 +1830,7 @@ again:
 
 	  // TODO: align the elements !!!
          if (!AncestorElementList.IsEmpty()) {
+
 	    for (const STRLIST *p = AncestorElementList.Next(); p != &AncestorElementList; p = p->Next()) {
               STRLIST list;
 	      STRING AncestorElementSet = p->Value();
@@ -1848,8 +1849,8 @@ again:
                       cout << content << endl;
                       if (ShowXML) cout << "-->" << endl; 
                     }
-                }
-             }
+                } // if couunt
+             } // for 
 	  }
 #endif
 	  if (ShowHit && result.GetHitTotal())

@@ -192,6 +192,7 @@ STRING ResolveConfigPath(const STRING& Filename)
 	  if ((l = _ib_ResolveConfigPath(Filename.c_str(), tmp.GetWriteBuf(tmpLen), tmpLen)) > 0)
 	    {
 	      tmp.EraseAfterNul(l);
+	      message_log(LOG_DEBUG, "Configuration %s --> %s", Filename.c_str(), tmp.c_str());
 	      return tmp;
 	    }
 	}

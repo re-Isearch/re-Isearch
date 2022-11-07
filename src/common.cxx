@@ -63,6 +63,8 @@ Description:	Common functions
 # undef WWW_SUPPORT
 #endif
 
+#define _MAX_USERNAME_LENGTH 512
+
 #ifndef FILENAME_MAX
 # define FILENAME_MAX 1024
 #endif
@@ -2955,7 +2957,7 @@ bool _IB_GetUserId(char *buf, int maxSize)
 // UNIX
 bool _IB_GetUserName(char *buf, int maxSize)
 {
-  static char tmp[256];
+  static char tmp[_MAX_USERNAME_LENGTH + 256];
 
   if (tmp[0])
     {
@@ -2963,6 +2965,7 @@ bool _IB_GetUserName(char *buf, int maxSize)
       buf[maxSize] = '\0';
       return buf[0] != '\0';
     }
+
   const char *name = getenv("REAL_NAME");
   if (name == NULL || *name == '\0')
     {
@@ -3041,7 +3044,7 @@ bool _IB_GetmyMail (PSTRING Name, PSTRING Address)
   // Return a URL for the maintainer
 
   char user_id  [256];
-  char user_name[512];
+  char user_name[ _MAX_USERNAME_LENGTH];
 
   if (_IB_GetUserId(user_id, sizeof(user_id)-1)  &&
 	_IB_GetUserName(user_name, sizeof(user_name)-1))

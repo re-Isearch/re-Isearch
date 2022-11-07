@@ -379,7 +379,7 @@ size_t DFDT::Lookup (const STRING& FieldName) const
   static int lastIndex = 0;
 
   if (FieldName.IsEmpty()) return 0;
-
+  
   STRING Field (FieldName);
   Field.ToUpper ();
 
@@ -394,6 +394,10 @@ size_t DFDT::Lookup (const STRING& FieldName) const
       return 0;
     }
 #endif
+
+  // Sanity check
+  // if ( _checkFieldName(Field) == false) return 0;
+
 
   // Only bother when 3 or more..
   if (Sorted && TotalEntries > 3)
