@@ -115,11 +115,15 @@ public:
   STRLIST& SplitWords (const STRING& TheString, const LISTOBJ *Stopwords) {
     return SplitWords(TheString, NULL, Stopwords);
   }
- STRLIST& SplitWords (const STRING& TheString, const CHARSET *Charset = NULL);
+  STRLIST& SplitWords (const STRING& TheString, const CHARSET *Charset = NULL);
 
   STRLIST& SplitWords (const STRING& TheString, const CHARSET *Charset, const LISTOBJ *Stopwords=NULL);
   STRLIST& SplitTerms (const STRING& TheString, const CHARSET *Charset = NULL);
   STRLIST& SplitPaths (const STRING& TheString);
+
+  // Contains
+  bool     Contains(const STRING& Item) const;
+  bool     ContainsCase(const STRING& Item) const; // Case independent
 
   // Cat them together
   STRING Join(const CHR Separator) const;

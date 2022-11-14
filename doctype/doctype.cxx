@@ -324,6 +324,7 @@ STRING  DOCTYPE::Httpd_Content_type (const RESULT& ResultRecord, const STRING& M
 
 bool DOCTYPE::SetFieldType(const STRING& FieldName, const FIELDTYPE FieldType)
 {
+  // TODO: Check sanity of the fieldname
   if (Db && FieldName.GetLength())
     {
       if (!Db->GetFieldType(FieldName).Ok())

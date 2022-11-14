@@ -101,7 +101,7 @@ const char * const __CopyrightData = "\
 Portions Copyright (c) 1995 MCNC/CNDIR; 1995-2011 BSn/Munich and its NONMONOTONIC Lab;\n\
 1995-2000 Archie Warnock; and a host of other contributors;\n\
 Copyright (c) 2020-2022 NONMONOTONIC Networks for the re.Isearch Project.\n\
-Copyright (c) 2022 Project Exodus 3.0 and the ExoDAO Society.\n\n\
+Copyright (c) 2022 Project Exodus 3.0 and the ExoDAO Association.\n\n\
 This software has been made available by generous public support including a grant\n\
 from the EU's NGI0 Discovery Fund through NLnet, grant agreement No 825322.";
 
@@ -114,7 +114,7 @@ const STRING __IB_DefaultDbName ("IB");
 const STRING __IB_DefaultDbName (".IB");
 #endif
 
-const char *__IB_Version = "4.10b";
+const char *__IB_Version = "4.10c";
 
 // Special Elements
 const STRING BRIEF_MAGIC    (ELEMENT_Brief); /* CNIDR "hardwires" this */

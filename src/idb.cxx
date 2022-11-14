@@ -1606,14 +1606,22 @@ size_t IDB::GetAncestorContent (RESULT& Result, const STRING& nodeName, STRLIST 
 
   FILE        *Fp = NULL; // Stream to the ChildNode index 
   STRING       NodeName (nodeName);
-//cerr << "NodeName = " << NodeName << endl;
+  // cerr << "NodeName = " << NodeName << endl;
+
+
   STRINGINDEX  i = NodeName.SearchReverse( __AncestorDescendantSeperator );
   if (i > 2)
     {
       STRING ChildNodeName ( (const char *)NodeName + i), Fn;
-//cerr << "ChildNode = " << ChildNodeName << endl;
+      // cerr << "ChildNode = " << ChildNodeName << endl;
+
+      // Need to lookup if the childnode exists.
+      if (! FieldExists (ChildNodeName)) {
+	return 0; 
+      }
+
       NodeName.EraseAfter(i-1);
-//cerr << "NodeName = " << NodeName << endl;
+      // cerr << "NodeName = " << NodeName << endl;
 
       if (DfdtGetFileName (ChildNodeName, &Fn) == 0 || (Fp = fopen (Fn, "rb")) == NULL)
 	{

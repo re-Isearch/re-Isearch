@@ -19,7 +19,7 @@ public:
 
   void        AddEntry(const DF& DfRecord);
   void        FastAddEntry(const DF& DfRecord);
-  bool GetEntry(const size_t Index, DF *DfRecord) const;
+  bool        GetEntry(const size_t Index, DF *DfRecord) const;
   const DF   *GetEntryPtr(const size_t Index) const;
 
   STRING     GetFieldName (const size_t Index) const;

@@ -225,48 +225,11 @@ INT DFDT::GetNewFileNumber () const
 #endif
 }
 
-static bool  _checkFieldName(const STRING& Fieldname)
-{
-  static const char ReservedViolationError[] =
-        "Fieldname '%s' is a reserved name. Record presentations MAY hang!!";
-  static const char ReservedViolationWarning[] =
-        "Fieldname '%s' %s create problems. Single letter fields are reserved.";
-  static const char ReservedViolationFatal[] = 
-	"Fieldname '%s' contains a reserved character '%s'. Skipping.";
-
- if (Fieldname.IsEmpty())
-    {
-      return false;
-    }
-  if (Fieldname == FULLTEXT_MAGIC)
-    {
-      message_log (LOG_ERROR, ReservedViolationError, Fieldname.c_str());
-    }
-  else if (Fieldname.GetLength() == 1)
-    {
-      // Install the ones we don't want to complain about
-      switch (Fieldname[0]) {
-	case 'A': case 'a': case 'P': case 'D': case '.': case '@': break;
-	case 'S': case 'L': case 'M': case 'H':
-	  message_log (LOG_ERROR, ReservedViolationWarning, Fieldname.c_str(), "can");
-	  break;
-	default:
-	  message_log (LOG_WARN, ReservedViolationWarning, Fieldname.c_str(), "may");
-      }
-    }
-  else if (Fieldname.Search(  __AncestorDescendantSeperator ))
-    {
-      message_log (LOG_ERROR, ReservedViolationFatal, Fieldname.c_str(),  __AncestorDescendantSeperator );
-      return false;
-    }
-  return true;
-}
-
 void DFDT::FastAddEntry(const DFD& DfdRecord)
 {
   STRING Fieldname ( DfdRecord.GetFieldName ());
 
-  if (_checkFieldName(Fieldname) == false)
+  if (checkFieldName(Fieldname) == false)
     {
       return;
     }
@@ -289,7 +252,7 @@ void DFDT::AddEntry(const DFD& DfdRecord)
 {
   STRING Fieldname ( DfdRecord.GetFieldName ());
 
-  if (_checkFieldName(Fieldname) == false)
+  if (checkFieldName(Fieldname) == false)
     {
       return;
     }
@@ -396,7 +359,7 @@ size_t DFDT::Lookup (const STRING& FieldName) const
 #endif
 
   // Sanity check
-  // if ( _checkFieldName(Field) == false) return 0;
+  if ( checkFieldName(Field) == false) return 0;
 
 
   // Only bother when 3 or more..
@@ -717,7 +680,12 @@ size_t DFDT::FieldExists(const STRING& FieldName, STRING *Ptr) const
 	    }
 	}
 //cerr << "MATCH " << count << endl;
-       return count;
+
+       // Do we want to let not plain characters pass through as
+       // field names???
+       //
+       // if (count)
+	       return count;
      }
 
 //cerr << "Lookup " << FieldName << endl;

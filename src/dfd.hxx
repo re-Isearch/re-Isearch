@@ -37,6 +37,9 @@ public:
     return true;
   }
 
+
+  bool        checkFieldName(const STRING& Fieldname) const;
+
   void        SetFieldName(const STRING& fieldName) {
 #if 1
     Attributes.AttrSetFieldName(fieldName);

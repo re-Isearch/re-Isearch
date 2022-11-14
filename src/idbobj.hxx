@@ -386,6 +386,10 @@ public:
 
   virtual int         Segment(const STRING&) { return 0; }
 
+  virtual bool         checkFieldName(const STRING& fieldname) const {
+          return true;
+  }
+
 protected:
   virtual void IndexingStatus(const t_IndexingStatus, const STRING&, const long = 0)  { };
   virtual void IndexingStatus(const t_IndexingStatus Status, const long Count = 0)  {

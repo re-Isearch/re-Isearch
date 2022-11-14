@@ -20,6 +20,9 @@ public:
   DFDT (const STRING& FileName);
   DFDT (PFILE Fp);
 
+
+  bool validFieldName(const STRING& FieldName) const;
+
   // Field Exists? Return number matching (if wild)
   size_t FieldExists(const STRING& FieldName) const;
   size_t NumericFieldExists(const STRING& FieldName, STRING *Ptr=NULL) const;
@@ -66,8 +69,14 @@ public:
   void Write (PFILE fp) const;
   bool Read (PFILE fp);
   ~DFDT();
+
+ bool        checkFieldName( const STRING& FieldName) const {
+                return Table ? Table->checkFieldName(FieldName) : true;
+  }
+
 private:
 //void Initialize();
+//
   size_t      FieldExists(const STRING& FieldName, STRING *Val) const;
   INT         GetNewFileNumber() const;
   bool Expand();

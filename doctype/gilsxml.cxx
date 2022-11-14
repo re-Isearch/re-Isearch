@@ -900,6 +900,12 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 	      // tagpaths.
 	      if(NestLevel==1)
 	        FieldName.Cat(levelCh);
+
+
+	      // sanity check on fieldname 
+	      if (!dfd.checkFieldName(FieldName))
+		continue; // bad field name
+
   	      dfd.SetFieldName (FieldName);
 
 	      if (!ft.IsText())

@@ -231,7 +231,7 @@ RSSCORE::RSSCORE (PIDBOBJ DbParent, const STRING& Name) : RSS2 (DbParent, Name)
 
 RSSCOREARCHIVE::RSSCOREARCHIVE (PIDBOBJ DbParent, const STRING& Name) : RSSCORE (DbParent, Name)
 {
-  KeyField = "RSS\\CHANNEL\\ITEM\\ID";
+  KeyField = "RSS\\CHANNEL\\ID";
 }
 
 bool RSSCORE::URL(const RESULT& ResultRecord, PSTRING StringBuffer,  
@@ -316,7 +316,7 @@ const char *RSSCOREARCHIVE::Description(PSTRLIST List) const
 
   RSSCORE::Description(List);
   return "CORE RSS XML format handler for NONMONOTONIC labs' pre-digested feeds (Archive).\n\
-- KeyField is by default \"RSS\\CHANNEL\\ITEM\\ID\" (and not eTag).";
+- KeyField is by default \"RSS\\CHANNEL\\ID\" (and not eTag).";
 }
 
 

@@ -927,6 +927,24 @@ bool STRLIST::CaseEquals(const STRLIST& OtherList) const
 }
 
 
+ // Contains
+bool     STRLIST::Contains(const STRING& Item) const
+{
+  for (const STRLIST *p = Next(); p != this; p = p->Next())
+    if (p->Value() == Item) return true;
+  return false;
+}
+
+bool     STRLIST::ContainsCase(const STRING& Item) const
+{
+   // Case independent
+   for (const STRLIST *p = Next(); p != this; p = p->Next())
+    if (p->Value() ^= Item) return true;
+   return false;
+}
+
+
+
 
 STRLIST::~STRLIST ()
 {

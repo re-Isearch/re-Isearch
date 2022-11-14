@@ -738,6 +738,11 @@ private:
   bool GetFieldData(const FC& FieldFC, const STRING& FieldName, DOUBLE* Buffer);
   bool GetFieldData(const FC& FieldFC, const STRING& FieldName, SRCH_DATE* Buffer);
 
+
+  bool  checkFieldName(const STRING& fieldname) const {
+	  return MainDfdt->checkFieldName(fieldname);
+  }
+
   // Openend?
   bool Initialized;
 
@@ -747,20 +752,20 @@ private:
   STRING      DbFileStem;
   STRLIST     DatabaseList;
   STRING      HTpath, HTDocumentRoot;
-  bool isMirror;
+  bool        isMirror;
   STRLIST     TemplateTypes;
   PINDEX      MainIndex;
   PDFDT       MainDfdt;
   size_t      IndexingMemory;
-  bool DebugMode;
-  bool autoDeleteExpired; 
+  bool        DebugMode;
+  bool        autoDeleteExpired; 
   PDTREG      DocTypeReg;
   FPT         MainFpt;
   size_t      TotalRecordsQueued;
   PREGISTRY   MainRegistry;
-  bool DbInfoChanged;
-  bool wrongEndian; // @@@ edz: Cache
-  bool Override;
+  bool        DbInfoChanged;
+  bool        wrongEndian; // @@@ edz: Cache
+  bool        Override;
   int         errorCode;
 //Z3950_ERROR ZerrorCode;
   FILE       *SortIndexFp;

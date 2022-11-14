@@ -1098,8 +1098,11 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 
       if (res == false)
         {
-          message_log (LOG_ERROR, "Can't append '%s' field data, DFD Defect!", FieldName.c_str());
-          errors++;
+	  if (Parent->checkFieldName(FieldName)) { 
+            message_log (LOG_ERROR, "Can't append '%s' field data, DFD Defect!", FieldName.c_str());
+            errors++;
+	  } // else disallowed characters in name
+
           continue;
         }
       else

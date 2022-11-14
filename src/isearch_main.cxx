@@ -746,8 +746,8 @@ int _Isearch_main (int argc, char **argv)
 		  message_log (LOG_FATAL, "Usage: No element set specified after -P.");
 		  return 0;
 		}
-	      // AncestorElementSet = argv[x];
-	      AncestorElementList.AddEntry(argv[x]);
+	      if (!AncestorElementList.ContainsCase( argv[x] ))
+		AncestorElementList.AddEntry(argv[x]);
 	      LastUsed = x;
 	    }
           else if (Flag.Equals ("-max"))
@@ -1830,7 +1830,10 @@ again:
 
 	  // TODO: align the elements !!!
          if (!AncestorElementList.IsEmpty()) {
+	    STRLIST *lists = NULL;
 
+	    size_t    idx = 0;
+	    size_t    max_items = 0;
 	    for (const STRLIST *p = AncestorElementList.Next(); p != &AncestorElementList; p = p->Next()) {
               STRLIST list;
 	      STRING AncestorElementSet = p->Value();
@@ -1838,19 +1841,36 @@ again:
               if (count)
                 {
                   STRING content;
+
+		  if (lists == NULL) lists = new STRLIST [max_items = count + 30];
                   for (int i=1; i<= count; i++)
                     {
-                      if (ShowXML) cout << "<!-- ";
-		      if (!Terse)
-                      	cout << "** '" <<  AncestorElementSet << "' Fragment: " << endl;
-		      else
-			cout << "\t\t" << "[" << i << "] " << AncestorElementSet << ": ";
+//                      if (ShowXML) cout << "<!-- ";
+//		      if (!Terse)
+//                     	cout << "** '" <<  AncestorElementSet << "' Fragment: " << endl;
+//		      else
+//			cout << "\t\t" << "[" << i << "] " << AncestorElementSet << ": ";
                       list.GetEntry(i, &content);
-                      cout << content << endl;
-                      if (ShowXML) cout << "-->" << endl; 
+//                    cout << content << endl;
+
+		      if (i < max_items)
+			lists[i-1].AddEntry( AncestorElementSet + ": " + content);
+//                    if (ShowXML) cout << "-->" << endl; 
                     }
                 } // if couunt
+	        idx++;
              } // for 
+
+
+	    if (ShowXML) cout << "<!-- ";
+	    for (size_t i = 0; !lists[i].IsEmpty(); i++)
+	    {
+	       cout << "\t[" << i+1 << "] " << lists[i] << endl;
+	    }
+	    if (ShowXML) cout << "-->" << endl;
+	    if (lists) delete[] lists;
+
+
 	  }
 #endif
 	  if (ShowHit && result.GetHitTotal())
