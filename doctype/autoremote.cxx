@@ -63,15 +63,19 @@ static const char *myDescription = "Automatic Remote/Local file indexing Plugin 
 
 static const char *dir_extension = ".url";
 
+
+
 class  IBDOC_AUTOREMOTE: public AUTODETECT {
 public:
    IBDOC_AUTOREMOTE(PIDBOBJ DbParent, const STRING& Name) : AUTODETECT(DbParent, Name) {
       DocumentRoot = DOCTYPE::Getoption(RootSection, NulString);
 
-      if (DocumentRoot.IsEmpty() && DbParent) {
-	DocumentRoot = DbParent->ComposeDbFn( dir_extension );
-        DbParent->ProfileWriteString(Doctype, RootSection, DocumentRoot);
-	message_log (LOG_INFO, "Setting crawl base to \"%s\"", DocumentRoot.c_str());
+      if (DbParent) {
+	if (DocumentRoot.IsEmpty()) {
+	  DocumentRoot = DbParent->ComposeDbFn( dir_extension );
+          DbParent->ProfileWriteString(Doctype, RootSection, DocumentRoot);
+	  message_log (LOG_INFO, "Setting crawl base to \"%s\"", DocumentRoot.c_str());
+	}
 	IPFS_gateway = DbParent->ProfileGetString(GatewaySection, "IPFS");
 	if (IPFS_gateway.IsEmpty()) {
 	  IPFS_gateway = ipfs_gateway;
@@ -84,16 +88,17 @@ public:
           message_log (LOG_DEBUG, "Setting BTFS default gateway to \"%s\"", btfs_gateway);
           DbParent->ProfileWriteString(GatewaySection, "BTFS", BTFS_gateway);
         }
-
+	CA_CERT_FILE =  DOCTYPE::Getoption("CERT", NulString);
       } else {
 	// Set defaults
 	IPFS_gateway = ipfs_gateway;
 	BTFS_gateway = btfs_gateway;
       }
 
-     desc.form("%s\nThis allows one to index remote URLs such as http://www.exodao.net/\n\n\
+     desc.form("%s\nThis allows one to index remote URLs such as https://www.exodao.net/\n\n\
 Index time Options:\n\
-%s // Specifies the crawl base of the fetched URL tree (root) files are downloaded into\n\
+CERT\t// Specifies the path to the ca_cert_file should it be used\n\
+%s\t// Specifies the crawl base of the fetched URL tree (root) files are downloaded into\n\
 \tBASE/<protocol>/..  This can also be specified in the doctype.ini as BASE=dir in the\n\
 \t[General] section. Once set and used it should never be changed as the search depends upon\n\
 \tthe layout to reconstruct the URLs.\n\
@@ -151,6 +156,7 @@ private:
    STRING        DocumentRoot;
    STRING        IPFS_gateway; // the IPFS Gateway
    STRING        BTFS_gateway; // the BTFS Gateway
+   STRING        CA_CERT_FILE;
    STRING        desc; // the description
 
 };
@@ -295,8 +301,11 @@ bool  IBDOC_AUTOREMOTE::fetch(const std::string& filepath,
   httplib::Client cli(site);
 
 
-  // Turn off SSL certificate verification
-  cli.enable_server_certificate_verification(false);
+  if (!CA_CERT_FILE.IsEmpty()) {
+    cli.set_ca_cert_path(CA_CERT_FILE.c_str());
+    cli.enable_server_certificate_verification(true);
+  } else // Turn off SSL certificate verification
+    cli.enable_server_certificate_verification(false);
 
 
   // We need to track depth so that we don't end up in a recursive
