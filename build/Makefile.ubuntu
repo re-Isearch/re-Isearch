@@ -14,6 +14,12 @@ GCC_VERSION=-10
 BERKELEY_DB_ROOT = /usr/local/BerkeleyDB.4.4/
 LIBBDB=-ldb
 
+
+## This must be where NEWER versions of the OpenSSL libs were installed.
+## It is ONLY used by the autoremote plugin and that depends upon a later
+## version of 1.1.1 or newer-- which may not be pre-installed.
+OPENSSL_LIBS_LOCATION=/usr/local/lib64
+
 #
 # Install Directory
 #
@@ -637,6 +643,13 @@ PLUGINOPT=-export-dynamic
 	-cp $@ /opt/nonmonotonic/ib/lib/plugins
 
 
+
+../doctype/autoremote.sob: ../doctype/autoremote.cxx ../doctype/doctype.hxx ../src/idb.hxx
+	$(CC) $(SHARED) $(CCFLAGS) $(INC) -o $@ $(PLUGINOPT) ../doctype/autoremote.cxx $(LDLIBS) -L $(OPENSSL_LIBS_LOCATION) -lssl -lcrypto
+	-cp $@ ~/.ib/plugins
+	-cp $@ /opt/nonmonotonic/ib/lib/plugins
+
+
 exif: ../doctype/exif.cxx ../doctype/doctype.hxx ../src/idb.hxx
 	$(CC) $(SHARED) $(CCFLAGS) $(INC) -I../3rdparty/TinyEXIF -o $@.sob  ../3rdparty/TinyEXIF/TinyEXIF.cpp ../3rdparty/TinyEXIF/tinyxml2.cpp  $(PLUGINOPT) $< $(LDLIBS)
 	cp $@.sob /opt/nonmonotonic/ib/lib/plugins
@@ -664,6 +677,10 @@ wcommon.tar:  $(BAS_SRCS)
 build:
 	make clean
 	make all
+
+https_test: https_test.cxx
+	 $(CC) -o https_test https_test.cxx -I../src -I../doctype -L/usr/local/lib64  -lssl -lcrypto
+
 
 install:
 	@echo "*** Copying Isearch executables to $(INSTALL)/. ***"

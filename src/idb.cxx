@@ -3771,16 +3771,19 @@ bool IDB::AddRecord (const RECORD& NewRecord)
   UINT4       End        = NewRecord.GetRecordEnd();
   UINT4       Start      = NewRecord.GetRecordStart();
 
+  bool        remote     = FileName.Search("://") != 0;
+
 //cerr << "AddRecord " << FileName << endl;
 
-  if (fileLength == 0)
+
+  if (!remote && fileLength == 0)
     message_log (LOG_INFO, "Skipping '%s' (empty or non-accesible)", FileName.c_str());
   else if (End > fileLength || Start > fileLength || (End >0 && Start > End))
     {
       message_log (LOG_NOTICE, "Skipping '%s'[%u-%lu], specified record out of bounds.",
 	FileName.c_str(), Start, End == 0 ? fileLength : End);
     }
-  else if (!IsSystemFile (FileName)) // Only add non-system files
+  else if (remote || !IsSystemFile (FileName)) // Only add non-system files
     {
       const STRING IndexingQueueFn (ComposeDbFn (DbExtIndexQueue1));
       PFILE fp = IDB::ffopen (IndexingQueueFn, "ab");

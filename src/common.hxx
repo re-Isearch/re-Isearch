@@ -195,6 +195,7 @@ STRING      ResolveHtdocPath(const STRING& Filename, bool AsUrl = false);
 #endif
 
 STRING UrlToFile(const STRING& LocalPath,const STRING& URL);
+bool isUrl(const STRING& path);
 
 STRING RelativizePathname(const char *Path, const char *Dir);
 STRING RelativizePathname(const STRING& Path, const STRING& Dir);

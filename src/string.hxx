@@ -263,9 +263,10 @@ public:
       { ASSERT_VALID_INDEX( n ); CopyBeforeWrite(); m_pchData[n] = ch; }
 
     /// get last character
-    char  Last() const { return m_pchData[Len() - 1]; }
+    char  Last() const            { return m_pchData[Len() - 1]; }
+    char  Last(size_t n) const    { return n < Len() ? m_pchData[Len() - n - 1] : 0; }
     /// get writable last character
-    char& Last() { CopyBeforeWrite(); return m_pchData[Len()-1]; }
+    char& Last()                  { CopyBeforeWrite(); return m_pchData[Len()-1]; }
 
     /// operator version of GetChar
     char  operator[](signed n) const {ASSERT_VALID_INDEX( n ); return m_pchData[n]; }
@@ -646,8 +647,9 @@ public:
   size_t Index(const char* psz) const { return Find(psz); }
   size_t Index(char ch)         const { return Find(ch);  }
     /// same as Truncate
-  STRING& Remove(size_t pos) { return Truncate(pos); }
-  STRING& RemoveLast() { return Truncate(Len() - 1); }
+  STRING& Remove(size_t pos)   { return Truncate(pos); }
+  STRING& RemoveLast()         { return Truncate(Len() - 1); }
+  STRING& RemoveLast(size_t n) { return Truncate(Len() - n); }
     /// same as IsEmpty
   bool IsNull() const { return IsEmpty(); }
   //@}

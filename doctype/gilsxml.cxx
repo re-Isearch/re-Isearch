@@ -772,7 +772,8 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
       // tags_ptr[offset] = ""; // Don't re-use same end-tag
 
       // Ignore <p> and <br>
-      if ((*tags_ptr)[0] == 'p' && (*tags_ptr)[1] == '\0') continue; // IP: Ignore paragraphs
+      if (((*tags_ptr)[0] == 'p' || (*tags_ptr)[0] == 'P')
+		      && (*tags_ptr)[1] == '\0') continue; // IP: Ignore paragraphs
       // if ((*tags_ptr)[0] == 'b' && (*tags_ptr)[1] == 'r' && (*tags_ptr)[2] == '\0') continue;
 
 

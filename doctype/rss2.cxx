@@ -45,11 +45,13 @@ STRING RSS2::UnifiedName (const STRING& Tag, PSTRING Value) const
     {"big", 3},
     {"blockquote", 10},
     {"center", 6},
+    {"div", 3}, // 2022
     {"em", 2},
     {"font", 4},
     {"h", 1}, // If it starts with h we won't want it..
     {"it", 2},
     {"java", 4},
+    {"p", 1}, // 2022
     {"small", 5},
     {"strong", 6},
     {"tt", 2},
@@ -140,7 +142,10 @@ void RSS2::Present (const RESULT& ResultRecord, const STRING& ElementSet, PSTRIN
     }
 
   // Link is special.. Want RAW!
-  if (ElementSet.SearchAny("link"))
+  int pos = ElementSet.SearchAny("link");
+  char ch;
+  if ((pos == 1 && ElementSet.GetLength() == 4)
+	|| pos > 3 &&  (ch = ElementSet.GetChr(pos-1)) == '/' || ch == '\\')
     return DOCTYPE::Present(ResultRecord, ElementSet, StringBuffer);
 
   return XMLBASE::Present(ResultRecord, ElementSet, StringBuffer);
@@ -375,6 +380,17 @@ STRING IETF_ATOM::UnifiedName (const STRING& Tag, PSTRING Value) const
   if ((Tag.GetLength() > 5) && Tag[4] == ':' &&
 	tolower(Tag[3]) == 'm' && tolower(Tag[2]) == 'o' && tolower(Tag[1]) == 't' && tolower(Tag[0]) == 'a')
    return UnifiedName (Tag.c_str()+5, Value);
+
+#if 0
+   // skip tag:
+   if ((Tag.GetLength() > 4) && 
+        tolower(Tag[3]) == ':' && tolower(Tag[2]) == 'g' && tolower(Tag[1]) == 'a' && tolower(Tag[0]) == 't')
+   return UnifiedName (Tag.c_str()+5, Value);
+#endif
+
+
+  if (Tag.GetLength() == 1 || (Tag ^= "div") || (Tag ^= "span") || (Tag ^= "em"))
+    return NulString; // bad
   return XMLBASE::UnifiedName (Tag, Value);
 }
  

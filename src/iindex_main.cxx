@@ -180,12 +180,12 @@ static int addFile(const STRING& Fn)
   Record.SetLocale (Locale);
   if (Separator.IsEmpty())
     {
-      if ((From < 0) || (To < 0) || (To == 0))
+      if (((From < 0) || (To < 0) || (To == 0)) && Fn.Search("://") == 0)
         {
           const off_t FileSize = GetFileSize(Fn);
           if (FileSize <= 5)
             {
-              message_log (LOG_NOTICE, "Skipping %s (contains %s%ld byte%s)", Fn.c_str(),
+              message_log (LOG_NOTICE, "Iindex skipping %s (contains %s%ld byte%s)", Fn.c_str(),
 		FileSize > 0 ? "only " : "",
 		FileSize,
 		FileSize != 1 ? "s" : "");
@@ -194,6 +194,7 @@ static int addFile(const STRING& Fn)
 	  if (To   <= 0)  To  += FileSize-1;
           if (From <  0) From += FileSize-1;
         }
+ 
       Record.SetRecordStart (From);
       Record.SetRecordEnd (To);
       if (pdb->AddRecord (Record) == false)

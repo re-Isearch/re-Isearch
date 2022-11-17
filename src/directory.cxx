@@ -99,6 +99,12 @@ void do_directory(const STRING& Dir, int (*do_file)(const STRING&),
 
   if (dir.IsEmpty()) dir = ".";
 
+  else if (dir.GetChr(1) == '/' && dir.GetChr(2) == '/') {
+    do_directory (dir.c_str() + 1,
+        do_file, filePatternList, excludeList, inclDirList,excludeDirList,recurse,follow );
+    return;
+  }
+
   if (is_regular(dir))
     {
       do_file(dir);
@@ -107,6 +113,29 @@ void do_directory(const STRING& Dir, int (*do_file)(const STRING&),
 
   if (is_symbolic_link(dir) && !follow)
     return;
+
+
+  // Added 2022 to support URLs
+  // Lets start with file:/
+  // file:/path (no hostname), file:///path (empty hostname), or file://hostname/path.
+  const char *file_proto = "file://localhost/";
+  // file:://localhost/path --> file:/path
+  if (dir.Compare(file_proto, 6) == 0 && (dir.GetChr(7) != '/' || dir.GetChr(8) == '/')) {
+    // Either file:/  or file:/// but not file:// so local 
+    do_directory (dir.c_str() + 5,
+	do_file, filePatternList, excludeList, inclDirList,excludeDirList,recurse,follow );
+    return;
+  } else if (dir.Compare (file_proto, 17) == 0) {
+    // hostname localhost is a special case
+    do_directory (dir.c_str() + 16,
+        do_file, filePatternList, excludeList, inclDirList,excludeDirList,recurse,follow );
+    return; 
+  }
+  if (isUrl(dir)) { // Then its probably a remote URL
+    do_file(dir); // We let the handler downstream do its magic
+    return;
+  }
+  //
 
   // Watch out for files with wildcard names!
   if (dir.IsWild() && !Exists(dir))

@@ -511,6 +511,11 @@ bool ContainsPathSep(const STRING& Path)
 //
 bool IsAbsoluteFilePath(const STRING& Path)
 {
+   // 2022 Added for remote files
+   // AUTOREMOTE
+   if (Path.Search("://")) return true; 
+
+
 #ifdef _WIN32
 
   // Standard drive convention
@@ -846,6 +851,21 @@ STRING UrlToFile(const STRING& LocalPath,const STRING& URL)
     sURL.Cat("index.html");
   return AddTrailingSlash(LocalPath) + sURL;
 }
+
+
+bool isUrl(const STRING& path)
+{
+  size_t pos = path.Search("://");
+  if (pos == 0) return false;
+  //
+  // ipfs
+  // http
+  // https 
+  // gopher
+  // 
+  return true;
+}
+
 
 
 
@@ -1788,30 +1808,25 @@ bool MkDirs(const STRING& Path, int Mask)
 
   PCHR fname = Scratch.NewCString ();
 
-cerr << "Mkdir " << fname << endl;
 
   for(PCHR ptr=strchr(fname,'/');ptr;ptr=strchr(ptr+1,'/'))
     {
       *ptr='\0';
       if (*fname) {
 
-cerr << "Looking at " << fname << endl;	      
       if ((res=stat((const char *)fname, &st_buf)) < 0)
 	{
-cerr << "CREATE " <<endl;
 	  if ((res = MKDIR(fname,mask|S_IEXEC)) < 0)
 	    {
-cerr << "XXXXXXX COULD NOT CREATE" << endl;
 	      break; // Could not create
 	    }
          }
       else if (! S_ISDIR(st_buf.st_mode))
 	{
-cerr << "NOT A DIR" <<endl;
 	  res = -1; // Not a directory so can't continue
 	  break;
 	}
-      else cerr << "Have it.. " << endl;
+      // else cerr << "Have it.. " << endl;
       }
       *ptr='/';
    }
