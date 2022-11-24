@@ -907,6 +907,9 @@ size_t NUMERICLIST::LoadTable(NumBlock Offset)
 }
 
 
+// This loads an intermediate table for merging into
+// a real TABLE for search and retrieval.
+// It DOES not yet have the magic header!!!!!
 size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End)
 {
   FILE   *fp;
@@ -946,23 +949,13 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End)
 
   
   if ((fp=fopen(FileName,"rb")) != NULL) {
-
+    // NOTE: don't have a magic header yet!
     if ((End==-1) || (End>=Elements))   End  = (INT4)(Elements - 1);
     if (Start==-1)                      Start= 0;
 
-
-    // Add to make sure its an index...
-    if (getObjID(fp) != objNLIST)
-      {
-        fclose(fp);
-        message_log (LOG_PANIC, "%s not a Numerical list??", FileName.c_str());
-        return 0;
-      }
-
-
     if (Start)
       {
-	if (fseek(fp,  SIZEOF_HEADER + (off_t)Start*size, SEEK_SET) != 0)
+	if (fseek(fp,  (off_t)Start*size, SEEK_SET) != 0)
 	  message_log (LOG_ERRNO, "Can't seek in '%s'[%ld]", FileName.c_str(), (long) Start*size);
       }
     Resize(Count + End-Start + 1);
