@@ -70,23 +70,25 @@ public:
    IBDOC_AUTOREMOTE(PIDBOBJ DbParent, const STRING& Name) : AUTODETECT(DbParent, Name) {
       DocumentRoot = DOCTYPE::Getoption(RootSection, NulString);
 
-      if (DbParent) {
+      if (Db) {
 	if (DocumentRoot.IsEmpty()) {
-	  DocumentRoot = DbParent->ComposeDbFn( dir_extension );
-          DbParent->ProfileWriteString(Doctype, RootSection, DocumentRoot);
+	  DocumentRoot = Db->ComposeDbFn( dir_extension );
+          Db->ProfileWriteString(Doctype, RootSection, DocumentRoot);
 	  message_log (LOG_INFO, "Setting crawl base to \"%s\"", DocumentRoot.c_str());
 	}
+	Db->SetMirrorBaseDirectory(DocumentRoot);
+
 	IPFS_gateway = DbParent->ProfileGetString(GatewaySection, "IPFS");
 	if (IPFS_gateway.IsEmpty()) {
 	  IPFS_gateway = ipfs_gateway;
 	  message_log (LOG_DEBUG, "Setting IPFS default gateway to \"%s\"", ipfs_gateway);
-	  DbParent->ProfileWriteString(GatewaySection, "IPFS", IPFS_gateway);
+	  Db->ProfileWriteString(GatewaySection, "IPFS", IPFS_gateway);
 	}
 	BTFS_gateway = DbParent->ProfileGetString(GatewaySection, "BTFS");
         if (BTFS_gateway.IsEmpty()) {
           IPFS_gateway = ipfs_gateway;
           message_log (LOG_DEBUG, "Setting BTFS default gateway to \"%s\"", btfs_gateway);
-          DbParent->ProfileWriteString(GatewaySection, "BTFS", BTFS_gateway);
+          Db->ProfileWriteString(GatewaySection, "BTFS", BTFS_gateway);
         }
 	CA_CERT_FILE =  DOCTYPE::Getoption("CERT", NulString);
       } else {
@@ -295,10 +297,17 @@ static const char *metatags[] = {
 } ;
 
 
+// Note IPFS keys can be long as 
+// Qme7ss3ARVgxv6rXqVPiiikMJ8u2NLgimgszg13pYriDKEoiu
+
+
 bool  IBDOC_AUTOREMOTE::fetch(const std::string& filepath,	
 	const std::string& site, const std::string& file, RECORD& record, int *depth)
 {
   httplib::Client cli(site);
+
+  // Timeout in seconds
+  // cli.set_connection_timeout(20);
 
 
   if (!CA_CERT_FILE.IsEmpty()) {
@@ -341,7 +350,9 @@ bool  IBDOC_AUTOREMOTE::fetch(const std::string& filepath,
 	  case 3: record.SetDateExpires(value); break;
 	  // Special case with ETag: we only use it if has not yet
 	  // been used.
-	  case 2: if (Db->MdtLookupKey (value) == 0) record.SetKey(value);
+	  case 2: // ETag may be a good place to build a key...
+		  // unsigned k = site.Hash();
+		  if (Db->MdtLookupKey (value) == 0) record.SetKey(value);
 		  break;
 	}
      	 // os << metatags[i] << ": " << meta << std::endl;
@@ -378,15 +389,16 @@ bool  IBDOC_AUTOREMOTE::fetch(const char *url, RECORD& record, int *depth)
 
    std::string site;
 
+   // std::cerr << "u.protocol = \"" << u.protocol << "\"" << std::endl;   
+
    // IPFS and BTFS are special cases which we rewrite to go through
    // a gateway to fetch the resource BUT store on the disk 
-   if (u.protocol == "ipfs" || u.protocol == "btfs") {
-      site = ipfs_gateway;
+   if ((u.protocol == "ipfs") || (u.protocol == "btfs") || (u.protocol == "ipns")) {
+      site = (u.protocol == "btfs" ? BTFS_gateway.c_str() : IPFS_gateway.c_str() );
       std::string path = u.path;
 
 
-      std::string depot = DocumentRoot.c_str();
-      
+      // std::string depot = DocumentRoot.c_str();
       // // such as  depot.append("/ipfs/");
       // depot.append("/");
       // depot.append(u.protocol);
@@ -403,8 +415,10 @@ bool  IBDOC_AUTOREMOTE::fetch(const char *url, RECORD& record, int *depth)
       if (!path.empty() && path != "/") {
 	u.path.append(path);
 	output_name.append(path);
-
-	if (!MkDirs(output_name.c_str(), 0777))
+      }
+      if (!MkDirs(output_name.c_str(), 0777)) {
+	  message_log (LOG_ERROR, "Could not create dirs for %s. %s", output_name.c_str(),
+			  errno == EEXIST ? "File in the way." : strerror(errno));
 	  return false; // could not make ; 
       }
    } else if (u.protocol == "http" || u.protocol == "https"){
@@ -444,6 +458,14 @@ bool  IBDOC_AUTOREMOTE::fetch(const char *url, RECORD& record, int *depth)
      }
      return false;
    } else {
+#if 0
+     STRING gateway = DbParent->ProfileGetString(GatewaySection, u.protocol);
+     if (gateway.IsEmpty()) {
+	message_log(LOG_ERROR,"Protocol \"%s\" is not (yet) supported! Skipping.", u.protocol.c_str());
+	return false;
+     }
+
+#endif
      message_log(LOG_ERROR,"Protocol \"%s\" is not (yet) supported! Skipping.", u.protocol.c_str());
      return false;
    }

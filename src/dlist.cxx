@@ -624,6 +624,7 @@ void DATELIST::Dump(INT4 start, INT4 end, ostream& os) const
    table[x].Dump(os);
 }
 
+// This gets date data from a index
 size_t DATELIST::LoadTable(INT4 Start, SRCH_DATE date)
 {
   off_t      MoveTo = SIZEOF_HEADER + (Start*sizeof(DATEFLD));
@@ -663,6 +664,9 @@ size_t DATELIST::LoadTable(INT4 Start, SRCH_DATE date)
 }
 
 
+// This routine like LoadTable in nlist is about the
+// intermediate table so it does not yet have the magic
+// header
 size_t DATELIST::LoadTable(INT4 Start, INT4 End)
 {
   FILE   *fp;
@@ -746,6 +750,7 @@ size_t DATELIST::LoadTable(INT4 Start, INT4 End, NumBlock Offset)
     _Count_t nCount;
     off_t MoveTo;
 
+    // This is the organized table so it HAS a magic header...
     if (getObjID(fp)!= objDLIST)
       {
 	fclose(fp);
@@ -810,6 +815,7 @@ size_t DATELIST::LoadTable(INT4 Start, INT4 End, NumBlock Offset)
 }
 
 
+// This is an intermediate table!
 void DATELIST::WriteTable()
 {
   FILE  *fp;
@@ -825,7 +831,7 @@ void DATELIST::WriteTable()
     }
 }
 
-
+// This is a date index 
 void DATELIST::WriteTable(INT Offset)
 {
   FILE  *fp;

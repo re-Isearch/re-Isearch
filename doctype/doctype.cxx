@@ -297,7 +297,7 @@ void DOCTYPE::SourceMIMEContent(STRING *stringPtr) const
 
 STRING  DOCTYPE::Httpd_Content_type (const RESULT& ResultRecord, const STRING& MimeType) const
 {
-  STRING mime, result;
+  STRING       mime, result;
   SRCH_DATE    date;
 
   if (MimeType.IsEmpty())
@@ -305,20 +305,29 @@ STRING  DOCTYPE::Httpd_Content_type (const RESULT& ResultRecord, const STRING& M
   else
     mime = MimeType;
 
-  date = ResultRecord.GetDateExpires();
+  endl (result <<"Content-type: " <<  mime);
+
+   date = ResultRecord.GetDateExpires();
   if (date.Ok())
     endl (result << "Expires: " << date.RFCdate() );
+
+
+  date = ResultRecord.GetDate();
+  if (date.Ok())
+    endl (result << "Date: " << date.RFCdate() );
 
   date = ResultRecord.GetDateCreated();
   if (date.Ok())
     endl (result << "Date-created: " << date.RFCdate()); 
 
-  endl (result <<"Content-type: " <<  mime);
   date = ResultRecord.GetDateModified();
   if (date.Ok())
     endl (result << "Date-modified: " << date.RFCdate());
 
+  endl (result << "ETag: " << ResultRecord.GetKey());
+
   endl (result);
+
   return result;
 }
 
@@ -910,8 +919,7 @@ void DOCTYPE::AfterRset (const STRING&)
 }
 
 // Hooks for the field parsers
-INT DOCTYPE::UnifiedNames (const STRING& Tag, PSTRLIST Value,
-	bool Use) const
+INT DOCTYPE::UnifiedNames (const STRING& Tag, PSTRLIST Value, bool Use) const
 {
   INT Total = 0;
 
@@ -1093,11 +1101,14 @@ static bool _valid_URL_method(const char *base, size_t len, bool *d)
   } methods[] = {
     {"ftp",     3, true},
     {"urn",     3, true},
+    {"btfs",    4, true},
     {"file",    4, true},
     {"http",    4, true},
+    {"ipfs",    4, true},
+    {"ipns",    4, true},
+    {"ldap",    4, true},
     {"news",    4, false},
     {"nntp",    4, true},
-    {"ldap",    4, true},
     {"wais",    4, true},
     {"x500",    4, true},
     {"https",   5, true},
@@ -1154,7 +1165,8 @@ bool DOCTYPE::URL(const RESULT& ResultRecord, STRING *StringBuffer,
 
 	  if (Path.SubString(1, root_len) ==  DocumentRoot)
 	    {
-	      Path.EraseBefore(root_len + 1);
+	      // Erase root path and in case we have a '/' it too...
+	      Path.EraseBefore(root_len + 1 + (Path.GetChr(root_len +1 ) == '/' ? 1 : 0) );
 	      // MIRROR_LAYOUT
 	      if (isMirror)
 		{
@@ -1243,6 +1255,44 @@ STRING DOCTYPE::UnifiedName (const STRING& tag) const
   return UnifiedName(tag, NULL);
 }
 
+
+STRING DOCTYPE::UnifiedNamePath (const STRING& Tag) const
+{
+   STRING tag =  UnifiedName(Tag); // First we do a Unified Name 
+
+   if (tag.IsEmpty()) return tag;
+
+   STRING path = tag.Dup(); // Dup since we'll change things
+   char  *p = path.stealData(); // Grab the data
+   STRING newTag;
+   static const STRING slash ("\\");
+   char *tcp = p;
+   STRING s;
+
+   // We now look to see if a path
+   for (; *tcp; *tcp++)
+   {
+      if (*tcp == '\\' || *tcp == '/') {
+        *tcp = '\0';
+        if (tcp > p) {
+          s = UnifiedName(p);
+          if (!s.IsEmpty())
+            newTag += slash + s;
+          p = tcp + 1;
+        }
+      } 
+   } // for
+   if (*p) {
+      // Normally if we see a \\ or / we should also see
+      // this since we should NEVER have trailing slashes..
+      s = UnifiedName(p);
+      if (!s.IsEmpty())
+	newTag += slash + s;
+   } 
+   // We see if newTag is empty to handle paranoia of being
+   // passed something like /one/two/ 
+   return newTag.IsEmpty() ? tag : UnifiedName(newTag);
+}
 
 // Return the first Entry (if multiple defined).
 STRING DOCTYPE::UnifiedName (const STRING& Tag, STRING *Value) const

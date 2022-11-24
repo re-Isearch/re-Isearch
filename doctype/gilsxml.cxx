@@ -725,6 +725,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 	// XXX Should check that (*tags_ptr)[1] matches TagPath[i] ?
 	//     (not for SGML... perhaps for SGMLNORM)
 
+
 	if ((*tags_ptr)[1] == 'p' && (*tags_ptr)[2] == '\0')
 	    continue; // See IP: Ignore paragraphs below
 
@@ -736,7 +737,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 	    i = TagPath.SearchReverse(levelCh);
 	    while (TagPath.GetChar(i) == levelCh) i--;
 	    if (i) TagPath.EraseAfter(i-1);
-// cerr << "   Outwith " << TagPath << endl;
+//cerr << "   Outwith " << TagPath << endl;
           } else {
 	    // At level 0, tagpath is empty
             TagPath.Clear();
@@ -771,12 +772,6 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 
       // tags_ptr[offset] = ""; // Don't re-use same end-tag
 
-      // Ignore <p> and <br>
-      if (((*tags_ptr)[0] == 'p' || (*tags_ptr)[0] == 'P')
-		      && (*tags_ptr)[1] == '\0') continue; // IP: Ignore paragraphs
-      // if ((*tags_ptr)[0] == 'b' && (*tags_ptr)[1] == 'r' && (*tags_ptr)[2] == '\0') continue;
-
-
 #if 1
       if (p && have_attribute_val)
 	{
@@ -790,7 +785,11 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 #endif
 
       // Opening tag found. Append it to TagPath, increment NestLevel
+
+      // Do we want /root or root/
+#ifndef ROOT_SLASH
       if(NestLevel)		// Add tagpath separator char if needed
+#endif
         TagPath += levelCh;
       TagPath += *tags_ptr;	// Add tag to tagpath
       // Make a copy of tag path with all attributes
@@ -853,7 +852,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 	      if (orig_char)
 		*tcp = orig_char;
 
-	      // added 30 Sept 2003: Make sure its a good printable fieldname
+	      // Make sure its a good printable fieldname
 	      if (!FieldName.IsPrint())
 		{
 		  FieldName.ToPrint();
@@ -893,14 +892,27 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 		  HandleSpecialFields(NewRecord, FieldName, _get_value(&RecBuffer[val_start], val_len));
                 }
 	      // Store data for the whole tagpath as well.
+
+
+//cerr << "FieldNAme = " << FieldName << endl;
+//cerr << "TagPath   = " << TagPath << endl;
+//cerr << "DF " << df << endl;
+//if (TagPath.Contains("\\p\\")) {cerr << "BAD: " << fn << endl;  abort(); }
+//if (TagPath.Contains("\\item\\item") ) {cerr << "BAD: " << fn << endl;  abort(); }
+
+
+	      // Here we look at the path....
 	      if (UnifiedName(TagPath, &FieldName).IsEmpty())
 		continue; // ignore these
 	      // To distinguish between top-level tags (ie. tag paths with just one
 	      // tag component) and tags with same name but residing deeper in the
 	      // SGML structure, we add a trailing backslash (levelCh) to level 1
 	      // tagpaths.
+	      //
+#ifndef ROOT_SLASH
 	      if(NestLevel==1)
 	        FieldName.Cat(levelCh);
+#endif
 
 
 	      // sanity check on fieldname 

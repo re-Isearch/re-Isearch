@@ -383,8 +383,13 @@ static struct Magic {
 	"application/x-stuffit"},
    {0, "GIF87a", 6, "\"GIF file, v87\"", "image/gif", "GIF:IMAGE"},
    {0, "GIF89a", 6, "\"GIF file, v89\"", "image/gif", "GIF:IMAGE"},
+#if 0
    {0, "\377\330\377\340", 4, "\"JPEG file\"", "image/jpeg", "JPEG:IMAGE"},
    {0, "\377\330\377\356", 4, "\"JPG file\"", "image/jpeg", "JPG:IMAGE"},
+#else
+  {0, "\377\330\377\340", 4, "JPEG:EXIF:", "image/jpeg", "JPEG:EXIF:"},
+  {0, "\377\330\377\356", 4, "JPEG:EXIF:", "image/jpeg", "JPEG:EXIF:"},
+#endif
    {0, "\131\246\152\225", 4, "\"Rasterfile\"", "image/x-raster", "RASTER:IMAGE"},
    {8, "ILBM", 4, "\"IFF ILBM file\"", "image/iff", "IFF:IMAGE"},
    {0, "ZyXEL\002", 6, "\"ZyXEL voice data\""},
@@ -1493,6 +1498,16 @@ message_log (LOG_DEBUG, "AFTER INDEXING");
 
       if (doctype.GetChr(1) == '"' || doctype.Search(' '))
 	{
+
+#if 0
+          // Kludge
+	  if (doctype.Search("JPEG")) {
+	     doctype = "EXIF:"; // need to check beforehand that the plugin is available
+cerr << "USE EXIF: " << endl;
+	     goto done;
+	  } 
+#endif
+
 	  PFILE Fp = NULL;
 	  off_t pos;
 	  RECORD NewRecord (FileRecord);
@@ -1576,13 +1591,12 @@ D \010O \010N \010' \010T  \010E \010D \010I \010T\
 		  STRING Owner ( ResourceOwner ( s) );
 		  if (Owner.GetLength())
 		    {
-		      pos += fprintf(Fp, "Author-Name-v1: %s", Owner.c_str());
-		      pos += fprintf(Fp, "\n");
+		      pos += fprintf(Fp, "Author-Name-v1: %s\n", Owner.c_str());
 		    }
 		  STRING Publisher ( ResourcePublisher(NulString)); // Publisher HERE
 		  if (Publisher.GetLength())
 		    {
-		      pos += fprintf(Fp, "Publisher-Name-v1: %s", Publisher.c_str());
+		      pos += fprintf(Fp, "Publisher-Name-v1: %s\n", Publisher.c_str());
 		    }
 		  pos += fprintf(Fp, "Last-Revision-Date-v1: %s (%s)\n",
 			RFCdate(stbuf.st_mtime),

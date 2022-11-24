@@ -28,11 +28,12 @@ skipDays
 #include "gilsxml.hxx"
 #include "doc_conf.hxx"
 
-static const STRING  ttl   ("ttl"); // TTL Field Name
-static const STRING  cdate  ("RSS\\CHANNEL\\PUBDATE") ; // ("pubDate");
-static const STRING  mdate ("lastBuildDate");
-static const STRING  eTag  ("eTag");
-static const STRING  lang  ("language");
+static const STRING  ttl      ("ttl"); // TTL Field Name
+static const STRING  cdate_p  ("RSS\\CHANNEL\\PUBDATE") ; 
+static const STRING  cdate    ("pubDate");
+static const STRING  mdate    ("lastBuildDate");
+static const STRING  eTag     ("eTag");
+static const STRING  lang     ("language");
 
 
 STRING RSS2::UnifiedName (const STRING& Tag, PSTRING Value) const
@@ -108,11 +109,11 @@ RSS2::RSS2 (PIDBOBJ DbParent, const STRING& Name) : XMLBASE (DbParent, Name)
   SGMLNORM::SetStoreComplexAttributes (Getoption("Complex", "False").GetBool());
 
   if (TTLfieldName.IsEmpty())      TTLfieldName      = ttl;
-  if (DateCreatedField.IsEmpty())  DateCreatedField  = cdate;
+  if (DateCreatedField.IsEmpty())  DateCreatedField  = cdate_p;
   if (DateModifiedField.IsEmpty()) DateModifiedField = mdate;
   if (LanguageField.IsEmpty())     LanguageField     = lang;
   if (KeyField.IsEmpty())          KeyField          = eTag;
-  if (DateField.IsEmpty())         DateField         = cdate;
+  if (DateField.IsEmpty())         DateField         = cdate_p;
 
 }
 
@@ -123,6 +124,7 @@ void RSS2::LoadFieldTable()
       Db->AddFieldType(DateField, FIELDTYPE::date);
       if (DateField != cdate) Db->AddFieldType(cdate, FIELDTYPE::date);
       if (DateField != mdate) Db->AddFieldType(mdate, FIELDTYPE::date);
+      Db->AddFieldType("slash:comments", FIELDTYPE::numerical); // 2022
       Db->AddFieldType("skipHours", FIELDTYPE::numerical);
       Db->AddFieldType("skipHours", FIELDTYPE::numerical);
       Db->AddFieldType(TTLfieldName, FIELDTYPE::ttl);

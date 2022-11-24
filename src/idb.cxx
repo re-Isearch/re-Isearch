@@ -2829,6 +2829,7 @@ bool IDB::GetFieldData (const RESULT &ResultRecord, const FC& Fc,
   ffclose(fpd);
 
   if (StringBuffer) *StringBuffer = data.Strip(STRING::both);
+
   return res;
 }
 
@@ -3232,14 +3233,14 @@ bool IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, SRCH_DATE* Bu
 
   if (Status == MATCH)
     {
+      const int count    = List.GetCount();
       List.LoadTable(Start, Start, GP_BLOCK);
-      GPTYPE start = List.GetGlobalStart(0);
+      GPTYPE start = List.GetGlobalStart(count);
       if (FieldFC.Contains(start))
 	{
-	  if (Buffer) *Buffer = List.GetValue(0); 
+	  if (Buffer) *Buffer = List.GetValue(count); 
 	  return true;
 	}
-//cerr << "PANIC: Could not find " << FieldName << "DATA for" << FieldFC <<  endl;
        message_log (LOG_PANIC, "Could not find %s data for '%s' %s",
 		"date", FieldName.c_str(), (const char *)((STRING)FieldFC));
     }

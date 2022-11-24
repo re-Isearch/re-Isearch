@@ -259,14 +259,19 @@ cerr << Record.GetRecordStart() << " -- " << Record.GetRecordEnd() << endl;
  */
 const PCHR XML::find_end_tag (const char *const *t, const char *tag, size_t *offset) const
 {
+
   if (tag == NULL || tag[0] == '/') return NULL; // End of an End???
+
   if (t == NULL || *t == NULL) return NULL; // Error
+
+
   if (*t[0] == '/') return NULL; // I'am confused!
 
   size_t len = 0;
   // Look for "real" tag name.. stop at white space
   while (tag[len] && !isspace(tag[len])) len++;
   // Have length
+  //
 
   // Now search for nearest matching close
   size_t i = 0;
@@ -275,6 +280,7 @@ const PCHR XML::find_end_tag (const char *const *t, const char *tag, size_t *off
   const char *caseTag = NULL;
   const char firstCh = toupper(tag[0]);
 #endif
+
   const char *tt = *t;
   do
     {
@@ -285,6 +291,7 @@ const PCHR XML::find_end_tag (const char *const *t, const char *tag, size_t *off
 	  if (tt[1] == '\0' || tag[0] == '\0')
 	    break;
 #endif
+
 	  // XML tags are mapped case DEPENDENT
 	  if (tag[0] == tt[1] && strncmp (tt+1, tag, len) == 0)
 	    {
@@ -305,8 +312,9 @@ const PCHR XML::find_end_tag (const char *const *t, const char *tag, size_t *off
 	    }
 #endif
 	}
-    }
-  while ((tt = t[++i]) != NULL);
+    } while ((tt = t[++i]) != NULL);
+
+
 #if RETRO
   if (tt == NULL && caseTag != NULL)
     {

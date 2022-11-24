@@ -1054,7 +1054,7 @@ off_t GetFileSize (const CHR *path)
 {
   struct stat sb;
 
-  if ((stat (path, &sb) >= 0) && ((sb.st_mode & S_IFMT) == S_IFREG))
+  if ((stat (path, &sb) >= 0) && S_ISREG(sb.st_mode)) // ((sb.st_mode & S_IFMT) == S_IFREG))
     {
 #if HOST_MACHINE_64
       // OK
@@ -1062,6 +1062,7 @@ off_t GetFileSize (const CHR *path)
       if (sb.st_size > (off_t)(0x7fffffffU))
 	message_log (LOG_WARN, "File %s possibly too large (%ldMB)", path, (long)(sb.st_size/(1024*1024L)) );
 #endif
+
       return sb.st_size;
     }
   return 0;                     // Error (return 0 instead of -1)

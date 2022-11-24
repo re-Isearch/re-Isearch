@@ -1007,6 +1007,7 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End, NumBlock Offset)
   FILE *fp = fopen(FileName,"rb");
   if (fp) {
 
+    // This is the organized table so it HAS a magic header...
     if (getObjID(fp) != objNLIST)
       {
 	fclose(fp);

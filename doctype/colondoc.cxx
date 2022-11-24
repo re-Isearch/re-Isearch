@@ -45,6 +45,7 @@ FIELDTYPE METADOC::GuessFieldType(const STRING& FieldName, const STRING& Content
 {
   const size_t fLen = FieldName.GetLength();
 
+
   if (Db && Contents.GetLength() && fLen > 0)
     {
       FIELDTYPE ft ( CheckFieldType(FieldName) );
@@ -58,7 +59,7 @@ FIELDTYPE METADOC::GuessFieldType(const STRING& FieldName, const STRING& Content
 	{
 	  if (Contents.IsGeoBoundedBox())      ft = FIELDTYPE::box;
 	  else if (Contents.IsNumberRange())   ft = FIELDTYPE::numericalrange;
-	  else if (Contents.IsNumber())
+	  else if (Contents.IsNumber()) 
 	    {
 	      // CCYYMMDD
 	      if (Contents.GetLong() > 19000101)
@@ -73,9 +74,9 @@ FIELDTYPE METADOC::GuessFieldType(const STRING& FieldName, const STRING& Content
 	      else
 		ft = FIELDTYPE::numerical;
             }
-	  else if (Contents.IsDateRange())     ft = FIELDTYPE::daterange;
 	  else if (Contents.IsDate())          ft = FIELDTYPE::date;
-	  else if (Contents.IsCurrency())      ft = FIELDTYPE::currency;
+	  else if (Contents.IsDateRange())     ft = FIELDTYPE::daterange;
+	  // else if (Contents.IsCurrency())      ft = FIELDTYPE::currency;
 	  else if (Contents.IsDotNumber())     ft = FIELDTYPE::dotnumber;
 
 	  else ft = FIELDTYPE::text;
@@ -398,13 +399,17 @@ void METADOC::ParseFields (RECORD *NewRecord)
       // Skip while space after the ':'
       while (isspace (RecBuffer[val_start]))
 	val_start++, off++;
+
+
       // Also leave off the \n
       INT val_len = (p - *tags_ptr) - off - 1;
-
       // Strip potential trailing while space
-      while (val_len >= 0 && isspace (RecBuffer[val_len + val_start])) 
+      while (val_len >= 0 && isspace (RecBuffer[val_len + val_start])) {
 	val_len--;
+      }
+
       if (val_len < 0) continue; // Don't bother with empty fields
+      val_len++; // Need to point to end
 
       (FieldName = SectionName).Cat(*tags_ptr);
 
@@ -426,7 +431,11 @@ void METADOC::ParseFields (RECORD *NewRecord)
       FIELDTYPE ft ( CheckFieldType(FieldName) );
       if (recordsAdded < 100 && !ft.Defined())
 	{
-	  char *entry_id = (char *)alloca( val_len + 1);
+#ifdef SVR4
+          char *entry_id = (char *)alloca(sizeof(char)*(val_len +1));
+#else
+	  char entry_id[ val_len + 1];
+#endif
 	  strncpy (entry_id, &RecBuffer[val_start], val_len);
 	  entry_id[val_len] = '\0'; 
 	  ft = GuessFieldType(FieldName, entry_id);
@@ -696,7 +705,6 @@ PCHR * METADOC::parse_tags (PCHR b, off_t len)
     }
   t[tc] = (PCHR) NULL;
   return t;
-cerr << "returning " << endl;
 }
 
 ///////////////// Code to handle the Heirarchical Structure

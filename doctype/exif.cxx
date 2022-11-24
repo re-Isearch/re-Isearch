@@ -25,53 +25,89 @@
 static const char *content_type_key = "Content-Type";
 static const char *default_content_type = "binary/octet-stream";
 
-static const char myDescription[] = "EXIF Plugin";
+static const char myDescription[] = "EXIF Plugin. Reads the EXIF Info in JPEGs";
 
 class EXIF_DOC : public COLONDOC {
 
 public:
 
-EXIF_DOC(PIDBOBJ DbParent, const STRING& Name) : COLONDOC(DbParent, Name)
-{
-#if USE_LIBMAGIC
-  magic_cookie = NULL;
-#endif
-}
-
-void SourceMIMEContent(const RESULT& Result, STRING *StringPtr) const
-{
-  if (StringPtr)
+  EXIF_DOC(PIDBOBJ DbParent, const STRING& Name) : COLONDOC(DbParent, Name)
   {
-    DOCTYPE::Present (Result,  content_type_key, StringPtr);
-    if (StringPtr->GetLength() == 0) SourceMIMEContent(StringPtr);
+#if USE_LIBMAGIC
+    magic_cookie = NULL;
+#endif
+    DateField = "DateTime";
+    DateModifiedField = "DateTimeDigitized";
+    DateCreatedField = "DateTimeOriginal";
   }
-}
-
-void SourceMIMEContent(STRING *stringPtr) const
-{
-  *stringPtr = default_content_type; 
-}
 
 
-const char *Description(PSTRLIST List) const
-{
-  List->AddEntry (Doctype);
-  COLONDOC::Description(List);
-  return myDescription;
-}
+  void LoadFieldTable()
+  {
+    if (Db)
+    {
+      Db->AddFieldType(DateField, FIELDTYPE::date);
+      Db->AddFieldType(DateCreatedField, FIELDTYPE::date);
+      Db->AddFieldType(DateModifiedField, FIELDTYPE::date);
+    }
+    COLONDOC::LoadFieldTable();
+  }
+
+
+  void SourceMIMEContent(const RESULT& Result, STRING *StringPtr) const
+  {
+    if (StringPtr)
+    {
+      DOCTYPE::Present (Result,  content_type_key, StringPtr);
+      StringPtr->Trim(STRING::both);
+      if (StringPtr->GetLength() == 0) SourceMIMEContent(StringPtr);
+    }
+  }
+
+  void SourceMIMEContent(STRING *stringPtr) const
+  {
+    *stringPtr = default_content_type; 
+  }
+
+
+  const char *Description(PSTRLIST List) const
+  {
+    List->AddEntry (Doctype);
+    COLONDOC::Description(List);
+    return myDescription;
+  }
 
 
 
+   void ParseRecords (const RECORD& FileRecord);
 
 void BeforeIndexing()
 {
-
 #if USE_LIBMAGIC
   if (magic_cookie == NULL)
      magic_cookie = magic_open(MAGIC_MIME|MAGIC_SYMLINK|MAGIC_ERROR);
   if (magic_cookie) magic_load(magic_cookie, NULL); // Use default 
 #endif
 }
+
+bool GetResourcePath(const RESULT& ResultRecord, STRING *StringBuffer) const
+{
+  if (ResultRecord.GetRecordStart() == 0)
+    {
+      STRING path;
+      Db->GetFieldData (ResultRecord, "Local-Path", &path, this);
+      path = path.Strip( STRING::both );
+
+      if (path.IsEmpty() || GetFileSize(path) < 10)
+        {
+          return false;
+        }
+      if (StringBuffer) *StringBuffer = path;
+      return true;
+    }
+  return false;
+}
+
 
 
 void AfterIndexing()
@@ -85,13 +121,69 @@ void AfterIndexing()
 #endif
 }
 
- ~EXIF_DOC() { }
+
+void DocPresent (const RESULT& ResultRecord, const STRING& ElementSet, const STRING& RecordSyntax, PSTRING StringBuffer) const
+{
+  StringBuffer->Clear();
+
+  if ( (RecordSyntax == SutrsRecordSyntax) ?
+        ElementSet.Equals(SOURCE_MAGIC) : ElementSet.Equals(FULLTEXT_MAGIC) )
+    {
+       STRING source;
+      // Read here the source file
+      if (RecordSyntax == HtmlRecordSyntax)
+         *StringBuffer  = DOCTYPE::Httpd_Content_type (ResultRecord);
+      if (GetResourcePath(ResultRecord, &source) && GetFileSize(source) > 10)
+        StringBuffer->CatFile( source );
+    }
+  else
+    COLONDOC::DocPresent(ResultRecord,ElementSet,RecordSyntax,StringBuffer);
+}
+
+
+void Present (const RESULT& ResultRecord, const STRING& ElementSet, const STRING& RecordSyntax, PSTRING StringBuffer) const
+{
+  StringBuffer->Clear();
+  if (ElementSet.Equals(BRIEF_MAGIC))
+    COLONDOC::Present(ResultRecord, "Description" ,RecordSyntax,StringBuffer);
+  if (StringBuffer->IsEmpty())
+    COLONDOC::Present(ResultRecord,ElementSet,RecordSyntax,StringBuffer);
+
+}
+
+ ~EXIF_DOC() {
+#if USE_LIBMAGIC
+  AfterIndexing();
+#endif
+ }
 
 private:
+
+
+// Convert the EXIF date format to ISO 8601
+STRING date_convert(const char *exif_date) const
+{
+  int yyyy, mm, dd;
+  int _hh =0, _mm = 0, _ss = 0;
+  int n;
+
+  // YYYY:MM:DD HH:MM:SS" with time shown in 24-hour format, and the date and time separated by one blank character (hex 20). 
+  if ( (n = sscanf (exif_date,"%d:%d:%d %d:%d:%d", &yyyy, &mm, &dd, &_hh, &_mm, &_ss)) >= 3) {
+     STRING s;
+     if (n == 3)
+	s.form("%04d%02d%02d", yyyy, mm, dd);
+     else
+	s.form("%04d%02d%02dT%02d:%02d:%02d", yyyy, mm, dd, _hh, _mm, _ss);
+     return s;
+  }
+  return exif_date;
+}
+
 
 #if USE_LIBMAGIC
   magic_t magic_cookie;
 #endif
+
 
 // Uses TinyEXIF, a tiny, lightweight C++ library for parsing the metadata existing inside JPEG files.
 //
@@ -101,6 +193,11 @@ private:
 //
 int gen_metadata(const char *input_file, const char *output_file) 
 {
+#if USE_LIBMAGIC
+        STRING content_type = magic_file (magic_cookie, input_file);
+	if (!content_type.IsEmpty() && content_type.SearchAny("jpeg") == 0) // Not a JPEG
+	   return -4;
+#endif
 	// open a stream to read just the necessary parts of the image file
 	std::ifstream in_stream(input_file, std::ios::binary);
 	if (!in_stream) return -2;
@@ -110,9 +207,9 @@ int gen_metadata(const char *input_file, const char *output_file)
 
 	// Now open the output stream
 	std::ofstream stream(output_file, std::ios::binary);
-        if (stream) return -2;
+        if (!stream) return -2;
 
-	std::cout << "Key: ";
+	stream << "Key: ";
 	// For Key would be nice to use Unique Image ID
 	if (!imageEXIF.ImageUniqueID.empty())
 		stream <<  imageEXIF.ImageUniqueID;
@@ -122,15 +219,18 @@ int gen_metadata(const char *input_file, const char *output_file)
 
 
 #if USE_LIBMAGIC
-	stream << std::endl << content_type_key << ": "<< 
-		magic_file (magic_cookie, input_file) << std::endl;
-#else
+	if (!content_type.IsEmpty())
+	   stream << content_type_key << ": "<< content_type << std::endl;
+	else
+#endif
 	// We could use the extension but it is unreliable... so we'll just
 	// say binary.. and let the application figure out what to do..
-	 stream << std::endl << content_type_key << ": " << default_content_type;
-#endif
+	 stream << content_type_key << ": " << default_content_type << std::endl;
 
-	if (!imageEXIF.Fields) return -3; // No fields
+	if (!imageEXIF.Fields) {
+	  stream.close();
+	  return -3; // No fields
+	}
 
 	// print extracted metadata
 	if (imageEXIF.ImageWidth || imageEXIF.ImageHeight)
@@ -152,11 +252,11 @@ int gen_metadata(const char *input_file, const char *output_file)
 	if (!imageEXIF.Software.empty())
 		stream << "Software: " << imageEXIF.Software << std::endl;
 	if (!imageEXIF.DateTime.empty())
-		stream << "DateTime: " << imageEXIF.DateTime << std::endl;
+		stream << "DateTime: " <<  date_convert(imageEXIF.DateTime.c_str()) << std::endl;
 	if (!imageEXIF.DateTimeOriginal.empty())
-		stream << "DateTimeOriginal: " << imageEXIF.DateTimeOriginal << std::endl;
+		stream << "DateTimeOriginal: " << date_convert(imageEXIF.DateTimeOriginal.c_str()) << std::endl;
 	if (!imageEXIF.DateTimeDigitized.empty())
-		stream << "DateTimeDigitized: " << imageEXIF.DateTimeDigitized << std::endl;
+		stream << "DateTimeDigitized: " << date_convert(imageEXIF.DateTimeDigitized.c_str()) << std::endl;
 	if (!imageEXIF.SubSecTimeOriginal.empty())
 		stream << "SubSecTimeOriginal: " << imageEXIF.SubSecTimeOriginal << std::endl;
 	if (!imageEXIF.Copyright.empty())
@@ -220,14 +320,14 @@ int gen_metadata(const char *input_file, const char *output_file)
 	}
 	if (imageEXIF.GeoLocation.AccuracyXY > 0 || imageEXIF.GeoLocation.AccuracyZ > 0)
 		stream << "GeoLocation.GPSAccuracy: XY " << imageEXIF.GeoLocation.AccuracyXY << " m" << " Z " << imageEXIF.GeoLocation.AccuracyZ << " m" << std::endl;
-	stream << "GeoLocation.GPSDOP " << imageEXIF.GeoLocation.GPSDOP << std::endl;
+	stream << "GeoLocation.GPSDOP: " << imageEXIF.GeoLocation.GPSDOP << std::endl;
 	stream << "GeoLocation.GPSDifferential: " << imageEXIF.GeoLocation.GPSDifferential << std::endl;
 	if (!imageEXIF.GeoLocation.GPSMapDatum.empty())
 		stream << "GeoLocation.GPSMapDatum: " << imageEXIF.GeoLocation.GPSMapDatum << std::endl;
 	if (!imageEXIF.GeoLocation.GPSTimeStamp.empty())
 		stream << "GeoLocation.GPSTimeStamp: " << imageEXIF.GeoLocation.GPSTimeStamp << std::endl;
 	if (!imageEXIF.GeoLocation.GPSDateStamp.empty())
-		stream << "GeoLocation.GPSDateStamp: " << imageEXIF.GeoLocation.GPSDateStamp << std::endl;
+		stream << "GeoLocation.GPSDateStamp: " << date_convert(imageEXIF.GeoLocation.GPSDateStamp.c_str()) << std::endl;
 	if (imageEXIF.GPano.hasPosePitchDegrees())
 		stream << "GPano.PosePitchDegrees: " << imageEXIF.GPano.PosePitchDegrees << std::endl;
 	if (imageEXIF.GPano.hasPoseRollDegrees())
@@ -235,9 +335,54 @@ int gen_metadata(const char *input_file, const char *output_file)
 	return 0;
 }
 
-
-
 } /* end Class definition */ ;
+
+
+void EXIF_DOC::ParseRecords (const RECORD& FileRecord)
+{
+   STRING fn (FileRecord.GetFullFileName());
+   STRING s;
+
+    Db->ComposeDbFn (&s, DbExtCat);
+    if (MkDir(s, 0, true) == -1) // Force creation
+      {
+        message_log (LOG_ERRNO, "Can't create meta directory '%s'", s.c_str() );
+        return;
+       }
+
+    const STRING key = INODE(fn).Key();
+
+    STRING outfile =  AddTrailingSlash(s);
+    outfile.Cat (((long)key.CRC16()) % 1000);
+    if (MkDir(outfile, 0, true) == -1)
+      outfile = s; // Can't make it
+    AddTrailingSlash(&outfile);
+    outfile.Cat (key);
+
+
+#if USE_LIBMAGIC
+    if (magic_cookie == NULL) BeforeIndexing() ;
+#endif
+    int result = gen_metadata(fn, outfile);
+
+    if (result == 0 || result == -3) 
+    {
+       RECORD r (FileRecord);
+       r.SetRecordStart(0);
+       r.SetRecordEnd(0);
+       r.SetFullFileName ( outfile );
+       r.SetKey( key );
+       COLONDOC::ParseRecords (r);
+    } else if (result == -4) {
+cerr << "NOTE A JPEG!!!!" << endl;
+       // Not a JPEG.. let AUTODETECT figure out what to do....
+       RECORD r (FileRecord);
+       r.SetDocumentType ( "AUTODETECT" );
+       // Db->DocTypeAddRecord(r);
+       DOCTYPE::ParseRecords( r);
+    } else message_log(LOG_INFO, "EXIF error. Skipping %s", fn.c_str());
+}
+
 
 
 // Stubs for dynamic loading
