@@ -950,9 +950,19 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End)
     if ((End==-1) || (End>=Elements))   End  = (INT4)(Elements - 1);
     if (Start==-1)                      Start= 0;
 
+
+    // Add to make sure its an index...
+    if (getObjID(fp) != objNLIST)
+      {
+        fclose(fp);
+        message_log (LOG_PANIC, "%s not a Numerical list??", FileName.c_str());
+        return 0;
+      }
+
+
     if (Start)
       {
-	if (fseek(fp, (off_t)Start*size, SEEK_SET) != 0)
+	if (fseek(fp,  SIZEOF_HEADER + (off_t)Start*size, SEEK_SET) != 0)
 	  message_log (LOG_ERRNO, "Can't seek in '%s'[%ld]", FileName.c_str(), (long) Start*size);
       }
     Resize(Count + End-Start + 1);
@@ -961,7 +971,7 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End)
       if (feof(fp))
 	break;
 #if DEBUG
-      cerr << "Read element " << Count << endl;
+      cerr << "--> Read element " << Count << endl;
 #endif
       ::Read(&table[Count], fp);
       nRecs++;
@@ -1037,7 +1047,7 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End, NumBlock Offset)
       else if (Offset == GP_BLOCK)
 	MoveTo = SIZEOF_HEADER + ((nCount+Start) * size);
       else 
-	MoveTo = 0;
+	MoveTo = 1; // +1 for the magic // 2022 November
 
 #if DEBUG
       cerr << "Moving " << MoveTo << " bytes into the file and reading "
@@ -1059,7 +1069,7 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End, NumBlock Offset)
 	  }
 	::Read(&table[Count],  fp);
 #if DEBUG
-	cerr << "Read " << table[Count] << endl;
+	cerr << "*Read " << Count << "   "<< table[Count] << endl;
 #endif
 
 	nRecs++;
@@ -1072,7 +1082,7 @@ size_t NUMERICLIST::LoadTable(INT4 Start, INT4 End, NumBlock Offset)
   } else
     message_log (LOG_ERROR, "Could not open '%s'", FileName.c_str());
 #if DEBUG
-  cerr <<"Read " << nRecs << endl;
+  cerr <<"** Read " << nRecs << endl;
 #endif
   return nRecs;
 }

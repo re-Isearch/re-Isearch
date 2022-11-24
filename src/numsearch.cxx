@@ -2,7 +2,6 @@
 Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
 It is made available and licensed under the Apache 2.0 license: see LICENSE
 */
-/* $Id: numsearch.cxx,v 1.2 2007/06/19 06:24:03 edz Exp $ */
 
 // TODO: The INT4 references need to be replaced with a GPTYPE
 //
@@ -75,7 +74,6 @@ void INDEX::SortNumericFieldData()
   DFD DfdRecord;
   STRING Fn;
   FIELDTYPE FieldType;
-  // INT4 Count;
 
   size_t total = Parent->DfdtGetTotalEntries();
 
@@ -587,6 +585,11 @@ PIRSET INDEX::NumericSearch(const NUMBER fKey, const STRING& FieldName, INT4 Rel
 #endif
    {
     GPTYPE Value=List.GetGlobalStart(Pointer);
+    
+#if DEBUG
+    cerr << "Looking at GP " << Value << endl;
+#endif
+
     if ((w = Parent->GetMainMdt()->LookupByGp(Value)) == 0)
        continue; // Not found
 

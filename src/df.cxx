@@ -55,5 +55,13 @@ bool DF::Read(PFILE fp) {
   return obj == objDF;
 }
 
+
+ostream& operator <<(ostream& Os, const DF& df)
+{
+  Os << df.FieldName << ":" << df.Fct;
+  return Os;
+}
+
+
 DF::~DF() {
 }

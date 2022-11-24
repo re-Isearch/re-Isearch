@@ -154,6 +154,9 @@ public:
   virtual INT     UnifiedNames (const STRING& Tag, PSTRLIST Value) const;
   virtual STRING  UnifiedName (const STRING& tag) const;
   virtual STRING  UnifiedName (const STRING& tag, PSTRING Value) const;
+
+  virtual  STRING UnifiedNamePath (const STRING& Tag) const;
+
   virtual STRING& DescriptiveName(const STRING& Art,
 	const STRING& FieldName, PSTRING Value) const;
   virtual STRING& DescriptiveName(const STRING& FieldName, PSTRING Value) const;

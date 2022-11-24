@@ -1824,6 +1824,7 @@ bool MkDirs(const STRING& Path, int Mask)
       else if (! S_ISDIR(st_buf.st_mode))
 	{
 	  res = -1; // Not a directory so can't continue
+	  errno = EEXIST;
 	  break;
 	}
       // else cerr << "Have it.. " << endl;

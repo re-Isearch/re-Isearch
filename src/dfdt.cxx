@@ -772,6 +772,10 @@ size_t DFDT::TypeFieldExists(const FIELDTYPE& Ft, const STRING& FieldName, STRIN
       if (Ptr) *Ptr = Table[i-1].GetFieldName();
       return 1;
     }
+
+// Not a match
+cerr << "Fieldtype = " << Table[i-1].GetFieldType() << endl;
+
   return 0;
 }
 

@@ -3154,23 +3154,46 @@ bool IDB::GetFieldData(const FC& FieldFC, const STRING& FieldName, DOUBLE* Buffe
   INT4        Start=-1;
   SearchState Status;
 
+#if 1
+  if ((Status = List.Find(DfFileName, FieldFC.GetFieldStart(), ZRelLE, &Start)) == TOO_LOW)
+    return false;
+  if (Status != MATCH)
+    Status = List.Find(DfFileName, FieldFC.GetFieldStart(), ZRelGE, &Start);
+#else
   if ((Status = List.Find(DfFileName, FieldFC.GetFieldStart(), ZRelGE, &Start)) == TOO_LOW)
     {
       // This case is when the position is at the very start!
       Status = List.Find(DfFileName, FieldFC.GetFieldStart(), ZRelLE, &Start);
     }
+#endif
   if (Status == MATCH)
     {
-      List.LoadTable(Start, Start, GP_BLOCK);
+      const int count    = List.GetCount();
+      const int nrecs    = List.LoadTable(Start, Start, GP_BLOCK);
+
+#if 1
+      for (int i=0; i < nrecs; i++) {
+         if (FieldFC.Contains( List.GetGlobalStart(i+count)))
+	    {
+	      if (Buffer) *Buffer = List.GetNumericValue(i+count);
+	      return true;
+	    }
+	} // for 
+       message_log (LOG_PANIC, "Could not find %s data for '%s' in %s",
+                "numerical", FieldName.c_str(), (const char *)((STRING)FieldFC));
+    }
+#else
       GPTYPE start = List.GetGlobalStart(0);
+
       if (FieldFC.Contains(start))
 	{
 	  if (Buffer) *Buffer = List.GetNumericValue(0); 
 	  return true;
 	}
-       message_log (LOG_PANIC, "Could not find %s data for '%s' %s",
-		"numerical", FieldName.c_str(), (const char *)((STRING)FieldFC));
+       message_log (LOG_PANIC, "Could not find %s data for '%s' %ld not in %s",
+		"numerical", FieldName.c_str(), (long)start, (const char *)((STRING)FieldFC));
     }
+#endif
   return false; 
 }
 

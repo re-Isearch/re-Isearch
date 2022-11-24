@@ -36,6 +36,7 @@ static struct DataType {
   const BYTE          Type;
   const char         *Description;
 } DataTypes[] = {
+  {"any",       "", FIELDTYPE::any, "Any"},  // 2022 EXPERIMENTAL  
   {"string",    "", FIELDTYPE::text, "String (full text)"},
   {"numerical", n,  FIELDTYPE::numerical, "Numerical IEEE floating"},
   {"computed",  n,  FIELDTYPE::computed,  "Computed Numerical"},
@@ -316,15 +317,16 @@ FIELDTYPE::operator STRING () const
 
 const char * FIELDTYPE::c_str() const
 {
-  if (Type > 0 && Type <= MAX_DATATYPE)
-    return DataTypes[Type-1].Name;
+  if (Type >= 0 && Type <= MAX_DATATYPE) // was > 0 // 2022
+    return DataTypes[Type].Name; // was -1 // 2022
+
   return "";
 }
 
 const char * FIELDTYPE:: datatype() const
 {
-  if (Type > 0 && Type <= MAX_DATATYPE)
-    return DataTypes[Type-1].dtype;
+  if (Type >= 0 && Type <= MAX_DATATYPE) // was > 0 // 2022
+    return DataTypes[Type].dtype; // was -1 // 2022
   return  DataTypes[0].dtype;
 } 
 

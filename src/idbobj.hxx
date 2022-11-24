@@ -50,6 +50,8 @@ public:
   virtual size_t GetTotalRecords() const { return 0; }
   virtual size_t GetTotalDocumentsDeleted() const { return 0; }
 
+  virtual  void SetMirrorBaseDirectory(const STRING& Mirror) {;}
+
   virtual off_t   GetTotalWords() const   { return 0; }
   virtual off_t   GetTotalUniqueWords() const { return 0; }
   virtual bool GetRecordDfdt(const STRING&, PDFDT)  { return false;}

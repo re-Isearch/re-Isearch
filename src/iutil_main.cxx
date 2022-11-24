@@ -55,9 +55,10 @@ int _Iutil_main(int argc, char **argv)
       << " -thes (X)      // File (X) contains Thesaurus." << endl
       << " -import (X)    // Import database: (X) as the root name for imported db files." << endl
       << " -centroid      // Create centroid." << endl
-      << " -vi            // View summary information about the database/record." << endl
-      << " -vf            // View list of fields defined in the database." << endl
       << " -v             // View list of documents in the database." << endl
+      << " -vf            // View list of fields defined in the database." << endl
+      << " -vfe           // View list of fields and their file paths." << endl
+      << " -vi            // View summary information about the database/record." << endl
       << " -mdt           // Dump MDT (debug option)." << endl
       << " -inx           // Dump INX (debug option)." << endl
       << " -check         // Check INX for consistency (WARNING: Slow and I/O expensive!)." << endl
@@ -133,7 +134,7 @@ int _Iutil_main(int argc, char **argv)
   INT             Cleanup = 0;
   INT             View = 0;
   INT             ViewInfo = 0;
-  INT             ViewFields = 0;
+  bool            ViewFields = false;
   INT             DumpMdt = 0;
   INT             DumpInx = 0;
   INT             CheckInx = 0;
@@ -141,6 +142,7 @@ int _Iutil_main(int argc, char **argv)
   INT             mvDirs = 0;
   INT             relPaths = 0;
   INT             dirsMv = 0;
+  bool            viewFieldsExtended = false;
   STRING          ScanField;
 
   INT             Optimize = 0;
@@ -431,7 +433,10 @@ int _Iutil_main(int argc, char **argv)
 	DumpInx = 1;
 	LastUsed = x;
       } else if (Flag.Equals("-vf")) {
-	ViewFields = 1;
+	ViewFields = true;
+	LastUsed = x;
+      } else if (Flag.Equals("-vfe")) {
+	viewFieldsExtended = true;
 	LastUsed = x;
       } else if (Flag.Equals("-vi")) {
 	ViewInfo = 1;
@@ -837,7 +842,7 @@ int _Iutil_main(int argc, char **argv)
     message_log(LOG_INFO, "%d document(s) were removed.", x);
   }
 
-  if (ViewFields) {
+  if (ViewFields || viewFieldsExtended) {
     DFDT            Dfdt;
     DFD             Dfd;
     FIELDTYPE       fieldtype;
@@ -847,18 +852,26 @@ int _Iutil_main(int argc, char **argv)
     INT             y = Dfdt.GetTotalEntries();
     STRING          message;
 
-    if (y >= 1)
-      message = "The following fields are defined in this database:";
-    else
+    if (y >= 1) {
+      message << "The following " << y << " field(s) are defined in this database:";
+      if (viewFieldsExtended) message << "\n";
+    } else
       message = "No fields in this database";
+
     for (INT x = 1; x <= y; x++) {
       Dfdt.GetEntry(x, &Dfd);
       Dfd.GetFieldName(&S);
       message << " '" << S << "'";
       fieldtype = Dfd.GetFieldType();
 
-      if (!fieldtype.IsText())
-	message << "::" << fieldtype.c_str();
+      if (viewFieldsExtended) {
+	const STRING path ( pdb->ComposeDbFn(Dfd.GetFileNumber()));
+	message << "  -> " << path << "\n";
+
+	if (!fieldtype.IsText())
+          message << " '" << S << "'::" << fieldtype.c_str() << "  -> " << path << fieldtype.datatype() << "\n";
+      } else if (!fieldtype.IsText())
+        message << "::" << fieldtype.c_str();
     }
     cout << message << endl;
   }

@@ -32,7 +32,7 @@ public:
   void        AddFct(const FCLIST *Ptr)    { Fct.AddEntry(Ptr);    }
   void        AddFct(const FCT& fct)       { Fct.AddEntry(fct);    }
 
-  bool Ok() const { return ! (FieldName.IsEmpty() || Fct.IsEmpty() ) ; }
+  bool        Ok() const { return ! (FieldName.IsEmpty() || Fct.IsEmpty() ) ; }
 
   operator    STRING() const          { return FieldName; }
   operator    FCT() const             { return Fct;       }
@@ -41,7 +41,11 @@ public:
   const FCLIST* GetFcListPtr () const { return Fct; }
 
   void        Write(PFILE fp) const;
-  bool Read(PFILE fp);
+  bool        Read(PFILE fp);
+
+
+  friend ostream& operator<<(ostream& os, const DF& df);
+
 
  ~DF();
 private:

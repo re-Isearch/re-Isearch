@@ -60,7 +60,7 @@ FC::operator STRING() const
 
 ostream& operator <<(ostream& Os, const FC& Fc)
 {
-  Os << "(" << Fc.FieldStart << ',' << Fc.FieldEnd << ")";
+  Os << "(" << Fc.FieldStart << ',' << Fc.FieldEnd << ")"; // << "[" << (Fc.FieldEnd-Fc.FieldStart) << "]";
   return Os;
 }
 

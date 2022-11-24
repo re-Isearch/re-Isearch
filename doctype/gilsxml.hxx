@@ -52,6 +52,7 @@ public:
   // STRING GetOption(const STRING& Option, const STRING& defaultValue = NulString);
 
   ~XMLBASE ();
+
 private:
   char   *_get_value(char *Buffer, size_t val_len);
   BUFFER tempBuffer, readBuffer;

@@ -3637,10 +3637,12 @@ PIRSET INDEX::Search (const QUERY& Query)
 
 	      // Did we specify a relation?
               gotRelation = Attrlist.AttrGetRelation(&Relation);
-  
+//  cerr << "Did we get a relation for " << FieldName << " ? " << gotRelation << endl;
+
               // Is undefined??
               if (gotRelation && !(FieldName.IsEmpty() || FieldType.Defined()))
                 {
+//cerr << "Checking.. " << endl;
 		  const DFDT *Dfdt =  Parent->GetMainDfdt();
                   if (Term.GetChr(1) == '#') // Force (historical)
                     {
@@ -3652,13 +3654,23 @@ PIRSET INDEX::Search (const QUERY& Query)
 		      if (Dfdt->TypeFieldExists(FIELDTYPE::box, FieldName))
 			FieldType = FIELDTYPE::box;
 		    }
-		  else if (Term.IsNumberRange())
+                  else if (Term.IsDotNumber() && Dfdt->TypeFieldExists(FIELDTYPE::dotnumber, FieldName))
+                    {
+                      FieldType = FIELDTYPE::dotnumber;
+                    }
+		  else if (Term.IsNumberRange() && Dfdt->TypeFieldExists(FIELDTYPE::numericalrange, FieldName))
 		    {
-		      if (Dfdt->TypeFieldExists(FIELDTYPE::numericalrange, FieldName))
-			FieldType = FIELDTYPE::numericalrange;
+//cerr << "Is number range" <<endl;
+		      FieldType = FIELDTYPE::numericalrange;
 		    }
+                  else if (Term.IsDate() && Dfdt->DateFieldExists(FieldName))
+                    {
+//cerr << "Is date " << endl;
+                      FieldType = FIELDTYPE::date;
+                    }
 		  else if (Term.IsNumber())
 		    {
+//cerr << "IS Number " << endl;
 		      // Number could be money but money should be money...
 		      if (Dfdt->NumericFieldExists(FieldName))
 			{
@@ -3671,24 +3683,18 @@ PIRSET INDEX::Search (const QUERY& Query)
 		    }
 		  else if (Term.IsCurrency())
 		    {
+//cerr << "Is money" << endl;
+//cerr << " but " << Dfdt->DateFieldExists(FieldName) << endl;
+
 		      if (Dfdt->TypeFieldExists(FIELDTYPE::currency, FieldName))
 			FieldType = FIELDTYPE::currency;
 		    }
-		  else if (Term.IsDotNumber())
-		    {
-		      if (Dfdt->TypeFieldExists(FIELDTYPE::dotnumber, FieldName))
-			FieldType = FIELDTYPE::dotnumber;
-		    }
 		  else if (Term.IsDateRange())
 		    {
+//cerr << "Is date range" << endl;
 		      if (Dfdt->TypeFieldExists(FIELDTYPE::daterange, FieldName))
 			FieldType = FIELDTYPE::daterange;
                     }
-		  else if (Term.IsDate())
-		    {
-		      if (Dfdt->DateFieldExists(FieldName))
-			FieldType = FIELDTYPE::date;
-		    }
                   else
                     FieldType = aFieldType;
                   if ((FieldType.IsDate() | FieldType.IsDateRange()) &&
@@ -6707,7 +6713,7 @@ long INDEX::Dump (INT Skip, ostream& os, bool OnlyErrors)
 		  GetIndirectBuffer (gp, Buffer);
 #endif
 		  os << " File=\"" << mdtrec.GetFileName() << "\" Pos=\"" << pos << "\"  Content=\"" << (char *)Buffer << "\"/>";
-cerr << "ERR: x=" << x << " " << mdtrec.GetFileName() << "(" << pos << "): \"" << (char *)Buffer << "\"" << endl;
+//cerr << "ERR: x=" << x << " " << mdtrec.GetFileName() << "(" << pos << "): \"" << (char *)Buffer << "\"" << endl;
 		  errors++;
 
 		}
