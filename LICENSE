@@ -189,13 +189,15 @@
    See the License for the specific language governing permissions and
    limitations under the License.
    
-    Portions Copyright (c) 1995 CNIDR/MCNC, (c) 1992-2011 BSn/Munich; (c) 2011-2020 NONMONOTONIC Networks;
-    Copyright (c) 2020-21 Edward C. Zimmermann for the re-iSearch project.
+   Portions Copyright (c) 1995 CNIDR/MCNC, (c) 1992-2011 BSn/Munich; (c) 2011-2020 NONMONOTONIC Networks;
+   Copyright (c) 2020-21 Edward C. Zimmermann for the re-iSearch project.
 
-    This project was funded through the NGI0 Discovery Fund, a fund established by NLnet with financial
-    support from the European Commission's Next Generation Internet programme, under the aegis of DG
-    Communications Networks, Content and Technology under grant agreement No 825322. 
-
+ This project was funded through a number of generious public grants including the NGI0 Discovery
+ Fund, a fund established by NLnet with financial support from the European Commission's Next
+ Generation Internet programme, under the aegis of DG Communications Networks, Content and
+ Technology under grant agreement No 825322. Work was also supported by the NGI TETRA Project
+ under European Union's Horizon 2020 research and innovation programme under Grant Agreement
+ No 825147.
     
     
 
