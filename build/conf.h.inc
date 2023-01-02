@@ -14,10 +14,11 @@ extern "C" {
 #define SIZEOF_LONG_LONG_INT 8
 #define SIZEOF_FLOAT 4
 #define SIZEOF_DOUBLE 8
-#define SIZEOF_LONG_DOUBLE 16
+#define SIZEOF_LONG_DOUBLE 8
 
-#define HOST_PLATFORM "4.15.0-192-generic x86_64 GNU/Linux"
-# define HOST_COMPILER "gcc-10 (Ubuntu 10.3.0-1ubuntu1~18.04~1) 10.3.0"
+#define IS_LITTLE_ENDIAN 1
+#define HOST_PLATFORM "Darwin 22.1.0 arm64"
+# define HOST_COMPILER "gcc-12 (Homebrew GCC 12.2.0) 12.2.0"
 #ifdef __cplusplus
 }
 #endif

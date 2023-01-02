@@ -311,6 +311,9 @@ UCHR *MMAP::map(int fd, int permit, off_t from, off_t to,
   if (p) {
     p += offset;
 #if HAVE_MADVISE
+# ifdef __APPLE__
+#  define MADV_NOSYNC MADV_WILLNEED
+# endif
     if (flag == MapSequential)
       madvise(p, len - offset, MADV_SEQUENTIAL|MADV_NOSYNC);
     else if (flag == MapRandom)

@@ -26,5 +26,11 @@ extern \"C\" {\n\n#endif\n\n");
   fprintf(f, "#define SIZEOF_FLOAT %u\n", (unsigned int)sizeof(float));
   fprintf(f, "#define SIZEOF_DOUBLE %u\n", (unsigned int)sizeof(double));
   fprintf(f, "#define SIZEOF_LONG_DOUBLE %u\n\n", (unsigned int)sizeof(long double));
+
+   if (!*(unsigned char *)&(uint16_t){1})
+     fprintf(f, "#define IS_BIG_ENDIAN 1\n");
+   else
+     fprintf(f, "#define IS_LITTLE_ENDIAN 1\n");
+
   exit(0);
 }

@@ -157,6 +157,9 @@ static char LockType (int Lock)
 
 static int db_lock (const char *dbname, int Lock)
 {
+#ifndef L_cuserid
+# define L_cuserid 128
+#endif
   char entry[MAXPIDLEN + 5 + L_cuserid + MAXUSERNAMLEN + MAXHOSTNAMELEN];
   char whoami[L_cuserid + 2];
   char fullname[MAXUSERNAMLEN];
@@ -172,7 +175,7 @@ static int db_lock (const char *dbname, int Lock)
   /* lock file form: pid/user/host */
   if (!_IB_GetHostName (host, (int)(sizeof(host)/sizeof(char)-1)))
     strcpy(host, "localhost");
-  (void) sprintf (entry, "%*lu/%s/%s/%s/\n", MAXPIDLEN, (long)getpid (), whoami, host, fullname);
+  (void) sprintf (entry, "%*0lu/%s/%s/%s/\n", MAXPIDLEN, (unsigned long)getpid (), whoami, host, fullname);
   (void) sprintf (tfile, _PID_TEMPLATE, dbname, (long)getpid ());
   (void) sprintf (lfile, _LOCK_TEMPLATE, dbname, LockType (Lock));
 

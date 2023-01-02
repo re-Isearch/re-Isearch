@@ -353,6 +353,8 @@ STRING FindSharedLibrary(const STRING& Argv0)
 	      STRING dir ( AddTrailingSlash(RemoveFileName(info.dli_fname)));
 	      STRING exe ( dir + Argv0 );
 
+//	      message_log (LOG_DEBUG, "Looking at %s", exe.c_str());
+
 	      if (FileExists(exe))
 		return exe;
 	      if (FileExists(exe = dir + "../lib/" + Argv0))
@@ -2430,7 +2432,7 @@ char *LCdate(time_t t)
 # include <netdb.h>
 #endif
 
-#if defined(SVR4) && !defined(LINUX)
+#if defined(SVR4) && !defined(LINUX) && !defined(__APPLE__)
 #include <sys/systeminfo.h>
 #endif
 
@@ -2474,7 +2476,7 @@ int getHostname (char *buf, int len)
   else
     {
       // Get hostname
-#if defined(SVR4) && !defined(LINUX)
+#if defined(SVR4) && !defined(LINUX) && !defined(__APPLE__)
 #define gethostname(_name, _size) sysinfo (SI_HOSTNAME, _name, _size)
 #endif
       if (gethostname (name, sizeof (name) / sizeof (char) - 1) != -1)
@@ -2869,6 +2871,9 @@ bool _IB_GetPlatformName(char *buf, int maxSize)
   struct utsname name;
   if (uname(&name) == 0)
     {
+#ifndef SYS_NMLN
+#define SYS_NMLN 128
+#endif
       char tmp[SYS_NMLN*3+3];
       strcpy(tmp, name.sysname);
       strcat(tmp, " ");

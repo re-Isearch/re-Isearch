@@ -76,7 +76,7 @@ public:
   virtual STRING UnifiedName (const STRING& Tag, PSTRING Value) const;
   virtual STRING UnifiedName (const STRING& DTD, const STRING& Tag, PSTRING Value) const;
 /* SGML helper functions */
-   virtual PCHR *parse_tags (register PCHR b, const off_t len);
+   virtual PCHR *parse_tags (PCHR b, const off_t len);
    virtual const PCHR find_end_tag (const char *const *t, const char *tag, size_t *offset=NULL) const;
 
    // Parser hook

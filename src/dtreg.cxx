@@ -567,6 +567,7 @@ bool DTREG::PluginExists(const STRING& Doctype) const
 	dt_fname = AddTrailingSlash(p->Value()) + name + PluginExtensionAlt;
 #endif
     }
+   message_log (LOG_DEBUG, "%s %sfound.", dt_fname.c_str(), not_found ? "not " : "");
   return !not_found;
 }
 
@@ -859,8 +860,9 @@ PDOCTYPE        DTREG::GetDocTypePtr(const DOCTYPE_ID& DoctypeId)
 
       // Look in FindSharedLibrary(DocType +  PluginExtension);
       { STRING Fn (DocType); STRING dt_name (FindSharedLibrary(Fn.ToLower() + PluginExtension));
-        if (Fn.GetLength() && FileExists(Fn))
+        if (dt_name.GetLength() && FileExists(dt_name)) // !!!!!!
 	  {
+	    message_log (LOG_DEBUG, "Looking for symbols in %s", dt_name.c_str());
 	    dt_constr_t create = open_doctype_constr(Fn, dt_name);
 	    if (create != NULL)
 	      {
@@ -868,12 +870,14 @@ PDOCTYPE        DTREG::GetDocTypePtr(const DOCTYPE_ID& DoctypeId)
 		pluginsLoaded++;
 		return dt_obj;
 	      }
-	  }
+	  } else message_log (LOG_DEBUG, "%s does not exist", dt_name.c_str());
       }
       // Search Path...
       for (const STRLIST *p = PluginsSearchPath.Next(); p != &PluginsSearchPath; p = p->Next())
         {
 	  // Just return the first one...
+          message_log (LOG_DEBUG, "Looking for %s constructor in %s", DocType.c_str(),
+			 p->Value().c_str());
 	  dt_constr_t create = get_doctype_constr (p->Value(), DocType);
 	  if (create != NULL)
 	    {
@@ -1071,6 +1075,7 @@ dt_constr_t DTREG::open_doctype_constr(const STRING& dt_fname, const STRING& doc
 #define RTLD_GLOBAL 0
 #endif
       // In Windows this is Openlibrary( );
+      message_log (LOG_DEBUG, "dlopen(%s)", dt_fname.c_str());
       HINSTANCE handle = dlopen (dt_fname, RTLD_GLOBAL | RTLD_NOW);
       if (handle)
 	{
@@ -1085,10 +1090,12 @@ dt_constr_t DTREG::open_doctype_constr(const STRING& dt_fname, const STRING& doc
 		doctype.c_str(), dt_fname.c_str(), (0xFFF & DoctypeDefVersion));
 	      dlclose(handle);
 	    }
+	  else message_log (LOG_DEBUG, "Got a class handle for %s", doctype.c_str());
 	}
       else
 	message_log (LOG_ERROR, "Error loading plugin %s: %s", dt_fname.c_str(), dlerror());
     }
+   else message_log (LOG_DEBUG, "%s not accessible", dt_fname.c_str());
   return create;
 }
 

@@ -19,6 +19,7 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE */
 # define IS_BIG_ENDIAN 0
 #endif
 
+#define REGISTER
 ///////////////////////////////////////////////////////////////////
 // Network byte order Read/Write
 ///////////////////////////////////////////////////////////////////
@@ -42,7 +43,7 @@ extern void errno_message(const char *);
 inline UINT8 UINT8of(const void *ptr, int y = 0)
 {
 #if IS_BIG_ENDIAN
-  register UINT8 Gpp;
+  REGISTER UINT8 Gpp;
   memcpy(&Gpp, (const BYTE *)ptr+y, 8);
   return Gpp;
 #else
@@ -63,8 +64,12 @@ inline UINT8 UINT8of(const void *ptr, int y = 0)
 #  define htonll(x)    __bswap_64 (x)
 #  define ntohll(x)    __bswap_64 (x)
 # else
+# ifndef htonll
 #  define htonll(x)  ((((UINT64)htonl(x)) << 32) + htonl(x >> 32))
+# endif
+# ifndef ntohll
 #  define ntohll(x)  ((((UINT64)ntohl(x)) << 32) + ntohl(x >> 32)) 
+# endif
 # endif
 #endif
 
@@ -72,7 +77,7 @@ inline UINT8 UINT8of(const void *ptr, int y = 0)
 inline UINT2 getINT2(PFILE fp)
 {
   int      r = GETC(fp);
-  register UINT2 x = 0;
+  REGISTER  UINT2 x = 0;
   if (r != EOF)
     {
       x = (UINT2)r;
@@ -93,7 +98,7 @@ inline SHORT getSHORT(const void *buffer, size_t x)
 
 inline UINT4 getINT4 (PFILE fp)
 {
-  register UINT4 x;
+  REGISTER UINT4 x;
 #if IS_BIG_ENDIAN
   fread(&x, 4, 1, fp);
 #else
@@ -108,7 +113,7 @@ inline UINT4 getINT4 (PFILE fp)
 
 inline UINT8 getINT8 (PFILE fp)
 {
-  register UINT8 x;
+  REGISTER UINT8 x;
 #if IS_BIG_ENDIAN
   fread(&x, 8, 1, fp);
 #else
@@ -146,7 +151,7 @@ inline UINT2 putINT2 (const INT2 c, PFILE fp)
 #if IS_BIG_ENDIAN
   return fwrite((void *)&c, sizeof(INT2), 1, fp) ? c : EOF;
 #else
-  register UINT2 x;
+  REGISTER UINT2 x;
   x  = (UINT2)PUTC((int)((c >> 8) & 0xff), fp) << 8;
   x |= (UINT2)PUTC((int)(c        & 0xff), fp);
 //if (x != c) cerr << "ERROR!!!!!! " << x << " != " << c << endl;
@@ -161,7 +166,7 @@ inline UINT4 putINT4 (const INT4 c, PFILE fp)
 #if IS_BIG_ENDIAN
   return fwrite((void *)&c, sizeof(INT4), 1, fp) ? c : EOF;
 #else
-  register UINT4 x;
+  REGISTER UINT4 x;
   x  = (UINT4)PUTC((int)((c>>24) & 0xff), fp) << 24;
   x |= (UINT4)PUTC((int)((c>>16) & 0xff), fp) << 16;
   x |= (UINT4)PUTC((int)((c>> 8) & 0xff), fp) << 8;
@@ -175,7 +180,7 @@ inline UINT8 putINT8 (const INT8 c, PFILE fp)
 #if IS_BIG_ENDIAN
   return fwrite(&c, sizeof(INT8), 1, fp) ? c : EOF;
 #else
-  register UINT8 x;
+  REGISTER UINT8 x;
 
   x  = (UINT8)PUTC((INT8)((c>>56) & 0xff), fp) << 56;
   x |= (UINT8)PUTC((INT8)((c>>48) & 0xff), fp) << 48;

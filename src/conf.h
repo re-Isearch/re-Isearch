@@ -13,11 +13,15 @@ extern "C" {
 
 #include "conf.h.inc"
 
+#ifndef BSD
 #ifndef LINUX 
 # define LINUX 1
 #endif
-#define IS_LITTLE_ENDIAN 1
+#endif
+// #define IS_LITTLE_ENDIAN 1
+#ifdef LINUX
 #undef BSD 
+#endif
 
 #define HAVE_LOCALE 1
 #define UNIX 1
