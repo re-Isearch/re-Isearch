@@ -1,13 +1,11 @@
-#pragma ident  "@(#)pdfdoc.cxx  1.39 02/24/01 17:45:08 BSN"
+#pragma ident  "@(#)pdfdoc.cxx"
 
 /* ########################################################################
 
    File: pdfdoc.cxx
    Version: 1.13
    Description: Class PDFDOC - PDF documents
-   Created: Thu Dec 28 21:38:30 MET 1995
    Author: Edward C. Zimmermann, edz@nonmonotonic.net
-   Modified: Fri Dec 29 11:57:19 MET 1995
    Last maintained by: Edward C. Zimmermann
 
 
@@ -16,17 +14,6 @@
    Note: None 
 
    ########################################################################
-
-   Copyright (c) 1995 : Basis Systeme netzerk. All Rights Reserved.
-
-  This notice is intended as a precaution against inadvertent publication
-  and does not constitute an admission or acknowledgement that publication
-  has occurred or constitute a waiver of confidentiality.
-
-  This software is the proprietary and confidential property of Basis
-  Systeme netzwerk, Munich.
-
-  Basis Systeme netzwerk, Brecherspitzstr. 8, D-81541 Munich, Germany.
 
    ######################################################################## */
 
@@ -42,6 +29,12 @@
 #include "process.hxx"
 #include "doc_conf.hxx"
 #include "mmap.hxx"
+
+// Filters
+static const char *pdfinfo_Filter  = "pdfinfo";
+static const char *pdf2text_Filter = "pdf2text";
+static const char *pdf2jpeg_Filter = "pdf2jpeg.bin";
+static const char *pdf2pdf_Filter  = "pdf2pdf.bin";
 
 static const STRING SOURCE_PATH_ELEMENT ("Source");
 
@@ -300,7 +293,7 @@ PDF file probably contains only image data.", FileName.c_str(), token);
   message_log (LOG_DEBUG, "Old style Metadata extracted.. Now look for new.." );
 
   if (pdfinfo_Command.IsEmpty())
-    pdfinfo_Command = ResolveBinPath("pdfinfo");
+    pdfinfo_Command = ResolveBinPath(pdfinfo_Filter);
 
 
   char *argv[3];
@@ -356,8 +349,8 @@ PDFDOC::PDFDOC (PIDBOBJ DbParent, const STRING& Name): METADOC (DbParent, Name)
   METADOC::SetPresentStyle(true);
   METADOC::SetSepChar('=');
 
-  pdf2jpeg_Command = ResolveBinPath("pdf2jpeg.bin");
-  pdf2pdf_Command = ResolveBinPath("pdf2pdf.bin");
+  pdf2jpeg_Command = ResolveBinPath(pdf2jpeg_Filter);
+  pdf2pdf_Command = ResolveBinPath(pdf2pdf_Filter);
 }
 
 
@@ -470,7 +463,7 @@ void PDFDOC::ParseRecords(const RECORD& FileRecord)
   outfile.form ("%s/%s", s.c_str(), key.c_str());
 
   if (pdf2text_Command.IsEmpty())
-    pdf2text_Command = ResolveBinPath("pdf2text");
+    pdf2text_Command = ResolveBinPath(pdf2text_Filter);
 
   STRING catfile = outfile +".cat";
 

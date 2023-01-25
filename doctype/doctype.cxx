@@ -156,6 +156,9 @@ DOCTYPE::DOCTYPE (IDBOBJ * DbParent, const STRING& Name)
   CategoryField = Getoption(DoctypeOptions, "CategoryField");
   PriorityField = Getoption(DoctypeOptions, "PriorityField");
   WordMaximum   = Getoption(DoctypeOptions, "MaxWordLength").GetInt();
+
+  trustKey      = Getoption("trustKey", "False").GetBool();
+
   if (Db)
     {
       Charset = Db->GetLocale().Charset();
@@ -228,6 +231,7 @@ Index options (defined in <doctype>.ini):\n\
   TTLField=<Time to live in minutes:  Now+TTL = DateExpires>\n\
   LanguageField=<Field name that contains the language code>\n\
   KeyField=<Field name that contains the record key>\n\
+  trustKey=<bool>  #If we can trust the key is unique (default 0)\n\
   CategoryField=Field name that contains the category (integer).\n\
   PriorityField=Field name that contains the priority (integer).\n\
   MaxWordLength=<Number, words longer than this won't get indexed>\n\
@@ -999,6 +1003,7 @@ bool DOCTYPE::Headline(const RESULT& ResultRecord, const STRING& RecordSyntax,
 
   if (result == false)
     {
+       const size_t headline_limit = 240;
       // Default for headline..
       if (RecordSyntax.GetLength())
 	Present(ResultRecord,  BRIEF_MAGIC, RecordSyntax, StringBuffer);
@@ -1007,6 +1012,10 @@ bool DOCTYPE::Headline(const RESULT& ResultRecord, const STRING& RecordSyntax,
 
       // StringBuffer->Pack(); // 2022
       result = StringBuffer->GetLength() != 0;
+      if (StringBuffer->GetLength() > headline_limit) {
+         StringBuffer->Truncate(headline_limit);
+	 StringBuffer->Cat("...");
+      }
     }
   return result;
 }
@@ -2247,6 +2256,11 @@ void DOCTYPE::Present (const RESULT& ResultRecord, const STRING& ElementSet,
 
   StringBufferPtr-> Pack( ); // 2022
 
+//  if (!html) {
+//    if (StringBufferPtr->Replace("<![CDATA[", " ")) 
+//      StringBufferPtr->Replace("]]>", " ");
+//  }
+
 }
 
 
@@ -2635,9 +2649,10 @@ void DOCTYPE::HandleSpecialFields(RECORD* NewRecord, const STRING& FieldName, co
       STRING Key (Buffer);
       // URLs are NOT persistent so we don't use as keys
       if (!Key.SearchAny("://")) {
-        if (Db->KeyLookup (Key))
-          Db->MdtSetUniqueKey(NewRecord, Key);
-        else
+        if (Db->KeyLookup (Key)) {
+	  if (trustKey)
+	    Db->MdtSetUniqueKey(NewRecord, Key);
+	} else
           NewRecord->SetKey (Key);
       }
     }

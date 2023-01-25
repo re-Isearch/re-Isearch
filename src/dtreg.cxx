@@ -567,7 +567,7 @@ bool DTREG::PluginExists(const STRING& Doctype) const
 	dt_fname = AddTrailingSlash(p->Value()) + name + PluginExtensionAlt;
 #endif
     }
-   message_log (LOG_DEBUG, "%s %sfound.", dt_fname.c_str(), not_found ? "not " : "");
+   message_log (LOG_DEBUG, "%s %sfound.", name.c_str(), not_found ? "not " : "");
   return !not_found;
 }
 
@@ -855,6 +855,8 @@ PDOCTYPE        DTREG::GetDocTypePtr(const DOCTYPE_ID& DoctypeId)
 		  pluginsLoaded++;
 		  return dt_obj;
 		}
+	      else message_log (LOG_DEBUG, "Ini map of doctype %s to %s went notwhere", DocType.c_str(),
+		Fn.c_str());
 	    }
 	}
 
@@ -862,7 +864,7 @@ PDOCTYPE        DTREG::GetDocTypePtr(const DOCTYPE_ID& DoctypeId)
       { STRING Fn (DocType); STRING dt_name (FindSharedLibrary(Fn.ToLower() + PluginExtension));
         if (dt_name.GetLength() && FileExists(dt_name)) // !!!!!!
 	  {
-	    message_log (LOG_DEBUG, "Looking for symbols in %s", dt_name.c_str());
+	    message_log (LOG_DEBUG, "Looking for symbols in %s (%s)", dt_name.c_str(), Fn.c_str());
 	    dt_constr_t create = open_doctype_constr(Fn, dt_name);
 	    if (create != NULL)
 	      {
@@ -870,7 +872,7 @@ PDOCTYPE        DTREG::GetDocTypePtr(const DOCTYPE_ID& DoctypeId)
 		pluginsLoaded++;
 		return dt_obj;
 	      }
-	  } else message_log (LOG_DEBUG, "%s does not exist", dt_name.c_str());
+	  } // else message_log (LOG_DEBUG, "%s does not exist (%s)", dt_name.c_str(), DocType.c_str());
       }
       // Search Path...
       for (const STRLIST *p = PluginsSearchPath.Next(); p != &PluginsSearchPath; p = p->Next())

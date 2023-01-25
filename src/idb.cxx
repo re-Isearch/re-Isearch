@@ -872,7 +872,7 @@ bool IDB::FillHeadlineCache(const STRING& RecordSyntax)
 	    }
 	}
       return Total != 0;
-    }
+    } else message_log(LOG_ERROR, "No directory set for a headline cache.");
   return false;
 }
 
@@ -1146,8 +1146,9 @@ static inline off_t OnDiskFcSearch(const FC& Fc, FILE *Fp)
   off_t                p = (high+low)/2, op;
   const char           message[] = "On Disk Field Search %s@%ld Error";
 
-//cerr << "low = " << low << endl;
-//cerr << "high= " << high << endl;
+//cerr << "OnDiskFcSearch for " << Fc << endl;
+// cerr << "low = " << low << endl;
+// cerr << "high= " << high << endl;
 
   do {
     op = p;
@@ -1162,16 +1163,16 @@ static inline off_t OnDiskFcSearch(const FC& Fc, FILE *Fp)
 
     if (cmp == 0) {
       // Found something...
-//cerr << "Found something" << endl;
+// cerr << "Found something" << endl;
       return p+1;
     }
-//cerr << "cmp=" << cmp << " fc = " << Fc << "-->" << fc << endl;
+// cerr << "cmp=" << cmp << " fc = " << Fc << "-->" << fc << endl;
 
     if (cmp < 0) high = p;
     if (cmp > 0 && (low = p + 1) > high) low = high; 
   } while ( ( p = (high + low)/2) != op);
 
-//cerr << "NOT FOUND" << endl;
+// cerr << "NOT FOUND" << endl;
   return 0; // NOT FOUND
 }
 
@@ -1182,9 +1183,9 @@ static inline off_t OnDiskFcZoneSearch(const FC& HitFc, FILE *Fp)
   off_t                p = (high+low)/2, op;
   const char           message[] = "On Disk Field Zone Search %s@%ld Error";
 
-//cerr << "Search for " << HitFc << endl;
+// cerr << "Zone Search for " << HitFc << endl;
   do {
-//cerr << "p = " << endl;
+// cerr << "p = " << p << endl;
     op = p;
     if ( -1 == fseek(Fp, p*sizeof(FC), SEEK_SET)) {
       message_log (LOG_ERRNO, message, "Seek", p);
@@ -1193,16 +1194,17 @@ static inline off_t OnDiskFcZoneSearch(const FC& HitFc, FILE *Fp)
       message_log (LOG_ERRNO, message, "Read", p);
       return 0;
     } 
-//cerr << "fc = " << fc << endl;
-    if ( fc.Contains(HitFc) )
+// cerr << "fc = " << fc << endl;
+    if ( fc.Contains(HitFc) ) {
+// cerr << "got something" << endl;
       return p+1;
-    else if (fc.GetFieldStart() >= HitFc.GetFieldStart() )
+    } else if (fc.GetFieldStart() >= HitFc.GetFieldStart() )
       high = p;
     else if ((low = p + 1) > high)
       low = high;
   } while ( ( p = (high + low)/2) != op);
 
-//cerr << "Not Found" << endl;
+// cerr << "Not Found" << endl;
   return 0; // NOT FOUND
 }
 
@@ -1341,6 +1343,8 @@ FCT IDB::GetDescendentsFCT (const FC& HitFc, FILE *Fp)
     {
       FC           Fc;
       off_t        Pos = OnDiskFcSubZoneSearch(HitFc, Fp);
+
+// cerr << "GetDescendentsFCT SubZoneSearch retuned " << Pos << " for " << HitFc << endl;
       if (Pos) {
         // work backwards to find first FC 
         while (--Pos >= 0) {
@@ -1366,7 +1370,7 @@ FCT IDB::GetDescendentsFCT (const FC& HitFc, FILE *Fp)
         }
     }
 
-//cerr << "DEBUG: ***** Children of " << HitFc << "  = " << Children << "----" << endl;
+// cerr << "DEBUG: ***** Children of " << HitFc << "  = " << Children << "----" << endl;
   return Children;
 }
 
@@ -1537,9 +1541,12 @@ size_t IDB::GetDescendentsContent (const FC HitFc, const STRING& NodeName, STRLI
 
 size_t IDB::GetDescendentsContent (const FC HitFc, FILE *Fp, STRLIST *StrlistPtr)
 {
+  // cerr << "Looking for child content for " << HitFc << endl;
   FCT           Hits = GetDescendentsFCT (HitFc, Fp);
   const FCLIST *list = Hits.GetPtrFCLIST();
   size_t        count = 0;
+
+  // if (list == NULL || list->Next() == list) cerr << "Oops empty" << endl;
 
   for (const FCLIST *ptr = list->Next(); ptr != list; ptr=ptr->Next())
     {
@@ -1549,6 +1556,7 @@ size_t IDB::GetDescendentsContent (const FC HitFc, FILE *Fp, STRLIST *StrlistPtr
           count++;
           if (StrlistPtr) StrlistPtr->AddEntry(Buffer);
         }
+       else cerr << "Empty peer content" << endl;
     }
   return count;
 }
@@ -1623,6 +1631,7 @@ size_t IDB::GetAncestorContent (RESULT& Result, const STRING& nodeName, STRLIST 
       NodeName.EraseAfter(i-1);
       // cerr << "NodeName = " << NodeName << endl;
 
+// cerr << "Looking up " << ChildNodeName << endl;
       if (DfdtGetFileName (ChildNodeName, &Fn) == 0 || (Fp = fopen (Fn, "rb")) == NULL)
 	{
 	  char ch = '\\';
@@ -1639,18 +1648,18 @@ size_t IDB::GetAncestorContent (RESULT& Result, const STRING& nodeName, STRLIST 
 	    }
 	  STRING newNode;
 	  newNode << NodeName << ch << ChildNodeName;
-//cerr << "Look at Node '" << newNode << "'" << endl;
+// cerr << "Look at Node '" << newNode << "'" << endl;
 	  if (DfdtGetFileName (newNode, &Fn) != 0 && (Fp = fopen (Fn, "rb")) != NULL)
 	    ChildNodeName = newNode;
 	  if (Fp == NULL)
 	    return 0; // No such Subnodes
 	}
-//cerr << "Descedent Field = " << ChildNodeName << endl;
+// cerr << "Descedent Field = " << ChildNodeName << endl;
     }
-//cerr << "Ancestor Field  = " << NodeName << endl;
+// cerr << "Ancestor Field  = " << NodeName << endl;
 
 
-//cerr << "Offset = " << offset << endl;
+// cerr << "Offset = " << offset << endl;
 
   FC             lastFc, Fc;
   FCT            HitTable = Result.GetHitTable();
@@ -1661,8 +1670,10 @@ size_t IDB::GetAncestorContent (RESULT& Result, const STRING& nodeName, STRLIST 
 	{
 	  if (Fp)
 	    {
+// cerr << "Looking for descendents content" << endl;
 	      // Want some child of this parent
 	      count += GetDescendentsContent (Fc, Fp, StrlistPtr);
+// cerr << "Got " << count << endl;
 	    }
 	  else
 	    {
@@ -1671,7 +1682,7 @@ size_t IDB::GetAncestorContent (RESULT& Result, const STRING& nodeName, STRLIST 
 	      if (Buffer.GetLength())
 		{
 		  count++;
-//cerr << "Add ======" << endl << Buffer << endl << "======" << endl;
+cerr << "Add ======" << endl << Buffer << endl << "======" << endl;
 		  if (StrlistPtr) StrlistPtr->AddEntry(Buffer); 
 		}
 	    }
@@ -2412,21 +2423,26 @@ int IDB::BitVersion() const
 
 bool IDB::IsDbCompatible() const
 {
-//  cerr << "compatible = " << (int)compatible << endl;
-//  cerr << "MainIndex = " << (long)MainIndex << endl;
-//  cerr << "MainMdt = " << (long)MainMdt << endl;
-//  cerr << "MDT OK = " << (int)(MainMdt && MainMdt->Ok()) << endl;
-//  cerr << "INDEX OK = " << (int)(MainIndex && MainIndex->Ok()) << endl;
-  return compatible && MainIndex && MainIndex->Ok() && MainMdt && MainMdt->Ok();
+  // cerr << "compatible = " << (int)compatible << endl;
+  // cerr << "MainIndex address = " << (long)MainIndex << endl;
+  // cerr << "MainMdt address = " << (long)MainMdt << endl;
+  // cerr << "MDT OK = " << (int)(MainMdt != NULL && MainMdt->Ok()) << endl;
+  // cerr << "INDEX OK = " << (int)(MainIndex != NULL && MainIndex->Ok()) << endl;
+  const bool ok = compatible && MainIndex && MainIndex->Ok() && MainMdt && MainMdt->Ok();
+  // cerr << "IsDbCompatible = " << ok << endl;
+  return ok;
 }
 
 
 bool IDB::IsEmpty() const
 {
-  if (MainIndex && MainIndex->IsEmpty())
+  if (MainIndex && MainIndex->IsEmpty()) {
     return true;
-  if (MainMdt && MainMdt->IsEmpty())
+  }
+  if (MainMdt && MainMdt->IsEmpty()) {
+    message_log (LOG_ERROR, "MDT is empty or corrupt!");
     return true;
+  }
   return false;
 }
 

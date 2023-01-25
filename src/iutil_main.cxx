@@ -56,9 +56,10 @@ int _Iutil_main(int argc, char **argv)
       << " -import (X)    // Import database: (X) as the root name for imported db files." << endl
       << " -centroid      // Create centroid." << endl
       << " -v             // View list of documents in the database." << endl
-      << " -vf            // View list of fields defined in the database." << endl
-      << " -vfe           // View list of fields and their file paths." << endl
-      << " -vi            // View summary information about the database/record." << endl
+      << " -vl            // View list of documents with metadata (view long format)." << endl
+      << " -vf            // View list of fields defined in the database (view fields)." << endl
+      << " -vfe           // View list of fields and their file paths (view fields extended)." << endl
+      << " -vi            // View summary information about the database/record (view info)." << endl
       << " -mdt           // Dump MDT (debug option)." << endl
       << " -inx           // Dump INX (debug option)." << endl
       << " -check         // Check INX for consistency (WARNING: Slow and I/O expensive!)." << endl
@@ -134,6 +135,7 @@ int _Iutil_main(int argc, char **argv)
   INT             Cleanup = 0;
   INT             View = 0;
   INT             ViewInfo = 0;
+  bool            ViewLL = false;
   bool            ViewFields = false;
   INT             DumpMdt = 0;
   INT             DumpInx = 0;
@@ -421,6 +423,10 @@ int _Iutil_main(int argc, char **argv)
       } else if (Flag.Equals("-v")) {
 	View = 1;
 	LastUsed = x;
+
+     } else if (Flag.Equals("-vl") ||   Flag.Equals("-ll")) {
+        ViewLL = true;
+        LastUsed = x;
       } else if (Flag.Equals("-mdt")) {
         DumpMdt = 1;
         LastUsed = x;
@@ -875,7 +881,7 @@ int _Iutil_main(int argc, char **argv)
     }
     cout << message << endl;
   }
-  if (View) {
+  if (View || ViewLL) {
     RECORD          Record;
     const size_t    y = pdb->GetTotalRecords();
     DOCTYPE_ID      id;
@@ -900,6 +906,22 @@ int _Iutil_main(int argc, char **argv)
 	  cout << Record.GetFullFileName();
 	  if (pdb->GetDocumentDeleted(x)) cout << " *";
 	  cout << endl;
+
+	  if (ViewLL) {
+	    SRCH_DATE date;
+	    RESULT Result;
+
+	    if (pdb->KeyLookup(Record.GetKey(), &Result))
+	      cout << "   Headline: " << pdb->Headline(Result) << endl;
+            if ((date = Record.GetDate()).Ok())
+              cout << "   Date: " << date.RFCdate() << endl;
+            if ((date = Record.GetDateCreated()).Ok())
+              cout << "   Created: " << date.RFCdate() << endl;
+            if ((date = Record.GetDateModified()).Ok())
+              cout << "   Modified: " << date.RFCdate() << endl;
+            if ((date = Record.GetDateExpires()).Ok())
+              cout << "   Expires: " << date.RFCdate() << endl;
+	  }
 	}
     }
   }

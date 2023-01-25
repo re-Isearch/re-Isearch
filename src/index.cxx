@@ -1491,7 +1491,7 @@ void INDEX::SetMergeStatus(t_merge_status a)
 }
 
 bool INDEX::IsEmpty() const
-  {
+{
     // Like GetTotalWords() below but we just need 1 word
     STRING s;
     const INT count = GetIndexNum();
@@ -1506,9 +1506,10 @@ bool INDEX::IsEmpty() const
           s = IndexFileName;
         if (GetFileSize(s) >= (off_t)sizeof(GPTYPE))
           return false;
+        if (!FileExists(s)) message_log (LOG_ERRNO, "Can't access %s", s.c_str());
       }
     return true;
-  }
+}
 
 off_t INDEX::GetTotalWords() const
   {

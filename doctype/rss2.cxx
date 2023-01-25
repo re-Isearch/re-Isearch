@@ -250,7 +250,7 @@ bool RSSCORE::URL(const RESULT& ResultRecord, PSTRING StringBuffer,
     {
       url.XMLCommentStrip();
 //cerr << "XXXXXX " << linkField << "  URL=\"" << url << "\"" << endl;
-      // **start Added Fed 2010 edz to support link as base 
+      // **start Added edz to support link as base 
       if (url.Search(":/") == 0)
 	{
 	  STRING base;

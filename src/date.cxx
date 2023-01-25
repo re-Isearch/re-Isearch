@@ -1005,6 +1005,7 @@ bool SRCH_DATE::date_parse (const char *str)
       tm.tm_sec = tm_sec;
       got_zone = 1;
     }
+
   /* N mth CCYY HH:MM ampm zone */
   else if (((sscanf (cp, "%d %[a-zA-Z] %[0-9] %d:%d %[apmAPM] %[^: ]",
 		   &tm_mday, str_mon, str_year, &tm_hour, &tm_min, str_ampm,
@@ -1174,6 +1175,7 @@ bool SRCH_DATE::date_parse (const char *str)
       got_zone = 1;
     }
 #if 1
+// "Wed, Dec 27 2000 10:15:55 GMT-0500"  
  /* wdy, mth N, CCYY HH:MM:SS ampm zone */
 // Tuesday, September 29, 1998 8:38:38 PM
   else if ((sscanf (cp, "%[a-zA-Z], %[a-zA-Z] %d, %[0-9] %d:%d:%d %[apmAPM] %[^: ]",
@@ -1191,6 +1193,36 @@ bool SRCH_DATE::date_parse (const char *str)
       tm.tm_mon = tm_mon;
       tm.tm_year = tm_year;
       tm.tm_hour = ampm_fix (tm_hour, ampm);
+      tm.tm_min = tm_min;
+      tm.tm_sec = tm_sec;
+#if DEBUG
+    cerr << "Time = " << tm.tm_hour << ":" << tm.tm_min << ":" << tm.tm_sec << endl;
+#endif
+      got_zone = scan_gmtoff (str_gmtoff, &gmtoff);
+#if DEBUG
+cerr << "GM offset = " << gmtoff << endl;
+#endif
+    }
+#endif
+
+#if 1
+// "Wed, Dec 27 2000 10:15:55 GMT-0500"
+ /* wdy, mth N CCYY HH:MM:SS zone */
+// Tuesday, September 29, 1998 8:38:38 PM
+  else if ((sscanf (cp, "%[a-zA-Z], %[a-zA-Z] %d %[0-9] %d:%d:%d  %[^: ]",
+                   str_wday, str_mon, &tm_mday, str_year, &tm_hour, &tm_min,
+                     &tm_sec, str_gmtoff) >=7 &&
+           (tm_mday > 0 && tm_mday < 32)) &&
+           scan_wday (str_wday, &tm_wday) &&
+           scan_year (str_year, &tm_year) &&
+           scan_mon (str_mon, &tm_mon) )
+    {
+      DP ("wdy, mth N CCYY HH:MM:SS zone");
+      tm.tm_wday = tm_wday;
+      tm.tm_mday = tm_mday;
+      tm.tm_mon = tm_mon;
+      tm.tm_year = tm_year;
+      tm.tm_hour = tm_hour;
       tm.tm_min = tm_min;
       tm.tm_sec = tm_sec;
 #if DEBUG
@@ -1335,6 +1367,26 @@ cerr << "GM offset = " << gmtoff << endl;
       got_zone = 0;
       tm.tm_year = tm_year;
     }
+
+ /* wdy, mth N HH:MM:SS CCYY */ /* edz ADDED */
+  else if ((sscanf (cp, "%[a-zA-Z], %[a-zA-Z] %d %d:%d:%d %[0-9]",
+                     str_wday, str_mon, &tm_mday, &tm_hour, &tm_min,
+                     &tm_sec, str_year) == 7) &&
+           scan_wday (str_wday, &tm_wday) &&
+           scan_year (str_year, &tm_year) &&
+           scan_mon (str_mon, &tm_mon) )
+    {
+      DP ("wdy, mth N HH:MM:SS CCYY");
+      tm.tm_wday = tm_wday;
+      tm.tm_mon = tm_mon;
+      tm.tm_mday = tm_mday;
+      tm.tm_hour = tm_hour;
+      tm.tm_min = tm_min;
+      tm.tm_sec = tm_sec;
+      got_zone = 0;
+      tm.tm_year = tm_year;
+    }
+
 
   /* wdy mth N HH:MM CCYY */ /* edz ADDED */
   else if ((sscanf (cp, "%[a-zA-Z] %[a-zA-Z] %d %d:%d %[0-9]",
@@ -4084,6 +4136,12 @@ MessageLogger _globalMessageLogger;
 
 int main(int argc, char **argv)
 {
+
+ if (argc = 2) {
+     SRCH_DATE Date (argv[1]);
+     cerr << " --> " << Date << endl;
+ }
+
 
   if (argc < 3) {
     cerr << "Usage: date1 date2" << endl;

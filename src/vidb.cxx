@@ -768,6 +768,7 @@ bool VIDB::IsDbCompatible () const
     {
       if (c_dblist[i]->IsDbCompatible () == false)
 	{
+
 	  return false;
 	}
     }

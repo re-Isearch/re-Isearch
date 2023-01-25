@@ -398,8 +398,10 @@ int _Iindex_main (int argc, char **argv)
 #if EVALULATION
       if (timeout > 0) std::cout << " Try-and-Buy.";
 #endif
-      std::cout << endl << __CopyrightData  << endl << endl;
+      std::cout << endl;
+      // std::cout  << __CopyrightData  << endl << endl;
       Usage();
+      return 0;
     }
 
   STRLIST DocTypeOptions;
@@ -607,6 +609,21 @@ int _Iindex_main (int argc, char **argv)
 	      //extern const char * const __CopyrightData;
 	      std::cout << "Copyright Statement:\n--------------------\n" << __CopyrightData << endl << endl << endl;
 	    }
+         else if (Flag.Equals("-license"))
+            {
+              LastUsed = x;
+	      std::cout << "\
+License Statement:\n--------------------\n" << __CopyrightData << endl << endl << "\
+Licensed under the Apache License, Version 2.0 (the \"License\")\n\
+you may not use this file except in compliance with the License.\n\
+You may obtain a copy of the License at\n\n\
+\thttp://www.apache.org/licenses/LICENSE-2.0 \n\n\
+Unless required by applicable law or agreed to in writing, software\n\
+distributed under the License is distributed on an \"AS IS\" BASIS,\n\
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n\
+See the License for the specific language governing permissions and\n\
+limitations under the License.  " << endl;
+            }
 	  else if (Flag.Equals ("-s") || Flag.Equals("-sep") || Flag.Equals("-xsep"))
 	    {
 	      if (++x >= argc)
@@ -1247,12 +1264,7 @@ Using '%s' as default.", browser);
 //    return 0;
     }
 
-  if (DocumentType.IsEmpty())
-    {
-      DocumentType = "AUTODETECT";
-      message_log(LOG_INFO, "No doctype specified, using Auto-detection (%s).", DocumentType.c_str());
-    }
-  else
+  if (!DocumentType.IsEmpty())
     {
       STRINGINDEX pos = DocumentType.Search('=');
       if (pos)
@@ -1297,7 +1309,15 @@ Using '%s' as default.", browser);
       message_log(LOG_PANIC, "%s open failed", DBName.c_str());
       exit(-1);
     }
-  else if (!pdb->ValidateDocType(DocumentType))
+ 
+  if (DocumentType.IsEmpty())
+    {
+      // If AUTOREMOTE: is available use it!
+      DocumentType = pdb->DoctypePluginExists("AUTOREMOTE") ? "AUTOREMOTE:" : "AUTODETECT";
+      message_log(LOG_INFO, "No doctype specified, using Auto-detection (%s).", DocumentType.c_str());
+    }
+
+  if (!pdb->ValidateDocType(DocumentType))
     {
       DTREG dtreg (0);
       message_log (LOG_ERROR, "Document type %s is not available (v%.2f).",
@@ -1786,6 +1806,7 @@ static void Usage()
   << " -license           // Display expiration date" << endl
 #endif
   << " -copyright         // Print the copyright statement." << endl
+  << " -license           // Print the license statement." << endl
   << " -version           // Print Indexer version." << endl
   << " -api               // Print API Shared libs version." << endl
   << " -capacities        // Print capacities." << endl

@@ -18,7 +18,7 @@ LIBBDB=-ldb
 ## This must be where NEWER versions of the OpenSSL libs were installed.
 ## It is ONLY used by the autoremote plugin and that depends upon a later
 ## version of 1.1.1 or newer-- which may not be pre-installed.
-OPENSSL_LIBS_LOCATION=/usr/local/lib64
+OPENSSL_LIBS_LOCATION= /opt/homebrew/Cellar/openssl@3/3.0.7
 
 #
 # Install Directory
@@ -179,7 +179,7 @@ SHARED = -shared $(PIC) $(DEBUG)
 
 
 ############### End Differences ######################################
-# DEBUG=-g 
+DEBUG=-g 
 LDFLAGS +=  $(DEBUG) $(PROF) -m64 
 #
 # EXTRA= -lnsl -ldl -lm -lmagic $(LIBBDB)
@@ -510,7 +510,8 @@ all: $(MALLOC_OBJ) \
 	$(BIN_DIR)/Iutil$(LIBX)$(COMPILER) \
 	$(BIN_DIR)/Idelete$(LIBX)$(COMPILER) \
 	$(BIN_DIR)/Iwatch \
-	$(BIN_DIR)/zpresent
+	$(BIN_DIR)/zpresent \
+	$(BIN_DIR)/zipper
 
 
 dirs: ~/.ib/lib/plugins
@@ -553,6 +554,8 @@ $(BIN_DIR)/.wrapper: $(SRC_DIR)/wrapper.c
 $(BIN_DIR)/Iwatch: $(SRC_DIR)/Iwatch.c
 	$(cc) -o $@ $(SRC_DIR)/Iwatch.c
 
+$(BIN_DIR)/zipper: $(SRC_DIR)/zipper.cxx
+	$(CC) -o $@ $(SRC_DIR)/zipper.cxx
 
 $(BIN_DIR)/zpresent: $(SRC_DIR)/zpresent.cxx
 	$(CC) $(INC) $(LDFLAGS) -o $@ $(SRC_DIR)/zpresent.cxx $(LDLIBS) $(EXTRA)
@@ -660,7 +663,7 @@ PLUGINOPT=
 
 
 ../doctype/autoremote.sob: ../doctype/autoremote.cxx ../doctype/doctype.hxx ../src/idb.hxx
-	$(CC) $(SHARED) $(CCFLAGS) $(INC) -o $@ $(PLUGINOPT) ../doctype/autoremote.cxx $(LDLIBS) -L $(OPENSSL_LIBS_LOCATION) -lssl -lcrypto
+	$(CC) $(SHARED) $(CCFLAGS) $(INC) -I$(OPENSSL_LIBS_LOCATION)/include -o $@ $(PLUGINOPT) ../doctype/autoremote.cxx $(LDLIBS) -L $(OPENSSL_LIBS_LOCATION)/lib -lssl -lcrypto
 	-cp $@ ~/.ib/plugins
 	-cp $@ /opt/nonmonotonic/ib/lib/plugins
 
@@ -705,6 +708,7 @@ install:
 	cp $(BIN_DIR)/Idelete $(INSTALL)/.
 	cp $(BIN_DIR)/zpresent  $(INSTALL)/.
 	cp $(BIN_DIR)/Iwatch $(INSTALL)/.
+	cp $(BIN_DIR)/zipper $(INSTALL)/.	
 	@echo "*** Copying Isearch shared libs to $(INSTALL_LIBS)/. ***"
 	-mkdir $(INSTALL_LIBS)
 	cp $(LIB_DIR)/$(CO_LIB).$(VERSION)  $(INSTALL_LIBS)/.

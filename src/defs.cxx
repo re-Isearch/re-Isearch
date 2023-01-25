@@ -2,7 +2,7 @@
 Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
 It is made available and licensed under the Apache 2.0 license: see LICENSE
 */
-#pragma ident  "@(#)defs.cxx  8.7 08/04/01 02:46:10 BSN"
+#pragma ident  "@(#)defs.cxx"
 #define  _GLOBAL_MESSAGE_LOGGER_INTERNALS 1
 /************************************************************************
 ************************************************************************/
@@ -114,7 +114,7 @@ const STRING __IB_DefaultDbName ("IB");
 const STRING __IB_DefaultDbName (".IB");
 #endif
 
-const char *__IB_Version = "4.10d";
+const char *__IB_Version = "4.10f";
 
 // Special Elements
 const STRING BRIEF_MAGIC    (ELEMENT_Brief); /* CNIDR "hardwires" this */

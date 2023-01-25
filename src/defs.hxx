@@ -68,7 +68,7 @@ extern void DualPivotQsort( void *, size_t, size_t, int (*)(const void *, const 
 
 extern void (*_IB_Qsort)(void *, size_t, size_t, int (*)(const void *, const void *));
 
-#ifndef _WIN32
+#if !defined(_WIN32) // && !defined(__APPLE__)
 #define USE_pThreadLocker 1
 #endif
 

@@ -545,7 +545,8 @@ ________________________________________________________________________", 72, 0
 		  IsDigest = false;
 		  Record.SetDocumentType (Digests[i].doctype);
 		  DigestKnown = true;
-		  message_log (LOG_INFO, "Identified %s (Digest)", Digests[i].doctype);
+		  message_log (LOG_INFO, "Identified %s (Digest)",
+			 Digests[i].doctype);
 		  LookFor = Header;
 		  break;
 		}

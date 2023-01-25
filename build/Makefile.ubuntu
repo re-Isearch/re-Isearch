@@ -497,6 +497,7 @@ all: $(MALLOC_OBJ) \
 	$(BIN_DIR)/Iutil$(LIBX)$(COMPILER) \
 	$(BIN_DIR)/Idelete$(LIBX)$(COMPILER) \
 	$(BIN_DIR)/Iwatch \
+	$(BIN_DIR)/zipper \
 	$(BIN_DIR)/zpresent
 
 
@@ -539,6 +540,10 @@ $(BIN_DIR)/.wrapper: $(SRC_DIR)/wrapper.c
 
 $(BIN_DIR)/Iwatch: $(SRC_DIR)/Iwatch.c
 	$(cc) -s -o $@ $(SRC_DIR)/Iwatch.c
+
+
+$(BIN_DIR)/zipper: $(SRC_DIR)/zipper.cxx
+	$(CC) -o $@ $(SRC_DIR)/zipper.cxx
 
 
 $(BIN_DIR)/zpresent: $(SRC_DIR)/zpresent.cxx
@@ -690,6 +695,7 @@ install:
 	cp $(BIN_DIR)/Idelete $(INSTALL)/.
 	cp $(BIN_DIR)/zpresent  $(INSTALL)/.
 	cp $(BIN_DIR)/Iwatch $(INSTALL)/.
+	cp $(BIN_DIR)/zipper $(INSTALL)/.
 	@echo "*** Copying Isearch shared libs to $(INSTALL_LIBS)/. ***"
 	-mkdir $(INSTALL_LIBS)
 	cp $(LIB_DIR)/$(CO_LIB).$(VERSION)  $(INSTALL_LIBS)/.

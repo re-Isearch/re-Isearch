@@ -66,6 +66,8 @@ void LISTDIGEST::ParseRecords (const RECORD& FileRecord)
       return;			// File not accessed
     }
 
+  message_log (LOG_DEBUG, "%s:ParseRecords(%s)", Doctype.c_str(), Fn.c_str());
+
   if (Start)
     {
       if (-1 == fseek (Fp, Start, SEEK_SET))

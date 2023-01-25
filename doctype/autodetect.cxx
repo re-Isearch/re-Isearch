@@ -1653,7 +1653,8 @@ done:
     { 
       if (Db && Db->ValidateDocType(Id))
 	{
-	  message_log (LOG_DEBUG, "Handling as %s", doctype.c_str());
+	  message_log (LOG_DEBUG, "%s Handling as %s", Doctype.c_str(),
+		 doctype.c_str());
 	  Record.SetDocumentType (Id);
 	  Db->ParseRecords (Record);
 	}

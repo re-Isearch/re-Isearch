@@ -107,9 +107,16 @@ MessageLogger::MessageLogger()
       abort();
     }
 
-#ifdef SOLARIS
+//#ifdef SOLARIS
+#ifdef USE_pThreadLocker
   // Threading
+#ifdef HAVE_SYSLOG
+  if (pthread_mutex_init(&m_mutex, NULL) != 0) {
+    error_message("Mutex init failed");
+   }
+#else
   pthread_mutex_init(&m_mutex, NULL);
+#endif
 #endif
 }
 
@@ -118,7 +125,8 @@ MessageLogger::~MessageLogger()
 {
   if (l_file != NULL && l_file != stderr && l_file != stdout && l_file != syslog_stream)
     fclose(l_file);
-#ifdef SOLARIS
+//#ifdef SOLARIS
+#ifdef USE_pThreadLocker
   pthread_mutex_destroy(&m_mutex);
 #endif
   if (last_message) free(last_message);
@@ -397,6 +405,7 @@ void MessageLogger::log (int Mask, const char *fmt,...)
   int          p_error = 0;
   va_list      ap;
 
+
   if (l_level == 0)
     return; // Total quietness
 
@@ -496,6 +505,7 @@ void MessageLogger::log (int Mask, const char *fmt,...)
 	{
 	  char tmp[BUFSIZ];
 	  sprintf(tmp, "**** last message repeated %ld times", count);
+
 	  OutputFunc(Mask, tmp);
 	}
       else if (l_file == syslog_stream)
@@ -508,13 +518,16 @@ void MessageLogger::log (int Mask, const char *fmt,...)
 	{
 #ifdef USE_pThreadLocker
 	  pThreadLocker lock(&m_mutex);
+
 #endif
+
 	  if (login == NULL)
 	    login = getlogin();
 	  fprintf(l_file, "%s [%s,pid=%ld]: **** last message repeated %ld times\n",
-		l_prefix, login, (long)getpid(), (long)count);
+		l_prefix, login ? login : "???", (long)getpid(), (long)count);
 	}
     }
+
   count = 0;
   strcpy(last_message, curr_message);
 

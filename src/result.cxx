@@ -63,6 +63,7 @@ RESULT::RESULT(const MDTREC& mdtrec)
 #endif
 }
 
+
 RESULT::RESULT(const RESULT& OtherResult)
 {
 #ifdef DEBUG_MEMORY
@@ -245,6 +246,7 @@ bool RESULT::PresentBestContextHit(STRING *StringBuffer, STRING *Term,
   return PresentHit(GetBestContextHit(), StringBuffer, Term, BeforeTerm, AfterTerm, DoctypePtr, TagPtr);
 }
 
+// 1 is the first entry
 bool RESULT::PresentNthHit(size_t N, STRING *StringBuffer, STRING *Term,
         const STRING& BeforeTerm, const STRING& AfterTerm, DOCTYPE *DoctypePtr, STRING *TagPtr) const
 {
@@ -497,7 +499,7 @@ StringBuffer->form("ERROR (%ld,%ld) not inside Record (%ld,%ld)",  start, end, R
       if (StringBuffer)
 	{
 	  STRING Context;
-	  register unsigned char *tcp = ptr;
+	  unsigned char *tcp = ptr;
 
 	  if (localStart && skipToFirstWord)
 	    {

@@ -494,7 +494,7 @@ bool STRING::AllocBeforeWrite(size_t nLen)
   wxASSERT( nLen != 0 );  // doesn't make any sense
 
   // must not share string and must have enough space
-  register STRINGData* pData = GetStringData();  
+  /*register*/ STRINGData* pData = GetStringData();  
   if ( pData->IsShared() || pData->IsConstant() || (nLen >= pData->nAllocLength) ) {
     // can't work with old buffer, get new one
     pData->Unlock();
@@ -678,7 +678,7 @@ STRINGINDEX STRING::CatFile (PFILE fp)
 	    {
 	      size_t addlength = (size_t)sb.st_size;
 	      size_t nLen = addlength + length+1; 
-	      register STRINGData* pData = GetStringData();
+	      /* register */ STRINGData* pData = GetStringData();
 	      if ( pData->IsShared() || pData->IsConstant() || (nLen >= pData->nAllocLength) )
 		{
 		  AllocBuffer(nLen);
@@ -2539,6 +2539,11 @@ STRING& STRING::XMLCommentStrip()
     len--;
    GetStringData()->nDataLength = len;
    m_pchData[len] = '\0';
+
+#if 0
+  // Maybe replace  <![CDATA[ and ]]> with space
+  if (Replace("<![CDATA[", " ")) Replace("]]>", " ");
+#endif
   return *this;
 }
 

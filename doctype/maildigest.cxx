@@ -78,7 +78,7 @@ void MAILDIGEST::ParseRecords (const RECORD& FileRecord)
       if (-1 == fseek (Fp, RecordStart, SEEK_SET))
 	{
 	  Db->ffclose(Fp);
-	  message_log (LOG_ERRNO, Doctype + ": Bad record boundary");
+	  message_log (LOG_ERRNO, "%s: Bad record boundary", Doctype.c_str());
 	  return; // Bad start
 	}
       SavePosition = Position = RecordStart;
@@ -215,6 +215,7 @@ void MAILDIGEST::ParseRecords (const RECORD& FileRecord)
       static const DOCTYPE_ID newDoctype ("MAILFOLDER");
       Record.SetRecordStart (Start);
       Record.SetRecordEnd (End);
+
       if (End > 0)
 	message_log (LOG_INFO, "Setting \"%s\" record %ld-%ld to %s.", Fn.c_str(), Start, End, newDoctype.c_str());
       else

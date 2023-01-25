@@ -230,6 +230,7 @@ private:
   HASH        Defaults;
   HASH        Unified;
   const STRLIST *DoctypeOptions;
+  bool        trustKey;
 };
 
 typedef DOCTYPE* PDOCTYPE;

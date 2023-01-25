@@ -1595,6 +1595,7 @@ PCHR *SGMLNORM::parse_tags (register PCHR b, const off_t len)
 #if 1 /* EXODUS 3.0 Additions 2022 */
 	      // Handle <![DATA[ ..... ]]>
       	      if (b[i+1] == '[' && strncmp(b+i+2, "CDATA[", 6) == 0) {
+
         	// Need to ignore <![CDATA[  .... ]]>
 		size_t pos = i + 7; // Get past the CDATA[ open
 		while (++pos < len) {
@@ -1602,13 +1603,13 @@ PCHR *SGMLNORM::parse_tags (register PCHR b, const off_t len)
 		    // See an end of the CDATA so...
 		    // message_log (LOG_DEBUG, "Witnessed a CDATA[ section .. ]]> %d - %d", i, pos + 3); 
 		    i = pos + 2;
-//cerr << "XXXXXX Looking at " << b[i] << endl;
-
+		    // cerr << "XXXXXX Looking at " << b[i] << endl;
 		    break;
 		  }
 		}
 		if (i >= len) break;
 		if (pos >= len) message_log (LOG_INFO, "Runaway CDATA[ encountered (%d)",  i);
+		continue; 
 	      }
 #endif
 

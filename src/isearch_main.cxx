@@ -257,6 +257,7 @@ static void HelpUsage(const char *progname)
   cout << prog << " -d db [options] term..." << endl <<
 	"options:" << endl << 
         "  -d (X)           // Search database with root name (X)." << endl <<
+	"  -fuel nn         // Space fuel where nn in %." << endl <<
 	"  -cd (X)          // Change working directory to (X)." << endl <<
 	"  -id (X)          // Request document(s) with docid (X)." << endl <<
 	"  -D (X)           // Load Result Set from file (X)." << endl <<
@@ -343,6 +344,7 @@ static void HelpUsage(const char *progname)
 	"  -bench           // Show rusage" << endl <<
 	"  -pager (EXE)     // Use program EXE to page results (e.g. more)." << endl <<
         "  -more            // Same as -pager /bin/more" << endl <<
+	"  -copyright       // Display the copyright statement" << endl <<
 	"  (...)            // Terms (X), (Y), .. or a query sentence." << endl <<
 	"                   // If -rpn was specified then the sentence is expected to be in RPN." << endl <<
         "                   // If -infix then the conventional in-fix notation is expected." << endl << 
@@ -463,7 +465,7 @@ int _Isearch_main (int argc, char **argv)
     {
       cout << endl << "IB Search v." <<  _isearch_main_version << "." << SRCH_DATE(__DATE__).ISOdate() << "."
 	      <<  __IB_Version << " (" << __HostPlatform << ")" << endl
-        << __CopyrightData  << endl << endl;
+      ; //  << __CopyrightData  << endl << endl;
       HelpUsage(  RemovePath(argv[0]).c_str() );
       return 0;
     }
@@ -514,6 +516,7 @@ int _Isearch_main (int argc, char **argv)
   INT ExpandSynonyms = 0;
   INT PresentHtml = 0;
   INT MaxHits = 300;
+  INT Fuel = 0;
   INT ShowHits = 0;
   INT ShowAux = 0;
   INT ShowHeadline = 0;
@@ -604,6 +607,16 @@ int _Isearch_main (int argc, char **argv)
                   return 0;
                 }
 	      LastUsed = x;
+	   }
+	  else if (Flag.Equals ("-fuel"))
+	   {
+	     if (++x >= argc)
+                {
+                  message_log (LOG_FATAL, "Usage: space fuel specified after %s.", Flag.c_str());
+                  return 0;
+                }
+              Fuel = atoi(argv[x]);
+              LastUsed = x;
 	   }
 	  else if (Flag.Equals ("-id"))
 	   {
@@ -1118,10 +1131,15 @@ int _Isearch_main (int argc, char **argv)
               Pager = argv[x];
               LastUsed = x;
             }
+	  else if (Flag.Equals ("-copyright"))
+	    {
+	      std::cout << __CopyrightData  << endl << endl;
+	      LastUsed =x;
+	    }
 	  else if (Flag.Equals ("-bench"))
 	    {
-	      ShowRusage = 1;
-	      LastUsed =x;
+              ShowRusage = 1;
+              LastUsed =x;
 	    }
 	  else if (Flag.Equals ("-debug"))
 	    {
@@ -1216,6 +1234,9 @@ int _Isearch_main (int argc, char **argv)
       return -1;
     }
 
+  
+  if (Fuel)
+    pdb->SetDbSearchFuel (Fuel) ;
 
   if (ShowXML)
     {
@@ -1251,7 +1272,7 @@ int _Isearch_main (int argc, char **argv)
     {
       if (ShowXML)
         cout << "<ERROR>";
-      cout << "The specified database is not compatible with this version. ";
+      cout << "The specified database \"" << DBName << "\" is not compatible with this version (or undefined). ";
       if (pdb->GetIDBCount() == 1)
 	{
 	  switch (pdb->GetIDB(1)->GetErrorCode()) {
@@ -1863,7 +1884,7 @@ again:
 
 
 	    if (ShowXML) cout << "<!-- ";
-	    for (size_t i = 0; !lists[i].IsEmpty(); i++)
+	    if (lists) for (size_t i = 0; !lists[i].IsEmpty(); i++)
 	    {
 	       cout << "\t[" << i+1 << "] " << lists[i] << endl;
 	    }

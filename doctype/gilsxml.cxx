@@ -757,6 +757,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 	      (*tags_ptr)[tag_len - 1] = 0; // edz 2021 addition
               store_attributes (pdft, RecBuffer, *tags_ptr, false, &Key, &Datum);
             }
+cerr << "NO CONTENT" << endl;
           continue; // No content
         }
 
@@ -764,9 +765,8 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
       const CHR *p = find_end_tag (tags_ptr, *tags_ptr, &offset);
       int have_attribute_val = (NULL != strchr (*tags_ptr, '='));
 
-//cerr << "@@@@ Start tag =" << *tags_ptr << " end=" << p << " length=" << p-*tags_ptr << endl;
+cerr << "@@@@ Start tag =" << *tags_ptr << " end=" << p << " length=" << p-*tags_ptr << endl;
 
-      // Added 2006
       if (p == NULL && have_attribute_val == 0)
 	continue;
 
@@ -937,6 +937,7 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 		  HandleSpecialFields(NewRecord, FieldName, entry_id);
                 }
 	    }
+else cerr << "EMPTY FIELD" << endl;
 	}
       if (have_attribute_val)
 	{
