@@ -1108,6 +1108,7 @@ static bool _valid_URL_method(const char *base, size_t len, bool *d)
     size_t      len;
     bool dslash;
   } methods[] = {
+    {"efs",     3, true}, // ExoDAO File System
     {"ftp",     3, true},
     {"urn",     3, true},
     {"btfs",    4, true},

@@ -1480,6 +1480,7 @@ Using '%s' as default.", browser);
 
   if (!pdb->Index ())
     {
+      if (pdb->GetErrorCode())
       message_log (LOG_NOTICE, "Indexing error encountered: %s", pdb->ErrorMessage());
     }
   clock_t final_time      = clock();

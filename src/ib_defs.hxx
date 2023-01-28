@@ -506,7 +506,11 @@ enum ZComplete {
 
 
 // Configuration
-const size_t DocumentKeySize = 36; // Might need to bump up to 64 for IPFS
+  // We need to be long enough to support 58-bit encoding of 32-byte hashes
+  // 32 * log(256) / log(58) + 1  -> (1.38 * 32 = 44
+  // -> 48
+const size_t DocumentKeySize = 48; // 36; // Bumped up for base58 keys
+
 const size_t DocumentTypeSize = 16-1;
 
 #if  !USE_MDTHASHTABLE

@@ -1243,6 +1243,7 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
 		{
 		  doctype = typ;
 		}
+
               if (doctype.SearchAny("OpenDocument"))
 		{
 		  message_log (LOG_DEBUG, "Recognized %s as ODF", s.c_str());
@@ -1272,12 +1273,12 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
 		}
 	      if (doctype.SearchAny("tiff"))
 		doctype = "TIFF";
-	      else if (doctype.SearchAny("text") && (
-		doctype.SearchAny("ascii") || doctype.SearchAny("english") ))
+	      else if (doctype.SearchAny("text") 
+		&& ( doctype.SearchAny("ascii") || doctype.SearchAny("english") ||
+		doctype.Search("UTF-8" ) || doctype.Search("8859") ) )
 		{
 		  doctype = "PLAINTEXT";
-		  message_log(LOG_INFO, "Identified %s as %s, using %s",
-                        (const char *)s, typ, (const char *)doctype );
+		  message_log(LOG_INFO, "Identified %s as %s, using %s", (const char *)s, typ, (const char *)doctype );
 		}
 	    }
 
@@ -1321,7 +1322,8 @@ message_log (LOG_DEBUG, "AFTER INDEXING");
 		  if (doctype.SearchAny("tiff")) 
 		     doctype = "TIFF";
 		  else if (doctype.Compare("English ", 8) == 0 ||
-		       doctype.SearchAny("ascii text") || doctype.SearchAny("ISO-8859 text")) 
+		       // doctype.SearchAny("ascii text") || doctype.SearchAny("ISO-8859 text") ||
+			doctyoe.Search("text")) 
 		    {
 		      doctype = "PLAINTEXT";
 		      message_log(LOG_INFO, "%s identified '%s', using %s",
@@ -1503,7 +1505,7 @@ message_log (LOG_DEBUG, "AFTER INDEXING");
           // Kludge
 	  if (doctype.Search("JPEG")) {
 	     doctype = "EXIF:"; // need to check beforehand that the plugin is available
-cerr << "USE EXIF: " << endl;
+	     // cerr << "USE EXIF: " << endl;
 	     goto done;
 	  } 
 #endif
@@ -1635,7 +1637,7 @@ D \010O \010N \010' \010T  \010E \010D \010I \010T\
 	}
       else
 	{
-	  message_log(LOG_INFO, "Identified %s as %s", s.c_str(), doctype.c_str() );
+	  message_log(LOG_INFO, "Processing %s as %s", s.c_str(), doctype.c_str() );
 	  kludge = false;
 	}
 

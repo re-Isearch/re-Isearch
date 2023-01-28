@@ -166,6 +166,10 @@ public:
 private:
   SRCH_DATE      Date; // Date of Record (Must be first element!)
 /* This is an object we write so the types need to be well defined */
+
+  // We need to be long enough to support 58-bit encoding of 32-byte hashes
+  // 32 * log(256) / log(58) + 1  -> (1.38 * 32 = 44 
+  // -> 47
   CHR            Key[DocumentKeySize];
   CHR            DocumentType[DocumentTypeSize];
 

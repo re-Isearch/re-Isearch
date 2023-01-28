@@ -20,6 +20,9 @@ Comments:       May need a newer version of OpenSSL library than often shipped w
 		e.g. ipfs://QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco/wiki
 		maps to https://ipfs.io/ipfs/QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco/wiki
 		where https://ipfs.io/ is the defined IPFS gateway.
+
+		btfs://QmSnAFu4to9G6VpKSzsc7cQ7cg9TMQYVLbsgsowaPWgxkB
+
 @@@*/
 
 
@@ -39,7 +42,8 @@ Comments:       May need a newer version of OpenSSL library than often shipped w
 
 // Configuration secion
 static const char *ipfs_gateway = "https://ipfs.io";
-static const char *btfs_gateway = "http://gateway.btfs.io/";
+static const char *btfs_gateway = "https://gateway.btfs.io";
+static const char *efs_gateway  = "http://exodus.exodao.net";
 // End configuration section
 
 
@@ -86,15 +90,23 @@ public:
 	}
 	BTFS_gateway = DbParent->ProfileGetString(GatewaySection, "BTFS");
         if (BTFS_gateway.IsEmpty()) {
-          IPFS_gateway = ipfs_gateway;
+          BTFS_gateway = btfs_gateway;
           message_log (LOG_DEBUG, "Setting BTFS default gateway to \"%s\"", btfs_gateway);
           Db->ProfileWriteString(GatewaySection, "BTFS", BTFS_gateway);
         }
+        EFS_gateway = DbParent->ProfileGetString(GatewaySection, "EFS");
+        if (EFS_gateway.IsEmpty()) {
+          EFS_gateway = efs_gateway;
+          message_log (LOG_DEBUG, "Setting EFS default gateway to \"%s\"", efs_gateway);
+          Db->ProfileWriteString(GatewaySection, "EFS", EFS_gateway);
+        }
+
 	CA_CERT_FILE =  DOCTYPE::Getoption("CERT", NulString);
       } else {
 	// Set defaults
 	IPFS_gateway = ipfs_gateway;
 	BTFS_gateway = btfs_gateway;
+	EFS_gateway  = efs_gateway;
       }
 
      desc.form("%s\nThis allows one to index remote URLs such as https://www.exodao.net/\n\n\
@@ -106,7 +118,7 @@ CERT\t// Specifies the path to the ca_cert_file should it be used\n\
 \tthe layout to reconstruct the URLs.\n\
 NOTE: if not set it uses <db>%s/ and sets the %s accordingly.\n\n\
 In the [%s] sections one needs to define the gateways for the non http/https protocols (such\n\
-as IPFS and BTFS) to access data via http/https.\n\
+as IPFS, BTFS and EFS) to access data via http/https.\n\
 NOTE: For remote file://host/path it assumes AFS under /afs/host/path",
     myDescription,  RootSection.c_str(), dir_extension,  RootSection.c_str(),
     GatewaySection.c_str());
@@ -158,6 +170,7 @@ private:
    STRING        DocumentRoot;
    STRING        IPFS_gateway; // the IPFS Gateway
    STRING        BTFS_gateway; // the BTFS Gateway
+   STRING        EFS_gateway; // ExoDAO file system gateway
    STRING        CA_CERT_FILE;
    STRING        desc; // the description
 
@@ -352,6 +365,10 @@ bool  IBDOC_AUTOREMOTE::fetch(const std::string& filepath,
 	  // been used.
 	  case 2: // ETag may be a good place to build a key...
 		  // unsigned k = site.Hash();
+		  if (value.GetLength() > DocumentKeySize ) { 
+		    // Need to re-encode
+		    // TODO
+		  }
 		  if (Db->MdtLookupKey (value) == 0) record.SetKey(value);
 		  break;
 	}
@@ -363,7 +380,7 @@ bool  IBDOC_AUTOREMOTE::fetch(const std::string& filepath,
     os.open (filepath, std::ofstream::out | std::ofstream::app);
     os << res->body << std::endl; // Make sure we have a trailing new line
   } else {
-    message_log (LOG_ERROR, "http/https protocol failure. Error code %d",  res.error());
+    message_log (LOG_ERROR, "Gateway http/https protocol failure. Error code %d",  res.error());
     return false;
   }
   return true;
@@ -393,10 +410,13 @@ bool  IBDOC_AUTOREMOTE::fetch(const char *url, RECORD& record, int *depth)
 
    // IPFS and BTFS are special cases which we rewrite to go through
    // a gateway to fetch the resource BUT store on the disk 
-   if ((u.protocol == "ipfs") || (u.protocol == "btfs") || (u.protocol == "ipns")) {
-      site = (u.protocol == "btfs" ? BTFS_gateway.c_str() : IPFS_gateway.c_str() );
-      std::string path = u.path;
+   if ((u.protocol == "ipfs") || (u.protocol == "btfs") || (u.protocol == "ipns") ||
+	u.protocol == "efs") {
 
+      // These protocols are adresses to immutable resources (save ipns)
+      site = (u.protocol == "btfs" ? BTFS_gateway.c_str() :
+	u.protocol == "ipfs" ? IPFS_gateway.c_str() : EFS_gateway.c_str() );
+      std::string path = u.path;
 
       // std::string depot = DocumentRoot.c_str();
       // // such as  depot.append("/ipfs/");
@@ -416,11 +436,28 @@ bool  IBDOC_AUTOREMOTE::fetch(const char *url, RECORD& record, int *depth)
 	u.path.append(path);
 	output_name.append(path);
       }
+
+      std::string key = u.host; // the base58 key
+
+      if (FileExists(output_name.c_str()) && u.protocol != "ipns") {
+	message_log (LOG_INFO, "Immutable resource %s already fetched.", key.c_str());
+	if (Db->MdtLookupKey (key.c_str())) {
+	  message_log (LOG_DEBUG, "Resource %s already in index", key.c_str());
+	  return false; // Don't fetch again 
+	}
+	// File exists but not in db?
+	record.SetKey(key.c_str());
+	record.SetFullFileName (output_name.c_str());
+	record.SetDocumentType("AUTODETECT");
+        AUTODETECT::ParseRecords(record);
+	return false;
+      }
       if (!MkDirs(output_name.c_str(), 0777)) {
 	  message_log (LOG_ERROR, "Could not create dirs for %s. %s", output_name.c_str(),
 			  errno == EEXIST ? "File in the way." : strerror(errno));
 	  return false; // could not make ; 
       }
+      record.SetKey(key.c_str()); // Set the key to hash
    } else if (u.protocol == "http" || u.protocol == "https"){
       site = u.protocol;
 	// // make sure we can write to the path

@@ -83,6 +83,7 @@ bool HTMLREMOTE::URL(const RESULT& ResultRecord, PSTRING StringBuffer, bool Only
 		    size_t      len;
 		    bool dslash;
 		  } methods[] = {
+			{"efs",     3, true}, // ExoDAO File System
 			{"ftp",     3, true},
 			{"urn",     3, true},
 			{"file",    4, true},

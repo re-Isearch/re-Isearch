@@ -12,23 +12,21 @@ inline static const char base58_chars[] = {
         'y', 'z'
 };
 
-
-
 static char *encode64(char *ptr, size_t siz, unsigned long num)
 {
   char tmp[13];
   const size_t modulo = sizeof(base58_chars)/sizeof(char) - 1;
   const size_t pad    = siz - 1;
   unsigned long val = num;
-  size_t i = 0, j;
+  size_t i = 0;
 
   do {
     tmp[i++] = chars[ val % modulo ];
     val /= modulo;
   } while (val);
-  for (j =i; j < pad; j++)
+  for (size_t j =i; j < pad; j++)
     tmp[j] = '0';
-  for (j = 0; j < pad; j++)
+  for (size_t j = 0; j < pad; j++)
     ptr[j] = tmp[pad -  j - 1];
   ptr[j] = '\0';
   return ptr;
@@ -37,8 +35,6 @@ static char *encode64(char *ptr, size_t siz, unsigned long num)
 
 STRING encodeBase58(const STRING& data, const uint8_t* mapping)
 {
-
-DATE
         std::vector<uint8_t> digits((data.size() * 138 / 100) + 1);
         size_t digitslen = 1;
         for (size_t i = 0; i < data.size(); i++)

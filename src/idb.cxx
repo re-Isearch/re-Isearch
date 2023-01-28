@@ -4182,7 +4182,7 @@ bool IDB::Index2()
     }
   else
     {
-      message_log (LOG_NOTICE, "No records, nothing to do!");
+      message_log (LOG_NOTICE, "No (new) records, nothing to do!");
       result = false;
     }
   TotalRecordsQueued = 0;
