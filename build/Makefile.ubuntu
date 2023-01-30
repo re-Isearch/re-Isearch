@@ -446,6 +446,8 @@ PLUGIN_SRCS = \
 	$(DOCTYPE_DIR)/isoteia.cxx \
 	$(DOCTYPE_DIR)/adobe_pdf.cxx \
 	$(DOCTYPE_DIR)/pdfdoc.cxx \
+	$(DOCTYPE_DIR)/djvu.cxx \
+	$(DOCTYPE_DIR)/autoremote.cxx \
 	$(DOCTYPE_DIR)/text.cxx
 
 

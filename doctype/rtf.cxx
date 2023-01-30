@@ -39,8 +39,10 @@ static const char myDescription[] = "\"Rich Text Format\" (RTF) Plugin";
 
 IBDOC_RTF::IBDOC_RTF(PIDBOBJ DbParent, const STRING& Name) : FILTER2TEXTDOC(DbParent, Name)
 {
-  desc.form("%s. Uses an external filter to PTEXT.\nOptions:\n\
-   FILTER   Specifies the program to use (Default '%s')\n", myDescription, GetDefaultFilter() );
+  const char *def_filter = GetDefaultFilter();
+  const char *filter = ResolveBinPath(def_filter);
+  desc.form("%s.\nUses an external filter (default: '%s') to PTEXT.\n",
+ 	myDescription, filter && *filter ? filter : def_filter );
 }
 
 
