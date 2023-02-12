@@ -31,7 +31,8 @@ Description:	Class IRSET - Internal Search Result Set
 ////
 extern enum NormalizationMethods {
   Unnormalized = 0, NoNormalization, CosineNormalization, MaxNormalization, LogNormalization, BytesNormalization,
-  preCosineMetricNormalization, CosineMetricNormalization, EuclideanNormalization, UndefinedNormalization
+  preCosineMetricNormalization, CosineMetricNormalization, EuclideanNormalization,
+  AuxNormalization1, AuxNormalization2, AuxNormalization3,  UndefinedNormalization
 } defaultNormalization;
 
 class atomicIRSET : public OPERAND {

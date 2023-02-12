@@ -60,6 +60,7 @@ static const char *efs_gateway  = "http://exodus.exodao.net";
 //
 //
 static const STRING ThisDoctype    ("AUTOREMOTE");
+static const STRING DocParent      ("AUTODETECT");
 static const STRING GatewaySection ("Gateways");
 static const STRING RootSection    ("BASE");
 
@@ -157,7 +158,7 @@ NOTE: For remote file://host/path it assumes AFS under /afs/host/path",
      if (fetch(s.c_str(), r, &depth))
        {
         // Got it
-	r.SetDocumentType("AUTODETECT");
+	r.SetDocumentType(DocParent);
 	AUTODETECT::ParseRecords(r);
        }
      }
@@ -448,7 +449,7 @@ bool  IBDOC_AUTOREMOTE::fetch(const char *url, RECORD& record, int *depth)
 	// File exists but not in db?
 	record.SetKey(key.c_str());
 	record.SetFullFileName (output_name.c_str());
-	record.SetDocumentType("AUTODETECT");
+	record.SetDocumentType(DocParent);
         AUTODETECT::ParseRecords(record);
 	return false;
       }

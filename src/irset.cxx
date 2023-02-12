@@ -3900,6 +3900,25 @@ OPOBJ *atomicIRSET::ComputeScoresBytesNormalization (const INT TermWeight)
   return this;
 }
 
+
+#if 0
+
+// Stubs for future expansion and implementation
+OPOBJ *atomicIRSET::ComputeScoresAux1Normalization (const INT TermWeight)
+{
+  return this;
+}
+OPOBJ *atomicIRSET::ComputeScoresAux2Normalization (const INT TermWeight)
+{ 
+  return this;
+}
+OPOBJ *atomicIRSET::ComputeScoresAux3Normalization (const INT TermWeight)
+{ 
+  return this;
+}
+
+#endif
+
 static int IrsetScoreCompare (const void *x, const void *y)
 {
   const DOUBLE Difference = ((const IRESULT *)y)->GetScore () - ((const IRESULT *)x)->GetScore ();

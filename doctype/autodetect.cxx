@@ -302,6 +302,8 @@ static struct Magic {
    {0, "Return-Path: <", 14, "RFC2822:MAILFOLDER" }, // RFC2822
 #endif
 
+    {0, "AT&TFORM", 8, "DJVU:"}, 
+
     {0, "Article ", 8,
 #ifdef NEWSFOLDER_HXX
 	"NEWSFOLDER"

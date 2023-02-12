@@ -2963,17 +2963,14 @@ bool _IB_GetUserId(char *buf, int maxSize)
 {
 #ifdef BSD
   struct passwd  *pwent = getpwuid(getuid());
-  const char *tty = pwent ? pwent->pw_name  : "nobody";
-  strncpy(buf, tty, maxSize-1);
-  buf[maxSize] = '\0';
-  return pwent->pw_name != NULL;
+  const char *ptr = pwent ? pwent->pw_name  : "nobody";
 #else
   char tty[L_cuserid+1];
-  char *ptr;
-  strncpy(buf, ptr = cuserid(tty) ? tty : (char *)"nobody", maxSize-1);
-  buf[maxSize] = '\0';  
-  return ptr && tty[0];
+  const char *ptr = cuserid(tty) ? tty : "nobody";
 #endif
+  strncpy(buf, ptr, maxSize-1);
+  buf[maxSize] = '\0';
+  return ptr && ptr[0];
 }
 
 // UNIX
