@@ -175,7 +175,10 @@ static int db_lock (const char *dbname, int Lock)
   /* lock file form: pid/user/host */
   if (!_IB_GetHostName (host, (int)(sizeof(host)/sizeof(char)-1)))
     strcpy(host, "localhost");
-  (void) sprintf (entry, "%*0lu/%s/%s/%s/\n", MAXPIDLEN, (unsigned long)getpid (), whoami, host, fullname);
+  // Build the lock
+  if (sprintf (entry, "%*0lu/%s/%s/%s/\n", MAXPIDLEN, (unsigned long)getpid (), whoami, host, fullname) < 0)
+    entry[0] = '\0';
+  message_log(LOG_DEBUG, "Setting lock as '%s'", entry); 
   (void) sprintf (tfile, _PID_TEMPLATE, dbname, (long)getpid ());
   (void) sprintf (lfile, _LOCK_TEMPLATE, dbname, LockType (Lock));
 
