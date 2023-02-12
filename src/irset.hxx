@@ -117,12 +117,17 @@ public:
   // Score normalization (scoring functions)
   OPOBJ *ComputeScores (const INT TermWeight, enum NormalizationMethods Method = defaultNormalization);
   // Methods
-  OPOBJ *ComputeScoresNoNormalization (const INT TermWeight);
-  OPOBJ *ComputeScoresCosineNormalization (const INT TermWeight);
-  OPOBJ *ComputeScoresMaxNormalization (const INT TermWeight);
-  OPOBJ *ComputeScoresLogNormalization (const INT TermWeight);
-  OPOBJ *ComputeScoresBytesNormalization (const INT TermWeight);
-  OPOBJ *ComputeScoresCosineMetricNormalization (const INT TermWeight);
+  OPOBJ *ComputeScoresNoNormalization (const int TermWeight);
+  OPOBJ *ComputeScoresCosineNormalization (const int TermWeight);
+  OPOBJ *ComputeScoresMaxNormalization (const int TermWeight);
+  OPOBJ *ComputeScoresLogNormalization (const int TermWeight);
+  OPOBJ *ComputeScoresBytesNormalization (const int TermWeight);
+  OPOBJ *ComputeScoresCosineMetricNormalization (const int TermWeight);
+
+  // Stubs
+  OPOBJ *ComputeScoresAux1Normalization (const int TermWeight);
+  OPOBJ *ComputeScoresAux2Normalization (const int TermWeight);
+  OPOBJ *ComputeScoresAux3Normalization (const int TermWeight);
 
   // Binary Functions
   virtual OPOBJ *Or (const OPOBJ& OtherIrset);

@@ -3607,7 +3607,7 @@ void atomicIRSET::Adjust_Scores()
 }
 
 
-OPOBJ *atomicIRSET::ComputeScores (const INT TermWeight, enum NormalizationMethods Method)
+OPOBJ *atomicIRSET::ComputeScores (const int TermWeight, enum NormalizationMethods Method)
 {
   if (Method != ComputedS)
     {
@@ -3643,12 +3643,20 @@ OPOBJ *atomicIRSET::ComputeScores (const INT TermWeight, enum NormalizationMetho
 	    return ComputeScoresLogNormalization (TermWeight);
 	  case BytesNormalization:
 	    return ComputeScoresBytesNormalization (TermWeight);
+
+	  // Aux stubs
+	  case AuxNormalization1:
+	    return ComputeScoresAux1Normalization (TermWeight);
+         case AuxNormalization2:
+	    return ComputeScoresAux1Normalization (TermWeight);
+         case AuxNormalization3:
+	    return ComputeScoresAux1Normalization (TermWeight);
 	}
     }
   return this;
 }
 
-OPOBJ *atomicIRSET::ComputeScoresNoNormalization (const INT TermWeight)
+OPOBJ *atomicIRSET::ComputeScoresNoNormalization (const int  TermWeight)
 {
   if (TotalEntries && ComputedS == Unnormalized)
     {
@@ -3662,7 +3670,7 @@ OPOBJ *atomicIRSET::ComputeScoresNoNormalization (const INT TermWeight)
 
 extern "C" { float _ib_Distrank_weight_factor(const int); };
 
-OPOBJ *atomicIRSET::ComputeScoresCosineMetricNormalization (const INT TermWeight)
+OPOBJ *atomicIRSET::ComputeScoresCosineMetricNormalization (const int TermWeight)
 {
 //cerr << "ComputeScoresCosineMetricNormalization is called" << endl;
 
@@ -3753,7 +3761,7 @@ OPOBJ *atomicIRSET::ComputeScoresCosineMetricNormalization (const INT TermWeight
 */
 
 
-OPOBJ *atomicIRSET::ComputeScoresCosineNormalization (const INT TermWeight)
+OPOBJ *atomicIRSET::ComputeScoresCosineNormalization (const int TermWeight)
 {
   if (TotalEntries && ComputedS != CosineNormalization && Parent)
     {
@@ -3802,7 +3810,7 @@ OPOBJ *atomicIRSET::ComputeScoresCosineNormalization (const INT TermWeight)
 }
 
 
-OPOBJ *atomicIRSET::ComputeScoresMaxNormalization (const INT TermWeight)
+OPOBJ *atomicIRSET::ComputeScoresMaxNormalization (const int TermWeight)
 {
   if (TotalEntries && ComputedS != MaxNormalization && Parent)
     {
@@ -3855,7 +3863,7 @@ OPOBJ *atomicIRSET::BoostScore (const float Weight)
   return this;
 }
 
-OPOBJ *atomicIRSET::ComputeScoresLogNormalization (const INT TermWeight)
+OPOBJ *atomicIRSET::ComputeScoresLogNormalization (const int TermWeight)
 {
   if (TotalEntries && ComputedS != LogNormalization && Parent)
     {
@@ -3874,7 +3882,7 @@ OPOBJ *atomicIRSET::ComputeScoresLogNormalization (const INT TermWeight)
   return this;
 }
 
-OPOBJ *atomicIRSET::ComputeScoresBytesNormalization (const INT TermWeight)
+OPOBJ *atomicIRSET::ComputeScoresBytesNormalization (const int TermWeight)
 {
   if (TotalEntries && ComputedS != BytesNormalization && Parent)
     {
@@ -3901,23 +3909,19 @@ OPOBJ *atomicIRSET::ComputeScoresBytesNormalization (const INT TermWeight)
 }
 
 
-#if 0
-
 // Stubs for future expansion and implementation
-OPOBJ *atomicIRSET::ComputeScoresAux1Normalization (const INT TermWeight)
+OPOBJ *atomicIRSET::ComputeScoresAux1Normalization (const int TermWeight)
 {
   return this;
 }
-OPOBJ *atomicIRSET::ComputeScoresAux2Normalization (const INT TermWeight)
+OPOBJ *atomicIRSET::ComputeScoresAux2Normalization (const int TermWeight)
 { 
   return this;
 }
-OPOBJ *atomicIRSET::ComputeScoresAux3Normalization (const INT TermWeight)
+OPOBJ *atomicIRSET::ComputeScoresAux3Normalization (const int TermWeight)
 { 
   return this;
 }
-
-#endif
 
 static int IrsetScoreCompare (const void *x, const void *y)
 {

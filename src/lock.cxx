@@ -143,6 +143,8 @@ static char LockType (int Lock)
 }
 
 #ifndef MAXPIDLEN
+// On 32-bit platfroms, 32768 is the maximum value for pid_max .
+// On 64-bit systems, pid_max can be set to any value up to 2^22 ( PID_MAX_LIMIT)
 # define MAXPIDLEN	10
 #endif
 #ifndef MAXNAMLEN
@@ -157,14 +159,23 @@ static char LockType (int Lock)
 
 static int db_lock (const char *dbname, int Lock)
 {
+  if (dbname == NULL || !*dbname) return -1; // Can"t lock nothing
 #ifndef L_cuserid
 # define L_cuserid 128
 #endif
   char entry[MAXPIDLEN + 5 + L_cuserid + MAXUSERNAMLEN + MAXHOSTNAMELEN];
   char whoami[L_cuserid + 2];
   char fullname[MAXUSERNAMLEN];
-  char tfile[256 + MAXNAMLEN];
-  char lfile[256 + MAXNAMLEN];
+
+#if defined(__GNUC__) || defined(__GNUG__)
+  const size_t len = strlen(dbname) + MAXNAMLEN + MAXPIDLEN + 3;
+  char tfile[len];
+  char lfile[len];
+#else
+  // We assume the max DB file stem length is 255
+  char tfile[256 + MAXNAMLEN + MAXPIDLEN];
+  char lfile[256 + MAXNAMLEN + MAXPIDLEN];
+#endif
   char host[MAXHOSTNAMELEN];
 
   /* 127/edz/furball/ */
@@ -176,7 +187,7 @@ static int db_lock (const char *dbname, int Lock)
   if (!_IB_GetHostName (host, (int)(sizeof(host)/sizeof(char)-1)))
     strcpy(host, "localhost");
   // Build the lock
-  if (sprintf (entry, "%*0lu/%s/%s/%s/\n", MAXPIDLEN, (unsigned long)getpid (), whoami, host, fullname) < 0)
+  if (sprintf (entry, "%*0lu/%s/%s/%s/", MAXPIDLEN, (unsigned long)getpid (), whoami, host, fullname) < 0)
     entry[0] = '\0';
   message_log(LOG_DEBUG, "Setting lock as '%s'", entry); 
   (void) sprintf (tfile, _PID_TEMPLATE, dbname, (long)getpid ());
