@@ -627,7 +627,7 @@ bool IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
 	  else if (PathCompare(HTDocumentRoot.c_str(), Cwd.c_str()) != 0)
 	    message_log (LOG_INFO, "Warning: HTDocumentRoot '%s'!='%s'.", HTDocumentRoot.c_str(), Cwd.c_str());
 	}
-      else
+      else if (DirectoryExists( HTDocumentRoot ))
 	message_log (LOG_ERROR, "Can't cwd to selected %sRoot \"%s\"",
 		isMirror ? "Mirror" : "Page", HTDocumentRoot.c_str());
 #endif
