@@ -243,8 +243,13 @@ void IDB::Initialize (const STRING& DBName, const STRLIST& NewDocTypeOptions, bo
 
 void IDB::Initialize (IDBOBJ *myParent, const STRING& DBName, const STRLIST& NewDocTypeOptions, bool SearchOnly)
 {
+  // Initialize the database
   const STRING  fullpath ( ExpandFileSpec(DBName.IsEmpty() ? __IB_DefaultDbName : DBName));
-  Initialize (myParent, RemoveFileName(fullpath),  RemovePath (fullpath), NewDocTypeOptions, SearchOnly);
+  if (DirectoryExists(fullpath) && !FileExists( fullpath + DbExtDbInfo)) {
+    // The index is probably embedded in a subdirectory...   path/DB/DB
+    Initialize (myParent, fullpath,  RemovePath (fullpath), NewDocTypeOptions, SearchOnly);
+  } else // path/DB
+    Initialize (myParent, RemoveFileName(fullpath),  RemovePath (fullpath), NewDocTypeOptions, SearchOnly);
 }
 
 void IDB::ClearWorkingDirectoryEntry()
@@ -305,6 +310,7 @@ void IDB::Initialize (const STRING& NewPathName, const STRING& NewFileName,
 void IDB::Initialize (IDBOBJ *myParent, const STRING& NewPathName, const STRING& NewFileName,
 	    const STRLIST& NewDocTypeOptions, bool SearchOnly)
 {
+  // This is where the real initialization takes place
   __Register_IB_Application(); // Make sure we've registered..
 
   Parent = myParent;

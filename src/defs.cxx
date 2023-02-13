@@ -114,7 +114,7 @@ const STRING __IB_DefaultDbName ("IB");
 const STRING __IB_DefaultDbName (".IB");
 #endif
 
-const char *__IB_Version = "4.11a";
+const char *__IB_Version = "4.11b";
 
 // Special Elements
 const STRING BRIEF_MAGIC    (ELEMENT_Brief); /* CNIDR "hardwires" this */
