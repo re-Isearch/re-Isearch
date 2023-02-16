@@ -17,7 +17,7 @@ CC=g++-12
 
 
 #CCC=$(CC) -fabi-version=$(CC_ABI_VERSION)
-CCC=$(CC) -framework Python 
+CCC=$(CC) 
 
 #SHARED=-G -s
 SHARED=-shared
