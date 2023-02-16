@@ -56,7 +56,7 @@ EXTRA= -ldl -lm -lmagic $(LIBBDB)
 ########## Target Selection  ##############################
 TYP=python
 PREFIX=Py
-OPTIONS= -py3  -shadow  -new_repr -module $(PROJECT) -interface $(PREFIX)$(PROJECT) 
+OPTIONS= -modern  -shadow  -new_repr -module $(PROJECT) -interface $(PREFIX)$(PROJECT) 
 EXT=.py
 
 ############################################################
@@ -65,7 +65,7 @@ EXT=.py
 #### This is the configuration stuff  ######################
 
 SWIG=swig-2
-INCLUDE= `python3-config --include` -I$(MAGIC_INC)
+INCLUDE= `python2-config --includes` -I$(MAGIC_INC)
 
 #OPT= -DSWIG -O5 -march=pentiumpro 
 #MOPT= -DSWIG -O5 -march=athlon64 -mtune=k8 $(OPT)

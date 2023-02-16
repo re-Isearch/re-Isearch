@@ -4,6 +4,8 @@ PYVERSION=2.7
 ## comment out below if re-isearch was built without
 ## Berkeley DB AND the host platform does not have BDB installed.
 LIBBDB=-ldb
+BERKELEY_DB_ROOT = /usr/local/BerkeleyDB.4.4/
+
 
 ############
 
@@ -26,7 +28,7 @@ LIBPATH=/opt/nonmonotonic/ib/lib:/usr/local/lib:../lib:../:
 RPATH=-R$(LIBPATH)
 RPATH=-Wl,-rpath,$(LIBPATH)
 ## MacOS
-RPATH = -undefined dynamic_lookup -rpath $(LIBPATH)
+## RPATH = -undefined dynamic_lookup -rpath $(LIBPATH)
 
 PROJECT=IB$(LIBX)
 
@@ -34,10 +36,10 @@ PROJECT=IB$(LIBX)
 #CCC=$(CC) -m64
 #cc=cc
 
-#EXTRA= -lnsl -ldl -lm -lmagic $(LIBDB)
+EXTRA= -lnsl -ldl -lm -lmagic $(LIBBDB)
 
 # MacOS
-EXTRA= -ldl -lm -lmagic $(LIBDB)
+# EXTRA= -ldl -lm -lmagic $(LIBBDB)
 
 
 ########## Target Selection  ##############################
@@ -52,7 +54,7 @@ EXT=.py
 #### This is the configuration stuff  ######################
 
 SWIG=swig-2
-INCLUDE= `python3-config --include`
+INCLUDE= `python2-config --includes` -I $(BERKELEY_DB_ROOT)/include
 #OPT= -DSWIG -O5 -march=pentiumpro 
 #MOPT= -DSWIG -O5 -march=athlon64 -mtune=k8 $(OPT)
 MOPT= -DSWIG 
