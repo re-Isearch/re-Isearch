@@ -23,6 +23,9 @@ static const int DebugFlag = 0;
 
 #ifdef SWIGPYTHON
 #include "callbacks.hxx"
+#include "py3k_compat.h"
+
+
 #endif
 
 #ifdef SHI
@@ -183,7 +186,9 @@ PyObject* PyIBCallbackHelper::callCallbackObj(PyObject* argTuple) {
 // This is where we include the other wrapper definition files for SWIG
 //----------------------------------------------------------------------
 
+%include py3k_compat.i
 %include my_typedefs.i
+
 
 typedef enum SortBy {
   Unsorted, ByDate, ByReverseDate, ByScore, ByAdjScore, ByAuxCount,

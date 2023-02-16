@@ -15,6 +15,7 @@ Java: .java
 all: .perl .python .tcl 
 
 .version: ../bin/Iindex
+	-@chmod +x ./vergen
 	./vergen
 
 .python: Makefile.py $(SRC)
