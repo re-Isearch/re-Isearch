@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void main()
+int main()
 {
   FILE *f=fopen("../src/conf.h.inc", "w");
   if (!f) {

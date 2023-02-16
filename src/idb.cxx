@@ -1688,7 +1688,7 @@ size_t IDB::GetAncestorContent (RESULT& Result, const STRING& nodeName, STRLIST 
 	      if (Buffer.GetLength())
 		{
 		  count++;
-cerr << "Add ======" << endl << Buffer << endl << "======" << endl;
+// cerr << "Add ======" << endl << Buffer << endl << "======" << endl;
 		  if (StrlistPtr) StrlistPtr->AddEntry(Buffer); 
 		}
 	    }

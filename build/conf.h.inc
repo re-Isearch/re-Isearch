@@ -17,8 +17,8 @@ extern "C" {
 #define SIZEOF_LONG_DOUBLE 8
 
 #define IS_LITTLE_ENDIAN 1
-#define HOST_PLATFORM "Darwin 22.1.0 arm64"
-# define HOST_COMPILER "gcc-12 (Homebrew GCC 12.2.0) 12.2.0"
+#define HOST_PLATFORM "Darwin 22.2.0 arm64"
+# define HOST_COMPILER "Apple clang version 14.0.0 (clang-1400.0.29.202)"
 #ifdef __cplusplus
 }
 #endif

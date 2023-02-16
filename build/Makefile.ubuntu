@@ -517,9 +517,8 @@ plugins: $(PLUGINS) ../doctype/doctype.hxx ../src/idb.hxx
 $(SRC_DIR)/platform.h:
 	touch $(SRC_DIR)/platform.h
 
-gdt-sys.h:
-	touch gdt-sys.h
-#	/bin/sh ./configure $(CC)
+conf.h.inc:
+	/bin/sh ./configure.linux.sh $(cc)
 
 $(BIN_DIR)/date_parse: $(SRC_DIR)/date.cxx $(SRC_DIR)/date.hxx 
 	$(CC) $(DEFINES) -I ../src -I .  -DMAIN_STUB=1 -o $(BIN_DIR)/date_parse $(SRC_DIR)/date.cxx \

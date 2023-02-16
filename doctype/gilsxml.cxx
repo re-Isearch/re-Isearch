@@ -765,7 +765,7 @@ cerr << "NO CONTENT" << endl;
       const CHR *p = find_end_tag (tags_ptr, *tags_ptr, &offset);
       int have_attribute_val = (NULL != strchr (*tags_ptr, '='));
 
-cerr << "@@@@ Start tag =" << *tags_ptr << " end=" << p << " length=" << p-*tags_ptr << endl;
+// cerr << "@@@@ Start tag =" << *tags_ptr << " end=" << p << " length=" << p-*tags_ptr << endl;
 
       if (p == NULL && have_attribute_val == 0)
 	continue;

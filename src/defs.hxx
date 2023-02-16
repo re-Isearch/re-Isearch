@@ -150,7 +150,7 @@ public:
   pThreadLocker(pthread_mutex_t * mutex, const STRING& caller = NulString) {
     m_mutex = mutex;
     what = caller;
-    if (errno = pthread_mutex_lock(mutex))
+    if ((errno = pthread_mutex_lock(mutex)) != 0)
       {
         locked = false;
         // _globalMessageLogger.use_syslog();
