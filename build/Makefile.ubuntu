@@ -490,6 +490,7 @@ touch-plugins:
 
 
 all: $(MALLOC_OBJ) \
+	conf.h.inc \ 
 	dirs \
 	$(PROC_OBJ) \
 	io_lib \
