@@ -1578,7 +1578,7 @@ rusage:
 		cpu_time > elapsed ? 100.0 :
 		100.0*cpu_time/elapsed ) << "%" << endl;
 	if (rusage.ru_maxrss)
-	  cerr << "Max resident size:      " << rusage.ru_maxrss << "k" << endl;
+	  cerr << "Max resident size:      " << (rusage.ru_maxrss/1024L) << "m" << endl;
 	if (rusage.ru_ixrss)
 	  cerr << "Shared text memory:     " << (rusage.ru_ixrss)/ticks << "k" << endl;
 	if (rusage.ru_idrss)

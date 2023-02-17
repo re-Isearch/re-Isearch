@@ -5538,6 +5538,10 @@ PIRSET IDB::SearchSmart(const QUERY& Query, const STRING& DefaultField, SQUERY *
       bool res;
       STRING      field (DefaultField);
       // Search as Peer
+
+      // Refresh query string since Python does something odd
+      nQuery.SetSQUERY(QueryString); // 2023
+
       if (field.Trim(STRING::both).IsEmpty())
 	res = nQuery.Squery.SetOperatorPeer();
       else
@@ -5557,6 +5561,7 @@ PIRSET IDB::SearchSmart(const QUERY& Query, const STRING& DefaultField, SQUERY *
 	  if (pIrset == NULL)
 	    {
 //cerr << "Search Or" << endl;
+	      nQuery.SetSQUERY(QueryString); // 2023
 	      nQuery.Squery.SetOperatorOr();
 	      if ((pIrset = Search(nQuery)) != NULL)
 		{
@@ -5567,6 +5572,7 @@ PIRSET IDB::SearchSmart(const QUERY& Query, const STRING& DefaultField, SQUERY *
 		}
 	    }
 	}
+	else message_log (LOG_WARN, "Ill formed search expression: %s", QueryString.c_str());
     }
   if (SqueryPtr) *SqueryPtr = nQuery.Squery;
   return pIrset;

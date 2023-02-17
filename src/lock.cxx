@@ -187,7 +187,14 @@ static int db_lock (const char *dbname, int Lock)
   if (!_IB_GetHostName (host, (int)(sizeof(host)/sizeof(char)-1)))
     strcpy(host, "localhost");
   // Build the lock
-  if (sprintf (entry, "%*0lu/%s/%s/%s/", MAXPIDLEN, (unsigned long)getpid (), whoami, host, fullname) < 0)
+  if (
+#if 1
+  sprintf (entry, "%lu/%s/%s/%s/", (unsigned long)getpid (), whoami, host, fullname)
+#else
+  // When run under Python this segfaults
+  sprintf (entry, "%*0lu/%s/%s/%s/", MAXPIDLEN, (unsigned long)getpid (), whoami, host, fullname)
+#endif
+  < 0 )
     entry[0] = '\0';
   message_log(LOG_DEBUG, "Setting lock as '%s'", entry); 
   (void) sprintf (tfile, _PID_TEMPLATE, dbname, (long)getpid ());
