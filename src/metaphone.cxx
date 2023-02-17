@@ -13,6 +13,7 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 #define OR ||
 
 
+
 // added by edz@nonmonotonic.com
 static int _code(const STRING& buf)
 {

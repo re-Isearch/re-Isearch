@@ -5540,6 +5540,8 @@ PIRSET IDB::SearchSmart(const QUERY& Query, const STRING& DefaultField, SQUERY *
       // Search as Peer
 
       // Refresh query string since Python does something odd
+      // Until we understand what and why we do this.. not quite
+      // efficient but still.....
       nQuery.SetSQUERY(QueryString); // 2023
 
       if (field.Trim(STRING::both).IsEmpty())
@@ -5561,6 +5563,8 @@ PIRSET IDB::SearchSmart(const QUERY& Query, const STRING& DefaultField, SQUERY *
 	  if (pIrset == NULL)
 	    {
 //cerr << "Search Or" << endl;
+	      // We set the query anew to deal with the weird Python bug
+	      // until we figure it out...
 	      nQuery.SetSQUERY(QueryString); // 2023
 	      nQuery.Squery.SetOperatorOr();
 	      if ((pIrset = Search(nQuery)) != NULL)
