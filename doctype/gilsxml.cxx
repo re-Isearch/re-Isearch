@@ -757,7 +757,9 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 	      (*tags_ptr)[tag_len - 1] = 0; // edz 2021 addition
               store_attributes (pdft, RecBuffer, *tags_ptr, false, &Key, &Datum);
             }
-cerr << "NO CONTENT" << endl;
+#if DEBUG
+cerr << "NO CONTENT (empty tag)" << endl;
+#endif
           continue; // No content
         }
 
@@ -937,7 +939,7 @@ cerr << "NO CONTENT" << endl;
 		  HandleSpecialFields(NewRecord, FieldName, entry_id);
                 }
 	    }
-else cerr << "EMPTY FIELD" << endl;
+//else cerr << "EMPTY FIELD" << endl;
 	}
       if (have_attribute_val)
 	{
@@ -1363,7 +1365,7 @@ cerr << "LOOKING AT: "<< endl << tmp << endl <<  "##### " << endl;
 #endif
 		//
 		//
-cerr << "XMLREC start = " << start << endl;
+//cerr << "XMLREC start = " << start << endl;
 		if (count == 0 && start > 0 ) {
 		   // Create a header element
 		   //
