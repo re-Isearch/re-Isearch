@@ -555,7 +555,7 @@ int _Isearch_main (int argc, char **argv)
                 << "  built with: " << __CompilerUsed  << " (" <<  __HostPlatform << ")" << endl;
               LastUsed = x;
             }
-	  else if (Flag.Equals ("-XML"))
+	  else if (Flag.Equals ("-XML") ||  Flag.Equals ("-xml"))
 	    {
 	      ShowXML = 1;
 	      PresentHtml = 1; // Latter PresentXML
