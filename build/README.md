@@ -1,6 +1,9 @@
 This is the build direectory for re-Isearch.
 
-There are a few Makefiles to choose from. Out of the box we are using the Makefile.ubuntu and it should be fine for other Linux distros.
+There are a few Makefiles to choose from. 
+The default Makefile calls, depending upon the OS, a number of other Makefiles.
+Out of the box on Linux we are using the Makefile.ubuntu and it should be fine for other Linux distros.
+The Makefile.MacOS is for Darwin (Apple) and has been tested on Apple Silicon using both gcc and clang compilers.
 
 
 For addtional information on building, installing, developing and using the system please consult the handbook in [docs/](https://github.com/re-Isearch/re-Isearch/blob/master/docs/re-Isearch-Handbook.pdf).
