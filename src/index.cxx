@@ -1626,6 +1626,19 @@ bool INDEX::WriteCentroid(FILE* fp)
 src=\"%s\" version=\"0.1\">\n",
           __IB_Version,  __HostPlatform,  Parent-> GetDbFileStem().c_str() );
 
+  fprintf(fp, "<title>%s</title>\n", Parent->GetTitle().c_str());
+  {
+    STRING val;
+    if (Parent->GetHTTP_server(&val))
+      fprintf(fp, "<server>%s/%s</server>\n", val.c_str(),
+		Parent->DbName().c_str());
+    else
+      fprintf(fp, "<server>%s</server>\n", Parent-> GetDbFileStem().c_str());
+    // fprintf(fp, "<maintainer>%s</maintainer>\n", Parent->GetMaintainer().c_str());
+    if (!(val = Parent->GetCopyright()).IsEmpty())
+      fprintf(fp, "<copyright>%s</copyright>\n", val.c_str());
+  }
+
   CHARSET Charset;
   BUFFER  buffer;
   char   *outword = (char *)(buffer.Want(1024));
@@ -1679,6 +1692,8 @@ src=\"%s\" version=\"0.1\">\n",
                   const atomicSCANLIST *sptr = ScanList.GetPtratomicSCANLIST();
                   for (const atomicSCANLIST *ptr = sptr->Next(); ptr!=sptr; ptr=ptr->Next())
                     {
+// IDEA: Instead of <word freq=number> term </> .. 
+// we do <word> term <freq>number </freq></word>
                       STRING Term (ptr->Term());
                       outword = (char *)(buffer.Want(Term.GetLength()*3 + 1));
                       fprintf(fp, "  <word freq=\"%ld\">%s</word>\n",

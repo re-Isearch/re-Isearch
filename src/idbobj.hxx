@@ -327,6 +327,10 @@ public:
     if (StrlistPtr) StrlistPtr->Clear();
     return 0;
   }
+  // Added 2023 for ExoDAO
+  virtual FC GetAncestorFc (const FC& HitFc, const STRING& NodeName) {
+    return HitFc;
+  }
 
   virtual void   Present(const RESULT& ResultRecord, const STRING& ElementSet,
         const STRING& RecordSyntax, PSTRING StringBuffer) const { StringBuffer->Clear(); }

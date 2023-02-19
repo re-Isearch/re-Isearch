@@ -2001,6 +2001,7 @@ public:
   %extend {
     VIDB &getself() { return *self; }
     IDB   *GetIDB(unsigned idx = 1) { return (IDB *)self->GetIDB(idx); }
+    IDB   *GetIDB(const RESULT& result) { return (IDB *)self->GetIDB(result); }
   }
   unsigned GetIDBCount() const;
   bool     IsDbVirtual() const;

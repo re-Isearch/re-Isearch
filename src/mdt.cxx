@@ -954,7 +954,7 @@ size_t MDT::AddEntry (const MDTREC& MdtRecord)
       message_log (LOG_FATAL|LOG_PANIC, "Physical database capacity exceeded (max %lu MB).",
 	MAX_GPTYPE/(1024L*1024L));
     }
-  else if (NextGlobalGp > (MAX_GPTYPE - (2^20)))
+  else if (NextGlobalGp > (MAX_GPTYPE -  1048576 /*(2^20)*/))
     {
       message_log (LOG_WARN, "Physical database capacity nearly reached (%luK, max %lu MB).",
 	NextGlobalGp/1024L, MAX_GPTYPE/(1024L*1024L));

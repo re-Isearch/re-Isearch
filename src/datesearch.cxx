@@ -970,7 +970,7 @@ PIRSET INDEX::DateSearch(const DOUBLE fKey, const STRING& FieldName,
     if ((w = Parent->GetMainMdt()->LookupByGp( Gp = List.GetGlobalStart(Pointer) ) ) != 0)
       {
 	// Check Date Range
-	if ( DateRange.Defined () & Relation != ZRelNE ) {
+	if ( DateRange.Defined () && Relation != ZRelNE ) {
 	  if ( w != old_w ) {
 	    MDTREC          mdtrec;
 	    if ( Parent->GetMainMdt()->GetEntry ( w, &mdtrec ) ) {

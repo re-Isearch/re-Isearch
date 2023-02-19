@@ -218,6 +218,22 @@ public:
   void        Write (PFILE Fp) const;
   bool Read  (PFILE Fp);
 
+#if 1
+  bool SetOperator(const OPERATOR& Operator) {
+    return Squery.SetOperator(Operator);
+  }
+  bool SetOperatorAndWithin(const STRING& FieldName) {
+    return Squery.SetOperatorAndWithin(FieldName);
+  }
+  bool SetOperatorNear() { return Squery.SetOperatorNear(); }
+  bool SetOperatorPeer() { return Squery.SetOperatorPeer(); }
+  bool SetOperatorOr()   { return Squery.SetOperatorOr(); }
+  bool SetOperatorOrReduce(int Reduce = 0) {
+    return Squery.SetOperatorOrReduce(Reduce);
+  }
+
+#endif
+
 private:
   SQUERY                    Squery;
   enum SortBy               Sort;

@@ -519,6 +519,7 @@ $(SRC_DIR)/platform.h:
 	touch $(SRC_DIR)/platform.h
 
 conf.h.inc:
+	touch conf.h.inc
 	/bin/sh ./configure.linux.sh $(cc)
 
 $(BIN_DIR)/date_parse: $(SRC_DIR)/date.cxx $(SRC_DIR)/date.hxx 

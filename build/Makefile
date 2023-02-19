@@ -2,16 +2,16 @@ UNAME := $(shell uname)
 
 all:
 ifeq ($(UNAME), Darwin)
-	make -j 2 -f Makefile.MacOS 
+	make  -f Makefile.MacOS 
 endif
 ifeq ($(UNAME), Linux)
-	make -j 2 -f Makefile.ubuntu
+	make  -f Makefile.ubuntu
 endif
 ifeq ($(UNAME), Solaris)
-	make -j 2 -f Makefile.solaris
+	make  -f Makefile.solaris
 endif
 
 clean:
-	rm -f *.o ../src/*.o ../doctype/*.o ../doctype/*.sob core 
+	rm -f *.o ../src/*.o ../doctype/*.o ../doctype/*.sob core ../lib/lib*.dylib ../lib/lib*.so
 	rm conf.h.inc
 

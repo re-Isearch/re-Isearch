@@ -15,6 +15,8 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 /************************************************************************
 ************************************************************************/
 
+#define BUGFIX 1
+
 #define NEW_HEADLINE_CACHE_CODE 0 /* BROKEN!! */
 
 /*@@@
@@ -407,7 +409,7 @@ bool IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
 */
 #if _NO_LOCKS
 #else
-  if (LockWait(DbFileStem, L_WRITE||L_CHECK))
+  if (LockWait(DbFileStem, L_WRITE|L_CHECK))
     message_log (LOG_NOTICE, "Indexing process running!!!!!!!!!");
 #endif
 
@@ -5510,7 +5512,7 @@ PIRSET IDB::SearchSmart(const QUERY& Query, const STRING& DefaultField, SQUERY *
 
   if (nQuery.isPlainQuery(&QueryString) == false)
     {
-      if (SqueryPtr) *SqueryPtr = Query.GetSQUERY(); // 17 Dec 2007
+      if (SqueryPtr) *SqueryPtr = Query.GetSQUERY();
       return Search(nQuery);
     }
 
@@ -5523,7 +5525,6 @@ PIRSET IDB::SearchSmart(const QUERY& Query, const STRING& DefaultField, SQUERY *
     {
       nQuery.Squery.SetLiteralPhrase(QueryString);
      
-//cerr << "Search Phrase: " << QueryString << endl;
       if ((pIrset = Search(nQuery)) != NULL)
 	{
 	  if (pIrset->GetTotalEntries() == 0)
@@ -5539,18 +5540,25 @@ PIRSET IDB::SearchSmart(const QUERY& Query, const STRING& DefaultField, SQUERY *
       STRING      field (DefaultField);
       // Search as Peer
 
-      // Refresh query string since Python does something odd
-      // Until we understand what and why we do this.. not quite
-      // efficient but still.....
+#if BUGFIX
+      SQUERY squery = nQuery.Squery;
+      if (field.Trim(STRING::both).IsEmpty())
+        res = squery.SetOperatorPeer();
+      else
+        res = squery.SetOperatorAndWithin(field);
+#else
       nQuery.SetSQUERY(QueryString); // 2023
 
       if (field.Trim(STRING::both).IsEmpty())
 	res = nQuery.Squery.SetOperatorPeer();
       else
 	res = nQuery.Squery.SetOperatorAndWithin(field);
+#endif
       if (res)
 	{
-//cerr << "Search PEER/FIELD: " << field << endl;
+#if BUGFIX
+	  nQuery.SetSQUERY(squery);
+#endif
 	  if ((pIrset = Search(nQuery)) != NULL)
 	    {
 	      if (pIrset->GetTotalEntries() == 0)
@@ -5562,11 +5570,13 @@ PIRSET IDB::SearchSmart(const QUERY& Query, const STRING& DefaultField, SQUERY *
 	  // Search
 	  if (pIrset == NULL)
 	    {
-//cerr << "Search Or" << endl;
-	      // We set the query anew to deal with the weird Python bug
-	      // until we figure it out...
+#if BUGFIX
+	      squery.SetOperatorOr();
+	      nQuery.SetSQUERY(squery);
+#else
 	      nQuery.SetSQUERY(QueryString); // 2023
 	      nQuery.Squery.SetOperatorOr();
+#endif
 	      if ((pIrset = Search(nQuery)) != NULL)
 		{
 		  size_t total = pIrset->GetTotalEntries();

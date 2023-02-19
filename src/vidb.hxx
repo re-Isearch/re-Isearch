@@ -122,6 +122,9 @@ public:
   size_t      GetDbSearchCutoff(size_t idx=0) const;
 
   IDBOBJ     *GetIDB(size_t idx = 1) const;
+  IDBOBJ     *GetIDB(const IRESULT& Result) const;
+  IDBOBJ     *GetIDB(const RESULT& Result) const;
+
   size_t      GetIDBCount() const { return c_dbcount; }
   bool IsDbVirtual() const { return c_dbcount > 1;}
 

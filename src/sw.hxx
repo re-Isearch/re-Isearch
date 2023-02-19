@@ -6,6 +6,8 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
  so stopword lists must now contain, should they wish to exclude specific
  overly frequent single characters these words in the lists ***********/
 
+#pragma execution_character_set("iso-8859-1")
+
 /*
 The only one-letter words in English are a and I. 
  */

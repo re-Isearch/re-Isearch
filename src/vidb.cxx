@@ -751,6 +751,21 @@ IDBOBJ *VIDB::GetIDB(size_t idx) const
 }
 
 
+IDBOBJ *VIDB::GetIDB(const RESULT& result) const
+{
+  size_t i = result.GetVirtualIndex();
+  if (i > 0) return GetIDB(i-1);
+  return NULL;
+}
+
+IDBOBJ *VIDB::GetIDB(const IRESULT& iresult) const
+{ 
+  size_t i = iresult.GetVirtualIndex();
+  if (i > 0) return GetIDB(i-1);
+  return NULL;
+}
+
+
 //
 // Check each database for compatibility problems
 //
@@ -2515,7 +2530,6 @@ PIRSET VIDB::SearchSmart(const SQUERY& Squery, const STRING& DefaultField,
     {
       SQUERY newQuery; 
       newQuery.SetLiteralPhrase(QueryString);
-//cerr << "Search Phrase: " << QueryString << endl;
       if ((pIrset = Search(newQuery, Sort, Method)) != NULL)
 	{
 	  if (pIrset->GetTotalEntries() == 0)
@@ -2530,14 +2544,15 @@ PIRSET VIDB::SearchSmart(const SQUERY& Squery, const STRING& DefaultField,
     {
       bool res;
       STRING      field (DefaultField);
+
       // Search as Peer
       if (field.Trim(STRING::both).IsEmpty())
 	res = squery.SetOperatorPeer();
       else
 	res = squery.SetOperatorAndWithin(field);
+
       if (res)
 	{
-//cerr << "Search PEER/FIELD: " << field << endl;
 	  if ((pIrset = Search(squery, Sort, Method)) != NULL)
 	    {
 	      if (pIrset->GetTotalEntries() == 0)
@@ -2549,7 +2564,6 @@ PIRSET VIDB::SearchSmart(const SQUERY& Squery, const STRING& DefaultField,
 	  // Search
 	  if (pIrset == NULL)
 	    {
-//cerr << "Search Or" << endl;
 	      squery.SetOperatorOr();
 	      if ((pIrset = Search(squery, Sort, Method)) != NULL)
 		{

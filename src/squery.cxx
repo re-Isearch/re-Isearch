@@ -2159,6 +2159,7 @@ size_t SQUERY::fetchTerm (PSTRING StringBuffer, bool WantRpn) const
                   case OperatorJoinL:   S = SOperatorJoinL;     break;
                   case OperatorJoinR:   S = SOperatorJoinR;     break;
 
+		  case OperatorFile:
                   case OperatorWithinFile:
                     S.form("FILE:%s", (OpPtr->GetOperatorString()).c_str() );
                     break;
