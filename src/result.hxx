@@ -66,7 +66,7 @@ public:
 #if 1
   void     SetPath(const STRING& newPath)     { Pathname.SetPath(newPath);         }
   STRING   GetPath() const                    { return Pathname.GetPath();         }
-  STRING&  GetPath(STRING *ptr) const         { return *ptr = GetPath();           }
+  STRING&  GetPathName(STRING *ptr) const     { return *ptr = GetPath();           }
   void     SetFileName(const STRING& newName) { Pathname.SetFileName(newName);     }
   STRING   GetFileName() const                { return Pathname.GetFileName();     }
   STRING&  GetFileName(STRING *ptr) const     { return *ptr = GetFileName();       }

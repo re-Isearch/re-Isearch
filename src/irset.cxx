@@ -733,12 +733,9 @@ PRSET atomicIRSET::Fill(size_t Start, size_t End, PRSET set) const
 	    if (factor)
 	      {
 		myScore += factor;
-		if (myScore > newMaxScore)
-		  newMaxScore = myScore;
-		if (myScore < newMinScore)
-		  newMinScore = myScore;
-		if (newSort == ByScore)
-		  newSort = Unsorted;
+		if (myScore > newMaxScore) newMaxScore = myScore;
+		if (myScore < newMinScore) newMinScore = myScore;
+		if (newSort == ByScore) newSort = Unsorted;
 	      }
 	  }
 	result.SetScore( myScore );
@@ -3672,7 +3669,7 @@ extern "C" { float _ib_Distrank_weight_factor(const int); };
 
 OPOBJ *atomicIRSET::ComputeScoresCosineMetricNormalization (const int TermWeight)
 {
-//cerr << "ComputeScoresCosineMetricNormalization is called" << endl;
+// cerr << "ComputeScoresCosineMetricNormalization is called" << endl;
 
 
   // We must first have been normalized byt CosineNormalization!

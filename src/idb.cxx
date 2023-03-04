@@ -15,8 +15,6 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 /************************************************************************
 ************************************************************************/
 
-#define BUGFIX 1
-
 #define NEW_HEADLINE_CACHE_CODE 0 /* BROKEN!! */
 
 /*@@@
@@ -5507,12 +5505,13 @@ PIRSET IDB::SearchSmart(const QUERY& Query, const STRING& DefaultField, SQUERY *
 {
   PIRSET pIrset = NULL;
   QUERY  nQuery (Query);
-
+  SQUERY squery = nQuery.Squery;
   STRING QueryString;
 
-  if (nQuery.isPlainQuery(&QueryString) == false)
+
+  if (squery.isPlainQuery(&QueryString) == false)
     {
-      if (SqueryPtr) *SqueryPtr = Query.GetSQUERY();
+      if (SqueryPtr) *SqueryPtr = squery;
       return Search(nQuery);
     }
 
@@ -5540,25 +5539,14 @@ PIRSET IDB::SearchSmart(const QUERY& Query, const STRING& DefaultField, SQUERY *
       STRING      field (DefaultField);
       // Search as Peer
 
-#if BUGFIX
-      SQUERY squery = nQuery.Squery;
-      if (field.Trim(STRING::both).IsEmpty())
-        res = squery.SetOperatorPeer();
-      else
-        res = squery.SetOperatorAndWithin(field);
-#else
       nQuery.SetSQUERY(QueryString); // 2023
-
       if (field.Trim(STRING::both).IsEmpty())
 	res = nQuery.Squery.SetOperatorPeer();
       else
 	res = nQuery.Squery.SetOperatorAndWithin(field);
-#endif
+
       if (res)
 	{
-#if BUGFIX
-	  nQuery.SetSQUERY(squery);
-#endif
 	  if ((pIrset = Search(nQuery)) != NULL)
 	    {
 	      if (pIrset->GetTotalEntries() == 0)
@@ -5570,13 +5558,8 @@ PIRSET IDB::SearchSmart(const QUERY& Query, const STRING& DefaultField, SQUERY *
 	  // Search
 	  if (pIrset == NULL)
 	    {
-#if BUGFIX
-	      squery.SetOperatorOr();
-	      nQuery.SetSQUERY(squery);
-#else
-	      nQuery.SetSQUERY(QueryString); // 2023
+	      // nQuery.SetSQUERY(QueryString); // 2023
 	      nQuery.Squery.SetOperatorOr();
-#endif
 	      if ((pIrset = Search(nQuery)) != NULL)
 		{
 		  size_t total = pIrset->GetTotalEntries();

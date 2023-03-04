@@ -3757,9 +3757,17 @@ BOOL IsRealFile(STRING sAbsFN)
 
 #endif
 
+
+// Either path/db.ini or path/db/db.ini exists
 bool DBExists(const STRING& FileSpec)
 {
-  return FileExists ( FileSpec + DbExtIndex);
+  if (!FileExists(FileSpec + DbExtIndex)) {
+    STRING path = AddTrailingSlash ( RemoveFileName(FileSpec) );
+    STRING name = RemovePath(FileSpec);
+    if (!Exists( path + AddTrailingSlash(name) + name + DbExtIndex))
+      return false;
+  }
+  return true;
 }
 
 

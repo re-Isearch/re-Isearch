@@ -121,7 +121,7 @@ public:
 
   size_t      GetDbSearchCutoff(size_t idx=0) const;
 
-  IDBOBJ     *GetIDB(size_t idx = 1) const;
+  IDBOBJ     *GetIDB(size_t idx = 0) const;
   IDBOBJ     *GetIDB(const IRESULT& Result) const;
   IDBOBJ     *GetIDB(const RESULT& Result) const;
 
@@ -512,6 +512,20 @@ public:
   STRING PrevKey(const STRING& Key) const;
 
   size_t GetAncestorContent (RESULT& Result, const STRING& NodeName, STRLIST *StrlistPtr);
+
+  // idx is the index into the list starting at 1
+  FCT    GetDescendentsFCT (const FC& HitFc, const STRING& NodeName, size_t idx = 0) {
+    if (idx < 1 && c_dbcount == 1) idx = 1;
+    if (idx > 0 && idx <= c_dbcount)
+      return  c_dblist[idx-1]->GetDescendentsFCT(HitFc, NodeName);
+    return FCT();
+  }
+  FC     GetAncestorFc (const FC& HitFc, const STRING& NodeName, size_t idx=0) {
+    if (idx < 1 && c_dbcount == 1) idx = 1;
+    if (idx > 0 && idx <= c_dbcount)
+      return  c_dblist[idx-1]->GetAncestorFc(HitFc, NodeName);
+    return FC();
+  }
 
   bool GetDocumentInfo (const INT Idx, const INT Index, PRECORD RecordBuffer) const;
   bool GetDocumentInfo (const INT Index, PRECORD RecordBuffer) const;

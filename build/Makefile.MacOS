@@ -514,6 +514,7 @@ all: $(MALLOC_OBJ) \
 	$(BIN_DIR)/Idelete$(LIBX)$(COMPILER) \
 	$(BIN_DIR)/Iwatch \
 	$(BIN_DIR)/zpresent \
+	$(BIN_DIR)/zsearch \
 	$(BIN_DIR)/zipper
 
 
@@ -563,6 +564,9 @@ $(BIN_DIR)/zpresent: $(SRC_DIR)/zpresent.cxx
 	$(CC) $(INC) $(LDFLAGS) -o $@ $(SRC_DIR)/zpresent.cxx $(LDLIBS) $(EXTRA)
 
 
+$(BIN_DIR)/zsearch: $(SRC_DIR)/zsearch.cxx
+	$(CC) $(INC) $(LDFLAGS) -o $@ $(SRC_DIR)/zsearch.cxx $(LDLIBS) $(EXTRA)
+        
 $(BIN_DIR)/siscompress: $(SRC_DIR)/siscompress.c
 	$(cc) -o $(BIN_DIR)/siscompress $(SRC_DIR)/siscompress.c
 

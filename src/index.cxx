@@ -3982,10 +3982,10 @@ error:
       message_log (LOG_DEBUG, "4     Terms only exclusion (stop) words   (unspecified)");
       Parent->SetErrorCode(4);
     }
-#if 1 /* EXPERIMENTAL 2006 */
-  else if (Method == CosineMetricNormalization)
+  else if (Method == CosineMetricNormalization || Method == EuclideanNormalization) {
     NewIrset->ComputeScoresCosineMetricNormalization(1);
-#endif
+  }
+else cerr << "METHOD+ " << Method << endl;
   return NewIrset;
 }
 

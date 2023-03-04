@@ -1481,6 +1481,7 @@ PIRSET VIDB::Search(const QUERY& Query, VIDB_STATS *Stats)
   pthread_t  idthreads[c_dbcount]; /* ids of threads */
 #endif
 
+#pragma omp parallel for
   for (i = 0; i < c_dbcount; i++)
     {
       // TODO: Run in a thread
