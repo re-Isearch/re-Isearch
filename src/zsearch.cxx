@@ -33,6 +33,10 @@ Description:	Command-line search utility
 #include "thesaurus.hxx"
 */
 
+
+// Can use IDB or VIDB class
+typedef IDB DB;
+
 #define MAX_QUERY_LINE 10240
 
 //#ifdef REMOTE_INDEXING
@@ -287,8 +291,10 @@ main(int argc, char** argv) {
   RemovePath(&DBFileName);
   RemoveFileName(&DBPathName);
 
-  VIDB *pdb;
-  pdb = new VIDB(DBPathName, DBFileName, DocTypeOptions);
+
+
+  DB *pdb;
+  pdb = new DB(DBPathName, DBFileName, DocTypeOptions);
 
   if (DebugFlag) {
     pdb->DebugModeOn();

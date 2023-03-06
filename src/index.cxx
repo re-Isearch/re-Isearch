@@ -3985,7 +3985,6 @@ error:
   else if (Method == CosineMetricNormalization || Method == EuclideanNormalization) {
     NewIrset->ComputeScoresCosineMetricNormalization(1);
   }
-else cerr << "METHOD+ " << Method << endl;
   return NewIrset;
 }
 

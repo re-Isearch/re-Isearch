@@ -58,6 +58,8 @@ int _IB_lstat(const char *path, struct stat *sb);
 STRING FixMicrosoftPathNames(const STRING& Path);
 STRING WinGetLongPathName(const STRING& Path);
 
+FILE *fmemopen(void *buf, size_t len, const char *type);
+
 #include <sys/time.h>
 /* We don't have getrusage() */
 struct rusage {

@@ -130,10 +130,6 @@ VIDB::VIDB (const STRING& NewPathName, const STRING& NewFileName,
 // database listed in the ".vdb" file and subsequent search and
 // present operations are performed on the entire list of databases.
 //
-//
-// Each database MUST be indexed with the same doctype or this will
-// fail! -- @@@ edz@nonmonotonic.com: Not sure of that!
-//
 bool VIDB::Open (const STRING& DBname, const STRLIST& NewDocTypeOptions,
 	const bool SearchOnly)
 {
@@ -188,6 +184,7 @@ static STRLIST& CollectDBs(STRLIST *FilenameList, const STRING& Path)
 	message_log(LOG_ERROR, "Circular collection around %s", db.c_str());
 	continue;
       }
+
       message_log(LOG_DEBUG, "Opening '%s'", ini.c_str());
       if ((Fp = fopen(ini, "r")) != NULL) {
 	REGISTRY        Registry("VirtualIsearch");
@@ -278,6 +275,8 @@ bool VIDB::Open (const STRING& NewPathName, const STRING& NewFileName,
 }
 
 
+// Opens the DB. collects the list and metadata and optinally (if defined) grabs
+// additional metadata from an XML Buffer 
 bool VIDB::Open(const STRING& NewPathName, const STRING& NewFileName,
             const STRLIST& NewDocTypeOptions, const bool SearchOnly, const STRING& XMLBuffer)
 {
@@ -313,6 +312,7 @@ bool VIDB::Open(const STRING& NewPathName, const STRING& NewFileName,
   STRLIST FilenameList;
   STRLIST GlobalDocTypeList;
 
+  // We open as text
   PFILE Fp=fopen(GetDbFileStem()+ (STRING)DbExtDbInfo, "r");
   if (Fp)
     {
@@ -396,6 +396,8 @@ A virtual database may contain a MAX. of %u databases!", DatabaseCount, VolIndex
 #else
   c_dblist = new IDB *[DatabaseCount];
 #endif
+
+  // NULL each pointer in the list
   for (size_t i = 0; i< DatabaseCount; i++) c_dblist[i] = NULL; // Zero
 
   //
@@ -411,6 +413,11 @@ A virtual database may contain a MAX. of %u databases!", DatabaseCount, VolIndex
 	continue;
       const STRING Fn = IsAbsoluteFilePath(p->Value()) ? p->Value() : DbPathName + p->Value();
 
+     // Support remote ExoDAO Dbs
+     if (Fn.SubString(0, 9) == "exodao://") {
+	message_log(LOG_WARN, "Remote indexes not yet supported, \"%s\" ignored!", Fn.c_str());
+	continue;
+     }
  #ifdef __EXCEPTIONS
       try {
 	c_dblist[c_dbcount] = new IDB (this, Fn, NewDocTypeOptions, SearchOnly);
@@ -457,7 +464,11 @@ A virtual database may contain a MAX. of %u databases!", DatabaseCount, VolIndex
       // But this is does not seem to be the case. The result of mixing
       // different databases with differing global doctypes seems less
       // of a problem than mixing different doctypes in a database--- and
-      // this only effects the field list in the CGI interface.
+      // this only effects the field list.
+      //
+      // To counteract the confusion of having multiple attributes for the
+      // same semantic we have unified fields. Here one should remap the field
+      // names/paths of the different doctypes into a common "unified" name/path.
       //
       const DOCTYPE_ID TmpDoctype = c_dblist[c_dbcount]->GetGlobalDoctype ();
       if (TmpDoctype.IsDefined())
@@ -472,13 +483,11 @@ A virtual database may contain a MAX. of %u databases!", DatabaseCount, VolIndex
       c_dbcount++;
     }
 
-#if 1 /* DEBUG CODE?? */
-  // I think we always want at least one DB? (11 March 2004) edz@nonmonotonic.com
+  // I think we always want at least one DB? 
   if (c_dbcount == 0 && SearchOnly == false)
     {
       c_dblist[c_dbcount++] = new IDB (DbPathName+DbFileName, NewDocTypeOptions, SearchOnly);
     }
-#endif
 
   if (c_dbcount > 1)
     {
@@ -606,9 +615,10 @@ STRING VIDB::Description() const
   result << "Virtual level <database>.ini Options:\n";
   result << "[" << DbInfoSection << "]\n";
   result << CollectionsEntry << "=<List of virtual databases>\n";
-  result << DatabasesEntry << "=<List of physical databases>\n";
+  result << DatabasesEntry << "=<List of physical/remote databases>\n";
   result << DatabaseListFileEntry << "=<Path to file list> (default: <database>"+ (STRING)DbExtVdb;
-  result << ") # File has 1 entry per line\n\n";
+  result << ") # File has 1 entry per line\n\
+## NOTE: Entries connect to remote indexes via exodao://<server_url>/<db>\n\n";
 #if 1
   if (c_dbcount > 0)
     {
