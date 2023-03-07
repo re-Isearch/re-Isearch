@@ -8,7 +8,7 @@ The Makefile.MacOS is for Darwin (Apple) and has been tested on Apple Silicon us
 The repository also contains optional document handlers (doctypes) that are supplied as plugins. This includes doctypes for a number of office formats as well as "autoremote" which allows one to index remote files (http/https/ipfs etc). Some of these have either 3rd party libs as prequisites (autoremote requires, for example, OpenSSL) or require (3rd party) external filters (availabel seperately) to function. By default they are NOT built. In order to have them build one must "make plugins".
 
 
-> External Base Classes ("Plugin Doctypes"): <PRE>
+> Supplied External Base Classes ("Plugin Doctypes"): <PRE>
   ODT2:              // "OASIS Open Document Format Text" (ODT) Plugin (MEMODOC)
   ADOBE_PDF:         // Adobe PDF Plugin
   USPAT:             // US Patents (Green Book)
