@@ -1699,6 +1699,7 @@ static void IniUsage()
 
 static void Usage()
 {
+  IDB p;
   cout << "Usage is: " << prognam << " [-d db] [options] [file...]" << endl
   << "Options:" << endl
   << " -d db              // Use database db." << endl

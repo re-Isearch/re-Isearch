@@ -18,7 +18,7 @@ LIBBDB=-ldb
 ## This must be where NEWER versions of the OpenSSL libs were installed.
 ## It is ONLY used by the autoremote plugin and that depends upon a later
 ## version of 1.1.1 or newer-- which may not be pre-installed.
-OPENSSL_LIBS_LOCATION= /opt/homebrew/Cellar/openssl@3/3.0.7
+OPENSSL_LIBS_LOCATION= /opt/homebrew/Cellar/openssl@3/3.0.8
 
 #
 # Install Directory
@@ -669,7 +669,7 @@ PLUGINOPT=
 
 
 ../doctype/autoremote.sob: ../doctype/autoremote.cxx ../doctype/doctype.hxx ../src/idb.hxx
-	$(CC) $(SHARED) $(CCFLAGS) $(INC) -I$(OPENSSL_LIBS_LOCATION)/include -o $@ $(PLUGINOPT) ../doctype/autoremote.cxx $(LDLIBS) -L $(OPENSSL_LIBS_LOCATION)/lib -lssl -lcrypto
+	$(CC) -std=c++11  $(SHARED) $(CCFLAGS) $(INC) -I$(OPENSSL_LIBS_LOCATION)/include -o $@ $(PLUGINOPT) ../doctype/autoremote.cxx $(LDLIBS) -L $(OPENSSL_LIBS_LOCATION)/lib -lssl -lcrypto
 	-cp $@ ~/.ib/plugins
 	-cp $@ /opt/nonmonotonic/ib/lib/plugins
 
