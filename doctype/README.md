@@ -1,7 +1,7 @@
 This directory contains the DOCTYPE handlers for re-Isearch.
 Some are new for re-Isearch, some have been updated and some are quite old and not tested if they continue to work..
 
-< Available Built-in Document Base Classes (v28.8):<PRE>
+> Available Built-in Document Base Classes (v28.8):<PRE>
         AOLLIST           ATOM     AUTODETECT       BIBCOLON
          BIBTEX         BINARY            CAP       COLONDOC
        COLONGRP         CSVDOC       DIALOG-B            DIF
