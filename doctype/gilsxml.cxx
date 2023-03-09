@@ -1343,12 +1343,12 @@ cerr << "LOOKING AT: "<< endl << tmp << endl <<  "##### " << endl;
 	        State = Scan;
 	        break;
 	     case Start:
-		// A nasty case <tag> ... </><tag> but we also accpet
+		// A nasty case <tag> ... </><tag> but we also accept
 		// <tag> ... <tag>  
 		Record.SetRecordEnd ( GlobalRecordStart + start - 1 );
 		Db->DocTypeAddRecord (Record);
 		count++;
-		State == Scan;
+		State = Scan; // 2023 was ==
 		message_log(LOG_WARN, "<%s> before </%s>, assume </><%s>:  (%ld)", t, t, t,  GlobalRecordStart + start); 
 		break;
 	     case Scan:

@@ -35,6 +35,7 @@ bool printNextFileName(std::ifstream &fs)
     fs.read(buf5,fileNameLength);
 
     if (fileNameLength) {
+      if (buf5[0] == 24) return false;
       std::cout << "<item>";
       for(int i=0;i<fileNameLength;i++)
         std::cout<<buf5[i];

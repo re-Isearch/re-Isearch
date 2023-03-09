@@ -57,6 +57,11 @@ STRING ResolveBinPath(const STRING& Filename)
   if (Filename.IsEmpty() || IsAbsoluteFilePath(Filename))
     return Filename;
 
+  if (ExeExists(Filename)) {
+    // Exists but not absolute.. so
+    return ExpandFileSpec(Filename);
+  }
+
   if (_ib_ResolveBinPath)
     {
       STRING tmp;
@@ -122,7 +127,7 @@ STRING ResolveBinPath(const STRING& Filename)
 	  break; // Have something
 	state++;
     case 1:
-	if ((dir = _GetUserHome(ib_admin)) != NULL && *dir);
+	if ((dir = _GetUserHome(ib_admin)) != NULL && *dir)
 	  break;
 	state++;
     case 2:
@@ -134,6 +139,11 @@ STRING ResolveBinPath(const STRING& Filename)
     case 4:
 	dir = "/usr";
 	break;
+#if 0
+    case 5:
+	dir = "..";
+	break;
+#endif
     } // switch
     // Look into process-id home
     if (dir)

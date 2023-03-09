@@ -1512,10 +1512,22 @@ message_log (LOG_DEBUG, "AFTER INDEXING");
 	  } 
 #endif
 
+	  if (doctype.Search("Zip archive")) {
+	    // We have a Zip archive
+	    doctype = "ZIP:FILTER2XML";
+	    if (Db->ProfileGetString("ZIP", "Filter").IsEmpty()) {
+	      STRING zipper ( ResolveBinPath("zipper"));
+	      if (ExeExists(zipper))
+		Db->ProfileWriteString("ZIP", "Filter", zipper);
+	    }
+	    goto done;
+	  }
+
 	  PFILE Fp = NULL;
 	  off_t pos;
 	  RECORD NewRecord (FileRecord);
-          STRING key;
+	  STRING key;
+
 
          if (!ParseInfo)
 	   {
@@ -1606,7 +1618,7 @@ D \010O \010N \010' \010T  \010E \010D \010I \010T\
 			RFCdate(stbuf.st_mtime),
 			ISOdate(stbuf.st_mtime));
 		  NewRecord.SetDate ( stbuf.st_mtime );
-		  pos += fprintf(Fp, "Size-v1: %ld bytes\n", stbuf.st_size);
+		  pos += fprintf(Fp, "Size-v1: %lu bytes\n", (unsigned long) stbuf.st_size);
 		}
 	      pos += fprintf(Fp, "Record-Last-Modified-Date: %s\n", RFCdate(0));
 	      pos += fprintf(Fp, "Local-Path: %s\n", s.c_str());
