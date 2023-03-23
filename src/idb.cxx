@@ -2351,9 +2351,9 @@ PDOCTYPE IDB::GetDocTypePtr (const DOCTYPE_ID& DocType) const
 	}
       else 
 	{
-	  if (GlobalDoctype.IsDefined())
+	  if (GlobalDoctype.IsDefined() &&DocType.IsDefined())
 	    message_log(LOG_NOTICE, "\"%s\" is not registered, using the global default document type %s.",
-		DocType.c_str(), GlobalDoctype.c_str());
+			DocType.c_str(), GlobalDoctype.c_str());
 	   else if (DocType.IsDefined())
 	    message_log(LOG_NOTICE, "\"%s\" is not registered, using the default document type.", DocType.c_str());
 	   else

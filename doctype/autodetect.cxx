@@ -162,7 +162,7 @@ static struct {
   {"tsl",    "TSLDOC"},
 #endif
 #ifdef BIBTEX_HXX
-  {"btx",     "BIBTEXT"},
+  {"btx",     "BIBTEX"},
   {"bibtex",  "BIBTEX"},
   {"BTX",     "BIBTEX"},
 #endif
@@ -1005,7 +1005,7 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
 			doctype = "SOIF";
 		      else
 #endif
-		      doctype = "BIBTEX";
+		      ; // doctype = "BIBTEX";
 		    }
 #endif
 #ifdef COLONDOC_HXX
@@ -1275,7 +1275,11 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
 		}
 	      if (doctype.SearchAny("tiff"))
 		doctype = "TIFF";
-	      else if (doctype.SearchAny("text") 
+	      else if (doctype.SearchAny("BibTeX")) {
+		doctype = "BIBTEX";
+	      } else if (doctype.SearchAny("LaTeX")) {
+		doctype = "LATEX:PANDOC";
+	      } else if (doctype.SearchAny("text") 
 		&& ( doctype.SearchAny("ascii") || doctype.SearchAny("english") ||
 		doctype.Search("UTF-8" ) || doctype.Search("8859") ) )
 		{
@@ -1511,6 +1515,11 @@ message_log (LOG_DEBUG, "AFTER INDEXING");
 	     goto done;
 	  } 
 #endif
+
+          if (doctype.Search("LaTeX")) {
+            doctype = "LATEX:PANDOC";
+            goto done;
+          }
 
 	  if (doctype.Search("Zip archive")) {
 	    // We have a Zip archive

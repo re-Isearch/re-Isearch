@@ -77,6 +77,10 @@ STRING ResolveBinPath(const STRING& Filename)
 	    }
 	}
     }
+
+  STRING tmp = FindSharedLibrary(Filename);
+  if (ExeExists(tmp)) return ExpandFileSpec(tmp);
+
 #ifdef _WIN32
 /*
  * We should look 
@@ -85,7 +89,7 @@ STRING ResolveBinPath(const STRING& Filename)
  * 	3. in CommonFilesDir
  * 
 */
-  STRING tmp (FindExecutable(Filename));
+  tmp = (FindExecutable(Filename));
 
   if (tmp.GetLength() && ExeExists(tmp)) return tmp;
 
@@ -116,8 +120,6 @@ STRING ResolveBinPath(const STRING& Filename)
 	return tmp;
     }
 #else /* UNIX */
-
-  STRING tmp;
 
   for (int state = 0; state <= 4; state++) {
     const char     *dir = NULL;

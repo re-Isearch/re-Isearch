@@ -794,9 +794,8 @@ void SGMLNORM::Present (const RESULT& ResultRecord, const STRING& ElementSet,
 	  (RecordSyntax == SutrsRecordSyntax) ||
 	  (RecordSyntax == UsmarcRecordSyntax) )
 	{
-	  STRING Fn, Path;
-	  ResultRecord.GetPath(&Path);
-	  ResultRecord.GetFileName(&Fn);
+	  STRING Path ( ResultRecord.GetPath());
+	  STRING Fn (ResultRecord.GetFileName());
 	  STRINGINDEX pos = Fn.SearchReverse('.');
 	  if (pos) Fn.EraseAfter(pos - 1);
 	  STRING Fullpath, mime; 

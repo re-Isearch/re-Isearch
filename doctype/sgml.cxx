@@ -70,7 +70,7 @@ SGML::SGML (PIDBOBJ DbParent, const STRING& Name): SGMLNORM (DbParent, Name)
     }
   if (!FileExists(DSSSL_Spec = ResolveConfigPath(Getoption("DSSSL", DefaultDSSSL_Spec))))
     {
-      if (DSSSL_Spec != DefaultDSSSL_Spec);
+      if (DSSSL_Spec != DefaultDSSSL_Spec)
 	message_log (LOG_WARN, "DSSSL Specification '%s' not found", Catalog.c_str());
       DSSSL_Spec.Clear();
     }
