@@ -499,7 +499,7 @@ DocPresent (const RESULT& ResultRecord,
 	    const STRING& ElementSet, const STRING& RecordSyntax,
 	    STRING *StringBuffer) const
 {
-cerr << "XXXXX METADOC::DocPresent()" << endl;
+//cerr << "XXXXX METADOC::DocPresent()" << endl;
 
   if (ElementSet.Equals (SOURCE_MAGIC))
     {
@@ -515,7 +515,7 @@ cerr << "XXXXX METADOC::DocPresent()" << endl;
 
   if (ElementSet.Equals (FULLTEXT_MAGIC))
     {
-cerr << "XXXXX FULLTEXT....." << endl;
+//cerr << "XXXXX FULLTEXT....." << endl;
      
       STRING Language ( ResultRecord.GetLanguageCode() );
       // METADOC class documents are 1-deep so just collect the fields
@@ -531,7 +531,7 @@ cerr << "XXXXX FULLTEXT....." << endl;
       bool First_value = true;
       const size_t Total = Dfdt.GetTotalEntries();
 
-cerr << "XXXXX Total = " << Total << endl;
+//cerr << "XXXXX Total = " << Total << endl;
 
       for (INT i = 1; i <= Total; i++)
 	{
@@ -546,7 +546,7 @@ cerr << "XXXXX Total = " << Total << endl;
 	    }
 
 	  // Get Value of the field, use parent
-cerr << "XXXXX Present field " << FieldName << endl;
+//cerr << "XXXXX Present field " << FieldName << endl;
 	  Present (ResultRecord, FieldName, RecordSyntax, &Value);	// @@@
 
 	  if (!Value.IsEmpty())
