@@ -819,6 +819,10 @@ limitations under the License.  " << endl;
 		  case 'b': case 'B': _IB_Qsort =  BentleyQsort; break;
 		  case 's': case 'S': _IB_Qsort =  SedgewickQsort; break;
 		  case 'd': case 'D': _IB_Qsort =  DualPivotQsort; break;
+		  // case 't': case 'T': _IB_Qsort =  TimQsort; break;
+		  case 'n': case 'N':
+		  default:
+		     _IB_Qsort = qsort; break; // Default platform
 		}
               LastUsed = x;
             }
@@ -1802,7 +1806,7 @@ static void Usage()
   << " -collapse          // Collapse last two database indexes." << endl
   << " -append            // Add and merge (like -a -optimize)" << endl
   << " -incr              // Incremental Append" << endl
-  << " -qsort B[entley]|S[edgewick]|D[ualPivot] // Which variation of Qsort to use" << endl 
+  << " -qsort B[entley]|S[edgewick]|D[ualPivot]|P[latform] // Which variation of Qsort to use" << endl 
 // << " -debug             // Debug Indexer" << endl
 #if EVALULATION
   << " -license           // Display expiration date" << endl

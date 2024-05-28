@@ -32,14 +32,6 @@ TSLDOC::TSLDOC (PIDBOBJ DbParent, const STRING& Name):
   IFS = "\t\r\n";
 }
 
-const char *TSVDOC::Description(PSTRLIST List) const
-{
-  TSLDOC::Description(List);
-  return "Tab delimited lists where the first line defines the field names.\n\
-  Uses TSLDOC services but has the \"UseFirstRecord\" option set by default to True\n\
-  and not auto to force its use.";
-}
-
 const char *TSLDOC::Description(PSTRLIST List) const
 {
   const STRING ThisDoctype("TSLDOC");
@@ -47,7 +39,7 @@ const char *TSLDOC::Description(PSTRLIST List) const
     List->AddEntry(Doctype);
   List->AddEntry (ThisDoctype);
   COLONDOC::Description(List);
-  return "TSLDOC is a base class for Tab Separated List (Tab delimited) files:\n\
+  return "This is a base class for Tab Separated List (Tab delimited) files:\n\
  - Each line is a record\n\
  - Each line contain fields separated from each other by TAB characters\n\
    (horizontal tab, HT, Ascii control code 9).\n\

@@ -17,7 +17,6 @@ Copyright:	Basis Systeme netzwerk, Munich
 
 class TSLDOC :  public COLONDOC {
   friend class OZSEARCH;
-  friend class TSVDOC;
 public:
   TSLDOC(PIDBOBJ DbParent, const STRING& Name);
   const char *Description(PSTRLIST List) const;
@@ -45,14 +44,6 @@ private:
    const char *IFS;
 };
 
-class TSVDOC : public TSLDOC {
-  public:
-    TSVDOC(PIDBOBJ DbParent, const STRING& Name) : TSLDOC(DbParent, Name) {
-      UseFirstRecord = 1;
-    }
-    const char *Description(PSTRLIST List) const;
-    ~TSVDOC() { ; }
-};
 
 typedef TSLDOC* PTSLDOC;
 

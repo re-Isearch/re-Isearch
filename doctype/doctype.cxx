@@ -1280,7 +1280,7 @@ STRING DOCTYPE::UnifiedNamePath (const STRING& Tag) const
    STRING s;
 
    // We now look to see if a path
-   for (; *tcp; *tcp++)
+   for (; *tcp; tcp++)
    {
       if (*tcp == '\\' || *tcp == '/') {
         *tcp = '\0';
@@ -2628,7 +2628,7 @@ bool DOCTYPE::IsSpecialField(const STRING &FieldName) const
 
 void DOCTYPE::HandleSpecialFields(RECORD* NewRecord, const STRING& FieldName, const char *Buffer)
 {
-  if (Buffer == NULL || *Buffer == '\0')
+  if (Buffer == NULL || *Buffer == '\0' || FieldName.IsEmpty())
     return;
 
   if ((FieldName ^= DateField) || (FieldName ^= DateCreatedField) || (FieldName ^= DateModifiedField) ||

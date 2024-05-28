@@ -362,7 +362,7 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
      useSoundex = true;
   }
 
-  if (MaxCPU_ticks > CLOCKS_PER_SEC);
+  if (MaxCPU_ticks > CLOCKS_PER_SEC)
     message_log (LOG_DEBUG, "Term search limit set to %.1f sec / Query total %1.f CPU.",
 	MaxCPU_ticks*1.0/CLOCKS_PER_SEC, MaxQueryCPU_ticks*1.0/CLOCKS_PER_SEC);
 
@@ -1081,7 +1081,7 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 
   const DFT *dftPtr = Record.GetDftPtr ();
   const size_t total = dftPtr->GetTotalEntries ();
-  size_t errors = 0;
+  size_t errors = 0; // shared in the threads below
 
   if (DebugMode && total)
     message_log (LOG_DEBUG, "Writing field data, %d elements", total);
@@ -1089,6 +1089,7 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
   DOCTYPE *DocTypePtr =  Parent->GetDocTypePtr ( Record.GetDocumentType() );
   BUFFER Buffer;
 
+#pragma omp parallel for 
   for (size_t x = 1; x <= total; x++)
     {
       const STRING    FieldName ( dftPtr->GetFieldName (x) );

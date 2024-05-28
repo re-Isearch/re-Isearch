@@ -1327,6 +1327,8 @@ message_log (LOG_DEBUG, "AFTER INDEXING");
 		  doctype = typ;
 		  if (doctype.SearchAny("tiff")) 
 		     doctype = "TIFF";
+		  else if (doctype.SearchAny("CSV"))
+		     doctype = "CSVDOC";
 		  else if (doctype.Compare("English ", 8) == 0 ||
 		       // doctype.SearchAny("ascii text") || doctype.SearchAny("ISO-8859 text") ||
 			doctyoe.Search("text")) 

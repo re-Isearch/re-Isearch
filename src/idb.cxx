@@ -2811,8 +2811,9 @@ bool IDB::DfdtGetFileName (const STRING& FieldName, const FIELDTYPE& FieldType,
       // Look up..
       INT filenumber;
 
-      if ((filenumber = MainDfdt->GetFileNumber (FieldName)) == 0)
+      if ((filenumber = MainDfdt->GetFileNumber (FieldName)) == 0) {
 	return false; // Nope..
+      }
       FileNames.AddEntry(name,  path  = ComposeDbFn(filenumber) + typ );
     }
   if (StringBuffer) *StringBuffer = path;
@@ -3904,10 +3905,11 @@ void IDB::DocTypeAddRecord (const RECORD& NewRecord)
   else if (End > 0 && End <= Start)
     {
       message_log (LOG_NOTICE, "Record '%s' End(%u)<=Start(%u). Skipping!",
-	(unsigned)End, (unsigned)Start);
+	NewRecord.GetFullFileName ().c_str(), (unsigned)End, (unsigned)Start);
       return;
     }
 
+// cerr << "OPEN QUEUE" << endl;
   FILE *fp;
   const STRING IndexingQueueFn( ComposeDbFn (DbExtIndexQueue2) );
 
@@ -3978,7 +3980,7 @@ void IDB::DocTypeAddRecord (const RECORD& NewRecord)
   else
     message_log (LOG_ERRNO, "Could not append to \"%s\", skipping!", IndexingQueueFn.c_str());
 
-//cerr << "DocTypeAdd done" << endl;
+// cerr << "DocTypeAdd done" << endl;
 }
 
 

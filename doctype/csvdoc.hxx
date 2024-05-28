@@ -17,6 +17,7 @@ Copyright:      Basis Systeme netzwerk, Munich
 #include "buffer.hxx"
 
 class CSVDOC :  public COLONDOC {
+  friend class TSVDOC;
 public:
   CSVDOC(PIDBOBJ DbParent, const STRING& Name);
   const char *Description(PSTRLIST List) const;
@@ -31,7 +32,8 @@ public:
   ~CSVDOC();
 
 protected:
-   void        SetIFS(const char *newValue) { IFS = newValue; };
+   void        setQuoteChar(char newVal) { if(newVal) quoteChar = newVal; };
+   char       *c_tokenize(char *s, char **last);
 
 private:
    INT         UseFirstRecord;
@@ -41,6 +43,22 @@ private:
    STRING      FileName;
    MMAP        FileMap;
    BUFFER      Buffer;
-   const char *IFS;
+// char        IFS[8];
+   char        quoteChar;
 };
+
+
+class TSVDOC : public CSVDOC {
+  public:
+    TSVDOC(PIDBOBJ DbParent, const STRING& Name) : CSVDOC(DbParent, Name) {
+      UseFirstRecord = 1;
+      SetSepChar('\t');
+    }
+    const char *Description(PSTRLIST List) const;
+    ~TSVDOC() { ; }
+};
+
+
+
+
 #endif

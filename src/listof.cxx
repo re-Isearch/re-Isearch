@@ -268,7 +268,7 @@ void ListOf::Insert(const T& item, int (*f)(const T&, const T&))
 			if (!f(el->item, item))
 				continue;
 		}
-		else if ((el->item == item) < 0)
+		else if (!(el->item == item))
 			continue;
 
 		items.InsertBefore(item);

@@ -189,7 +189,7 @@ static const struct {
   { "SGML",       _SGML,       true}, { "SGMLNORM",   _SGMLNORM,   true},
   { "SGMLTAG",    _SGMLTAG,    true}, { "SIMPLE",     _SIMPLE,     true},
 
-  { "SOIF",       _SOIF,       true}, { "TSVDOC",     _TSLDOC,     true},
+  { "SOIF",       _SOIF,       true}, { "TSLDOC",     _TSLDOC,      true}, // Old name, old code
   { "TSV",        _TSVDOC,     true}, { "XBINARY",    _XBINARY,    true},
   { "FILTER",     _FILTER,     true}, { "XFILTER",    _XFILTER,    true},
   { "XML",         _XML,       true}, { "XMLBASE",    _XMLBASE,    true},
@@ -198,7 +198,7 @@ static const struct {
   { "CAP",        _CAPRSS,     true}, { "RSSCORE",    _RSSCORE,    true},
   { "HTMLZERO",   _HTMLZERO,   true}, { "RSSARCHIVE", _RSSCOREARCHIVE, true},
   { "ATOM",       _ATOM,       true}, { "NEWSML",     _NEWSML,     true},
-  { "XMLREC",     _XMLREC,     true}, { "CSVDOC",     _CSVDOC,     true},
+  { "XMLREC",     _XMLREC,     true}, { "CSV",        _CSVDOC,     true},
 
   /* Image Formats */
   { "GIF",        _IMAGEGIF,   false}, { "PNG",        _IMAGEPNG,   false},
@@ -231,10 +231,9 @@ static const struct {
   { "JSON",       _PANDOC,      false}, // Supports ONLY Pandoc created JSON
 
 
-
+  { "CSVDOC",     _CSVDOC,      false},
   { "CSLDOC",     _CSVDOC,      false}, // Old name
-  { "TSLDOC",     _TSLDOC,      false}, // Old name
-
+  { "TSVDOC",     _TSVDOC,     false}, // Old name
 
   { "PLUGIN",     _PLUGIN,      false}
 };

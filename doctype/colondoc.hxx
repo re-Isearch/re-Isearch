@@ -18,6 +18,7 @@ Copyright:	Basis Systeme netzwerk, Munich
 class METADOC :  public DOCTYPE {
   friend class COLONDOC;
   friend class DIALOGB;
+  friend class CSVDOC;
 public:
   METADOC(PIDBOBJ DbParent, const STRING& Name);
   virtual const char  *Description(PSTRLIST List) const;

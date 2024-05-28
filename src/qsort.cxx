@@ -599,7 +599,7 @@ void DualPivotQsort (void *base, size_t nel, size_t esz, cmp_t *cmp)
 
 
 //
-// Choices are: BentleyQsort, SedgewickQsort, DualPivotQsort
+// Choices are: BentleyQsort, SedgewickQsort, DualPivotQsort, qsort, timsort
 //
 
 void (*_IB_Qsort)(void *, size_t, size_t, cmp_t) = BentleyQsort; 

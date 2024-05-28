@@ -282,7 +282,7 @@ static void HelpUsage(const char *progname)
         "  -log_norm        // Log Normalization." << endl << 
         "  -bytes_norm      // Bytes Normalization." << endl << 
 	"  -no_norm         // Don't calculate scores or normalize." << endl <<
-	"  -sort B[entley]|S[edgewick]|D[ualPivot] // Which variation of QuickSort to use" << endl <<
+	"  -sort B[entley]|S[edgewick]|D[ualPivot]|T[im]|N[ative] // Which variation of QuickSort to use" << endl <<
 	"  -show            // Show first hit neighborhood." << endl <<
 	"  -summary         // Show summary/description." << endl <<
 	"  -XML             // Present Results in XML-like structure." << endl <<
@@ -1094,6 +1094,8 @@ int _Isearch_main (int argc, char **argv)
                   case 'b': case 'B': _IB_Qsort =  BentleyQsort; break;
                   case 's': case 'S': _IB_Qsort =  SedgewickQsort; break;
 		  case 'd': case 'D': _IB_Qsort =  DualPivotQsort; break;
+		  // case 't': case 'T': _IB_Qsort =  TimQsort; break;
+		  case 'n': case 'N': default:  _IB_Qsort =  qsort; break; // Default libc
                 }
               LastUsed = x;
             }

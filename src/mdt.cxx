@@ -297,6 +297,7 @@ MDT::MDT (INDEX *Index)
       static const STRING MdtInfo("_MdtControl");
 
       const char *def = (InstanceCount < MaxMDTInstances) ? "1" : "0";
+      // Do we use an Index Map??
       useIndexMap    = Index-> ProfileGetString(MdtInfo, "UseIndexMap", def).GetBool();
 #if USE_MDTHASHTABLE
       fastAdd        = Index->GetMergeStatus() == iNothing;
@@ -682,6 +683,9 @@ bool MDT::RebuildIndex()
 		"MDT: Gp Index memory allocation for %ld elements failed.", TotalEntries) ;
 	return false;
       }
+
+      // The following loop is safe for running in threads.
+#pragma omp parallel for 
       for (_index_id_t i = 0; i < TotalEntries; i++)
 	{
 	  // Gp Index
@@ -1023,10 +1027,22 @@ static int MdtCompareGpByIndex (const void *GpRecPtr1, const void *GpRecPtr2)
 
 void MDT::IndexSortByIndex ()
 {
+#if 1 /* 05.2024 tweaks */
+  if (KeyIndex && !KeyIndexSorted && useIndexMap)
+    {
+      QSORT (KeyIndex, TotalEntries, sizeof (KEYREC), MdtCompareKeysByIndex);
+      KeyIndexSorted = Changed = true;
+    }
+  if (GpIndex && !GpIndexSorted)
+    {
+      QSORT (GpIndex, TotalEntries, sizeof (GPREC), MdtCompareGpByIndex);
+      GpIndexSorted = Changed = true;
+    }
+#else
   if (KeyIndex)
     {
       if (useIndexMap)
-      qsort (KeyIndex, TotalEntries, sizeof (KEYREC), MdtCompareKeysByIndex);
+        qsort (KeyIndex, TotalEntries, sizeof (KEYREC), MdtCompareKeysByIndex);
       KeyIndexSorted = false;
     }
   if (GpIndex)
@@ -1035,6 +1051,7 @@ void MDT::IndexSortByIndex ()
       GpIndexSorted = false;
     }
   Changed = true;
+#endif
 }
 
 
