@@ -572,10 +572,13 @@ bool DTREG::PluginExists(const STRING& Doctype) const
 
 int    DTREG::Version() const
 {
-  char tmp[12];
- 
-  sprintf(tmp, "2%d",  _MAX_ID-1);
-  return (int) (100.0 * atof(tmp));
+  const int generation = 2; // may be up to 9 with this code
+  const int id = _MAX_ID -1;
+  int   version;
+  if (id < 10)       version = generation*10+id;
+  else if (id < 100) version = generation*100+id;
+  else               version = generation*1000+id;
+  return version*100;
 }
 
 bool     DTREG::ValidateDocType(const STRING& DocType)
