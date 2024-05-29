@@ -34,7 +34,7 @@ static const int _isearch_main_version = 3;
 #include <sys/resource.h> 
 #endif
 
-
+#if 0
 static void dumpXMLHitTable(FCLIST *HitTable)
 {
   const INT z = HitTable->GetTotalEntries();
@@ -222,7 +222,7 @@ static void dumpJsonHitTable(FCLIST *HitTable, VIDB *vidb, const RESULT& Result)
     }
 }
 
-
+#endif /* Obsolete */
 
 
 #if 0
