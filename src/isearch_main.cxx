@@ -306,6 +306,8 @@ static void HelpUsage(const char *progname)
 	"  -priority (NN.NN)// Over-ride priority factor with NN.NN" << endl <<
 	"  -scale (NN)      // Normalize score to 0-(NN) (scale)." << endl <<
 	"  -max (NN)        // Max. NN hits" << endl <<
+        "  -negative        // Show results with negative scores." << endl <<
+	"  -positive        // Show only results with positive scores." << endl <<
 	"  -clip (NN)       // Clip at NN." << endl <<
 	"  -common (NN)     // Set common words threshold at NN." << endl <<
 	"  -reduce          // Reduce result set (MiniMax of different matches)." << endl <<
@@ -524,6 +526,7 @@ int _Isearch_main (int argc, char **argv)
   bool ShowAux = false;
   bool ShowHeadline = false;
   bool FilenameOnly = false;
+  bool Negative_scores = true;
   STRING Headline;
   bool Terse = false;
   bool TabFormat = false;
@@ -794,6 +797,17 @@ int _Isearch_main (int argc, char **argv)
               MaxHits = atoi(argv[x]);
               LastUsed = x;
             }
+          else if (Flag.Equals ("-negative"))
+            { 
+              Negative_scores = true;
+              LastUsed = x;
+            }
+          else if (Flag.Equals ("-positive"))
+            { 
+              Negative_scores = false;
+              LastUsed = x;
+            }
+	  
 	  else if (Flag.Equals ("-reduce"))
 	    {
 	      Reduce = true;
@@ -1624,7 +1638,10 @@ again:
 	  if (VerboseFlag) cout << "Number of Term-Hits: " << (INT)(prset->GetHitTotal()) << endl;
 	  if (matches) cout << endl << matches << " record" << ((matches != 1) ? "s" : "")
 		<< " of " << Total << " matched your query, ";
-	  cout << n << " record" << ((n != 1) ? "s" : "")  << " displayed." << endl;
+	  if (!Negative_scores) cout << "max. ";
+	  cout << n;
+	  if (!Negative_scores) cout << " non-negative scored";
+	  cout << " record" << ((n != 1) ? "s" : "")  << " displayed." << endl;
 	  if (!ElementSet.IsEmpty() && ElementSet!="B")
 	    cout << "HeadlineElement:= " << ElementSet << endl;
 
@@ -1682,9 +1699,12 @@ again:
 	{
 	  if (!prset->GetEntry (t, &result))
 	    continue;
+          const DOUBLE score = result.GetScore ();
+	  if (!Negative_scores && score < 0.0)
+	    continue;
+
 	  if (ShowXML)
 	    {
-	      DOUBLE score = result.GetScore ();
 	      LOCALE Locale (result.GetLocale());
 	      cout << "<RESULT ID=\"" << t << "\" CHARSET=\"" << Locale.GetCharsetName()
 		<< "\" LANGUAGE=\"" << Locale.GetLanguageCode() << "\">" << endl
@@ -1696,8 +1716,8 @@ again:
 	    {
 	      cout << t << ".\t";
               if (ShowAbsoluteScore)
-                cout << result.GetScore() << "\t";
-              cout << prset->GetScaledScore (result.GetScore (), base_score) << "\t";
+                cout << score << "\t";
+              cout << prset->GetScaledScore (score, base_score) << "\t";
               if (ShowHits)
                 cout << result.GetHitTotal() << "\t";
 	      if (ShowAux)
@@ -1707,9 +1727,9 @@ again:
 	    {
 	      cout << setw (4) << t << ".";
 	      if (ShowAbsoluteScore)
-		cout << "  " << setw(8) << result.GetScore();
+		cout << "  " << setw(8) << score;
 	      cout << "  " << setw ( (int)(log10((double)base_score)+0.5) + 2)
-		<< prset->GetScaledScore (result.GetScore (), base_score);
+		<< prset->GetScaledScore (score, base_score);
 	      if (ShowHits)
                 cout << " " << setw(4) << result.GetHitTotal() << "   ";
 	      if (ShowAux)

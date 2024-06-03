@@ -3916,8 +3916,9 @@ OPOBJ *atomicIRSET::ComputeScoresNormalizationL1 (const int TermWeight)
 	    Score += Table[i].GetGscore().Potenz();
 #endif
 
-	  SumScores += Score; // Running sum
 	  Score *= TermWeight;
+          SumScores += abs(Score); // Running sum
+
 	  Table[i].SetScore ( Score );
 	  if ((Score - MaxScore) > 0.0) MaxScore=Score;
 	  if ((Score - MinScore) < 0.0) MinScore=Score;
