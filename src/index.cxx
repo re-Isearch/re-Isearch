@@ -1042,6 +1042,9 @@ FILE *INDEX::OpenForAppend(const STRING& FieldName, FIELDTYPE FieldType)
 	case FIELDTYPE::dotnumber:
 	  fp = NUMERICLIST().OpenForAppend(FileName);
 	  break;
+	case FIELDTYPE::db_hnsw:
+	  /* NOT YET IMPLEMENTED */
+	  break;
 	case FIELDTYPE::privhash:
 	  if (_IB_private_hash)
 	    fp = NUMERICLIST().OpenForAppend(FileName);
@@ -1281,6 +1284,12 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
                 }
               break;
             }
+
+	    case FIELDTYPE::db_hnsw: /* HNSW */
+	    {
+	      message_log (LOG_ERROR, "HNSW Not Yet Implemented");
+	      break;
+	    }
 
 	    case FIELDTYPE::metaphone:
 	    case FIELDTYPE::phonhash:
@@ -3974,8 +3983,10 @@ error:
   if (!Query.isUnlimited())
     {
       const size_t clip = Query.GetMaximumResults();
-      if (NewIrset->GetTotalEntries() > clip)
+      if (NewIrset->GetTotalEntries() > clip) {
+	NewIrset->SortBy(Query.GetSortBy()); // Added 2024
 	NewIrset->SetTotalEntries(clip);
+      }
     }
 
   if (terms == 0)

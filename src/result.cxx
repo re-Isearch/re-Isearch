@@ -202,6 +202,12 @@ STRING RESULT::XMLHitTable() const
   return XML;
 }
 
+STRING RESULT::JsonHitTable() const
+{
+  message_log (LOG_FATAL, "RESULT::JsonHitTable() Not yet implemented");
+  return NulString;
+}
+
 STRING RESULT::GetXMLHighlightRecordFormat(int pageno, off_t offset) const
 {
   STRING XML ("<XML>\n<Body Units=Characters color=#FF00FF Mode=Active version=2>\n <Highlight>\n");

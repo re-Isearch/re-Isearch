@@ -19,7 +19,7 @@ public:
 	dotnumber, phonhash, phonhash2, metaphone, metaphone2, hash, casehash,
 	lexi, privhash, isbn, telnumber, creditcardnum, iban, bic,
 	db_string, callback, callback1, callback2, callback3, callback4, callback5, callback6, callback7,
-	special, __last=255};
+	db_hnsw, special, __last=255};
 
   FIELDTYPE();
   FIELDTYPE(const FIELDTYPE& OtherFieldType);
@@ -73,6 +73,7 @@ public:
   bool    IsLexiHash() const { return Type == lexi;      }
   bool    IsPrivHash() const { return Type == privhash;  }
   bool    IsDBMStr() const   { return Type == db_string; }
+  bool    IsHNSW()           { return Type == db_hnsw;   } // Hierarchical Navigable Small Worlds (HNSW)
   bool    IsCallback() const { return IsCallback(Type);  }
   bool    IsExternal() const { return IsExternal(Type);  }
 

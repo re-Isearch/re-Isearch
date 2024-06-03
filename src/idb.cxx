@@ -5484,6 +5484,38 @@ STRING IDB::XMLHitTable(const RESULT& Result)
 }
 #endif
 
+#if 0
+STRING IDB::JsonHitTable(const RESULT& Result)
+{
+#if 1
+  message_log (LOG_FATAL, "JsonHitTable is not yet implemented");
+  return NulString;
+#else
+/*
+<folders>
+    <folder id="123" private="0" archived="0" order="1">Shopping</folder>
+</folders>
+
+is JSON
+
+{
+    "folders": {
+        "folder":{
+        "@": {
+            "id": "123",
+            "private": "0",
+            "archived": "0",
+            "order": "1"
+            },
+        "#": "Shopping"
+        }
+    }
+}
+*/
+}
+#endif
+#endif
+
 
 PIRSET IDB::SearchSmart(QUERY *Query, const STRING& DefaultField)
 {

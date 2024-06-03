@@ -41,7 +41,7 @@ Description:	Class IRSET - Internal Search Result Set
 #endif
 
 
-enum NormalizationMethods defaultNormalization = CosineNormalization;
+enum NormalizationMethods defaultNormalization = NormalizationL2;
 
 #define AWWW 1
 #define STORE_PROX 1
@@ -3647,13 +3647,17 @@ OPOBJ *atomicIRSET::ComputeScores (const int TermWeight, enum NormalizationMetho
 	    break;
 	  case NoNormalization:
 	    return ComputeScoresNoNormalization (TermWeight);
-	  case CosineNormalization:
-	    return ComputeScoresCosineNormalization (TermWeight);
+	  case NormalizationL2:
+	    return ComputeScoresNormalizationL2 (TermWeight);
+	  case NormalizationL1:
+	    return ComputeScoresNormalizationL1 (TermWeight);
+	  case NormalizationAF:
+	    return ComputeScoresNormalizationAF (TermWeight);
 	  case EuclideanNormalization:
 	  case CosineMetricNormalization:
 	    if (ComputedS != preCosineMetricNormalization)
 	      {
-		OPOBJ *res = ComputeScoresCosineNormalization (TermWeight);
+		OPOBJ *res = ComputeScoresNormalizationL2 (TermWeight);
 		ComputedS =  preCosineMetricNormalization;
 		return res;
 	      }
@@ -3696,12 +3700,12 @@ OPOBJ *atomicIRSET::ComputeScoresCosineMetricNormalization (const int TermWeight
 // cerr << "ComputeScoresCosineMetricNormalization is called" << endl;
 
 
-  // We must first have been normalized byt CosineNormalization!
+  // We must first have been normalized by NormalizationL2!
   if (ComputedS != preCosineMetricNormalization && ComputedS != CosineMetricNormalization &&
-    ComputedS != CosineNormalization)
+    ComputedS != NormalizationL2)
     {
 //cerr << "ComputedS was not pre or Cosine so need to do the pre Normalization" << endl;
-      ComputeScoresCosineNormalization (1);
+      ComputeScoresNormalizationL2 (1);
       ComputedS = preCosineMetricNormalization;
     }
 
@@ -3709,7 +3713,7 @@ OPOBJ *atomicIRSET::ComputeScoresCosineMetricNormalization (const int TermWeight
     {
       ComputedS = CosineMetricNormalization;
     }
-  else if ((ComputedS == preCosineMetricNormalization || ComputedS == CosineNormalization) && Parent)
+  else if ((ComputedS == preCosineMetricNormalization || ComputedS == NormalizationL2) && Parent)
     {
       for (size_t i = 0; i < TotalEntries; i++)
 	{
@@ -3751,26 +3755,30 @@ OPOBJ *atomicIRSET::ComputeScoresCosineMetricNormalization (const int TermWeight
 
 /*
  Dave Hawking's AF1:
+https://citeseerx.ist.psu.edu/document?repid=rep1&type=pdf&doi=470327208be6f5b46978cbf1445a2120baa988e3
 
-  f_qt := number of times the current term occurred in the query
-  f_dt := number of times term occurs in current document
+
+OPOBJ *atomicIRSET::ComputeScoresNormalizationAF (const int f_qt)
+{
+  // f_qt := number of times the current term occurred in the query
+  // f_dt := number of times term occurs in current document = HitCount
 
   // N := number of documents in the collection
-  N =  Parent->GetTotalRecords ();
+  int N =  Parent->GetTotalRecords ();
 
   // f_t  := number of documents in collection term occurs in
-  f_t = Parent->GetTotalRecords () / (double)TotalEntries;
+  float f_t = Parent->GetTotalRecords () / (double)TotalEntries;
 
-   k3 = 7 - 1000; //  (infinite)
-   alpha = 0.75 ;
+  float k3 = 7 - 1000; //  (infinite)
+  float alpha = 0.75 ;
 
-   const float w_t  = log((N - f_t + 0.5F) / (f_t + 0.5F)) * log(TermWeight);
-   const float w_qt = ((k3 + 1) * f_qt) / (k3 + f_qt);
+  const float w_t  = log((N - f_t + 0.5F) / (f_t + 0.5F)) * log(TermWeight);
+//  const float w_qt = ((k3 + 1) * f_qt) / (k3 + f_qt);
 
-   accumulator += w_qt * alpha * log(f_dt + 1) * w_t;
+//  accumulator += w_qt * alpha * log(f_dt + 1) * w_t;
 
-   DOUBLE sumScore = 0;
-   for (size_t i = 0; i < TotalEntries; i++)
+  DOUBLE sumScore = 0;
+  for (size_t i = 0; i < TotalEntries; i++)
     {
        sumScore += (Table[i].GetHitCount () * f_t)* w_t;
     }
@@ -3778,20 +3786,77 @@ OPOBJ *atomicIRSET::ComputeScoresCosineMetricNormalization (const int TermWeight
    // versus Cosine:
    // accumulator += (1 + (float) log(f_qt)) * (1 + (float) log(f_dt));
 
-
+}
 */
 
-
-OPOBJ *atomicIRSET::ComputeScoresCosineNormalization (const int TermWeight)
+// TF-IDF
+// L2 score normalization
+OPOBJ *atomicIRSET::ComputeScoresNormalizationAF (const int TermWeight)
 {
-  if (TotalEntries && ComputedS != CosineNormalization && Parent)
+  float k3 = 7 - 1000; //  (infinite)
+  float alpha = 0.75 ;
+
+  if (TotalEntries && ComputedS != NormalizationAF && Parent)
+    {
+      if (TermWeight == 0) {
+        ComputedS = NormalizationAF;
+	return this;
+      }
+
+      // Get Freq of <Total Docs in Db>/<Total Docs in Result Set> 
+      const off_t   TotalDocs = Parent->GetTotalRecords ();
+      const DOUBLE InvDocFreq = log ( (double)(TotalDocs) / (double)TotalEntries ); // Added log // 2024
+      const DOUBLE w_t  = log((TotalDocs - InvDocFreq + 0.5F) / (InvDocFreq + 0.5F)) * log(TermWeight+1);
+      const DOUBLE w_qt = ((k3 + 1) * (DOUBLE)TermWeight) / (k3 + (DOUBLE)TermWeight);
+
+      const DOUBLE factor = InvDocFreq/w_t;
+
+      double accumulator = 0;
+      // Get sum of squares
+#pragma omp parallel for reduction(+:SumSqScores, MinScore, MaxScore)
+      for (size_t i = 0; i < TotalEntries; i++)
+	{
+	  DOUBLE  f_dt = Table[i].GetHitCount ();
+	  DOUBLE Score = f_dt * factor;
+
+#if USE_GEOSCORE
+	  if (Table[i].HaveGscore()) 
+	    Score += Table[i].GetGscore().Potenz();
+#endif
+           accumulator += w_qt * alpha * log(f_dt + 1) * w_t;
+
+	  Score *= TermWeight;
+	  Table[i].SetScore ( Score );
+	  if ((Score - MaxScore) > 0.0) MaxScore=Score;
+	  if ((Score - MinScore) < 0.0) MinScore=Score;
+	}
+      errno = 0;
+
+      if (accumulator < 0.0) accumulator = -accumulator;
+      else if (accumulator == 0.0) accumulator = 1;
+      MaxScore /= accumulator;
+      MinScore /= accumulator;
+      // Now caculate the Factor
+      for (size_t x = 0; x < TotalEntries; x++)
+	Table[x].SetScore ( Table[x].GetScore () / accumulator );
+      ComputedS = NormalizationAF;
+    }
+  return this;
+}
+
+// TF-IDF
+// L2 score normalization
+OPOBJ *atomicIRSET::ComputeScoresNormalizationL2 (const int TermWeight)
+{
+  if (TotalEntries && ComputedS != NormalizationL2 && Parent)
     {
       // Get Freq of <Total Docs in Db>/<Total Docs in Result Set> 
       const off_t   TotalDocs = Parent->GetTotalRecords ();
-      const DOUBLE InvDocFreq = (double)(TotalDocs) / (double)TotalEntries;
+      const DOUBLE InvDocFreq = log ( (double)(TotalDocs) / (double)TotalEntries ); // Added log // 2024
 
       double SumSqScores = 0;
       // Get sum of squares
+#pragma omp parallel for reduction(+:SumSqScores, MinScore, MaxScore)
       for (size_t i = 0; i < TotalEntries; i++)
 	{
 	  DOUBLE Score = Table[i].GetHitCount () * InvDocFreq;
@@ -3825,10 +3890,56 @@ OPOBJ *atomicIRSET::ComputeScoresCosineNormalization (const int TermWeight)
 	  for (size_t x = 0; x < TotalEntries; x++)
 	    Table[x].SetScore ( Table[x].GetScore () / SqrtSum );
 	}
-      ComputedS = CosineNormalization;
+      ComputedS = NormalizationL2;
     }
   return this;
 }
+
+
+OPOBJ *atomicIRSET::ComputeScoresNormalizationL1 (const int TermWeight)
+{
+  if (TotalEntries && ComputedS != NormalizationL1 && Parent)
+    {
+      // Get Freq of <Total Docs in Db>/<Total Docs in Result Set> 
+      const off_t   TotalDocs = Parent->GetTotalRecords ();
+      const DOUBLE InvDocFreq = log ( (double)(TotalDocs) / (double)TotalEntries );
+
+      double SumScores   = 0;
+      // Get sum of scores
+#pragma omp parallel for reduction(+:SumScores, MinScore, MaxScore)
+      for (size_t i = 0; i < TotalEntries; i++)
+	{
+	  DOUBLE Score = Table[i].GetHitCount () * InvDocFreq;
+
+#if USE_GEOSCORE
+	  if (Table[i].HaveGscore()) 
+	    Score += Table[i].GetGscore().Potenz();
+#endif
+
+	  SumScores += Score; // Running sum
+	  Score *= TermWeight;
+	  Table[i].SetScore ( Score );
+	  if ((Score - MaxScore) > 0.0) MaxScore=Score;
+	  if ((Score - MinScore) < 0.0) MinScore=Score;
+	}
+      // The Root of Squares...
+      errno = 0;
+      // Now caculate the Factor
+      if (SumScores > 0.0)
+	{
+	  MaxScore /= SumScores;
+	  MinScore /= SumScores;
+#pragma omp parallel for
+	  for (size_t x = 0; x < TotalEntries; x++) {
+	    double nscore = Table[x].GetScore () / SumScores;
+	    Table[x].SetScore ( nscore );
+	  }
+	}
+      ComputedS = NormalizationL1;
+    }
+  return this;
+}
+
 
 
 OPOBJ *atomicIRSET::ComputeScoresMaxNormalization (const int TermWeight)
@@ -3836,10 +3947,11 @@ OPOBJ *atomicIRSET::ComputeScoresMaxNormalization (const int TermWeight)
   if (TotalEntries && ComputedS != MaxNormalization && Parent)
     {
       // Get Freq of <Total Docs in Db>/<Total Docs in Result Set> 
-      const DOUBLE InvDocFreq = ( Parent->GetTotalRecords () / (double)TotalEntries);
+      const DOUBLE InvDocFreq = log ( Parent->GetTotalRecords () / (double)TotalEntries);
 
       MinScore=MAXFLOAT;
       MaxScore=0.0;
+#pragma omp parallel for reduction(+:MinScore, MaxScore)
       {for (size_t i = 0; i < TotalEntries; i++)
 	{
 	  DOUBLE Score = Table[i].GetHitCount () * InvDocFreq;
@@ -3888,9 +4000,10 @@ OPOBJ *atomicIRSET::ComputeScoresLogNormalization (const int TermWeight)
 {
   if (TotalEntries && ComputedS != LogNormalization && Parent)
     {
-      const DOUBLE InvDocFreq = Parent->GetTotalRecords () / (double)TotalEntries;
+      const DOUBLE InvDocFreq = log (Parent->GetTotalRecords () / (double)TotalEntries);
       MinScore=MAXFLOAT;
       MaxScore=0.0;
+#pragma omp parallel for reduction(+:MinScore, MaxScore)
       for (size_t i = 0; i < TotalEntries; i++)
 	{
 	  DOUBLE Score = (1 + log (Table[i].GetHitCount () * InvDocFreq)) * TermWeight;
@@ -3908,7 +4021,7 @@ OPOBJ *atomicIRSET::ComputeScoresBytesNormalization (const int TermWeight)
   if (TotalEntries && ComputedS != BytesNormalization && Parent)
     {
       // Get Freq of <Total Docs in Db>/<Total Docs in Result Set> 
-      const DOUBLE wInvDocFreq = TermWeight * ( Parent->GetTotalRecords () / (double)TotalEntries);
+      const DOUBLE wInvDocFreq = TermWeight * log ( Parent->GetTotalRecords () / (double)TotalEntries);
 
       MinScore=MAXFLOAT;
       MaxScore=0.0;

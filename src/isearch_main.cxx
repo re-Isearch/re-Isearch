@@ -275,17 +275,20 @@ static void HelpUsage(const char *progname)
 	"  -h               // Sort results by different matches (see -joint)." << endl <<
 	"  -k               // Sort results by Key." << endl <<
 	"  -n               // Don't sort (By indexing order)." << endl <<
-	"  -cosine_norm     // Cosine Normalization (default)." << endl << 
-	"  -euclidean_norn  // Euclidean Normalization." << endl << 
+        "  -AF_norm         // AF Normalization." << endl <<
+        "  -bytes_norm      // Bytes Normalization." << endl <<
+	"  -euclidean_norm  // Euclidean Normalization." << endl << 
 //	"  -metric_norm     // (Cosine) Metric Normalization." << endl << 
- 	"  -max_norm        // Max. normalization. " << endl <<
+        "  -L1_norm         // Cosine L1 Normalization." << endl <<
+        "  -L2_norm         // Cosine L2 Normalization (default)." << endl <<
         "  -log_norm        // Log Normalization." << endl << 
-        "  -bytes_norm      // Bytes Normalization." << endl << 
+        "  -max_norm        // Max. normalization. " << endl <<
 	"  -no_norm         // Don't calculate scores or normalize." << endl <<
 	"  -sort B[entley]|S[edgewick]|D[ualPivot]|T[im]|N[ative] // Which variation of QuickSort to use" << endl <<
 	"  -show            // Show first hit neighborhood." << endl <<
 	"  -summary         // Show summary/description." << endl <<
 	"  -XML             // Present Results in XML-like structure." << endl <<
+	"  -Json            // Present Result in Json structure." << endl <<
 	"  -H[TML]          // Use HTML Record Presentation." << endl <<
 	"  -q[uiet]         // Print results and exit immediately." << endl <<
 	"  -t[erse]         // Print terse results." << endl <<
@@ -488,7 +491,7 @@ int _Isearch_main (int argc, char **argv)
   STRING ResTable;
   STRING LoadTable;
   enum SortBy Sort = ByScore; 
-  enum NormalizationMethods Method = CosineNormalization;
+  enum NormalizationMethods Method = NormalizationL2;
   DOUBLE MagFactor = 0.0;
   DOUBLE PriorityFactor = 1.192092896E-07F;
   size_t Clip = 0;
@@ -496,38 +499,39 @@ int _Isearch_main (int argc, char **argv)
   INT    DropScaled = 0;
   INT    DropHits = 0;
   bool Reduce = false;
-  INT DebugFlag = 0;
-  INT ShowRusage = 0;
-  INT QuitFlag = 0;
-  INT VerboseFlag = 0;
-  INT ShellFlag = 0;
-  INT ByteRangeFlag = 0;
-  INT KeyFlag = 0;
-  INT DoctypeFlag = 0;
+  bool DebugFlag = false;
+  bool ShowRusage = false;
+  bool QuitFlag = false;
+  bool VerboseFlag = false;
+  bool ShellFlag = false;
+  bool ByteRangeFlag = false;
+  bool KeyFlag = false;
+  bool DoctypeFlag = false;
   bool DateFlag = false;
   bool DateModifiedFlag = false;
-  INT RpnQuery = 0;
-  INT InfixQuery = 0;
-  INT SmartQuery = 1;
+  bool RpnQuery = false;
+  bool InfixQuery = false;
+  bool SmartQuery = true;
   STRING SmartField;
-  INT WordsQuery = 0;
-  INT AndWordsQuery = 0;
-  INT PlainQuery = 0;
-  INT ExpandSynonyms = 0;
-  INT PresentHtml = 0;
+  bool WordsQuery = false;
+  bool AndWordsQuery = false;
+  bool PlainQuery = false;
+  bool ExpandSynonyms = false;
+  bool PresentHtml = false;
   INT MaxHits = 300;
   INT Fuel = 0;
-  INT ShowHits = 0;
-  INT ShowAux = 0;
-  INT ShowHeadline = 0;
-  INT FilenameOnly = 0;
+  bool ShowHits = false;
+  bool ShowAux = false;
+  bool ShowHeadline = false;
+  bool FilenameOnly = false;
   STRING Headline;
-  INT Terse = 0;
-  INT TabFormat = 0;
-  INT ShowAbsoluteScore = 0;
+  bool Terse = false;
+  bool TabFormat = false;
+  bool ShowAbsoluteScore = false;
   INT x = 0;
   INT LastUsed = 0;
-  INT ShowXML = 0;
+  bool ShowXML = false;
+  bool ShowJson = false;
   INT ShowSummary = 0;
   INT ShowHit = 0;
   ElementSet = BRIEF_MAGIC;
@@ -557,23 +561,30 @@ int _Isearch_main (int argc, char **argv)
             }
 	  else if (Flag.Equals ("-XML") ||  Flag.Equals ("-xml"))
 	    {
-	      ShowXML = 1;
-	      PresentHtml = 1; // Latter PresentXML
+	      ShowXML = true;
+	      PresentHtml = true; // Latter PresentXML
 	      LastUsed = x;
 	    }
+          else if (Flag.Equals ("-JSON") ||  Flag.Equals ("-Json"))
+            {
+	      message_log (LOG_FATAL, "Json not yet supported");
+              ShowJson = true;
+              PresentHtml = true; // Latter PresentXML
+              LastUsed = x;
+            }
           else if (Flag.Equals ("-summary"))
             {
-              ShowSummary = 1;
+              ShowSummary = true;
               LastUsed = x;
             }
 	  else if (Flag.Equals ("-show"))
 	    {
-	      ShowHit = 1;
+	      ShowHit = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals ("-HTML") || Flag.Equals ("-H"))
 	    {
-	      PresentHtml = 1;
+	      PresentHtml = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals ("-o"))
@@ -710,11 +721,21 @@ int _Isearch_main (int argc, char **argv)
 	      Sort = ByReverseDate;
 	      LastUsed = x;
 	    }
-	  else if (Flag.Equals("-cosine_norm"))
+	  else if (Flag.Equals("-cosine_norm") || Flag.Equals("-L2_norm"))
 	    {
-	      Method = CosineNormalization;
+	      Method = NormalizationL2;
 	      LastUsed = x;
 	    }
+	  else if (Flag.Equals("-L1_norm"))
+	   {
+	      Method = NormalizationL1;
+	      LastUsed = x;
+	   }
+          else if (Flag.Equals("-AF_norm"))
+           {
+              Method = NormalizationAF; 
+              LastUsed = x; 
+           }
 	  else if (Flag.Equals("-euclidean_norm") || Flag.Equals("-metric_norm"))
 	    {
 	      Method = EuclideanNormalization;
@@ -871,17 +892,17 @@ int _Isearch_main (int argc, char **argv)
 	    }
 	  else if (Flag.Equals("-syn"))
 	    {
-	      ExpandSynonyms = 1;
+	      ExpandSynonyms = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals ("-hits"))
 	   {
-	      ShowHits = 1;
+	      ShowHits = true;
 	      LastUsed = x;
 	   }
           else if (Flag.Equals ("-joint"))
            {
-              ShowAux = 1;
+              ShowAux = true;
               LastUsed = x;
            }
 	  else if (Flag.Equals ("-t") || Flag.Equals("-terse"))
@@ -889,17 +910,17 @@ int _Isearch_main (int argc, char **argv)
 	     if (FilenameOnly)
 	       message_log (LOG_WARN, "%s: headline (\"B\") over-ride for filename", Flag.c_str());
 	     Headline = "B";
-	     ShowHeadline = 1;
-	     FilenameOnly = 0;
-	     Terse = 1;
+	     ShowHeadline = true;
+	     FilenameOnly = false;
+	     Terse = true;
 	     LastUsed = x ;
 	   }
 	  else if (Flag.Equals("-filename"))
 	   {
 	      if (ShowHeadline)
 		message_log (LOG_WARN, "%s: filename over-ride for headline", Flag.c_str());
-	      FilenameOnly = 1;
-	      ShowHeadline = 0;
+	      FilenameOnly = true;
+	      ShowHeadline = false;
 	      ElementSet = NulString;
 	      LastUsed = x;
 	   }
@@ -907,10 +928,10 @@ int _Isearch_main (int argc, char **argv)
 	   {
 	     if (Headline.IsEmpty())
 		Headline = "B";
-             ShowHeadline = 1;
-             // Terse = 1;
+             ShowHeadline = true;
+             // Terse = true;
              LastUsed = x ;
-	     TabFormat = 1;
+	     TabFormat = true;
 	   }
           else if (Flag.Equals ("-headline"))
            {
@@ -920,12 +941,12 @@ int _Isearch_main (int argc, char **argv)
                   return 0;
                 }
 	      Headline = argv[x];
-              ShowHeadline = 1;
+              ShowHeadline = true;
               LastUsed = x;
            }
           else if (Flag.Equals ("-score"))
            {
-              ShowAbsoluteScore = 1;
+              ShowAbsoluteScore = true;
               LastUsed = x;
            }
           else if (Flag.Equals ("-daterange"))
@@ -980,45 +1001,45 @@ int _Isearch_main (int argc, char **argv)
             }
 	  else if (Flag.Equals ("-v") || Flag.Equals("-verbose"))
 	    {
-	      QuitFlag = 0;
-	      VerboseFlag = 1;
-	      Terse = 0;
+	      QuitFlag = false;
+	      VerboseFlag = true;
+	      Terse = false;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals ("-q") || Flag.Equals("-quiet"))
 	    {
-	      QuitFlag = 1;
+	      QuitFlag = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals("-shell"))
 	    {
-	      ShellFlag = 1;
+	      ShellFlag = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals ("-byterange"))
 	    {
-	      ByteRangeFlag = 1;
+	      ByteRangeFlag = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals ("-filesystem"))
 	    {
-	      FilenameOnly = 1;
-              ShowHeadline = 0;
+	      FilenameOnly = true;
+              ShowHeadline = false;
 	      Headline = NulString;
               ElementSet = NulString;
-	      ByteRangeFlag = 1;
-	      QuitFlag = 1;
-	      TabFormat = 1;
+	      ByteRangeFlag = true;
+	      QuitFlag = true;
+	      TabFormat = true;
               LastUsed = x;
 	    }
 	  else if (Flag.Equals ("-key"))
 	    {
-	      KeyFlag = 1;
+	      KeyFlag = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals("-doctype"))
 	    {
-	      DoctypeFlag = 1;
+	      DoctypeFlag = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals ("-date"))
@@ -1033,36 +1054,36 @@ int _Isearch_main (int argc, char **argv)
 	    }
 	  else if (Flag.Equals ("-rpn"))
 	    {
-	      RpnQuery = 1;
+	      RpnQuery = true;
 	      LastUsed = x;
-	      SmartQuery = 0;
+	      SmartQuery = false;
 	    }
 	  else if (Flag.Equals ("-infix"))
 	    {
-	      InfixQuery = 1;
+	      InfixQuery = true;
 	      LastUsed = x;
-	      SmartQuery = 0;
+	      SmartQuery = false;
 	    }
 	  else if (Flag.Equals ("-words"))
 	    {
-	      WordsQuery = 1;
+	      WordsQuery = true;
 	      LastUsed = x;
 	    }
 
 	  else if (Flag.Equals ("-and"))
             {
-              AndWordsQuery = 1;
+              AndWordsQuery = true;
               LastUsed = x;
             }
 	  else if (Flag.Equals ("-regular"))
 	    {
-	      PlainQuery = 1;
-	      if (SmartQuery) SmartQuery = 0;
+	      PlainQuery = true;
+	      if (SmartQuery) SmartQuery = false;
 	      LastUsed = x;
 	    }
           else if (Flag.Equals ("-smart"))
             {
-              SmartQuery = 1;
+              SmartQuery = true;
               if (++x >= argc)
                 { 
                   message_log (LOG_FATAL, "Usage: No field specified after -smart.");
@@ -1140,12 +1161,12 @@ int _Isearch_main (int argc, char **argv)
 	    }
 	  else if (Flag.Equals ("-bench"))
 	    {
-              ShowRusage = 1;
+              ShowRusage = true;
               LastUsed =x;
 	    }
 	  else if (Flag.Equals ("-debug"))
 	    {
-	      DebugFlag = 1;
+	      DebugFlag = true;
 	      __Register_IB_Application(argv0, stdout, DebugFlag);
 	      LastUsed = x;
 	    }
@@ -1248,6 +1269,14 @@ int _Isearch_main (int argc, char **argv)
         cout << "encoding='" << Charset << "' ";
       cout << "standalone='yes'?>" << endl;
     }
+  else if (ShowJson)
+    {
+      cout << "{\n@:{\n";
+      STRING Charset;
+      if (GetGlobalCharset (&Charset))
+        cout << " \"encoding\":'" << Charset << "',\n";
+      cout <<   " \"standalone\": 1\n}" << endl;
+    }       
 
   INT Locks = pdb->GetLocks ();
   if (Locks)

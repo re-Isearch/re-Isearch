@@ -2018,6 +2018,14 @@ bool VIDB::XMLContext(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
   return false;
 }
 
+STRING VIDB::JsonHitTable(const RESULT& ResultRecord)
+{
+  RESULT Result;
+  const size_t i = VirtualSet (ResultRecord, &Result);
+  if (i)
+    return c_dblist[i-1]->JsonHitTable (Result);
+  return STRING("{\n") + ResultRecord.JsonHitTable() + "\n}\n";
+}
 
 bool VIDB::Summary(const RESULT& ResultRecord,
 	const STRING& RecordSyntax, PSTRING StringBuffer) const

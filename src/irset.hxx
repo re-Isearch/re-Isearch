@@ -30,10 +30,12 @@ Description:	Class IRSET - Internal Search Result Set
 ///
 ////
 extern enum NormalizationMethods {
-  Unnormalized = 0, NoNormalization, CosineNormalization, MaxNormalization, LogNormalization, BytesNormalization,
+  Unnormalized = 0, NoNormalization, NormalizationL2, NormalizationL1, MaxNormalization, LogNormalization, BytesNormalization,
   preCosineMetricNormalization, CosineMetricNormalization, EuclideanNormalization,
-  AuxNormalization1, AuxNormalization2, AuxNormalization3,  UndefinedNormalization
+  AuxNormalization1, AuxNormalization2, AuxNormalization3, NormalizationAF,  UndefinedNormalization
 } defaultNormalization;
+const int CosineNormalization=NormalizationL2;
+
 
 class atomicIRSET : public OPERAND {
 public:
@@ -118,7 +120,9 @@ public:
   OPOBJ *ComputeScores (const INT TermWeight, enum NormalizationMethods Method = defaultNormalization);
   // Methods
   OPOBJ *ComputeScoresNoNormalization (const int TermWeight);
-  OPOBJ *ComputeScoresCosineNormalization (const int TermWeight);
+  OPOBJ *ComputeScoresNormalizationAF (const int TermWeight);
+  OPOBJ *ComputeScoresNormalizationL2 (const int TermWeight);
+  OPOBJ *ComputeScoresNormalizationL1 (const int TermWeight);
   OPOBJ *ComputeScoresMaxNormalization (const int TermWeight);
   OPOBJ *ComputeScoresLogNormalization (const int TermWeight);
   OPOBJ *ComputeScoresBytesNormalization (const int TermWeight);
@@ -422,7 +426,7 @@ public:
   void FastAddEntry(const IRESULT& ResultRecord) { node()->FastAddEntry(ResultRecord); }
 
   OPOBJ *ComputeScores (const INT TermWeight) {
-        return node()->ComputeScoresCosineNormalization(TermWeight); }
+        return node()->ComputeScoresNormalizationL2(TermWeight); }
   OPOBJ *ComputeScores (const INT TermWeight, enum NormalizationMethods Method) {
 	return node()->ComputeScores(TermWeight, Method); }
 

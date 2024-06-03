@@ -119,6 +119,9 @@ public:
 
   // Dump a XML hit table
   STRING XMLHitTable() const;
+  
+  // Dump a Json hit table;
+  STRING JsonHitTable() const;
 
   // Get the data
   void   GetRecordData(STRING *StringBuffer, DOCTYPE *DoctypePtr = NULL) const;

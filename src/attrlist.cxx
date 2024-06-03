@@ -24,6 +24,7 @@ static const char *c = "c"; // 64-bit/Numeric hash
 static const char *t = "t"; // Telephone number 
 static const char *v = "v"; // Credit Card Number (Visa etc.)
 static const char *i = "i"; // IBAN (includes Checksum)
+static const char *w = "w"; // Hierarchical Navigable Small Worlds (HNSW)
 static const char *_s = "";
 
 extern "C" long double (*_IB_private_hash)(const char *, const char *, size_t );
@@ -73,7 +74,7 @@ static struct DataType {
   {"local5",    _s, FIELDTYPE::callback5, "Local callback 5 (External)"},
   {"local6",    _s, FIELDTYPE::callback6, "Local callback 6 (External)"},
   {"local7",    _s, FIELDTYPE::callback7, "Local callback 7 (External)"},
-
+  {"hnsw",       w, FIELDTYPE::db_hnsw,   "Hierarchical Navigable Small Worlds (HNSW)"},
   {"special",   _s, FIELDTYPE::special, "Special text (reserved)"},
 #define MAX_DATATYPE (int)(FIELDTYPE::special) 
   // Aliases
@@ -113,6 +114,7 @@ static struct DataType {
   {"inet",           n,   FIELDTYPE::dotnumber,     NULL},
   {"ipv4",           n,   FIELDTYPE::dotnumber,     NULL},
   {"ipv6",           n,   FIELDTYPE::dotnumber,     NULL},
+  {"vector",         w,   FIELDTYPE::db_hnsw,        NULL},
 // common xs: data type names
   {"xs:string",            _s,  FIELDTYPE::text,      NULL},
   // derived
@@ -152,13 +154,13 @@ void FIELDTYPE::AvailableTypesHelp(ostream& os) const
   
   os << "The following fundamental data types are currently supported (v." <<  FIELDTYPE::special
 	<< "." <<  ((sizeof(DataTypes)/sizeof(DataType ))-FIELDTYPE::special)/3 << "):" << endl;
-  for (; i < MAX_DATATYPE; i++)
+  for (; i <= MAX_DATATYPE; i++)
     os << "   " << DataTypes[i].Name << "  \t// " << DataTypes[i].Description << endl;
   os << "They are also available via the following alternative 'compatibility' names:" << endl;
   for (; i < sizeof(DataTypes)/sizeof(DataTypes[0]); i++) {
    if (!IsExternal(DataTypes[i].Type))
     os << "   " << DataTypes[i].Name << "     \t// Alias of " <<
-		DataTypes[DataTypes[i].Type -1].Name << endl;
+		DataTypes[DataTypes[i].Type].Name << endl; // was -1
   }
 }
 

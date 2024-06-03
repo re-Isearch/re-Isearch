@@ -404,9 +404,10 @@ public:
   }
 
   STRING XMLHitTable(const RESULT& Result);
-
   bool XMLContext(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
 	const STRING& Tag) const;
+
+  STRING JsonHitTable(const RESULT& Result); // Like above but JSON
 
   // Record Summary (if available)
   bool Summary(const RESULT& ResultRecord, const STRING& RecordSyntax,
