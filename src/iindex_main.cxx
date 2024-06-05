@@ -394,7 +394,7 @@ int _Iindex_main (int argc, char **argv)
   if (argc < 2)
     {
       std::cout << "IB indexer " <<  _iindex_main_version  << "." << SRCH_DATE(__DATE__).ISOdate()  << "." << __IB_Version << " " <<
-	sizeof(GPTYPE)*8 << "-bit edition (" << __HostPlatform << ")";
+	 sizeof(_index_id_t)*8 << ":" << sizeof(GPTYPE)*8 << "-bit edition (" << __HostPlatform << ")";
 #if EVALULATION
       if (timeout > 0) std::cout << " Try-and-Buy.";
 #endif
@@ -1043,7 +1043,7 @@ limitations under the License.  " << endl;
 	  else if (Flag.Equals ("-capacities"))
 	    {
 	       cout << "Physical Index Capacities for this " << sizeof(GPTYPE)*8 << "-bit edition:" << endl <<
-
+			"  Index id:    " <<  sizeof(_index_id_t)*8 << "-bit" << endl <<
 #ifdef  O_BUILD_IB64
 			"  Max Input:   " << ((MAX_GPTYPE)/(1024UL*1024UL*1024UL*1024ULL*1024ULL)+1) << " Tbytes (Total of all files)" << endl <<
 
