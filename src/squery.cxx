@@ -1656,23 +1656,19 @@ size_t SQUERY::SetTerm (const STRING& NewTerm, bool Ored)
 	      AttrlistPtr->AttrSetGlob(true);
 	    }
 #endif
-          if (StrTemp.GetChr (pos) == '.' && StrTemp.GetChr(pos-1) != '\\')
-            {
-              AttrlistPtr->AttrSetExactTerm (true);
-              StrTemp.EraseAfter (--pos);
-            }
-          if (StrTemp.GetChr (pos) == '~' && StrTemp.GetChr(pos-1) != '\\')
-            {
-              AttrlistPtr->AttrSetPhonetic (true);
-              StrTemp.EraseAfter (--pos);
-            }
-#if 1
-          if (StrTemp.GetChr (pos) == '$' && StrTemp.GetChr(pos-1) != '\\')
-            {
-              AttrlistPtr->AttrSetFreeForm (true);
-              StrTemp.EraseAfter (--pos);
-            }
-#endif
+
+	 // Let's process post-ops
+	 if (StrTemp.GetChr(pos-1) != '\\') {
+	   bool zap = true;
+	   switch ( StrTemp.GetChr (pos) ) {
+	     case '.': AttrlistPtr->AttrSetExactTerm (true); break;
+	     case '~': AttrlistPtr->AttrSetPhonetic (true); break;
+	     case '$': AttrlistPtr->AttrSetFreeForm (true); break;
+	     case '@': AttrlistPtr->AttrSetDenseFeedback (true); break;
+	     default:  zap = false; // Not a proper post op
+	   }
+	  if (zap) StrTemp.EraseAfter (--pos);
+	 }
 
           ///////////////////////////
           // Extract Term

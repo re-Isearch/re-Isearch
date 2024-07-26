@@ -3938,9 +3938,12 @@ PIRSET INDEX::Search (const QUERY& Query)
                 {
                   NewIrset = TermSearch (Term, FieldName, ExactTerm);
                 }
-              else
+              else // Relevant Feedback?
                 {
-                  if (Attrlist.AttrGetFreeForm ())
+		  if (Attrlist.AttrGetDenseFeedback()) {
+		    // NOT YET SUPPORTED (TODO)
+		    message_log (LOG_ERROR, "Dense feedback not yet supported.");
+		  } else if (Attrlist.AttrGetFreeForm ())
                     NewIrset = TermSearch (Term, FieldName, FreeForm);
                   else
                     NewIrset = TermSearch (Term, FieldName, Exact);

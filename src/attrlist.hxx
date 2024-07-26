@@ -180,6 +180,10 @@ public:
   void        AttrSetFreeForm (const bool Set);
   bool AttrGetFreeForm () const;
 
+// As above but dense vectors (using HNSW etc)
+  void        AttrSetDenseFeedback(const bool Set);
+  bool        AttrGetDenseFeedback() const;
+
   void        AttrSetPhrase(const bool Phrase);
   bool AttrGetPhrase() const;
 

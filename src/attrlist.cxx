@@ -595,7 +595,8 @@ enum StructureValues {
   LocalNumber = 107,
   String = 108,
   NumericString = 109, // Number
-  Glob = 200 // Local Extension
+  Glob = 200, // Local Extension
+  DenseVector // Dense Vector (TODO)
 };
 
 enum TruncationValues {
@@ -773,6 +774,23 @@ bool ATTRLIST::AttrGetFreeForm () const
 	true :
 	false;
 }
+
+// Dense vector feedback
+void ATTRLIST::AttrSetDenseFeedback (const bool Set)
+{ 
+  if (Set)
+    SetValue (Bib1AttributeSet, StructureAttribute, DenseVector);
+  else
+    ClearAttr (Bib1AttributeSet, StructureAttribute, DenseVector);
+}
+  
+bool ATTRLIST::AttrGetDenseFeedback() const
+{ 
+  return Lookup (Bib1AttributeSet, StructureAttribute, DenseVector) ?
+        true :
+        false;
+} 
+
 
 
 // Search Term Attributes 

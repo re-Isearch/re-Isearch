@@ -367,6 +367,8 @@ static void HelpUsage(const char *progname)
 	"                   // Append = for exact (case dependent) search." << endl <<
 	"                   // Append > for exact right truncated search (=*)." << endl <<
 	"                   // Append . for \"exact-term\" (e.g. \"auto\" won't match \"auto-mobile\")" << endl << 
+	"                   // Append $ for freeform encoded address (sparse vector)." << endl <<
+	"                   // Append @ for embeddings address (dense vector)." << endl <<
 	"                   // Append :n for term weighting (default=1)." << endl <<
 	"                   //   (Use negative values to lower rank.)" << endl <<
 	"                   // Use \"literal phrase\" for literal search" << endl <<
@@ -1376,7 +1378,7 @@ int _Isearch_main (int argc, char **argv)
 	message_log (LOG_WARN, "Could not locate record id '%s'", RecordID.c_str());
       return -1;
     }
-  else if (!Terse && !ShowXML && !TabFormat && VerboseFlag)
+  else if (!Terse && !ShowXML && !&ShowJson && !TabFormat && VerboseFlag)
     cout << "Isearch " << __IB_Version << endl;
 
 
