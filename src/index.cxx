@@ -1039,10 +1039,17 @@ FILE *INDEX::OpenForAppend(const STRING& FieldName, FIELDTYPE FieldType)
 	case FIELDTYPE::casehash:
 	case FIELDTYPE::currency:
 	case FIELDTYPE::lexi:
+	case FIELDTYPE::smiles:
 	case FIELDTYPE::dotnumber:
 	  fp = NUMERICLIST().OpenForAppend(FileName);
 	  break;
 	case FIELDTYPE::db_hnsw:
+	  /* NOT YET IMPLEMENTED */
+	  break;
+	case FIELDTYPE::db_nsg:
+	  /* NOT YET IMPLEMENTED */
+	  break;
+	case FIELDTYPE::db_IVFFlat:
 	  /* NOT YET IMPLEMENTED */
 	  break;
 	case FIELDTYPE::privhash:
@@ -1286,8 +1293,10 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
             }
 
 	    case FIELDTYPE::db_hnsw: /* HNSW */
+	    case FIELDTYPE::db_nsg: // 
+	    case FIELDTYPE::db_IVFFlat:
 	    {
-	      message_log (LOG_ERROR, "HNSW Not Yet Implemented");
+	      message_log (LOG_ERROR, "Dense Vectors Not Yet Implemented");
 	      break;
 	    }
 
@@ -1367,6 +1376,14 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 	      break;
 
 	    }
+            case FIELDTYPE::smiles:
+            {
+	      // NOT YET SUPPORTED
+              // const NUMERICOBJ val = encodeSMILESHash( DocTypePtr->ParseBuffer(Buffer) );
+              // NUMERICFLD(gp, val).Write(fp);
+              items++;
+              break;
+            }
             case FIELDTYPE::privhash:
             {
 	      if (_IB_private_hash)
@@ -3781,6 +3798,12 @@ PIRSET INDEX::Search (const QUERY& Query)
 		  if (gotRelation==false) Relation=ZRelEQ;
 		  NewIrset=LexiHashSearch( Term, FieldName, Relation);
 		}
+              else if (aFieldType.IsSMILES() || FieldType.IsSMILES()) // FIELDTYPE::smiles
+                {
+		  // NOT YET SUPPORTED
+                  if (gotRelation==false) Relation=ZRelEQ;
+                  // NewIrset=SmilesHashSearch( Term, FieldName, Relation);
+                }
               else if (Attrlist.AttrGetPhonetic ())
                 {
                   NewIrset = TermSearch (Term, FieldName,

@@ -22,9 +22,11 @@ static const char *b = "b"; // Box
 static const char *h = "h"; // Phonetic hash
 static const char *c = "c"; // 64-bit/Numeric hash
 static const char *t = "t"; // Telephone number 
-static const char *v = "v"; // Credit Card Number (Visa etc.)
-static const char *i = "i"; // IBAN (includes Checksum)
+static const char *v = "iin"; // Credit Card Number (Visa etc.) = issuer identification number (IIN) 
+static const char *i = "iban"; // IBAN (includes Checksum)
 static const char *w = "w"; // Hierarchical Navigable Small Worlds (HNSW)
+static const char *g = "g"; // Graph vector ANN algorithms (except HNSW)
+static const char *f = "f"; // Vector Flat algorithms
 static const char *_s = "";
 
 extern "C" long double (*_IB_private_hash)(const char *, const char *, size_t );
@@ -59,10 +61,11 @@ static struct DataType {
   {"hash",      c,  FIELDTYPE::hash, "Computed 64-bit hash of field contents"},
   {"casehash",  c,  FIELDTYPE::casehash, "Computed case-independent hash of text field contents"},
   {"lexi",      c,  FIELDTYPE::lexi, "Computed case-independent lexical hash (first 8 characters)"},
+  {"smiles",    c,  FIELDTYPE::smiles, "Computed SMILES (Chemical) hash // NOT YET"},
   {"privhash",  c,  FIELDTYPE::privhash, _IB_private_hash_descr ? _IB_private_hash_descr : "Undefined Private Hash (callback)"},
   {"isbn",      _s, FIELDTYPE::isbn, "ISBN: International Standard Book Number"},
   {"telnumber", t,  FIELDTYPE::telnumber, "ISO/CCITT/UIT Telephone Number"},
-  {"creditcard", v, FIELDTYPE::creditcardnum, "Credit Card Number"},
+  {"iin", v, FIELDTYPE::creditcardnum, "Issuer Identification (Crediti/Debit Card) Number"},
   {"iban",       i, FIELDTYPE::iban, "IBAN: International Bank Account Number"},
   {"bic",       _s, FIELDTYPE::bic, "BIC : International Identifier Code (SWIFT)"},
   {"db_string", _s, FIELDTYPE::db_string, "External DB String (callback)"},
@@ -75,7 +78,9 @@ static struct DataType {
   {"local6",    _s, FIELDTYPE::callback6, "Local callback 6 (External)"},
   {"local7",    _s, FIELDTYPE::callback7, "Local callback 7 (External)"},
   {"hnsw",       w, FIELDTYPE::db_hnsw,   "Hierarchical Navigable Small Worlds (HNSW)"},
-  {"special",   _s, FIELDTYPE::special, "Special text (reserved)"},
+  {"nsg",        g, FIELDTYPE::db_nsg,    "Spread Out Graph ANNS algorithms (NSG)"}, 
+  {"ivfflat",    f, FIELDTYPE::db_IVFFlat,"IVFFlat Vectors"},
+  {"special",   _s, FIELDTYPE::special,   "Special text (reserved)"},
 #define MAX_DATATYPE (int)(FIELDTYPE::special) 
   // Aliases
   {"dbm_string",    _s,  FIELDTYPE::db_string,     NULL},
@@ -110,10 +115,13 @@ static struct DataType {
   {"telnum",         t,  FIELDTYPE::telnumber,      NULL},
   {"phone",          t,  FIELDTYPE::telnumber,      NULL},
   {"telephone",      t,  FIELDTYPE::telnumber,      NULL},
+  {"creditcard",     v,  FIELDTYPE::creditcardnum,  NULL},
 //
   {"inet",           n,   FIELDTYPE::dotnumber,     NULL},
   {"ipv4",           n,   FIELDTYPE::dotnumber,     NULL},
   {"ipv6",           n,   FIELDTYPE::dotnumber,     NULL},
+  {"flat",           f,   FIELDTYPE::db_IVFFlat,    NULL},
+  {"sog",            g,   FIELDTYPE::db_nsg,        NULL},
   {"vector",         w,   FIELDTYPE::db_hnsw,        NULL},
 // common xs: data type names
   {"xs:string",            _s,  FIELDTYPE::text,      NULL},

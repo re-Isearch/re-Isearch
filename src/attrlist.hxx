@@ -17,9 +17,9 @@ public:
   enum datatypes { unknown=-1, any = 0, text, numerical, computed, numericalrange,
 	date, daterange, gpoly, box, time, ttl, ttl_expires, boolean, currency,
 	dotnumber, phonhash, phonhash2, metaphone, metaphone2, hash, casehash,
-	lexi, privhash, isbn, telnumber, creditcardnum, iban, bic,
+	lexi, smiles, privhash, isbn, telnumber, creditcardnum, iban, bic,
 	db_string, callback, callback1, callback2, callback3, callback4, callback5, callback6, callback7,
-	db_hnsw, special, __last=255};
+	db_hnsw, db_nsg, db_IVFFlat, special, __last=255};
 
   FIELDTYPE();
   FIELDTYPE(const FIELDTYPE& OtherFieldType);
@@ -71,9 +71,12 @@ public:
   bool    IsHash() const     { return Type == hash;      }
   bool    IsCaseHash() const { return Type == casehash;  }
   bool    IsLexiHash() const { return Type == lexi;      }
+  bool    IsSMILES() const   { return Type == smiles;    }
   bool    IsPrivHash() const { return Type == privhash;  }
   bool    IsDBMStr() const   { return Type == db_string; }
-  bool    IsHNSW()           { return Type == db_hnsw;   } // Hierarchical Navigable Small Worlds (HNSW)
+  bool    IsHNSW()           { return Type == db_hnsw;   } // Hierarchical Navigable Small Worlds
+  bool    IsNSG()            { return Type == db_nsg;    } // Spread Out Graph
+  bool    IsIVFFlat() const  { return Type == db_IVFFlat;} // IVF Flat Model
   bool    IsCallback() const { return IsCallback(Type);  }
   bool    IsExternal() const { return IsExternal(Type);  }
 
