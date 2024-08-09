@@ -28,6 +28,8 @@ Description:	Class INDEX
 class FPT;
 class Dictionary;
 
+extern NUMERICOBJ (*_IB_smiles_hash)(const char *);
+
 class INDEX /* : public IDBOBJ */ {
 friend class IDB;
 public:
@@ -347,6 +349,10 @@ private:
   NUMERICOBJ  encodeHash(const STRING& String) const;
   NUMERICOBJ  encodeCaseHash(const STRING& String) const;
   NUMERICOBJ  encodeLexiHash(const STRING& String) const;
+  NUMERICOBJ  encodeSmiles(const STRING& String) const {
+    if ( _IB_smiles_hash) return _IB_smiles_hash(String.c_str());
+    return 0;
+  }
   FILE       *OpenForAppend(const STRING& FieldName, FIELDTYPE FieldType);
 
 // Variables (constants)

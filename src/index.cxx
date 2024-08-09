@@ -31,7 +31,6 @@ TODO:
 extern int _ib_defaultMaxCPU_ticks;
 extern int _ib_defaultMaxQueryCPU_ticks;
 
-
 #define XXX_DEBUG 1
 #undef XXX_DEBUG /* NO DEBUG */
 
@@ -135,6 +134,9 @@ static const char _mode_rt[] = "rt";
 #else
 static const char _mode_rt[] = "r";
 #endif
+
+
+NUMERICOBJ (*_IB_smiles_hash)(const char *) = 0; // NOT YET IMPLEMENTED
 
 static const char CommonWordsFileExtension[] = ".cwi";
 
@@ -1379,9 +1381,12 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
             case FIELDTYPE::smiles:
             {
 	      // NOT YET SUPPORTED
-              // const NUMERICOBJ val = encodeSMILESHash( DocTypePtr->ParseBuffer(Buffer) );
-              // NUMERICFLD(gp, val).Write(fp);
-              items++;
+	      if (_IB_smiles_hash)
+		{
+		  const NUMERICOBJ val = encodeSmiles( DocTypePtr->ParseBuffer(Buffer) );
+		  NUMERICFLD(gp, val).Write(fp);
+		  items++;
+		}
               break;
             }
             case FIELDTYPE::privhash:

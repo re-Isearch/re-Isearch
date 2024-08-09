@@ -101,7 +101,7 @@ void INDEX::SortNumericFieldData()
 
     if (FieldType.IsNumerical() || FieldType.IsComputed() || FieldType.IsPhonetic() ||
 		FieldType.IsHash() || FieldType.IsCaseHash() || FieldType.IsPrivHash() ||
-		FieldType.IsCurrency() || FieldType.IsLexiHash() || FIeldType.IsSMILES() ) {
+		FieldType.IsCurrency() || FieldType.IsLexiHash() || FieldType.IsSMILES() ) {
       NUMERICLIST().WriteIndex(Fn);
     } else if (FieldType.IsNumericalRange()) {
       INTERVALLIST().WriteIndex(Fn);
