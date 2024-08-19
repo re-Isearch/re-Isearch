@@ -70,6 +70,8 @@ public:
   virtual long       ParseCategory(const STRING& Buffer) const;
   virtual MONETARYOBJ ParseCurrency(const STRING& FieldName, const STRING& Buffer) const;
 
+  // TODO: Interface may change.
+  // virtual EMBEDDING ParseEmbeddings(const STRING& FieldName, const STRING& Buffer int Typ) const;(
 
   virtual INT ReadFile(FILE *Fp, CHR *Buffer, off_t Offset, size_t Length) const;
   virtual INT ReadFile(const STRING& Filename, CHR *Buffer, off_t Offset, size_t Length) const;

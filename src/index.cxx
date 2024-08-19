@@ -1298,6 +1298,11 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 	    case FIELDTYPE::db_nsg: // 
 	    case FIELDTYPE::db_IVFFlat:
 	    {
+	      //TODO: Callack. Convert a buffer to a dense vector
+	      // We'd need a method in Doctypes to 
+	      // vector = DocTypePtr->ParseEmbeddings(Buffer, FieldName, type);
+	      // write the vector with the associated gp.
+
 	      message_log (LOG_ERROR, "Dense Vectors Not Yet Implemented");
 	      break;
 	    }
