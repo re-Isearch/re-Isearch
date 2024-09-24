@@ -1089,7 +1089,7 @@ limitations under the License.  " << endl;
 	      if (!_IB_GetPlatformName(tmp, sizeof(tmp)))
 		tmp[0] = '\0';
 	      cout << "IB indexer v" <<  _iindex_main_version  <<  "." << SRCH_DATE(__DATE__).ISOdate()  << "."
-		<< __IB_Version << " " << sizeof(GPTYPE)*8 << "-bit edition (" << __HostPlatform << ")" ;
+		<< __IB_Version << " " << sizeof(_index_id_t)*8 << ":" << sizeof(GPTYPE)*8 << "-bit edition (" << __HostPlatform << ")" ;
 	      if (tmp[0])
 		cout << "  [" << tmp << "]";
 	      cout << endl;

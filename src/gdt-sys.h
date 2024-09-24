@@ -119,7 +119,18 @@ const GDT_BOOLEAN GDT_TRUE = (1==1);
 # ifndef O_BUILD_IB32
 #  define O_BUILD_IB64 1
 # endif
-#endif  
+#endif
+
+#ifdef LARGE_INDEX
+# if HOST_MACHINE_64
+#  ifndef O_BUILD_IB64
+#    define O_BUILD_IB64
+#  endif
+#  else
+#    warning "LARGE_INDEX only available on 64-bit platforms"
+#    undef LARGE_INDEX
+#  endif
+#endif
 
 #ifdef O_BUILD_IB64 /* 64 Bit Edition? */
 # define MAX_GPTYPE 0xffffffffffff0000ULL

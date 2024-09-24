@@ -183,22 +183,35 @@ inline bool Read(DOCTYPE_ID *Ptr, PFILE Fp)    { return Ptr->Read(Fp); }
 typedef UINT4   _ib_category_t; // Category Type
 typedef INT2    _ib_priority_t; // Priority
 
-const unsigned int MdtIndexCapacity = (1L << 25) - 1; // See below
-const unsigned int VolIndexCapacity = 0xFF; // See below
-
-#if 1 /* 32-bit default addressing */
-typedef UINT4  _index_id_t; // 32 bit index ID encoding. This limits the total 
-                            // number of records to around 12 million per index
-# else
-// 64-bit addressing is ONLY available on platforms where int is 64-bit or larger.
+#if defined(LARGE_INDEX) && defined(O_BUILD_IB64)
+// IB64 using 64-bit addresses is prerequisite for LARGE_INDEX (64-bit ids)
+// 64-bit index id addressing is ONLY available on platforms where int is 64-bit or larger.
 // this excludes Microsoft Windows (which is still WIN32).
 #  if ( (UINT_MAX) >= 0xFFFFFFFUL)
-// typedef UINT8  _index_id_t; // 64 bit index ID encoding. 
+  typedef UINT8  _index_id_t; // 64 bit index ID encoding. 
+  const unsigned int MdtIndexCapacity = (1L << (64-6)) - 1; // See below
+
+  static const _index_id_t  _vert_mask  = 0xFF00000000000000ULL;  
+  static const _index_id_t  _index_mask = 0x00FFFFFFFFFFFFFFULL;
+
 #    else
-// typedef UINT4  _index_id_t;
+  typedef UINT4  _index_id_t;
+  const unsigned int MdtIndexCapacity = (1L << 25) - 1; // See below
+  static const _index_id_t  _vert_mask = 0xFF000000;
+  static coant _index_id_t  _index_mask = 0x00FFFFFF;
 #  endif
+#else /* 32-bit default addressing */
+
+// Normal 32-bit index ids
+typedef UINT4  _index_id_t; // 32 bit index ID encoding. This limits the total
+                            // number of records to around 12 million per index
+static const _index_id_t  _vert_mask  = 0xFF000000;
+static coant _index_id_t  _index_mask = 0x00FFFFFF;
+const unsigned int MdtIndexCapacity = (1L << 25) - 1; // See below
+
 #endif
 
+const unsigned int VolIndexCapacity = 0xFF; // See below
 
 #define MAX_VIRTUAL_INDEXES 255
 
@@ -222,13 +235,13 @@ public:
 
   _index_id_t GetIndex() const { return Index; }
   void        SetMdtIndex(const INT NewMdtIndex) {
-    Index = (NewMdtIndex | (Index & 0xFF000000));
+    Index = (NewMdtIndex | (Index & _vert_mask ));
   }
-  INT         GetMdtIndex() const { return (Index & 0x00FFFFFF); };
+  INT         GetMdtIndex() const { return (Index & _index_mask); };
   void        SetVirtualIndex(const UCHR NewvIndex) {
     Index = (Index & 0x00FFFFFF) | (((long)NewvIndex) << 24);
   }
-  INT        GetVirtualIndex() const { return ((Index & 0xFF000000) >> 24);}
+  INT        GetVirtualIndex() const { return ((Index & _vert_mask) >> 24);}
 
   void       Write(FILE *fp) const { ::Write(Index, fp); }
   void       Read(FILE *fp)        { ::Read(&Index, fp); }
