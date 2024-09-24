@@ -412,7 +412,7 @@ UINT8 MString::DoubleMetaphone(STRING &metaph, STRING &metaph2)
           break;
 
         case 'D':
-          if (StringAt(current, 2, "DG", NULL))
+          if (StringAt(current, 2, "DG", NULL)) {
             if (StringAt((current + 2), 1, "I", "E", "Y", NULL))
               {
                 //e.g. 'edge'
@@ -427,6 +427,7 @@ UINT8 MString::DoubleMetaphone(STRING &metaph, STRING &metaph2)
                 current += 2;
                 break;
               }
+           }
 
           if (StringAt(current, 2, "DT", "DD", NULL))
             {

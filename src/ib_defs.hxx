@@ -186,7 +186,19 @@ typedef INT2    _ib_priority_t; // Priority
 const unsigned int MdtIndexCapacity = (1L << 25) - 1; // See below
 const unsigned int VolIndexCapacity = 0xFF; // See below
 
-typedef UINT4  _index_id_t;
+#if 1 /* 32-bit default addressing */
+typedef UINT4  _index_id_t; // 32 bit index ID encoding. This limits the total 
+                            // number of records to around 12 million per index
+# else
+// 64-bit addressing is ONLY available on platforms where int is 64-bit or larger.
+// this excludes Microsoft Windows (which is still WIN32).
+#  if ( (UINT_MAX) >= 0xFFFFFFFUL)
+// typedef UINT8  _index_id_t; // 64 bit index ID encoding. 
+#    else
+// typedef UINT4  _index_id_t;
+#  endif
+#endif
+
 
 #define MAX_VIRTUAL_INDEXES 255
 

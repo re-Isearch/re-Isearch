@@ -65,6 +65,7 @@ static int IrsetIndexCompare(const void* x, const void* y)
   return s1.Compare(s2);
 }   
 
+// FIX: Need to make sure that if _index_id_t is 64-bits that int is 64-bits
 static int iIndexCompare(const void *x, const void *y)
 {
   return (int)(*((_index_id_t *)x) - (_index_id_t)(((IRESULT *)y)->GetIndex()) );
