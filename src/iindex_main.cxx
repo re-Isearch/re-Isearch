@@ -1056,7 +1056,7 @@ limitations under the License.  " << endl;
 			                   " trillion words (optimized), >" <<
 				((MAX_GPTYPE)/(2ULL*1024ULL*1024ULL*1000ULL*1000ULL)) << " trillion (non-optimized)" << endl <<
 		       "  Word Freq:   Maximum same as \"Max Words\"" << endl <<
-		       "  Max Records: " << (((_index_id_t)-1) / (2*1024L*1024L*sizeof(MDTREC))) << " million." << endl <<
+		       "  Max Records: " << (MdtIndexCapacity / (1024L*1024L*sizeof(MDTREC))) << " million." << endl <<
 		       "  Min. disk requirements: some fixed and variable amounts plus each" << endl <<
                        "    record (" << sizeof(MDTREC) << "); word (" << sizeof(GPTYPE) << "); unique word (~"<< (DefaultSisLength+1+2*sizeof(GPTYPE)) << "); field (" << sizeof(FC) << ")." << endl <<
 		       "Virtual Database Search Capacities:" << endl <<
@@ -1065,7 +1065,7 @@ limitations under the License.  " << endl;
 		       "  Max Words:   unlimited (limit only imposed by physical index)" << endl <<
 		       "  Max Unique:  unlimited (limit only imposed by physical index)" << endl <<
 		       "  Max Indexes: " << VolIndexCapacity << endl <<
-                       "  Max Records: " << (MdtIndexCapacity/(1024L*1024L)) << " million (Total all indexes)" << endl <<
+                       "  Max Records: " << VolIndexCapacity *(MdtIndexCapacity/(sizeof(MDTREC)*1024L*1024L)) << " million (Total all indexes)" << endl <<
 		       "Preset Per-Record Limits:" << endl <<
 #if !USE_MDTHASHTABLE
                        "  Max Path:    " << MaxDocPathNameSize << " characters" << endl <<

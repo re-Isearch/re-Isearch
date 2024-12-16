@@ -4,6 +4,8 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE */
 
 //// TODO: htonll etc... Current implmentation is 32-bit!!!
 
+// LARGE INDEXES DON'T YET WORK.. 
+
 const int MaxMDTInstances = 20; // 100000;
 
 /************************************************************************
@@ -70,6 +72,7 @@ MDTHASHTABLE *_globalMDTHashTable = NULL;
 #endif
 
 
+
 #if PORTABLE_MDT
 # ifdef O_BUILD_IB64
 #  define NTOHL(_x) ntohll(_x)
@@ -86,7 +89,7 @@ MDTHASHTABLE *_globalMDTHashTable = NULL;
 #endif
 
 
-
+static const _index_id_t MDT_CAPACITY (MdtIndexCapacity/sizeof(MDTREC)) ;
 
 
 #define SIZEOF_MAGIC 16 /* See mdt.cxx */
@@ -97,10 +100,23 @@ int _IB_MDT_SEED = 5039;
 #define GROWTH_FACTOR(_x) ((_x)*3 + _IB_MDT_SEED)
 
 
-#define DELETED_BITS        0xF0000000UL
+// static const _index_id_t  _vert_mask  = 0xFF00000000000000ULL;
+//  static const _index_id_t  _index_mask = 0x00FFFFFFFFFFFFFFULL;
+
+
+#if defined(LARGE_INDEX) && defined(O_BUILD_IB64)
+#  define DELETED_BITS        0xF000000000000000ULL
+#else
+#  define DELETED_BITS        0xF0000000UL
+#endif 
+
 #define INDEX_BITS          (0x0FFFFFFFUL | ((UINT8)(0xFFFFFFFFUL)) << 32)
+
+
+
 #define DELETED_MASK(_x)    (((_x) & DELETED_BITS) ? true : false)
 #define INDEX_MASK(_x)      ((_x) & INDEX_BITS)
+
 #define KEYHASH_MASK(_x)    (UINT4)((_x) >> 32)
 #define SET_DELETE_BITS(_x) ((_x) |= DELETED_BITS)
 #define CLR_DELETE_BITS(_x) ((_x) &= INDEX_BITS) 
@@ -869,9 +885,9 @@ size_t MDT::AddEntry (const MDTREC& MdtRecord)
     {
       return 0;
     }
-  if (TotalEntries >=  MdtIndexCapacity)
+  if (TotalEntries >=  MDT_CAPACITY)
     {
-      message_log (LOG_PANIC, "MDT Capacity of %lu records has been exceeded!",  MdtIndexCapacity);
+      message_log (LOG_PANIC, "MDT Capacity of %lu records has been exceeded!", MDT_CAPACITY);
       return 0;
     }
 //if (TotalEntries == 0) WriteHeader();
@@ -1320,8 +1336,8 @@ void MDT::Resize (const size_t Entries)
 {
   if (Entries > TotalEntries)
     {
-      if (Entries > MdtIndexCapacity)
-	message_log (LOG_WARN, "MDT Capacity is %lu records in this version.",  MdtIndexCapacity);
+      if (Entries > MDT_CAPACITY)
+	message_log (LOG_WARN, "MDT Capacity is %lu records in this version.", MDT_CAPACITY);
       // Resize Key Index
       KEYREC *OldKeyIndex = KeyIndex;
       try {

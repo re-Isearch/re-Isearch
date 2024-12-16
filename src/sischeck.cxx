@@ -15,7 +15,7 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 #include "lang-codes.hxx"
 
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
    char tmp[1024], outfile[1024], last[256];
    int len, pos;

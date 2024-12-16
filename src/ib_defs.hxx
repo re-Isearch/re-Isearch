@@ -183,20 +183,21 @@ inline bool Read(DOCTYPE_ID *Ptr, PFILE Fp)    { return Ptr->Read(Fp); }
 typedef UINT4   _ib_category_t; // Category Type
 typedef INT2    _ib_priority_t; // Priority
 
+
 #if defined(LARGE_INDEX) && defined(O_BUILD_IB64)
 // IB64 using 64-bit addresses is prerequisite for LARGE_INDEX (64-bit ids)
 // 64-bit index id addressing is ONLY available on platforms where int is 64-bit or larger.
 // this excludes Microsoft Windows (which is still WIN32).
 #  if ( (UINT_MAX) >= 0xFFFFFFFUL)
   typedef UINT8  _index_id_t; // 64 bit index ID encoding. 
-  const unsigned int MdtIndexCapacity = (1L << (64-6)) - 1; // See below
+  const unsigned long MdtIndexCapacity = (1L << (64-4)) - 1; // See below
 
   static const _index_id_t  _vert_mask  = 0xFF00000000000000ULL;  
   static const _index_id_t  _index_mask = 0x00FFFFFFFFFFFFFFULL;
 
 #    else
   typedef UINT4  _index_id_t;
-  const unsigned int MdtIndexCapacity = (1L << 25) - 1; // See below
+  const unsigned long MdtIndexCapacity = (1L << (32-4)) - 1; // See below
   static const _index_id_t  _vert_mask = 0xFF000000;
   static coant _index_id_t  _index_mask = 0x00FFFFFF;
 #  endif
@@ -206,10 +207,21 @@ typedef INT2    _ib_priority_t; // Priority
 typedef UINT4  _index_id_t; // 32 bit index ID encoding. This limits the total
                             // number of records to around 12 million per index
 static const _index_id_t  _vert_mask  = 0xFF000000;
-static coant _index_id_t  _index_mask = 0x00FFFFFF;
-const unsigned int MdtIndexCapacity = (1L << 25) - 1; // See below
+static const _index_id_t  _index_mask = 0x00FFFFFF;
+const unsigned long MdtIndexCapacity = (1L << (32-4)) - 1; // See below
 
 #endif
+
+
+/*  
+ static index_id_t _vert_mask = (index_id_t)0xFF << ( sizeof(index_id_t)*7); // want 8*sizeof() - 8 (byte)
+ static index_id_t _index_mask = ~_vert_mask & (_index_id_t)-1);
+
+ // Maximum number of indexes
+ const unsigned long MdtIndexCapacity = (1L << ((sizeof(index_id_t)*7)) - 1; // See above
+ // True capacity is really, since we are seeking, MdtIndexCapacity / sizof(MDTREC)
+
+*/  
 
 const unsigned int VolIndexCapacity = 0xFF; // See below
 

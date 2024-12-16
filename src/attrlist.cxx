@@ -61,7 +61,7 @@ static struct DataType {
   {"hash",      c,  FIELDTYPE::hash, "Computed 64-bit hash of field contents"},
   {"casehash",  c,  FIELDTYPE::casehash, "Computed case-independent hash of text field contents"},
   {"lexi",      c,  FIELDTYPE::lexi, "Computed case-independent lexical hash (first 8 characters)"},
-  {"smiles",    c,  FIELDTYPE::smiles, "Computed SMILES (Chemical) hash // NOT YET"},
+  {"smiles",    c,  FIELDTYPE::smiles, "Computed SMILES (Chemical) hash // OPTIONAL FEATURE"},
   {"privhash",  c,  FIELDTYPE::privhash, _IB_private_hash_descr ? _IB_private_hash_descr : "Undefined Private Hash (callback)"},
   {"isbn",      _s, FIELDTYPE::isbn, "ISBN: International Standard Book Number"},
   {"telnumber", t,  FIELDTYPE::telnumber, "ISO/CCITT/UIT Telephone Number"},
@@ -77,9 +77,9 @@ static struct DataType {
   {"local5",    _s, FIELDTYPE::callback5, "Local callback 5 (External)"},
   {"local6",    _s, FIELDTYPE::callback6, "Local callback 6 (External)"},
   {"local7",    _s, FIELDTYPE::callback7, "Local callback 7 (External)"},
-  {"hnsw",       w, FIELDTYPE::db_hnsw,   "Hierarchical Navigable Small Worlds (HNSW)"},
-  {"nsg",        g, FIELDTYPE::db_nsg,    "Spread Out Graph ANNS algorithms (NSG)"}, 
-  {"ivfflat",    f, FIELDTYPE::db_IVFFlat,"IVFFlat Vectors"},
+  {"hnsw",       w, FIELDTYPE::db_hnsw,   "Hierarchical Navigable Small Worlds (HNSW) // NOT YET"},
+  {"nsg",        g, FIELDTYPE::db_nsg,    "Spread Out Graph ANNS algorithms (NSG) // NOT YET"}, 
+  {"ivfflat",    f, FIELDTYPE::db_IVFFlat,"IVFFlat Vectors // NOT YET"},
   {"special",   _s, FIELDTYPE::special,   "Special text (reserved)"},
 #define MAX_DATATYPE (int)(FIELDTYPE::special) 
   // Aliases

@@ -67,9 +67,9 @@ LDOPTS = -lC
 
 CPATH=#/usr/local/bin/
 
-CC=$(CPATH)g++$(GCC_VERSION)
-cc=$(CPATH)gcc$(GCC_VERSION)
-LD=$(purify) $(CC)
+CC=emcc --bind
+cc=emcc --bind
+LD=$(CC)
 RPATH=$(DEFAULT_LIB_INSTALL_PATH)
 LDOPTS = -undefined dynamic_lookup -rpath $(RPATH)
 
@@ -465,11 +465,11 @@ PLUGIN_SRCS = \
 
 
 
-PROC_OBJ= $(PROC_SRCS: .cxx=.o)
-BAS_OBJ = $(BAS_SRCS:.cxx=.o)
-IO_OBJ  = $(IO_SRCS:.cxx=.o)
-ENG_OBJ = $(ENG_SRCS:.cxx=.o) $(SRC_DIR)/defs.o
-APPS_OBJ= $(APPS_SRCS:.cxx=.o)
+PROC_OBJ= $(PROC_SRCS: .cxx=.js)
+BAS_OBJ = $(BAS_SRCS:.cxx=.js)
+IO_OBJ  = $(IO_SRCS:.cxx=.js)
+ENG_OBJ = $(ENG_SRCS:.cxx=.js) $(SRC_DIR)/defs.js
+APPS_OBJ= $(APPS_SRCS:.cxx=.js)
 BAS_H   = $(BAS_SRCS:.cxx=.hxx)
 
 
