@@ -181,7 +181,7 @@ void atomicIRSET::Set(const atomicIRSET *OtherPtr)
   // Now add to table..
 //cerr << "SET: Now add to table " << OtherTotal << " Count = " << __IB_IRESULT_allocated_count << endl;
 
-#pragma omp parallel for
+//#pragma omp parallel for
   for (TotalEntries = 0; TotalEntries < OtherTotal; TotalEntries++)
     Table[TotalEntries] = OtherPtr->Table[TotalEntries];
 
@@ -344,7 +344,7 @@ void atomicIRSET::SetMdt(const MDT *NewMdt)
   const MDT *MdtPtr = NewMdt ? NewMdt : (Parent ? Parent->GetMainMdt () : NULL);
   if (MdtPtr)
     {
-#pragma omp parallel for
+//#pragma omp parallel for
       for (size_t i=0; i<TotalEntries; i++)
 	Table[i].SetMdt(MdtPtr);
     }
@@ -457,7 +457,7 @@ STRING& atomicIRSET::Serialize()
   // Need to allocate sufficient memory to take the whole serialized IRSET
   const size_t space = sizeof(STRINGData) * (Parent ? Parent->GetDbFileStem().GetLength() : 1) + 4;
   const size_t capacity = (TotalEntries + 1)*sizeof(Table) + 4*sizeof(atomicIRSET) + space;
-  STRING buf ('\0", (capacity + 1);
+  STRING buf ('\0', (capacity + 1);
   FILE *fp = fmemopen(buf.data(), capacity, "wb");
   if (fp) {
     Write(fp));
@@ -841,7 +841,7 @@ void atomicIRSET::Resize (const size_t Entries)
 	return;
       }
 
-#pragma omp parallel for
+//#pragma omp parallel for
       for (size_t i = 0; i < NewTotal; i++)
 	{
 	  NewTable[i] = Table[i];
@@ -898,7 +898,7 @@ size_t atomicIRSET::GetHitTotal ()
     return HitTotal;
 
   size_t Total = 0;
-#pragma omp parallel for reduction(+:Total)
+//#pragma omp parallel for reduction(+:Total)
   for (size_t x = 0; x < TotalEntries; x++)
     Total += Table[x].GetHitCount ();
   return HitTotal = Total;
@@ -3937,7 +3937,7 @@ OPOBJ *atomicIRSET::ComputeScoresNormalizationL1 (const int TermWeight)
 	{
 	  MaxScore /= SumScores;
 	  MinScore /= SumScores;
-#pragma omp parallel for
+//#pragma omp parallel for
 	  for (size_t x = 0; x < TotalEntries; x++) {
 	    double nscore = Table[x].GetScore () / SumScores;
 	    Table[x].SetScore ( nscore );

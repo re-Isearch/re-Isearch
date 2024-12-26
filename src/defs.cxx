@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+Copyright (c) 2020-25 Project re-Isearch and its contributors: See CONTRIBUTORS.
 It is made available and licensed under the Apache 2.0 license: see LICENSE
 */
 #pragma ident  "@(#)defs.cxx"
@@ -103,8 +103,10 @@ Portions Copyright (c) 1995 MCNC/CNDIR; 1995-2011 BSn/Munich and its NONMONOTONI
 Copyright (c) 2020-2022 NONMONOTONIC Networks for the re.Isearch Project.\n\
 Copyright (c) 2022-2023 Project Exodus 3.0 (Germany) and the ExoDAO Network Association (Zurich).\n\n\
 Copyright (c) 2024 re-Isearch.org (Germany)\n\
-This software has been made available by generous public support including a grant\n\
-from the EU's NGI0 Discovery Fund through NLnet, grant agreement No 825322.";
+This software has been made available by generous public support including grants\n\
+from the EU's NGI0 Discovery Fund through NLnet, grants agreement No 825322 and\n\
+No 101135429 (which support also from SERI) for project Schmate as well as the\n\
+German BMBF as grant Nr. 01IS22S32 for the Exodus 3.0 project";
 
 const char * const __CompilerUsed = HOST_COMPILER;
 const char * const __HostPlatform = HOST_PLATFORM;

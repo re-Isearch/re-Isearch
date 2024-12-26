@@ -471,7 +471,11 @@ int _Isearch_main (int argc, char **argv)
   if (argc < 2)
     {
       cout << endl << "IB Search v." <<  _isearch_main_version << "." << SRCH_DATE(__DATE__).ISOdate() << "."
-	      <<  __IB_Version << " (" << __HostPlatform << ")" << endl
+	      <<  __IB_Version << " (" << __HostPlatform <<
+#ifdef _OPENMP
+	" MultiThreaded" << 
+#endif
+ 	")" << endl
       ; //  << __CopyrightData  << endl << endl;
       HelpUsage(  RemovePath(argv[0]).c_str() );
       return 0;

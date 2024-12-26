@@ -375,11 +375,19 @@ const STRING INFIX2RPN::op2string (int op) const
     }
   if (op >= BoolXXXX)
     {
+#if 1
+      STRING tmp;
+      if (op - BoolFRAC > 200)
+	tmp.sprintf("NEAR:%d",  op - BoolPROXIMITY);
+      else
+	tmp.sprintf("NEAR:%d%%.", op - BoolFRAC - 100);
+#else
       char tmp[33];
       if (op - BoolFRAC > 200)
 	sprintf(tmp, "NEAR:%d",  op - BoolPROXIMITY);
       else
 	sprintf(tmp, "NEAR:%d%%.", op - BoolFRAC - 100);
+#endif
       return tmp;
     }
   return Ops[op].name;

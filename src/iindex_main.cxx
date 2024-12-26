@@ -394,7 +394,11 @@ int _Iindex_main (int argc, char **argv)
   if (argc < 2)
     {
       std::cout << "IB indexer " <<  _iindex_main_version  << "." << SRCH_DATE(__DATE__).ISOdate()  << "." << __IB_Version << " " <<
-	 sizeof(_index_id_t)*8 << ":" << sizeof(GPTYPE)*8 << "-bit edition (" << __HostPlatform << ")";
+	 sizeof(_index_id_t)*8 << ":" << sizeof(GPTYPE)*8 << "-bit edition (" << __HostPlatform 
+#ifdef _OPENMP
+      << " MultiThreaded"
+#endif
+     << ")";
 #if EVALULATION
       if (timeout > 0) std::cout << " Try-and-Buy.";
 #endif
@@ -428,6 +432,7 @@ int _Iindex_main (int argc, char **argv)
   bool useRelativePaths = false;
   STRING      basePath;
   bool useIndexPath = false;
+  bool depreciatedPath = false;
 
   STRING  SynonymFileName;
   STRLIST  includeStrlist;
@@ -603,6 +608,12 @@ int _Iindex_main (int argc, char **argv)
 	      LastUsed = x;
 	    }
 #endif
+
+	  else if (Flag.Equals("-depreciated") )
+	    {
+	      LastUsed = x;
+	      depreciatedPath = true;
+	    }
 	  else if (Flag.Equals("-copyright"))
             {
               LastUsed = x;
@@ -1267,6 +1278,15 @@ Using '%s' as default.", browser);
 //    cout << "ERROR: No database name specified!" << endl;
 //    return 0;
     }
+  if (!depreciatedPath) {
+    // Want path/db -> path/db/db
+    STRING newDB = DBName + "/";
+    if (DirectoryExists(newDB) || MkDirs (newDB) == true)
+      { // OK..
+	newDB <<  RemovePath(DBName);
+	DBName = newDB;
+      } else depreciatedPath = true;
+  }
 
   if (!DocumentType.IsEmpty())
     {
@@ -1707,6 +1727,7 @@ static void Usage()
   cout << "Usage is: " << prognam << " [-d db] [options] [file...]" << endl
   << "Options:" << endl
   << " -d db              // Use database db." << endl
+  << " -depreciated       // Use depreciated path for DBs (specified directory)" << endl
   << " -setuid X          // Run under user-id/name X (when allowed)." << endl
   << " -setgid X          // Run under group-id/name X (when allowed)." << endl
   << " -cd X              // Change working directory to X before indexing." << endl

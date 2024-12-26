@@ -1285,6 +1285,50 @@ STRING GetUserHome(const char *user)
 }
 
 // Destructive removal of /./ and /../ stuff
+#ifdef UNIX
+
+static char *_Realpath (char *path)
+{
+    int res_index = 0; // Index for writing the resolved path
+    int i = 0;         // Index for reading the original path
+
+    while (path[i] != '\0') {
+        // Skip redundant slashes (e.g., "//")
+        if (path[i] == '/' && (res_index == 0 || path[res_index - 1] != '/')) {
+            path[res_index++] = path[i++];
+        }
+        else if (path[i] == '/') {
+            i++;
+        }
+        // Handle "/./"
+        else if (path[i] == '.' && path[i + 1] == '/' ) {
+            i += 2; // Skip "./"
+        }
+        // Handle "/../"
+        else if (path[i] == '.' && path[i + 1] == '.' && (path[i + 2] == '/' || path[i + 2] == '\0')) {
+            i += 2; // Skip ".."
+            if (res_index > 1) {
+                res_index--; // Remove trailing slash
+                while (res_index > 0 && path[res_index - 1] != '/') {
+                    res_index--; // Go back one directory
+                }
+            }
+        }
+        // Handle regular characters
+        else {
+            path[res_index++] = path[i++];
+        }
+    }
+
+    // Remove trailing slash if it's not the root "/"
+    if (res_index > 1 && path[res_index - 1] == '/') {
+        res_index--;
+    }
+
+    path[res_index] = '\0'; // Null-terminate the resolved path
+    return path;
+}
+#else
 static char *_Realpath (char *path)
 {
   char Sep = '/';
@@ -1339,6 +1383,7 @@ static char *_Realpath (char *path)
 	
 	return path;
 }
+#endif
 
 /*-
  Handles:
@@ -1806,11 +1851,12 @@ bool MkDirs(const STRING& Path, int Mask)
   struct stat st_buf;
   STRING      Scratch (Path);
   const int   mask = ( Mask == 0 ? DefMask : Mask);
+  bool        all = Path.Last() == '/';
 
   ExpandFileSpec(&Scratch);
+  if (all) Scratch << "/"; // Wants all the dirs
 
   PCHR fname = Scratch.NewCString ();
-
 
   for(PCHR ptr=strchr(fname,'/');ptr;ptr=strchr(ptr+1,'/'))
     {
@@ -3864,7 +3910,7 @@ FILE *makeTemporaryFile (STRING &path, const STRING& Prefix, const char *mode = 
 
 const char * const ALPHABET =
     "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-const char ALPHABET_MAP[256] = {
+const signed char ALPHABET_MAP[256] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,

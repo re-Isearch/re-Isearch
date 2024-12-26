@@ -7,6 +7,8 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 /* The following constants are used to determine the category of a Unicode character.  */
 #define UNICODE_CATEGORY_MASK 0X1F
 
+#define REGISTER
+
 enum {
     UNASSIGNED,
     UPPERCASE_LETTER,
@@ -117,13 +119,13 @@ inline int _ib_UniCharToUpper(int ch)
 
 inline int _ib_UniCharIsAlnum(int ch)
 {
-  register int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
+  REGISTER int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
   return (((ALPHA_BITS | DIGIT_BITS) >> category) & 1);
 }
 
 inline int _ib_UniCharIsAlpha(int ch)
 {
-  register int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
+  REGISTER int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
   return ((ALPHA_BITS >> category) & 1);
 }
 
@@ -149,21 +151,21 @@ inline int _ib_UniCharIsDigit(int ch)
 
 inline int _ib_UniCharIsGraph(int ch)
 {
-  register int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
+  REGISTER int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
   return (((PRINT_BITS >> category) & 1) && ((unsigned char) ch != ' '));
 }
 
 
 inline int _ib_UniCharIsPrint(int ch)
 {
-  register int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
+  REGISTER int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
   return ((PRINT_BITS >> category) & 1);
 }
 
 
 inline int _ib_UniCharIsPunct(int ch)
 {
-  register int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
+  REGISTER int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
   return ((PUNCT_BITS >> category) & 1);
 }
 
@@ -172,7 +174,7 @@ inline int _ib_UniCharIsSpace(int ch)
   if (ch < UNICODE_SELF)
    return isspace((unsigned char)ch); /* INTL: ISO space */
 
-  register int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
+  REGISTER int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
   return ((SPACE_BITS >> category) & 1);
 }
 
@@ -194,7 +196,7 @@ inline int _ib_UniCharIsSpace(int ch)
 
 inline int _ib_UniCharIsWordChar(int ch)
 {
-  register int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
+  REGISTER int category = (GetUniCharInfo(ch) & UNICODE_CATEGORY_MASK);
   return (((ALPHA_BITS | DIGIT_BITS | CONNECTOR_BITS) >> category) & 1);
 }
 
