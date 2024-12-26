@@ -983,7 +983,7 @@ STRING STRING::w3Encode() const
   STRING dest ('\0', len*3 + 16);
 
   size_t j = 0;
-  for (register size_t i = 0; i < len; i++)
+  for (/*register*/ size_t i = 0; i < len; i++)
     {
       unsigned char Ch =  (unsigned char )m_pchData[i];
       if (Ch <= 32 || strchr("%+&=?<>[]()", Ch))
@@ -1010,7 +1010,7 @@ STRING STRING::unEscape () const
   STRING dest ('\0', len);
 
   size_t j = 0;
-  for (register size_t i = 0; i < len; i++, j++)
+  for (/*register*/ size_t i = 0; i < len; i++, j++)
     {
       char Ch;
       if ((Ch = m_pchData[i]) == '\\')
@@ -1030,8 +1030,8 @@ STRING STRING::unEscape () const
 	      case 'x': case 'X':
 		{
 		  // Hex
-		  register int val = 0;
-		  for (register int count=0;count<2;count++)
+		  /*register*/ int val = 0;
+		  for (/*register*/ int count=0;count<2;count++)
 		    {
 		      int digit;
 		      Ch = m_pchData[++i];
@@ -1054,8 +1054,8 @@ STRING STRING::unEscape () const
 	      case '0': case '1': case '2': case '3':
 	      case '4': case '5': case '6': case '7':
 		{
-		  register int val = Ch - '0';
-		  for (register int count = 0; count < 3; count++)
+		  /*register*/ int val = Ch - '0';
+		  for (/*register*/ int count = 0; count < 3; count++)
 		    {
 		      Ch = m_pchData[i++];
 		      if (Ch >= '0' && Ch <= '7')
@@ -1670,7 +1670,7 @@ void STRING::ConcatSelf(int nSrcLen, const char *pszSrcData)
   // concatenating an empty string is a NOP
   if ( nSrcLen != 0 )
     {
-      register STRINGData *pData = GetStringData();
+      /*register*/ STRINGData *pData = GetStringData();
 
       // alloc new buffer if current is too small
       if ( pData->IsShared() || pData->IsConstant() || pData->nDataLength + nSrcLen > pData->nAllocLength )
@@ -2955,8 +2955,8 @@ STRINGINDEX STRING::SearchN(const CHR* CString, const STRINGINDEX Count, const S
 
 STRINGINDEX STRING::SearchN(const UCHR Character, const STRINGINDEX Count, const STRINGINDEX Start) const
 {
-  register STRINGINDEX length = Len();
-  register STRINGINDEX x = Start > 0 ? Start-1 : 0;
+  /*register*/ STRINGINDEX length = Len();
+  /*register*/ STRINGINDEX x = Start > 0 ? Start-1 : 0;
   if (Count > 0 && length - x > Count)
      length = Count + x;
   while (x < length)
@@ -3012,7 +3012,7 @@ STRINGINDEX STRING::Search (const CHR *CString, const STRINGINDEX Start) const
 STRINGINDEX STRING::Search (const CHR Character, const STRINGINDEX Start) const
 {
   const STRINGINDEX length = Len();
-  register STRINGINDEX x = Start ? Start - 1 : 0;
+  /*register*/ STRINGINDEX x = Start ? Start - 1 : 0;
   while (x < length)
     {
       if (m_pchData[x++] == Character)
@@ -3037,7 +3037,7 @@ STRINGINDEX STRING::Search (const UCHR Character, const STRINGINDEX Start) const
 STRINGINDEX STRING::Search (const CHR Character, const STRINGINDEX Start, STRINGINDEX Length) const
 {
   const STRINGINDEX length = Length ? min(Len(), Length) : Len() ;
-  register STRINGINDEX x = Start ? Start - 1 : 0;
+  /*register*/ STRINGINDEX x = Start ? Start - 1 : 0;
   while (x < length)
     {
       if (m_pchData[x++] == Character)

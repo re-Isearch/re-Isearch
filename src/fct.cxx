@@ -238,14 +238,14 @@ void FCLIST::SubtractOffset (const GPTYPE GpOffset)
 
 FCLIST& FCLIST::operator -=(const GPTYPE GpOffset)
 {
-  for (register FCLIST *p = Next(); p != this; p = p->Next() )
+  for (FCLIST *p = Next(); p != this; p = p->Next() )
     p->Fc -= GpOffset;
   return *this;
 }
 
 FCLIST& FCLIST::operator -=(const FC& fc)
 {
-  for (register FCLIST *p = Next (); p != this; p = p->Next ())
+  for (FCLIST *p = Next (); p != this; p = p->Next ())
     p->Fc -= fc;
   return *this;
 }
@@ -253,14 +253,14 @@ FCLIST& FCLIST::operator -=(const FC& fc)
 
 FCLIST& FCLIST::operator +=(const GPTYPE GpOffset)
 {
-  for (register FCLIST *p = Next (); p != this; p = p->Next () )
+  for (FCLIST *p = Next (); p != this; p = p->Next () )
     p->Fc += GpOffset;
   return *this;
 }
 
 FCLIST& FCLIST::operator +=(const FC& fc)
 {
-  for (register FCLIST *p = Next (); p != this; p = p->Next () ) 
+  for (FCLIST *p = Next (); p != this; p = p->Next () ) 
     p->Fc += fc; 
   return *this; 
 }
@@ -288,7 +288,7 @@ void FCLIST::MergeEntries()
   size_t TotalEntries = 0;
   bool sorted = true;
 
-  for (register FCLIST *p = Next(); p != this; p = p->Next())
+  for (FCLIST *p = Next(); p != this; p = p->Next())
    {
      // Look at not just order but also for dups(!).
      if (p->Fc == p->Prev()->Fc)
@@ -303,11 +303,13 @@ void FCLIST::MergeEntries()
     {
       FC           *TablePtr = new FC[TotalEntries];
       FC            fc (0,0);
-      register FC  *ptr = TablePtr;
- 
-      // Put into TablePtr
-      for (register FCLIST *p = Next(); p != this; p = p->Next())
-        *ptr++ = p->Fc;
+
+      {
+        FC  *ptr = TablePtr;
+        // Put into TablePtr
+        for (FCLIST *p = Next(); p != this; p = p->Next())
+          *ptr++ = p->Fc;
+      }
   
       // Sort  
       QSORT (TablePtr, TotalEntries, sizeof (FC), FctFcCompare);

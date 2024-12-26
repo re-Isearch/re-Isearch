@@ -134,8 +134,8 @@ int TREENODELIST::Sort ()
   if (TotalEntries > 1)
     {
       TREENODE             *TablePtr = new TREENODE[TotalEntries];
-      register TREENODE *ptr = TablePtr;
-      register TREENODELIST *p;
+      TREENODE             *ptr = TablePtr;
+      TREENODELIST         *p;
 
       // Put into TablePtr
       for (p = Next(); p != this; p = p->Next())

@@ -274,7 +274,7 @@ GPTYPE SGMLNORM::ParseWords(UCHR* DataBuffer, GPTYPE DataLength,
 //cerr << "XXXXXX Last Character = " << DataBuffer[DataLength] << endl;
 //cerr << "       last to read   = " << DataBuffer[DataLength-1] << endl;
  
-    for (register GPTYPE Position =0; Position < DataLength; Position++)
+    for (REGISTER GPTYPE Position =0; Position < DataLength; Position++)
       {
         // Zap all tags but comments
         if (DataBuffer[Position] == '<' && (DataLength-Position) > 3 &&
@@ -958,7 +958,7 @@ static bool grabSchema(PSTRING SchemeBuffer, PSTRING TypBuffer,
 		    }
 		}
 	    }		/* *tcp == '=' */
-	}	/* have a "registered" keyword */
+	}	/* have a "REGISTERed" keyword */
       else
 	{
 	  if (StrNCaseCmp(tcp, "PICS", 4))
@@ -1443,7 +1443,7 @@ Scheme overridding (Scheme=..) content");
    terminated by a NULL.
    Returns the total number of tags found or -1 if out of memory
  */
-PCHR *SGMLNORM::parse_tags (register PCHR b, const off_t len)
+PCHR *SGMLNORM::parse_tags (REGISTER PCHR b, const off_t len)
 {
 #ifndef TAG_GROW_SIZE
 #define TAG_GROW_SIZE 1022 
@@ -1465,7 +1465,7 @@ PCHR *SGMLNORM::parse_tags (register PCHR b, const off_t len)
   // Step though every character in the buffer looking for '<' and '>'
 
 //cerr << "Length = " << len << endl;
-  for (register off_t i = 0; i < len; i++)
+  for (REGISTER off_t i = 0; i < len; i++)
     {
       if (InComment && b[i] != '-')
 	continue;
@@ -1827,7 +1827,7 @@ const char *SGMLNORM::_cleanBuffer(char *DataBuffer, size_t DataLength) const
   int        quote = 0;
   UCHR       Ch;
 
-  for (register size_t Position =0; Position < DataLength; Position++)
+  for (REGISTER size_t Position =0; Position < DataLength; Position++)
     {
       // Zap all tags but comments
       if (DataBuffer[Position] == '<' && (DataLength-Position) > 3 &&

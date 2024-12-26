@@ -102,7 +102,7 @@ GPTYPE HTMLZERO::ParseWords(UCHR* DataBuffer, GPTYPE DataLength,
   UCHR       Ch;
   GPTYPE     qPosition=0;
 
-  for (register GPTYPE Position =0; Position < DataLength; Position++)
+  for (GPTYPE Position =0; Position < DataLength; Position++)
     {
       // Zap all tags but comments
       if (DataBuffer[Position] == '<' && (DataLength-Position) > 3 &&

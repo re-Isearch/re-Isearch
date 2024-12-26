@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+Copyright (c) 2020-25 Project re-Isearch and its contributors: See CONTRIBUTORS.
 It is made available and licensed under the Apache 2.0 license: see LICENSE
 */
 #pragma ident  "@(#)idb.cxx"
@@ -1146,7 +1146,7 @@ static int DfdtCompare (const void *p1, const void *p2)
 // First Element is 1... 0 means not found
 static inline off_t OnDiskFcSearch(const FC& Fc, FILE *Fp)
 {
-  register INT         cmp;
+  /*register*/ INT     cmp;
   FC                   fc;
   off_t                low = 0, high = GetFileSize(Fp) / sizeof (FC);
   off_t                p = (high+low)/2, op;

@@ -26,8 +26,8 @@ static Key_type IndexStr2Num(const STRING& Str)
 
   if (len > 0)
     {
-      register size_t t = 0;
-      register int    st = *idxstr;
+      /*register*/ size_t t = 0;
+      /*register*/ int    st = *idxstr;
 
       Value += st;
       do {

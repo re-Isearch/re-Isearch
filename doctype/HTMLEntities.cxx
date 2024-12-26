@@ -313,8 +313,8 @@ void HTMLEntities::normalize(char *input, size_t len) const
 {
   size_t          pos   = 0;
   size_t          count = 0;
-  register char  *buffer= input;
-  register char  *ptr   = buffer;
+  REGISTER char  *buffer= input;
+  REGISTER char  *ptr   = buffer;
 
   do {
     if (*ptr == '\0')
@@ -348,8 +348,8 @@ void HTMLEntities::normalize2(char *input, size_t len) const
 {
   size_t          pos   = 0;
   size_t          count = 0;
-  register char  *buffer= input;
-  register char  *ptr   = buffer;
+  REGISTER char  *buffer= input;
+  REGISTER char  *ptr   = buffer;
 
   do {
     if (*ptr == '\0')

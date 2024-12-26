@@ -4,6 +4,7 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 */
 #pragma ident  "@(#)qsort.cxx  1.4 04/17/01 13:01:28 BSN"
 
+#define REGISTER 
 
 /*-
  * Copyright (c) 1992, 1993
@@ -55,10 +56,10 @@ static inline void       swapfunc(void *, void *, int, int);
  */
 #define swapcode(TYPE, parmi, parmj, n) {               \
         long i = (n) / sizeof (TYPE);                   \
-        register TYPE *pi = (TYPE *) (parmi);           \
-        register TYPE *pj = (TYPE *) (parmj);           \
+        REGISTER TYPE *pi = (TYPE *) (parmi);           \
+        REGISTER TYPE *pj = (TYPE *) (parmj);           \
         do {                                            \
-                register TYPE   t = *pi;                \
+                REGISTER TYPE   t = *pi;                \
                 *pi++ = *pj;                            \
                 *pj++ = t;                              \
         } while (--i > 0);                              \
@@ -174,8 +175,8 @@ loop:   SWAPINIT(a, es);
 #define SWAP(a, b, size)                                                      \
     do                                                                          \
       {                                                                         \
-        register size_t __size = (size);                                        \
-        register char *__a = (a), *__b = (b);                                   \
+        REGISTER size_t __size = (size);                                        \
+        REGISTER char *__a = (a), *__b = (b);                                   \
         do                                                                      \
           {                                                                     \
             char __tmp = *__a;                                                  \
@@ -205,7 +206,7 @@ typedef struct {
 
 void SedgewickQsort(void *pbase, size_t total_elems, size_t size, cmp_t cmp)
 {
-	register char  *base_ptr = (char *) pbase;
+	REGISTER char  *base_ptr = (char *) pbase;
 	char           *pivot_buffer;
 	const size_t    max_thresh = MAX_THRESH * size;
 
@@ -310,7 +311,7 @@ void SedgewickQsort(void *pbase, size_t total_elems, size_t size, cmp_t cmp)
 		char           *tmp_ptr = base_ptr;
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 		char           *thresh = MIN(end_ptr, base_ptr + max_thresh);
-		register char  *run_ptr;
+		REGISTER char  *run_ptr;
 
 		/*
 		 * Find smallest element in first threshold and place it at

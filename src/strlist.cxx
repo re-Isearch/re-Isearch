@@ -215,7 +215,7 @@ size_t STRLIST::UniqueSort (const size_t from, const size_t max)
 
       size_t i = 0;
       // Flatten into a linear list
-      for (register const STRLIST *p = Next(); p != this; p=p->Next())
+      for (REGISTER const STRLIST *p = Next(); p != this; p=p->Next())
         TablePtr[i++] = p->String;
       Clear(); // Don't need the old list anymore
       // Sort
@@ -250,7 +250,7 @@ size_t STRLIST::UniqueSort (const size_t from, const size_t max)
 bool STRLIST::DeleteEntry(const size_t pos)
 {
   size_t i = 0;
-  for (register STRLIST *p = Next(); p != this; p = p->Next() )
+  for (REGISTER STRLIST *p = Next(); p != this; p = p->Next() )
     {
       if (++i == pos)
 	{
@@ -283,8 +283,8 @@ size_t STRLIST::Sort ()
 		"Can't allocate %u string slots in STRLIST::Sort().", (unsigned)Total);
         return Total;
       }
-      register STRING  *ptr      = TablePtr;
-      register STRLIST *p;
+      REGISTER STRING  *ptr      = TablePtr;
+      REGISTER STRLIST *p;
 
       // Flatten into a linear list
       for (p = Next();  p != this; p = p->Next())
@@ -325,8 +325,8 @@ size_t STRLIST::CaseSort ()
 		"Can't allocate %u string slots in STRLIST::CaseSort().", (unsigned)Total);
         return Total;
       }
-      register STRING  *ptr      = TablePtr;
-      register STRLIST *p;
+      REGISTER STRING  *ptr      = TablePtr;
+      REGISTER STRLIST *p;
 
       // Flatten into a linear list
       for (p = Next();  p != this; p = p->Next())
@@ -781,7 +781,7 @@ size_t STRLIST::GetValue (const STRING& Title, STRING *StringBuffer) const
 	{
 	  S.EraseAfter (Position - 1);
 
-	  register int zap = 0;
+	  REGISTER int zap = 0;
 	  // get rid of leading spaces
 	  while (_ib_isspace(S.GetChr (zap+1)))
 	    zap++;

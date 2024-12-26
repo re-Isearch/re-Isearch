@@ -377,10 +377,10 @@ bool RESULT::PresentHit(const FC& Fc, STRING *StringBuffer, STRING *Term,
       if (::GetRecordData(GetFullFileName(), &strPtr, localStart + RecordStart, Length, DoctypePtr) == 0)
 	return false;
 
-      register unsigned char *ptr = (unsigned char *)(strPtr.c_str());
+      REGISTER unsigned char *ptr = (unsigned char *)(strPtr.c_str());
       if (StringBuffer)
 	{
-	  register unsigned char *tcp = ptr;
+	  REGISTER unsigned char *tcp = ptr;
 	  if (localStart && skipToFirstWord)
 	    {
 	      while (!isspace(*tcp))
@@ -501,7 +501,7 @@ StringBuffer->form("ERROR (%ld,%ld) not inside Record (%ld,%ld)",  start, end, R
       STRING strPtr;
       if (::GetRecordData(GetFullFileName(), &strPtr, localStart + RecordStart, Length, DoctypePtr) == 0)
 	return false;
-      register unsigned char *ptr = (unsigned char *)(strPtr.c_str());
+      REGISTER unsigned char *ptr = (unsigned char *)(strPtr.c_str());
       if (StringBuffer)
 	{
 	  STRING Context;

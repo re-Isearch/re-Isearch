@@ -715,7 +715,7 @@ static int scan_year(const char *str, int *year)
   int i, yr = 0;
   for (i=0; str[i]; i++)
     {
-      const register int k = str[i] - '0';
+      const /* register */ int k = str[i] - '0';
       if (k < 0 || k > 9)
 	return 0; // ERROR
       yr *= 10;

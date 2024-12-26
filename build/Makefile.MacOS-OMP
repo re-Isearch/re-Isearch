@@ -155,7 +155,7 @@ OPT= -m64
 ## DEBUG OR NOT???
 #OPT=-O3 -ftree-vectorize  -ffast-math -msse2 
 DEBUG=
-OPT=-O3 -fvectorize -ffast-math -ftree-vectorize
+OPT=-O3 -fvectorize -ffast-math -ftree-vectorize -fopenmp 
 # OPT=-g 
 PIC=-fpic
 
@@ -259,7 +259,7 @@ EXTRA_LIBS= -L$(BERKELEY_DB_ROOT)/lib
 LD_PATH = -L../lib/ -L$(LIB_DIR) -L$(GCC_LIBDIR) -L/usr/local/lib -L/opt/nonmonotonic/ib/lib -L/usr/lib -L$(MAGIC_LIB) $(EXTRA_LIBS) #-WL,"--rpath ../lib:/opt/nonmonotonic/ib/lib:/usr/lib:/usr/local/lib"
 LDOPTS +=  $(LD_PATH)
 CORELIBS= -l$(COMMON) -l$(ENGINE) -l$(DOCTYPES) -l$(PROCESS)  -l$(IOS) -l$(CTYPE)
-LDLIBS += $(LDOPTS) $(CORELIBS) -l$(APPS)
+LDLIBS += $(LDOPTS) $(CORELIBS) -l$(APPS) -lomp
 
 AR = ar
 ARFLAGS = r

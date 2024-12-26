@@ -754,7 +754,7 @@ static void Decode (PSTRING Input)
   int brace = 0;
   STRING Output;
   CHR Ch;
-  for (register size_t i = 0; i < Len; i++)
+  for (size_t i = 0; i < Len; i++)
     {
       Ch = Buffer[i];
       while (Ch == O_BRACE && (brace || Buffer[i + 1] == '\\'))

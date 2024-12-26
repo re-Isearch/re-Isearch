@@ -1275,7 +1275,7 @@ PRSET VIDB::VSearch (const QUERY& Query)
   //
   // Search each database
   //
-  register size_t i;
+  REGISTER size_t i;
   bool QueryError = true;
 
   bool Not_Seen = true;
@@ -1475,7 +1475,7 @@ PIRSET VIDB::Search(const QUERY& Query, VIDB_STATS *Stats)
   //
   // Search each database
   //
-  register size_t i;
+  REGISTER size_t i;
   bool QueryError = true;
   size_t TotalEntries = 0; 
 
@@ -1491,7 +1491,8 @@ PIRSET VIDB::Search(const QUERY& Query, VIDB_STATS *Stats)
   pthread_t  idthreads[c_dbcount]; /* ids of threads */
 #endif
 
-#pragma omp parallel for
+// The code is not yet OMP safe 
+//#pragma omp parallel for
   for (i = 0; i < c_dbcount; i++)
     {
       // TODO: Run in a thread
@@ -2607,7 +2608,7 @@ PIRSET VIDB::FileSearch(const STRING& FileSpec)
   //
   // Search each database
   //
-  register size_t i;
+  REGISTER size_t i;
   bool QueryError = true;
   size_t TotalEntries = 0; 
 

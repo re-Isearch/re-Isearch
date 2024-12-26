@@ -54,7 +54,7 @@ void atomicSCANLIST::Dump(ostream& os) const
 {
   int count = 0;
   os << "{";
-  for (register const atomicSCANLIST *p = Next() ; p != this; p = p->Next() )
+  for (REGISTER const atomicSCANLIST *p = Next() ; p != this; p = p->Next() )
     {
       if (count++) os << ", ";
       p->Scan.Dump(os);
@@ -68,7 +68,7 @@ void atomicSCANLIST::Write(FILE *fp) const
   putObjID(objSCANLIST, fp);
   off_t  count_pos = ftell(fp);
   ::Write(count, fp); // Write Zero
-  for (register const atomicSCANLIST *p = Next() ; p != this; p = p->Next() )
+  for (REGISTER const atomicSCANLIST *p = Next() ; p != this; p = p->Next() )
     {
       p->Scan.Write(fp);
       count++;
@@ -143,7 +143,7 @@ atomicSCANLIST::atomicSCANLIST() : VLIST()
 
 atomicSCANLIST *atomicSCANLIST::Find (const STRING &Term) const
 {
-  for (register const atomicSCANLIST *p = Next() ; p != this; p = p->Next() )
+  for (REGISTER const atomicSCANLIST *p = Next() ; p != this; p = p->Next() )
     {
       if (p->Scan.String == Term)
 	{
@@ -206,7 +206,7 @@ void atomicSCANLIST::FastAddEntry(const STRING& StringEntry, size_t Frequency)
 atomicSCANLIST *atomicSCANLIST::AddEntry(const atomicSCANLIST& Other)
 {
   // Insert in alpha order!
-  for (register atomicSCANLIST *p = Next() ; p != this; p = p->Next() )
+  for (REGISTER atomicSCANLIST *p = Next() ; p != this; p = p->Next() )
     {
       INT diff = p->Scan.String.Compare(Other.Scan.String);
       if (diff == 0)
@@ -231,7 +231,7 @@ atomicSCANLIST *atomicSCANLIST::AddEntry(const STRING& StringEntry, size_t Frequ
 {
 #if 1
   // Insert in alpha order!
-  for (register atomicSCANLIST *p = Next() ; p != this; p = p->Next() )
+  for (REGISTER atomicSCANLIST *p = Next() ; p != this; p = p->Next() )
     {
       INT diff = p->Scan.String.Compare(StringEntry);
       if (diff == 0)
@@ -277,9 +277,9 @@ atomicSCANLIST *atomicSCANLIST::AddEntry(const STRLIST& StrList)
 
   newStrList.Sort();
 
-  register atomicSCANLIST *p = Next();
-  register int             diff;
-  register const STRLIST  *ptr = newStrList.Next();
+  REGISTER atomicSCANLIST *p = Next();
+  REGISTER int             diff;
+  REGISTER const STRLIST  *ptr = newStrList.Next();
   STRING                   term (ptr->Value());
 
   while ((ptr != &newStrList) && (p != this))
@@ -338,7 +338,7 @@ atomicSCANLIST *atomicSCANLIST::MergeEntry(const STRING& StringEntry, size_t Fre
   if (Frequency == 0)
     return this; // Nothing to do
 
-  for (register atomicSCANLIST *p = Next() ; p != this; p = p->Next() )
+  for (REGISTER atomicSCANLIST *p = Next() ; p != this; p = p->Next() )
     {
       INT diff = p->Scan.String.Compare(StringEntry);
       if (diff == 0)
@@ -417,7 +417,7 @@ size_t atomicSCANLIST::UniqueSort (const size_t from, const size_t max, bool Add
       table_t *TablePtr = new table_t[Total];
       size_t i = 0;
       // Flatten into a linear list
-      for (register atomicSCANLIST *p = Next() ; p != this; p = p->Next() )
+      for (REGISTER atomicSCANLIST *p = Next() ; p != this; p = p->Next() )
         {
 	  if (p->Scan.Count>0 &&  p->Scan.String.GetLength())
 	    {
@@ -457,7 +457,7 @@ size_t atomicSCANLIST::UniqueSort (const size_t from, const size_t max, bool Add
 size_t atomicSCANLIST:: Search (const STRING& SearchTerm, size_t *freq) const
 {
   size_t x = 0;
-  for (register const atomicSCANLIST *p = Next(); p != this; p = p->Next() ) 
+  for (REGISTER const atomicSCANLIST *p = Next(); p != this; p = p->Next() ) 
     {
       x++;
       if (p->Scan.String == SearchTerm)
@@ -472,7 +472,7 @@ size_t atomicSCANLIST:: Search (const STRING& SearchTerm, size_t *freq) const
 
 size_t atomicSCANLIST:: GetFrequency (const STRING& SearchTerm) const
 {
-  for (register const atomicSCANLIST *p = Next();  p != this; p = p->Next() ) 
+  for (REGISTER const atomicSCANLIST *p = Next();  p != this; p = p->Next() ) 
     {
       if (p->Scan.String == SearchTerm)
 	return p->Scan.Count;

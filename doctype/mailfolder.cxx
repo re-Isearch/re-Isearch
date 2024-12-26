@@ -956,8 +956,8 @@ PCHR MAILFOLDER::NameKey (PCHR buf, bool wantName) const
 
   // BUGFIX: Wed Apr 17 01:02:20 MET DST 1996
   // Some mail headers have \( so we can't use strchr
-  register PCHR s = NULL;
-  register PCHR e = NULL;
+  REGISTER PCHR s = NULL;
+  REGISTER PCHR e = NULL;
 
   // BUGFIX: Wed Aug 28 10:41:25 MET DST 1996
   // Strip multiple as in: Joe Blow <joe@blow@foo.bar> (By way of Elmer Fudd <Elmer@Fudd.com>)
@@ -1932,8 +1932,8 @@ bool MAILFOLDER::IsMailFromLine (const char *line) const
 #define MAX_FIELDS 10
   char *fields[MAX_FIELDS];
   const char *sender_tail;
-  register const char *lp;
-  register char **fp;
+  REGISTER const char *lp;
+  REGISTER char **fp;
   // Email (RFC822) has English language dates from 1 Jan 1970 on
   const char legal_day[] = "SunMonTueWedThuFriSat";
   const char legal_month[] = "JanFebMarAprMayJunJulAugSepOctNovDec";

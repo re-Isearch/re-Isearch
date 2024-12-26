@@ -346,6 +346,8 @@ size_t DFDT::Lookup (const STRING& FieldName) const
   STRING Field (FieldName);
   Field.ToUpper ();
 
+  message_log(LOG_DEBUG, "DFDT Lookup (%s) // Total=%d", Field.c_str(), TotalEntries);
+
 #if 1
   if (!Field.IsPlain())
     {

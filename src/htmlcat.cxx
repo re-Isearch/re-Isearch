@@ -268,7 +268,7 @@ const STRING& CHARSET::HtmlCat (const STRING& Input, PSTRING StringBufferPtr, bo
     }
   else
     {
-      for (register const CHR *tp = (const CHR *)Input; *tp; tp++)
+      for (REGISTER const CHR *tp = (const CHR *)Input; *tp; tp++)
 	HtmlCat(*tp, StringBufferPtr);
     }
   return *StringBufferPtr;

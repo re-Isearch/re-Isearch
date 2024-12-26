@@ -1385,10 +1385,10 @@ STRING __ExpandPath(const STRING& filePath)
 #ifndef _WIN32
   char            buffer[FILENAME_MAX];
 #endif
-  register char  *name_copy = name.NewCString (); // Make a scratch copy
+  REGISTER char  *name_copy = name.NewCString (); // Make a scratch copy
 
-  register const char  *s = name_copy;
-  register char  *d = lnm;
+  REGISTER const char  *s = name_copy;
+  REGISTER char  *d = lnm;
 
   path[0] = '\0';
   /* Expand inline environment variables */
@@ -1400,9 +1400,9 @@ STRING __ExpandPath(const STRING& filePath)
       } else
 	break;
     } else if (*s++ == '$') {
-      register char  *start = d;
-      register int    braces = (*s == '{' || *s == '(');
-      register char  *value;
+      REGISTER char  *start = d;
+      REGISTER int    braces = (*s == '{' || *s == '(');
+      REGISTER char  *value;
       while ((*d++ = *s) != 0)
 	if (braces ? (*s == '}' || *s == ')') : !(isalnum(*s) || *s == '_'))
 	  break;
@@ -1438,7 +1438,7 @@ STRING __ExpandPath(const STRING& filePath)
   }
 
   /* Expand ~ and ~user */
-  register char *nm = lnm;
+  REGISTER char *nm = lnm;
   s = "";
 #ifndef _WIN32
   int             q = (name_copy[0] == '\\' && name_copy[1] == '~');
@@ -1455,7 +1455,7 @@ STRING __ExpandPath(const STRING& filePath)
 	  nm++;
       }
     } else {			/* ~user/filename */
-	register const char  *home;
+	REGISTER const char  *home;
 	char                 *tcp;
 	for (tcp = nm; *tcp && !IsPathSep(*tcp); tcp++)
 	  /* loop */;
@@ -1878,10 +1878,10 @@ STRING __ExpandPath(const STRING& filePath)
   char            path[FILENAME_MAX];
   char            lnm[FILENAME_MAX];
   char            buffer[FILENAME_MAX];
-  register char  *name_copy = name.NewCString (); // Make a scratch copy
+  REGISTER char  *name_copy = name.NewCString (); // Make a scratch copy
 
-  register char  *s = name_copy;
-  register char  *d = lnm;
+  REGISTER char  *s = name_copy;
+  REGISTER char  *d = lnm;
 
   path[0] = '\0';
   /* Expand inline environment variables */
@@ -1893,9 +1893,9 @@ STRING __ExpandPath(const STRING& filePath)
       } else
 	break;
     } else if (*s++ == '$') {
-      register char  *start = d;
-      register int    braces = (*s == '{' || *s == '(');
-      register char  *value;
+      REGISTER char  *start = d;
+      REGISTER int    braces = (*s == '{' || *s == '(');
+      REGISTER char  *value;
       while ((*d++ = *s) != 0)
 	if (braces ? (*s == '}' || *s == ')') : !(isalnum(*s) || *s == '_'))
 	  break;
@@ -1913,7 +1913,7 @@ STRING __ExpandPath(const STRING& filePath)
   }
 
   /* Expand ~ and ~user */
-  register char *nm = lnm;
+  REGISTER char *nm = lnm;
   int             q = (name_copy[0] == '\\' && name_copy[1] == '~');
   s = "";
   if (nm[0] == '~' && !q) {
@@ -1924,8 +1924,8 @@ STRING __ExpandPath(const STRING& filePath)
 	  nm++;
       }
     } else {			/* ~user/filename */
-      register char  *nnm;
-      register char  *home;
+      REGISTER char  *nnm;
+      REGISTER char  *home;
       for (s = nm; *s && *s != SEP; s++) /* loop */;
       nnm = *s ? s + 1 : s;
       *s = 0;
@@ -2059,7 +2059,7 @@ UINT8 Swab (UINT8 *Ptr)
 #else /* Don't have a bswap64 call */
 #if HOST_MACHINE_64
   /* 64-bit implementation */
-  register UINT8   x = *Ptr;
+  REGISTER UINT8   x = *Ptr;
   return *Ptr =
 	( (x << 56) & 0xff00000000000000UL ) |
 	( (x << 40) & 0x00ff000000000000UL ) |
@@ -2897,6 +2897,46 @@ bool _IB_GetHostName(char *buf, int maxSize)
 #endif
 }
 
+#if 0
+long _IB_MacAddr()
+{
+    struct ifreq ifr;
+    struct ifconf ifc;
+    char buf[1024];
+    int success = 0;
+
+    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+    if (sock == -1) { /* handle error*/ };
+
+    ifc.ifc_len = sizeof(buf);
+    ifc.ifc_buf = buf;
+    if (ioctl(sock, SIOCGIFCONF, &ifc) == -1) { /* handle error */ }
+
+    struct ifreq* it = ifc.ifc_req;
+    const struct ifreq* const end = it + (ifc.ifc_len / sizeof(struct ifreq));
+
+    for (; it != end; ++it) {
+        strcpy(ifr.ifr_name, it->ifr_name);
+        if (ioctl(sock, SIOCGIFFLAGS, &ifr) == 0) {
+            if (! (ifr.ifr_flags & IFF_LOOPBACK)) { // don't count loopback
+                if (ioctl(sock, SIOCGIFHWADDR, &ifr) == 0) {
+                    success = 1;
+                    break;
+                }
+            }
+        }
+        else { /* handle error */ }
+    }
+
+    unsigned char mac_address[6];
+    if (success) memcpy(mac_address, ifr.ifr_hwaddr.sa_data, 6);
+
+    unsigned char *x = mac_address;
+ return ( (((UINT8)x[0])  << 40) + (((UINT8)x[1]) << 32) +
+         (((UINT8)x[2]) << 24)  + (((UINT8)x[3]) << 16) +
+         (((UINT8)x[4])  << 8) +  (((UNIT8)x[5] ) ) );
+}
+#endif
 
 // Determine the acurate hostid
 long  _IB_Hostid()
@@ -2950,7 +2990,7 @@ Set hostid to the Ethernet MAC address of its main networking card.");
 		}
 	      else
 		{
-		  message_log (LOG_ERROR, "No hostid or network address on this platform !?");
+		  message_log (LOG_ERROR, "No hostid or network address on this platform (%s not resolved)!?", name);
 		}
 	    }
 	}

@@ -152,7 +152,7 @@ void XML::ParseRecords(const RECORD& FileRecord)
 	  if (RecBuffer[i-1] == '-')
 	    State = ScanToEnd;
 	}
-      else if (Ch == '<' & (i+5 < ActualLength))
+      else if (Ch == '<' && (i+5 < ActualLength))
 	{
 	  if ((Ch=RecBuffer[++i]) == '!')
 	    {

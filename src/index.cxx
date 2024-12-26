@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-22 Project re-Isearch and its contributors: See CONTRIBUTORS.
+/* Copyright (c) 2020-25 Project re-Isearch and its contributors: See CONTRIBUTORS.
 It is made available and licensed under the Apache 2.0 license: see LICENSE */
 #pragma ident  "@(#)index.cxx"
 
@@ -232,11 +232,11 @@ const INT IndexVersion = (((INDEX_VERSION-1) * 2)) & 0x1F; // Increment * 2
 // Private bsearch
 static char * __priv_bsearch(const void *key,  const void *base0, size_t nmemb, size_t size, int (*compar)(const void *, const void*))
 {
-  register const char *base = (const char *)base0;
-  register int lim, cmp;
+  REGISTER const char *base = (const char *)base0;
+  REGISTER int lim, cmp;
 
   for (lim = nmemb; lim != 0; lim >>= 1) {
-      register void *p = (void *)(base + (lim >> 1) * size);
+      REGISTER void *p = (void *)(base + (lim >> 1) * size);
       if ((cmp = (*compar)(key, p)) == 0)
 	return (char *)(p);
       else if (cmp > 0) {  /* key > p: move right */
@@ -1101,7 +1101,8 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
   DOCTYPE *DocTypePtr =  Parent->GetDocTypePtr ( Record.GetDocumentType() );
   BUFFER Buffer;
 
-#pragma omp parallel for 
+/* Pragma OMP does not work here... */
+//#pragma omp parallel for 
   for (size_t x = 1; x <= total; x++)
     {
       const STRING    FieldName ( dftPtr->GetFieldName (x) );
@@ -6740,9 +6741,8 @@ long INDEX::Dump (INT Skip, ostream& os, bool OnlyErrors)
           else if (x < 0)
             {
               // Not available
-              sprintf((char *)Buffer, "<%s>",
-                      errno ==  EIDRM ? "corrupt" : ((errno == ENOENT) ? "erased" : "not readable")
-                     );
+	      strcpy((char *)Buffer, errno ==  EIDRM ? "<corrupt>" :
+			((errno == ENOENT) ? "<erased>" : "<not readable>"));
               x = strlen((const char *)Buffer);
             }
 	  else
@@ -7137,10 +7137,10 @@ INT INDEX::Cleanup ()
 
 #define swapcode(TYPE, parmi, parmj, n) {               \
         long i = (n) / sizeof (TYPE);                   \
-        register TYPE *pi = (TYPE *) (parmi);           \
-        register TYPE *pj = (TYPE *) (parmj);           \
+        REGISTER TYPE *pi = (TYPE *) (parmi);           \
+        REGISTER TYPE *pj = (TYPE *) (parmj);           \
         do {                                            \
-                register TYPE   t = *pi;                \
+                REGISTER TYPE   t = *pi;                \
                 *pi++ = *pj;                            \
                 *pj++ = t;                              \
         } while (--i > 0);                              \
@@ -7171,7 +7171,7 @@ static int inline MemIndexCompare (const void *a, const void *b, const void *bas
 #if 0
   return memcmp((char *)base+(*((PGPTYPE)(a))), (char *)base+(*((PGPTYPE)(b))), StringCompLength);
 #else
-  register int result;
+  REGISTER int result;
   if ((result = strncmp((const char *)base+(*((PGPTYPE)(a))),
                         (const char *)base+(*((PGPTYPE)(b))), StringCompLength)) == 0)
     result = *((PGPTYPE)(a)) - *((PGPTYPE)(b));

@@ -292,8 +292,7 @@ NETBOXPROFILE::StartServer() {
   addr_in.sin_addr.s_addr = htonl(INADDR_ANY);
   //  addr_in.sin_port = (unsigned short int)htons(Profile->Port);
   addr_in.sin_port = (unsigned short int)htons(Port);
-  if ( bind(s, (struct sockaddr*)&addr_in, sizeof(addr_in)) ==
-       SOCKET_ERROR ) {
+  if ( ::bind(s, (struct sockaddr*)&addr_in, sizeof(addr_in)) == SOCKET_ERROR ) {
 #ifdef PLATFORM_WINDOWS
     //    if (WSAGetLastError() == WSAEADDRINUSE) {
     //  if ( connect(s, (const struct sockaddr FAR*)&addr_in,
@@ -326,8 +325,7 @@ NETBOXPROFILE::StartServer() {
       addr_in.sin_family = AF_INET;
       addr_in.sin_addr.s_addr = INADDR_ANY;
       addr_in.sin_port = (unsigned short int)htons(Port);
-      if ( bind(s, (struct sockaddr*)&addr_in, sizeof(addr_in)) ==
-	   SOCKET_ERROR )
+      if ( ::bind((int)s, (struct sockaddr*)&addr_in, sizeof(addr_in)) == SOCKET_ERROR )
 	return -1;
     }
   }

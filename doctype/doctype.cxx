@@ -380,7 +380,7 @@ void DOCTYPE::AddFieldDefs ()
       STRING    s;
 
       tagRegistry->GetEntryList(FieldTypeSection, &fieldslist);
-      for (register STRLIST *p = fieldslist.Next(); p!=&fieldslist ; p=p->Next())
+      for (REGISTER STRLIST *p = fieldslist.Next(); p!=&fieldslist ; p=p->Next())
 	{
 	  tagRegistry->ProfileGetString(FieldTypeSection, p->Value(), NulString, &s);
 	  if (!(fieldType = s).IsText())
@@ -569,7 +569,7 @@ GPTYPE DOCTYPE::ParseWords(UCHR* DataBuffer, GPTYPE DataLength,
 	(long long)DataLength, (long long)GpLength, (long long)DataOffset);
 #endif
 
-  for (register GPTYPE Position =0; Position < DataLength;)
+  for (REGISTER GPTYPE Position =0; Position < DataLength;)
     {
       // Skip non-word characters
       // TODO: For UTF8 need to rework this.

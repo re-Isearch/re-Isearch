@@ -312,7 +312,7 @@ void atomicIRSET::MergeEntries(const bool AddHitCounts)
 
 void atomicIRSET::SetVirtualIndex(const UCHR NewvIndex)
 {
-#pragma omp parallel for
+//#pragma omp parallel for
   for (size_t i=0; i<TotalEntries; i++)
     Table[i].SetVirtualIndex( NewvIndex );
 }
@@ -898,7 +898,7 @@ size_t atomicIRSET::GetHitTotal ()
     return HitTotal;
 
   size_t Total = 0;
-#pragma omp parallel for
+#pragma omp parallel for reduction(+:Total)
   for (size_t x = 0; x < TotalEntries; x++)
     Total += Table[x].GetHitCount ();
   return HitTotal = Total;
@@ -1279,7 +1279,13 @@ OPOBJ *atomicIRSET::HitCount (const float Level)
   MinScore=MAXFLOAT;
   MaxScore=0.0;
 
-#pragma omp parallel for reduction(max:MaxScore, min:MinScore) 
+  #define P                (omp_get_num_threads())
+  #define CHUNK_I          (k * TotalEntries / P)
+  #define CHUNK_I_PLUS_1   ((k+1)* TotalEntries / P)
+
+//  int icond = -1;
+
+//#pragma omp parallel for private(k) reduction(max:MaxScore) reduction(min:MinScore) 
   for (; i < TotalEntries; i++)
     {
       const int hits = Table[i].GetHitCount();
@@ -3814,7 +3820,7 @@ OPOBJ *atomicIRSET::ComputeScoresNormalizationAF (const int TermWeight)
 
       double accumulator = 0;
       // Get sum of squares
-#pragma omp parallel for reduction(+:SumSqScores, MinScore, MaxScore)
+#pragma omp parallel for reduction(+:accumulator, MinScore, MaxScore)
       for (size_t i = 0; i < TotalEntries; i++)
 	{
 	  DOUBLE  f_dt = Table[i].GetHitCount ();
@@ -4325,8 +4331,8 @@ extern "C" {
 
 static int IrsetCompareNewsrank(const void* p1, const void* p2)
 {
-  register IRESULT *irp1 = (IRESULT *)p1;
-  register IRESULT *irp2 = (IRESULT *)p2;
+  REGISTER IRESULT *irp1 = (IRESULT *)p1;
+  REGISTER IRESULT *irp2 = (IRESULT *)p2;
 
   const    double   score1 = irp1->GetScore();
   const    double   score2 = irp2->GetScore();
