@@ -181,6 +181,7 @@ void atomicIRSET::Set(const atomicIRSET *OtherPtr)
   // Now add to table..
 //cerr << "SET: Now add to table " << OtherTotal << " Count = " << __IB_IRESULT_allocated_count << endl;
 
+// OMP does not work here correctly.
 //#pragma omp parallel for
   for (TotalEntries = 0; TotalEntries < OtherTotal; TotalEntries++)
     Table[TotalEntries] = OtherPtr->Table[TotalEntries];
@@ -312,7 +313,7 @@ void atomicIRSET::MergeEntries(const bool AddHitCounts)
 
 void atomicIRSET::SetVirtualIndex(const UCHR NewvIndex)
 {
-//#pragma omp parallel for
+#pragma omp parallel for
   for (size_t i=0; i<TotalEntries; i++)
     Table[i].SetVirtualIndex( NewvIndex );
 }
@@ -344,7 +345,7 @@ void atomicIRSET::SetMdt(const MDT *NewMdt)
   const MDT *MdtPtr = NewMdt ? NewMdt : (Parent ? Parent->GetMainMdt () : NULL);
   if (MdtPtr)
     {
-//#pragma omp parallel for
+#pragma omp parallel for
       for (size_t i=0; i<TotalEntries; i++)
 	Table[i].SetMdt(MdtPtr);
     }
@@ -3820,7 +3821,7 @@ OPOBJ *atomicIRSET::ComputeScoresNormalizationAF (const int TermWeight)
 
       double accumulator = 0;
       // Get sum of squares
-#pragma omp parallel for reduction(+:accumulator, MinScore, MaxScore)
+//#pragma omp parallel for reduction(+:accumulator, MinScore, MaxScore)
       for (size_t i = 0; i < TotalEntries; i++)
 	{
 	  DOUBLE  f_dt = Table[i].GetHitCount ();
@@ -4011,7 +4012,7 @@ OPOBJ *atomicIRSET::ComputeScoresLogNormalization (const int TermWeight)
       const DOUBLE InvDocFreq = log (Parent->GetTotalRecords () / (double)TotalEntries);
       MinScore=MAXFLOAT;
       MaxScore=0.0;
-#pragma omp parallel for reduction(+:MinScore, MaxScore)
+//#pragma omp parallel for reduction(+:MinScore, MaxScore)
       for (size_t i = 0; i < TotalEntries; i++)
 	{
 	  DOUBLE Score = (1 + log (Table[i].GetHitCount () * InvDocFreq)) * TermWeight;

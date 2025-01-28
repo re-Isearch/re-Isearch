@@ -450,10 +450,14 @@ static void HelpUsage(const char *progname)
 	"          " << prog << " -d BILLS -rpn vendor/BSn price<100 AND" << endl << 
 	"          " << prog << " -d NEWS  -rpn unix WITHIN:2006" << endl <<
 	"          " << prog << " -d SHAKESPEARE -P SPEECH/SPEAKER -rpn out spot PEER" << endl <<
-	"Note: \"Built-in\" Elements for -p and -headline: F for Full, B for Brief and S for Short." << endl <<
-        "Additional Special elements: R for Raw, H for Highlight, L for location/redirect and M for metadata." 
-	<< endl << endl;
-
+	"Note: \"Built-in\" Elements for -p and -headline: F for Full, B for Brief and S for Short. Additional" << endl <<
+        "\"Special\" elements: R for Raw, H for Highlight/Hits; and if they exist, L for location/redirect" << endl 
+	<< "and M for metadata." << endl << endl <<
+	"In the response one can select not just the record but also all elements of a specific field as" << endl <<
+	"well as specific contents where the hit occurs (similar to -P). Example:  1,speech/speech" << endl <<
+        "to select the contents of a speech where the hit(s) in record #1 occurs." << endl << 
+	"By contrast 1,speech returns ALL the speeches in record #1." << endl <<
+	"The above 'special' elements may also be specified, e.g. 1,H" << endl << endl;
 //    PrintDoctypeList();
 }
 
@@ -1994,7 +1998,7 @@ again:
 	{
 	  if (ShowXML) cout << "<!-- ";
 	newline:
-	  cout << endl << "Enter Query (=), [un]set option, range first-last or Select file #: ";
+	  cout << endl << "Enter Query (=), [un]set option, range first-last or Select file # [,element/path]: ";
 	cout.flush();
 #ifdef LINUX
 	  { STRING s;
