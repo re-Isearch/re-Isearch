@@ -1171,11 +1171,13 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
       message_log (LOG_DEBUG, "Handle fieldtype: %d", type);
       switch (type)
 	{
-#if 0
+#if 0 // SUPPORT DB_STRING
 	  case FIELDTYPE::db_string:
-	    db_stringPtr = new DB_STRING();
-	    db_stringPtr->OpenFieldForAppend(FieldName);
+	    if (db_stringPtr == NULL) db_stringPtr = new DB_STRING(Parent);
+	    if (db_stringPtr) db_stringPtr->OpenFieldForAppend(FieldName);
 	    break;
+#endif
+#if 0
           case FIELDTYPE::callback:
 	  case FIELDTYPE::callback1:
 	  case FIELDTYPE::callback2:
@@ -1224,14 +1226,16 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 
             }
             break;
-#if 0
+#if 0 // SUPPORT DB_STRING
             case FIELDTYPE::db_string:
             {
               STRING value (DocTypePtr->ParseString(FieldName, Record, Buffer);
-                            if (db_stringPtr->Write(value))
-                            items++;
-                          }
-                        break;
+              if (db_stringPtr && db_stringPtr->Write(value, Record.GetKey()))
+                items++;
+            }
+            break;
+#endif
+#if 0
       case FIELDTYPE::callback:  case FIELDTYPE::callback1: case FIELDTYPE::callback2:
       case FIELDTYPE::callback3: case FIELDTYPE::callback4: case FIELDTYPE::callback5:
         case FIELDTYPE::callback6: case FIELDTYPE::callback7:
@@ -3809,6 +3813,17 @@ PIRSET INDEX::Search (const QUERY& Query)
 		  if (gotRelation==false) Relation=ZRelEQ;
 		  NewIrset=LexiHashSearch( Term, FieldName, Relation);
 		}
+#if 0 // SUPPORT DB_STRING
+	      else if (aFieldType.IsDBMStr() || FieldType.IsDBMStr()) // FIELDTYPE::db_string
+		{
+		  if (db_stringPtr == NULL) db_stringPtr = new DB_STRING(Parent);
+		  if (gotRelation==false || Relation == ZRelEQ) // Only support =
+		    {
+		       *OpenFieldForRead (FieldName);
+			NewIrset= db_stringPtr->Search(Term); 
+		     }
+		}
+#endif
               else if (aFieldType.IsSMILES() || FieldType.IsSMILES()) // FIELDTYPE::smiles
                 {
 		  // NOT YET SUPPORTED

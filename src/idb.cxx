@@ -1415,13 +1415,15 @@ STRING IDB::GetXMLHighlightRecordFormat(const RESULT& Result, const STRING& Page
   const FCT HitTable = Result.GetHitTable();
   const FCLIST *ptr = (const FCLIST*)HitTable;
 
-  XML << "<XML>\n<Body Units=Characters color=#FF00FF Mode=Active version=2>\n <Highlight>\n"; 
+  XML << "<XML><!-- Adobe Technical Note #5172 -->\n<Body Units=Characters color=#FF00FF Mode=Active version=2>\n <Highlight>\n"; 
   size_t   count = 1;
   for (const FCLIST *p = ptr->Next(); p != ptr ; p = p->Next())
     {
       gp =  p->Value().GetFieldStart();
       if (!PageFc.Contains(gp)) pageno = -1;
+// cerr << "Pageno = " << pageno << endl;
       if (pageno < 0) pageno = GetNodeOffsetCount (gp, Page, &PageFc);
+// cerr << "Pageno = " << pageno << endl;
       if (pageno >= 0)
 	{
 	  FC x (p->Value());
@@ -1562,7 +1564,7 @@ size_t IDB::GetDescendentsContent (const FC HitFc, FILE *Fp, STRLIST *StrlistPtr
           count++;
           if (StrlistPtr) StrlistPtr->AddEntry(Buffer);
         }
-       else cerr << "Empty peer content" << endl;
+       // else cerr << "Empty peer content" << endl;
     }
   return count;
 }

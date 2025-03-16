@@ -170,7 +170,9 @@ int _Iutil_main(int argc, char **argv)
   log_init(DEF_LOG, argv[0], stderr);
   while (x < argc) {
     if (argv[x][0] == '-') {
-      Flag = argv[x];
+
+      // process --opt as -opt
+      Flag = argv[x][1] == '-' ? argv[x] + 1 : argv[x];
 
       if (Flag.Equals ("-api")) {
           cout << "API " << __IB_Version << "/" << (DoctypeDefVersion & 0xFFF)
@@ -239,7 +241,7 @@ int _Iutil_main(int argc, char **argv)
         }
         Title = argv[x];
         LastUsed = x;
-     } else if (Flag.Equals("-copyright")) {
+     } else if (Flag.Equals("-copyright") || Flag.Equals("-R")) {
         if (++x >= argc) {
 	  message_log (LOG_FATAL, "Option error: No copyright string specified after %s", Flag.c_str());
           return 0;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-21 Project re-Isearch and its contributors: See CONTRIBUTORS.
+/* Copyright (c) 2020-25 Project re-Isearch and its contributors: See CONTRIBUTORS.
 It is made available and licensed under the Apache 2.0 license: see LICENSE */
 #include <gdbm.h>
 #include "common.hxx"
@@ -15,6 +15,11 @@ class DB_STRING {
     dbp = NULL; db = Db; ft=FieldType;
   }
 
+  ~DB_STRING() {
+    Close();
+    if (dbp) delete dbp;
+   }
+
   void   *Open(const STRING& Filename, const char *mode=NULL) {
     if (Filename == filename && dbp && *dbp) return (void *)dbp;
     // We don't use mode
@@ -28,7 +33,7 @@ class DB_STRING {
   void   *OpenForAppend(const STRING& Filename) {
     return Open(Filename);
   }
-  void *OpenForRead(const STRING& Fieldname) {
+  void *OpenForRead(const STRING& Filename) {
     return OpenForAppend(Filename); // No difference with GDB
   }
 
@@ -107,10 +112,6 @@ class DB_STRING {
   const char *Name() const        { return "db_string"; }
   const char *Description() const { return "read and write GDBM Strings"; }
 
-  ~DB_STRING() { 
-    Close();
-    delete dbp;
-  }
 private:
   STRING       filename;
   FIELDTYPE    ft;

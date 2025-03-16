@@ -27,6 +27,7 @@ static const char *i = "iban"; // IBAN (includes Checksum)
 static const char *w = "w"; // Hierarchical Navigable Small Worlds (HNSW)
 static const char *g = "g"; // Graph vector ANN algorithms (except HNSW)
 static const char *f = "f"; // Vector Flat algorithms
+static const char *x = "X"; // Embedded object/store (External)
 static const char *_s = "";
 
 extern "C" long double (*_IB_private_hash)(const char *, const char *, size_t );
@@ -65,10 +66,10 @@ static struct DataType {
   {"privhash",  c,  FIELDTYPE::privhash, _IB_private_hash_descr ? _IB_private_hash_descr : "Undefined Private Hash (callback)"},
   {"isbn",      _s, FIELDTYPE::isbn, "ISBN: International Standard Book Number"},
   {"telnumber", t,  FIELDTYPE::telnumber, "ISO/CCITT/UIT Telephone Number"},
-  {"iin", v, FIELDTYPE::creditcardnum, "Issuer Identification (Crediti/Debit Card) Number"},
+  {"iin", v, FIELDTYPE::creditcardnum, "Issuer Identification (Credit/Debit Card) Number"},
   {"iban",       i, FIELDTYPE::iban, "IBAN: International Bank Account Number"},
   {"bic",       _s, FIELDTYPE::bic, "BIC : International Identifier Code (SWIFT)"},
-  {"db_string", _s, FIELDTYPE::db_string, "External DB String (callback)"},
+  {"db_string",  x, FIELDTYPE::db_string, "Embedded (public) key/value store (gdbm)."},
   {"callback",  _s, FIELDTYPE::callback,  "Local callback 0 (External)"},
   {"local1",    _s, FIELDTYPE::callback1, "Local callback 1 (External)"},
   {"local2",    _s, FIELDTYPE::callback2, "Local callback 2 (External)"},
@@ -83,9 +84,10 @@ static struct DataType {
   {"special",   _s, FIELDTYPE::special,   "Special text (reserved)"},
 #define MAX_DATATYPE (int)(FIELDTYPE::special) 
   // Aliases
-  {"dbm_string",    _s,  FIELDTYPE::db_string,     NULL},
-  {"bdb_string",    _s,  FIELDTYPE::db_string,     NULL},
-  {"gdb_string",    _s,  FIELDTYPE::db_string,     NULL},
+  {"dbm_string",     x,  FIELDTYPE::db_string,     NULL},
+  {"bdb_string",     x,  FIELDTYPE::db_string,     NULL},
+  {"gdb_string",     x,  FIELDTYPE::db_string,     NULL},
+  {"lmdb_string",   _s,  FIELDTYPE::db_string,     NULL},
   {"local0",        _s,  FIELDTYPE::callback,      NULL},
   {"callback0",     _s,  FIELDTYPE::callback,      NULL},
   {"callback1",     _s,  FIELDTYPE::callback1,     NULL},

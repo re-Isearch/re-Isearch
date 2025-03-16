@@ -456,7 +456,8 @@ int _Iindex_main (int argc, char **argv)
     {
       if (argv[x][0] == '-')
 	{
-	  Flag = argv[x];
+	  // process --opt as -opt
+	  Flag = argv[x][1] == '-' ? argv[x] + 1 : argv[x];
 	  if (Flag.Equals ("-o"))
 	    {
 	      if (++x >= argc)

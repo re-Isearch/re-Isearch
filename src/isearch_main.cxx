@@ -456,6 +456,7 @@ static void HelpUsage(const char *progname)
 	"In the response one can select not just the record but also all elements of a specific field as" << endl <<
 	"well as specific contents where the hit occurs (similar to -P). Example:  1,speech/speech" << endl <<
         "to select the contents of a speech where the hit(s) in record #1 occurs." << endl << 
+	"Shorthand for element/element is @element, so 1,@line or even 1@line is really 1,line/line" << endl <<
 	"By contrast 1,speech returns ALL the speeches in record #1." << endl <<
 	"The above 'special' elements may also be specified, e.g. 1,H" << endl << endl;
 //    PrintDoctypeList();
@@ -564,7 +565,8 @@ int _Isearch_main (int argc, char **argv)
     {
       if (argv[x][0] == '-')
 	{
-	  Flag = argv[x];
+	  // process --opt as -opt
+	  Flag = argv[x][1] == '-' ? argv[x] + 1 : argv[x];
 
           if (Flag.Equals ("-api"))
             {
@@ -1998,7 +2000,7 @@ again:
 	{
 	  if (ShowXML) cout << "<!-- ";
 	newline:
-	  cout << endl << "Enter Query (=), [un]set option, range first-last or Select file # [,element/path]: ";
+	  cout << endl << "Enter Query (=), [un]set option, range first-last or Select file #[,element|@element|@path]: ";
 	cout.flush();
 #ifdef LINUX
 	  { STRING s;
@@ -2018,6 +2020,8 @@ again:
 	    {
 	      break;
 	    }
+	  // @element is shorthand for element/element
+	  //
 	  if (strncmp(Selection, "hel", 3) == 0 || *Selection == '?')
 	    {
 	       cout << "# Help: set/unset or NNN[,<ELEMENT>], NNN,<Ancestor>/<Descendant>, range nnn-mmm or =<Query Expression>" << endl;
@@ -2147,9 +2151,20 @@ again:
 	  STRING Buf;
 	  STRING Full;
 	  char *tcp = strchr (Selection, ',');
-	  if (tcp)
+	  if (tcp) {
+	    // @element but not @element/sub-element
+	    if (*++tcp == '@' && strchr(tcp, '/') == NULL) {
+	      Full = ++tcp;
+	      Full.Cat("/") ;
+	    }
+	    Full.Cat(tcp);
+	  } else if ((tcp = strchr(Selection, '@')) != NULL) { 
 	    Full = ++tcp;
-	  else if (Pager && isatty(fileno(stdout)))
+	    if (strchr(tcp, '/') == NULL) {
+	      Full.Cat ("/");
+	      Full.Cat (tcp);
+	    }
+	  } else if (Pager && isatty(fileno(stdout)))
 	    Full = "h";
 	  else
 	    Full = "F";
