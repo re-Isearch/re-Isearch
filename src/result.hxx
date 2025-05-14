@@ -131,6 +131,9 @@ public:
         const STRING& BeforeTerm, const STRING& AfterTerm, DOCTYPE *DoctypePtr = NULL,
 	STRING *Tag = NULL) const;
 
+  bool XMLPresentHit(const FC& Fc, STRING *StringBuffer, const STRING& Tag,
+	STRING *Term, DOCTYPE *DoctypePtr) const;
+
   // Context..
   FC GetBestContextHit() const;
   bool PresentBestContextHit(STRING *StringBuffer, STRING *Term,
@@ -150,6 +153,9 @@ public:
     return PresentNthHit(1, StringBuffer, Term, BeforeTerm, AfterTerm, DoctypePtr, TagPtr);
   }
   // XML versions of above
+
+  bool XMLPresentBestContextHit(STRING *StringBuffer, const STRING& Tag,
+	STRING *Term = NULL, DOCTYPE *DoctypePtr = NULL) const;
   bool XMLPresentNthHit(size_t N, STRING *StringBuffer, const STRING& Tag,
         STRING *Term = NULL, DOCTYPE *DoctypePtr = NULL) const;
   bool XMLPresentFirstHit(STRING *StringBuffer, const STRING& Tag,

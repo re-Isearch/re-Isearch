@@ -3864,7 +3864,7 @@ OPOBJ *atomicIRSET::ComputeScoresNormalizationL2 (const int TermWeight)
 
       double SumSqScores = 0;
       // Get sum of squares
-#pragma omp parallel for reduction(+:SumSqScores, MinScore, MaxScore)
+//#pragma omp parallel for reduction(+:SumSqScores, MinScore, MaxScore)
       for (size_t i = 0; i < TotalEntries; i++)
 	{
 	  DOUBLE Score = Table[i].GetHitCount () * InvDocFreq;

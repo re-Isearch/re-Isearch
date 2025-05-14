@@ -191,7 +191,16 @@ STRING RESULT::XMLHitTable() const
       for (const FCLIST *ptr = HitTable, *itor = ptr->Next(); itor != ptr; itor = itor->Next())
         {
 	  XML << "  <LOC POS=\"" << itor->Value().GetFieldStart()
-		<< "\" LEN=\"" << itor->Value().GetLength() << "\"/>\n";
+		<< "\" LEN=\"" << itor->Value().GetLength()
+#if 1 
+		<< "\"/>\n";
+#else
+	  // For this we'd need to pass a DoctypePtr...
+	  STRING buffer;
+	  if (::GetRecordData(GetFullFileName(), &buffer, FieldStart, FieldStart + Length + 1, DoctypePtr) > 0)
+	     XML << "\" TERM = \" << buffer << "\";
+	  XML << "/>\n";
+#endif
 	  z++;
         }
       STRING prefix ("<HITS UNITS=\"characters\" NUMBER=\"");
@@ -204,8 +213,36 @@ STRING RESULT::XMLHitTable() const
 
 STRING RESULT::JsonHitTable() const
 {
+#if 1
+  STRING JSON;
+  if (!HitTable.IsEmpty())
+    {
+      size_t z = 0;
+      JSON << "{\n";
+      JSON << "  \"units\": \"characters\",\n";
+      JSON << "  \"hits\": [\n";
+
+      const FCLIST *ptr = HitTable, *itor = ptr->Next();
+      for (; itor != ptr; itor = itor->Next())
+        {
+          if (z > 0)
+            JSON << ",\n"; // Add comma before every item except the first
+          JSON << "    {\n";
+          JSON << "      \"pos\": " << itor->Value().GetFieldStart() << ",\n";
+          JSON << "      \"len\": " << itor->Value().GetLength() << "\n";
+          JSON << "    }";
+          z++;
+        }
+
+      JSON << "\n  ]\n";
+      JSON << "  \"number\": " << z << "\n";
+      JSON << "}\n";
+    }
+  return JSON;
+#else
   message_log (LOG_FATAL, "RESULT::JsonHitTable() Not yet implemented");
   return NulString;
+#endif
 }
 
 STRING RESULT::GetXMLHighlightRecordFormat(int pageno, off_t offset) const
@@ -229,6 +266,20 @@ STRING RESULT::GetXMLHighlightRecordFormat(int pageno, off_t offset) const
   return XML;
 }
 
+// Get the FC (address range) for the "best" context
+// 
+// The algorithm is simple: walk through the list of hits and try
+// to find one with the minimum distance between any two. This algorithm
+// builds upon the sort of HitTable..
+//
+// There are surely other plausible algorithms, some delivering perhaps even
+// better "best" contexts. This one is 1) simple 2) fast 3) works reasonably well.
+//
+// An alternative we might consider for structured text is looking for the field
+// container with the most hits.  This, however, would not work with unfielded text.
+// We would need to first analyse the structure to assure that hits are in different
+// fields (for example not just in a "body"). At this time I'm not sure it would be
+// worth the effort much less if the results would really be "that much" better.
 FC RESULT::GetBestContextHit() const
 {
   int metric = 200; 
@@ -437,11 +488,168 @@ cerr << "Term= \"" << tmp << "\"" << endl;
   return false;
 }
 
+#if 1
+bool RESULT::XMLPresentBestContextHit(STRING *StringBuffer, const STRING& Tag,
+   STRING *Term, DOCTYPE *DoctypePtr) const
+{
+  return XMLPresentHit(GetBestContextHit(), StringBuffer, Tag, Term, DoctypePtr);
+}
+#endif
+
+#if 1
+bool RESULT::XMLPresentHit(const FC& Fc, STRING *StringBuffer, const STRING& Tag,
+   STRING *Term, DOCTYPE *DoctypePtr) const
+{
+      STRING  hitTag;
+      const GPTYPE start = Fc.GetFieldStart();
+      const GPTYPE end   = Fc.GetFieldEnd();
+      GPTYPE       localStart = (start > 44 ? start - 40 : 0);
+      GPTYPE       localEnd   = end + 60 + (end-start)/2;
+      GPTYPE       peer_end = RecordEnd;
+      bool  skipToFirstWord = true;
+
+      if (StringBuffer) StringBuffer->Clear();
+
+      if (DoctypePtr && DoctypePtr->Db) {
+        IDBOBJ *idb = DoctypePtr->Db;
+        MDTREC  mdtrec;
+        if ( idb->GetMainMdt()->GetEntry (GetMdtIndex(), &mdtrec))
+          {
+             off_t offset = mdtrec.GetGlobalFileStart() + mdtrec.GetLocalRecordStart();
+             FC     PeerFC = idb->GetPeerFc(FC(Fc)+=offset,&hitTag);
+
+             GPTYPE peer_start = PeerFC.GetFieldStart() - offset;
+
+             peer_end   = PeerFC.GetFieldEnd() - offset ; /* 2022 add +1 ?? */;
+
+             if (peer_end - peer_start < 200) {
+		// Min
+		if ((peer_end - peer_start) > (end - start + PeerMinimumFieldLength)) {
+                  localEnd = peer_end;
+                  localStart = peer_start;
+                  skipToFirstWord = false;
+		}
+             } else {
+                if (peer_end < localEnd || ((peer_end - localEnd) < 200))
+                  localEnd = peer_end;
+                if (peer_start > localStart || (localStart - peer_start < 200)) {
+                  localStart = peer_start;
+                  skipToFirstWord = false;
+                }
+             }
+          }
+      } // Have a Doctype Pointer 
+
+      if (localEnd > RecordEnd) localEnd = RecordEnd - RecordStart;
+
+      if (localStart > localEnd)
+	{
+	  message_log (LOG_PANIC, "Start after End in RESULT::XMLPresentNthHit()");
+StringBuffer->form("ERROR (%ld,%ld) not inside Record (%ld,%ld)",  start, end, RecordStart, RecordEnd);
+	  return false;
+	}
+
+      const size_t Length = localEnd - localStart + 1;
+
+//    if (Length > BUFSIZ) Length = BUFSIZ;
+      STRING strPtr;
+      if (::GetRecordData(GetFullFileName(), &strPtr, localStart + RecordStart, Length, DoctypePtr) == 0)
+	return false;
+      REGISTER unsigned char *ptr = (unsigned char *)(strPtr.c_str());
+      if (StringBuffer)
+	{
+	  STRING Context;
+	  unsigned char *tcp = ptr;
+
+	  if (localStart && skipToFirstWord)
+	    {
+	      while (!isspace(*tcp) && *tcp)
+		tcp++; // Skip to first word..
+	    }
+	  int i = tcp - ptr;
+
+          if (i > (int)(start - localStart))
+	    {
+	      Context.Cat ("...");
+	      i = -3;
+	      tcp = ptr;
+	    }
+	  else if (localStart && i)
+	    {
+	      Context.Cat ("... ");
+	      i -= 4; // Offset from "... "
+	    }
+	  Context.Cat(tcp);
+	  Context.Insert(end - localStart - i + 2, "\002");
+	  Context.Insert(start - localStart - i + 1, "\001");
+	  // Remove multiple empty spaces...
+	  Context.Pack();
+#if 0
+	  if (localEnd != RecordEnd) Context.Cat ("...");
+#else
+	  if (localEnd != peer_end) Context.Cat ("...");
+#endif
+	  const int Context_len = (int) Context.Length();
+	  const BYTE   charsetId =  Locale.GetCharsetId();
+	  CHARSET charset (charsetId);
+	  for (i=1; i <= Context_len; i++)
+	    {
+	      char buf[11]; // max 4294967295 although most is only short (UCS-2)
+	      unsigned int wchar;
+	      unsigned char ch;
+
+	      if ((ch = Context.GetUChr(i)) == '\001')
+		{
+		  *StringBuffer << "<" << Tag;
+		  if (hitTag.GetLength())
+		    *StringBuffer << " CONTAINER_NAME=\"" << hitTag << "\"";
+		  *StringBuffer << ">";
+		}
+	      else if (ch == '\002')
+		{
+		  *StringBuffer << "</" << Tag << ">";
+		}
+	      else if ((wchar = (unsigned)charset.UCS(ch)) < 0x7f && wchar > 0x1f)
+		{
+		  if (wchar == '<')
+		    StringBuffer->Cat("&lt;");
+		  else if (wchar == '>')
+		    StringBuffer->Cat("&gt;");
+		  else if (wchar == '&')
+		    StringBuffer->Cat("&amp;");
+		  else
+		    StringBuffer->Cat(ch);
+		}
+	      else if (wchar == 160)
+		{
+		  StringBuffer->Cat("&nbsp;");
+		}
+	      else if (wchar == 173)
+		{
+		  StringBuffer->Cat("&shy;");
+		}
+	      else
+		{
+		  // Non-ASCII character -- Map to UCS
+		  sprintf(buf, "&#%u;", wchar);
+		  StringBuffer-> Cat (buf);
+		}
+	    }
+	}
+      if (Term)
+	{
+	  unsigned char *term = ptr + (start - localStart);
+	  term[end - start + 1] = '\0';
+	  *Term = term;
+	}
+   return true;
+}
+#endif
+
 bool RESULT::XMLPresentNthHit(size_t N, STRING *StringBuffer, const STRING& Tag,
    STRING *Term, DOCTYPE *DoctypePtr) const
 {
   FC      Fc;
-  STRING  hitTag;
 
   if (StringBuffer)
     StringBuffer->Clear();
@@ -449,6 +657,12 @@ bool RESULT::XMLPresentNthHit(size_t N, STRING *StringBuffer, const STRING& Tag,
     Term->Clear();
   if (HitTable.GetEntry(N, &Fc))
     {
+#if 1
+      STRING  hitTag;
+
+      if (XMLPresentHit(Fc,StringBuffer, Tag, Term, DoctypePtr) == false)
+	return false;
+#else
       const GPTYPE start = Fc.GetFieldStart();
       const GPTYPE end   = Fc.GetFieldEnd();
       GPTYPE       localStart = (start > 44 ? start - 40 : 0);
@@ -589,6 +803,7 @@ StringBuffer->form("ERROR (%ld,%ld) not inside Record (%ld,%ld)",  start, end, R
 	  *Term = term;
 	}
       return true;
+#endif
     }
   return false;
 }

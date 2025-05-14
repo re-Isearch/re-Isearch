@@ -3516,8 +3516,13 @@ bool IDB::Context(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
 bool IDB::XMLContext(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
         const STRING& Tag) const
 {
+#if 1
+  return (&ResultRecord)->XMLPresentBestContextHit(Line, Tag, Term,
+        GetDocTypePtr( ResultRecord.GetDocumentType() ));
+#else // Just the first
   return (&ResultRecord)->XMLPresentFirstHit(Line, Tag, Term,
         GetDocTypePtr( ResultRecord.GetDocumentType() ));
+#endif
 }
 
 
@@ -5465,6 +5470,10 @@ STRING IDB::XMLHitTable(const RESULT& Result)
 			if (!ft.IsText() && GetFieldData(PeerFC, Tag, &value)) 
 			  XML << "\" VALUE=\"" << value;
 			XML << "\">" << endl;
+#if 0
+		        // Comming soon
+			Result.XMLPresentNthHit(element, const STRING& Tag);
+#endif
 		    }
 		  else
 		    {
@@ -5486,36 +5495,118 @@ STRING IDB::XMLHitTable(const RESULT& Result)
 }
 #endif
 
-#if 0
+#if 1
 STRING IDB::JsonHitTable(const RESULT& Result)
 {
 #if 1
+  STRING JSON;
+  MDTREC mdtrec;
+
+  if (MainMdt == NULL || !MainMdt->GetEntry(Result.GetMdtIndex(), &mdtrec))
+    {
+      message_log(LOG_ERROR, "IDB::JSONHitTable Can't resolve record!");
+      return NulString;
+    }
+
+  int offset = mdtrec.GetGlobalFileStart() + mdtrec.GetLocalRecordStart();
+  FCT HitTable(Result.GetHitTable());
+  size_t z = HitTable.GetTotalEntries();
+
+  if (z)
+    {
+      const FCLIST* hitList = (const FCLIST*)HitTable;
+      FC Fc;
+      STRING Tag, lastTag;
+      FC lastPeerFC;
+      bool fulltext = false;
+      bool firstTime = true;
+      bool insideContainer = false;
+
+      JSON << "{\n";
+      JSON << "  \"units\": \"characters\",\n";
+      JSON << "  \"number\": " << z << ",\n";
+      JSON << "  \"containers\": [\n";
+
+      for (const FCLIST* ptr = hitList->Next(); ptr != hitList; ptr = ptr->Next())
+        {
+          Fc = ptr->Value();
+          GPTYPE Start = Fc.GetFieldStart();
+          GPTYPE End   = Fc.GetFieldEnd();
+          FC PeerFC = GetPeerFc(FC(Fc) += offset, &Tag);
+
+          if (!(PeerFC == lastPeerFC))
+            {
+              if (!firstTime)
+                {
+                  JSON << "\n      ]\n    },\n"; // Close previous container's "locs" array and container object
+                  insideContainer = false;
+                }
+              else
+                {
+                  firstTime = false;
+                }
+
+              if (Tag.GetLength())
+                {
+                  FIELDTYPE ft = GetFieldType(Tag);
+                  STRING value;
+                  fulltext = false;
+
+                  JSON << "    {\n";
+                  JSON << "      \"name\": \"" << Tag << "\",\n";
+                  JSON << "      \"type\": \"" << ft.c_str() << "\",\n";
+                  JSON << "      \"fc\": { \"start\": " << PeerFC.GetFieldStart()
+                       << ", \"end\": " << PeerFC.GetFieldEnd() << " }";
+
+                  if (!ft.IsText() && GetFieldData(PeerFC, Tag, &value))
+                    {
+                      JSON << ",\n      \"value\": \"" << value << "\"";
+                    }
+                  JSON << ",\n      \"locs\": [\n";
+                }
+              else
+                {
+                  JSON << "    {\n";
+                  JSON << "      \"fulltext\": true,\n";
+                  JSON << "      \"locs\": [\n";
+                  fulltext = true;
+                }
+
+              lastPeerFC = PeerFC;
+              lastTag = Tag;
+              insideContainer = true;
+            }
+
+          // Output LOC inside current container
+          JSON << "        { \"pos\": " << Start << ", \"len\": " << (End - Start + 1) << " }";
+
+          // If next LOC is in the same container, add comma
+          if (ptr->Next() != hitList && !(GetPeerFc(FC(ptr->Next()->Value()) += offset, &Tag) != lastPeerFC))
+            {
+              JSON << ",\n";
+            }
+          else
+            {
+              // Last LOC of this container
+              JSON << "\n";
+            }
+        } // for
+
+      if (insideContainer)
+        {
+          JSON << "      ]\n    }\n"; // Close final container
+        }
+
+      JSON << "  ]\n";
+      JSON << "}\n"; // Close all
+    }
+
+  return JSON;
+#else
   message_log (LOG_FATAL, "JsonHitTable is not yet implemented");
   return NulString;
-#else
-/*
-<folders>
-    <folder id="123" private="0" archived="0" order="1">Shopping</folder>
-</folders>
-
-is JSON
-
-{
-    "folders": {
-        "folder":{
-        "@": {
-            "id": "123",
-            "private": "0",
-            "archived": "0",
-            "order": "1"
-            },
-        "#": "Shopping"
-        }
-    }
-}
-*/
-}
 #endif
+}
 #endif
 
 

@@ -34,7 +34,8 @@ static const int _isearch_main_version = 3;
 #include <sys/resource.h> 
 #endif
 
-#if 0
+
+#if 0 /* Obsolete */
 static void dumpXMLHitTable(FCLIST *HitTable)
 {
   const INT z = HitTable->GetTotalEntries();
@@ -261,10 +262,10 @@ static void HelpUsage(const char *progname)
 	"  -cd (X)          // Change working directory to (X)." << endl <<
 	"  -id (X)          // Request document(s) with docid (X)." << endl <<
 	"  -D (X)           // Load Result Set from file (X)." << endl <<
-	"  -p (X)           // Present element set (X) with results." << endl <<
-	"  -P (X)           // Present Ancestor (X) content for hits (may be used multiple)." << endl <<
-	"                   // where X may be as (X)/(Y) where (X) is an ancestor" << endl <<
-        "                   // and (Y) is a descendant of that ancestor." << endl << 
+	"  -p (X)           // Present element set (X) as the identifier with results." << endl <<
+	"  -P (X|X/Y)       // Present Ancestor (X) content for hits (may be recurringly specified)." << endl <<
+	"                   // where X may be as (X)/(Y) where (X) is an ancestor and" << endl <<
+        "                   // (Y) is a descendant of that ancestor." << endl << 
 	"  -c               // Sort results Chronologically." << endl <<
 	"  -cr              // Sort result from oldest to newest." << endl <<
 	"  -s               // Sort results by Score (Relevant Ranked)." << endl <<
@@ -285,7 +286,8 @@ static void HelpUsage(const char *progname)
         "  -max_norm        // Max. normalization. " << endl <<
 	"  -no_norm         // Don't calculate scores or normalize." << endl <<
 	"  -sort B[entley]|S[edgewick]|D[ualPivot]|T[im]|N[ative] // Which variation of QuickSort to use" << endl <<
-	"  -show            // Show first hit neighborhood." << endl <<
+	"  -show            // Show 'best' hit neighborhood." << endl <<
+//	"  -showall         // Show all hits neighborhoods." << endl <<
 	"  -summary         // Show summary/description." << endl <<
 	"  -XML             // Present Results in XML-like structure." << endl <<
 	"  -Json            // Present Result in Json structure." << endl <<
@@ -450,9 +452,9 @@ static void HelpUsage(const char *progname)
 	"          " << prog << " -d BILLS -rpn vendor/BSn price<100 AND" << endl << 
 	"          " << prog << " -d NEWS  -rpn unix WITHIN:2006" << endl <<
 	"          " << prog << " -d SHAKESPEARE -P SPEECH/SPEAKER -rpn out spot PEER" << endl <<
-	"Note: \"Built-in\" Elements for -p and -headline: F for Full, B for Brief and S for Short. Additional" << endl <<
-        "\"Special\" elements: R for Raw, H for Highlight/Hits; and if they exist, L for location/redirect" << endl 
-	<< "and M for metadata." << endl << endl <<
+	"Note: \"Built-in\" Elements for -p and -headline: F for Full, B for Brief and S for Short." << endl <<
+        "Additional \"Special\" elements: R for Raw, H for Highlight/Hits; and if they exist," << endl <<
+        "L for location/redirect and M for metadata." << endl << endl <<
 	"In the response one can select not just the record but also all elements of a specific field as" << endl <<
 	"well as specific contents where the hit occurs (similar to -P). Example:  1,speech/speech" << endl <<
         "to select the contents of a speech where the hit(s) in record #1 occurs." << endl << 
@@ -546,8 +548,9 @@ int _Isearch_main (int argc, char **argv)
   INT LastUsed = 0;
   bool ShowXML = false;
   bool ShowJson = false;
-  INT ShowSummary = 0;
-  INT ShowHit = 0;
+  bool ShowSummary = false;
+  bool ShowHitContent = false;
+  bool ShowAllHitContents = false;
   ElementSet = BRIEF_MAGIC;
   INT first = 1;
   INT last =  0;
@@ -574,13 +577,13 @@ int _Isearch_main (int argc, char **argv)
                 << "  built with: " << __CompilerUsed  << " (" <<  __HostPlatform << ")" << endl;
               LastUsed = x;
             }
-	  else if (Flag.Equals ("-XML") ||  Flag.Equals ("-xml"))
+	  else if (Flag.CaseEquals ("-XML"))
 	    {
 	      ShowXML = true;
 	      PresentHtml = true; // Latter PresentXML
 	      LastUsed = x;
 	    }
-          else if (Flag.Equals ("-JSON") ||  Flag.Equals ("-Json"))
+          else if (Flag.CaseEquals ("-JSON"))
             {
 	      message_log (LOG_FATAL, "Json not yet supported");
               ShowJson = true;
@@ -594,7 +597,12 @@ int _Isearch_main (int argc, char **argv)
             }
 	  else if (Flag.Equals ("-show"))
 	    {
-	      ShowHit = true;
+	      ShowHitContent = true;
+	      LastUsed = x;
+	    }
+	  else if (Flag.Equals ("-showall"))
+	    {
+	      ShowAllHitContents = true;
 	      LastUsed = x;
 	    }
 	  else if (Flag.Equals ("-HTML") || Flag.Equals ("-H"))
@@ -1311,6 +1319,8 @@ int _Isearch_main (int argc, char **argv)
 	{
 	  if (ShowXML)
 	    cout << "<ERROR>";
+	  else if (ShowJson)
+	    cout << "\"ERROR\": ";
 	  cout << "Database \"" << DBName << "\" temp. not available. Try again in a few minutes..";
 	  if (ShowXML)
 	    cout << "</ERROR>";
@@ -1327,8 +1337,8 @@ int _Isearch_main (int argc, char **argv)
 
   if (!pdb->Ok ())
     {
-      if (ShowXML)
-        cout << "<ERROR>";
+      if (ShowXML)       cout << "<ERROR>";
+      else if (ShowJson) cout << "\"ERROR\": ";
       cout << "The specified database \"" << DBName << "\" is not compatible with this version (or undefined). ";
       if (pdb->GetIDBCount() == 1)
 	{
@@ -1388,7 +1398,7 @@ int _Isearch_main (int argc, char **argv)
 	message_log (LOG_WARN, "Could not locate record id '%s'", RecordID.c_str());
       return -1;
     }
-  else if (!Terse && !ShowXML && !&ShowJson && !TabFormat && VerboseFlag)
+  else if (!Terse && !ShowXML && !ShowJson && !TabFormat && VerboseFlag)
     cout << "Isearch " << __IB_Version << endl;
 
 
@@ -1957,12 +1967,13 @@ again:
 
 	  }
 #endif
-	  if (ShowHit && result.GetHitTotal())
+	  if (ShowHitContent && result.GetHitTotal())
             {
 	      if (ShowXML)
 		pdb->XMLContext(result, &string, &tstring, "MATCH");
 	      else
 		pdb->Context(result, &string, &tstring);
+
               if (ShowXML)
                 cout << "<HIT TERM=\"" << tstring << "\">";
               else
@@ -1975,7 +1986,11 @@ again:
                 cout << "</HIT>";
               cout << endl;
             }
-	  if (ShowXML)
+	  if (ShowJson)
+	    {
+	      cout << pdb->JsonHitTable(result) << endl;
+	    }
+	  else if (ShowXML)
 	    {
 #if 1
 	      cout << pdb->XMLHitTable(result) << endl;
@@ -2056,7 +2071,7 @@ again:
               else if (strncasecmp(tcp, "xml", 2) == 0)
                 ShowXML = PresentHtml = false;
               else if (strncasecmp(tcp, "sho", 3) == 0)
-                ShowHit = 0;
+                ShowHitContent = false;
 	      else if (strncasecmp(tcp, "anc", 3) == 0)
 		AncestorElementList.Clear(); // Clear List
 	      else if (strncasecmp(tcp, "pres", 4) == 0)
@@ -2072,12 +2087,12 @@ again:
 	      if (*tcp == '\0')
 		{
 		  cout << "Options Set:";
-		  if (InfixQuery)  cout << " Infix";
-		  if (RpnQuery)    cout << " RPN";
-		  if (PresentHtml) cout << " HTML";
-		  if (ShowXML)     cout << " XML";
-		  if (ShowHit)     cout << " SHOW";
-		  if (DateFlag)    cout << " DATE";
+		  if (InfixQuery)    cout << " Infix";
+		  if (RpnQuery)      cout << " RPN";
+		  if (PresentHtml)   cout << " HTML";
+		  if (ShowXML)       cout << " XML";
+		  if (ShowHitContent)cout << " SHOW";
+		  if (DateFlag)      cout << " DATE";
 		  if (!ElementSet.IsEmpty() && ElementSet != BRIEF_MAGIC)  cout << " Present:{" << ElementSet << "}"; 
 		  if (!AncestorElementList.IsEmpty()) cout << " Ancestors:{" << AncestorElementList << "}";
 		}
@@ -2121,9 +2136,9 @@ again:
 		    pdb->SetDbSearchCacheSize(atol(tp));
 		}
 	      else if (strncasecmp(tcp, "nos", 3) == 0)
-		ShowHit = 0;
+		ShowHitContent = false;
 	      else if (strncasecmp(tcp, "sho", 3) == 0)
-		ShowHit = 1;
+		ShowHitContent = true;
 	      else
 		cout << endl << "Only set Ancestor <value>, Present [<element>], date, Infix, RPN, Words, XML, HTML, SUTRS, cachesize nnn, Show, Noshow supported!";
 	      goto newline;
@@ -2229,58 +2244,58 @@ again:
 	    cout << "-->";
 	  cout << endl;
 	}
-       else if (ShowXML) cout << "-->" << endl;
-    }
-  while (FileNum != 0 || ShellFlag);
-  delete prset;
+	       else if (ShowXML) cout << "-->" << endl;
+	    }
+	  while (FileNum != 0 || ShellFlag);
+	  delete prset;
 
-  // #################################################################################
-#if 0 /* HOUSEKEEPING CHECK 2008 March */
-  cerr << "Still " << result.GetHitTotal() << " FCLISTs in use" << endl;
-#endif
+	  // #################################################################################
+	#if 0 /* HOUSEKEEPING CHECK 2008 March */
+	  cerr << "Still " << result.GetHitTotal() << " FCLISTs in use" << endl;
+	#endif
 
-  delete pdb;
+	  delete pdb;
 
-#if SHOW_RUSAGE
-  if (ShowRusage)
-    {
-  struct rusage rusage;
-  int    ru = RUSAGE_SELF;
-rusage:
-  if (getrusage(ru, &rusage) == 0)
-    {
-      long double cpu_time = rusage.ru_utime.tv_sec +
-                rusage.ru_utime.tv_usec/1000000.0 +
-		rusage.ru_stime.tv_sec + rusage.ru_stime.tv_usec/1000000.0;
-      long ticks = sysconf(_SC_CLK_TCK) ;
-      if (rusage.ru_utime.tv_usec || cpu_time ||  rusage.ru_maxrss) {
-      cerr << endl << endl << ((ru == RUSAGE_SELF) ? "Main" : "Subprocess" ) << " Job Statistics:" << endl <<
-	// tv_sec // tv_usec;   
-	"CPU time:               " << cpu_time << " seconds" << endl <<
-	"    User time:          " << (rusage.ru_utime.tv_sec + 
-		rusage.ru_utime.tv_usec/1000000.0) << " seconds" << endl <<
-        "    System time:        " << (rusage.ru_stime.tv_sec + 
-		rusage.ru_stime.tv_usec/1000000.0)  << " seconds" << endl <<
-        "Max resident size:      " << rusage.ru_maxrss << "k" << endl <<
-	"Shared text memory:     " << (rusage.ru_ixrss)/ticks << "k" << endl <<
-	"Unshared data:          " << (rusage.ru_idrss)/ticks << "k" << endl <<
-	"Unshared stack:         " << (rusage.ru_isrss)/ticks << "k" << endl <<
-	"Page reclaims:          " << rusage.ru_minflt << endl <<
-	"       faults:          " << rusage.ru_majflt << endl <<
-	"Swaps:                  " << rusage.ru_nswap << endl <<
-	"File system in events:  " << rusage.ru_inblock << endl <<
-	"           out event:   " << rusage.ru_oublock << endl <<
-	"Context switches Vol.:  " << rusage.ru_nvcsw << endl <<
-	"               Invol.:  " << rusage.ru_nivcsw << endl;
-	cerr << endl;
-       }
-       if (ru == RUSAGE_SELF)
-	{
-	  ru = RUSAGE_CHILDREN;
-	  goto rusage;
-	}
-     };
-    }
-#endif
-  return 0;
+	#if SHOW_RUSAGE
+	  if (ShowRusage)
+	    {
+	  struct rusage rusage;
+	  int    ru = RUSAGE_SELF;
+	rusage:
+	  if (getrusage(ru, &rusage) == 0)
+	    {
+	      long double cpu_time = rusage.ru_utime.tv_sec +
+			rusage.ru_utime.tv_usec/1000000.0 +
+			rusage.ru_stime.tv_sec + rusage.ru_stime.tv_usec/1000000.0;
+	      long ticks = sysconf(_SC_CLK_TCK) ;
+	      if (rusage.ru_utime.tv_usec || cpu_time ||  rusage.ru_maxrss) {
+	      cerr << endl << endl << ((ru == RUSAGE_SELF) ? "Main" : "Subprocess" ) << " Job Statistics:" << endl <<
+		// tv_sec // tv_usec;   
+		"CPU time:               " << cpu_time << " seconds" << endl <<
+		"    User time:          " << (rusage.ru_utime.tv_sec + 
+			rusage.ru_utime.tv_usec/1000000.0) << " seconds" << endl <<
+		"    System time:        " << (rusage.ru_stime.tv_sec + 
+			rusage.ru_stime.tv_usec/1000000.0)  << " seconds" << endl <<
+		"Max resident size:      " << rusage.ru_maxrss << "k" << endl <<
+		"Shared text memory:     " << (rusage.ru_ixrss)/ticks << "k" << endl <<
+		"Unshared data:          " << (rusage.ru_idrss)/ticks << "k" << endl <<
+		"Unshared stack:         " << (rusage.ru_isrss)/ticks << "k" << endl <<
+		"Page reclaims:          " << rusage.ru_minflt << endl <<
+		"       faults:          " << rusage.ru_majflt << endl <<
+		"Swaps:                  " << rusage.ru_nswap << endl <<
+		"File system in events:  " << rusage.ru_inblock << endl <<
+		"           out event:   " << rusage.ru_oublock << endl <<
+		"Context switches Vol.:  " << rusage.ru_nvcsw << endl <<
+		"               Invol.:  " << rusage.ru_nivcsw << endl;
+		cerr << endl;
+	       }
+	       if (ru == RUSAGE_SELF)
+		{
+		  ru = RUSAGE_CHILDREN;
+		  goto rusage;
+		}
+	     };
+	    }
+	#endif
+	  return 0;
 }
