@@ -16,6 +16,8 @@
 #include "bert.h"
 #include "hnswlib/hnswlib.h"
 
+#define STANDALONE 1 /* run this standalone */
+
 static const float epsilon = std::numeric_limits<float>::epsilon() * 100.0f; // A common way to define epsilon
 
 
@@ -252,9 +254,10 @@ public:
         // save(); // we defer this as its too expensve!
     }
 
-#if 0
+#if 1
 
-    void delete(size_t label) {
+    // Mark deleted in the graph
+    void markDelete(size_t label) {
         if (!index) throw std::runtime_error("Index not initialized (delete)");
         index->markDelete((hnswlib::labeltype)label);
         dirty_count++;
@@ -278,13 +281,13 @@ public:
         // if (dirty_count >= cfg.flush_threshold) flush();
     }
 
-//    Can't undelete since the <start,end> was already zapped
-//    void undelete(size_t label) {
-//        if (!index) throw std::runtime_error("Index not initialized");
-//        index->unmarkDelete((hnswlib::labeltype)label);
-//        dirty_count++;
-//        if (dirty_count >= cfg.flush_threshold) flush();
-//    }
+    // Can undelete but not unremove since the <start,end> was already zapped
+    void undelete(size_t label) {
+        if (!index) throw std::runtime_error("Index not initialized");
+        index->unmarkDelete((hnswlib::labeltype)label);
+        dirty_count++;
+        // if (dirty_count >= cfg.flush_threshold) flush();
+    }
 
    // Return the labels that have start,end range that contain address
     std::vector<size_t> labels_byAddress(int64_t address) {
@@ -331,17 +334,17 @@ public:
 
     void delete_byAddress(int64_t gp) {
         auto matches = labels_byAddress(gp);
-        for (auto lbl : matches) delete(lbl);
+        for (auto lbl : matches) markDelete(lbl);
     }
 
 
+    // Can undelete but can't unremove
+    void undelete_byAddress(int64_t gp) {
+        auto matches = labels_byAddress(gp);
+        for (auto lbl : matches) undelete(lbl);
+    }
 
-//    void undelete_byAddress(int64_t gp) {
-//        auto matches = labels_byAddress(gp);
-//        for (auto lbl : matches) undelete(lbl);
-//    }
-
-#endif
+#else
 
     void remove(size_t label) {
         if (!index) throw std::runtime_error("Index not initialized");
@@ -366,7 +369,7 @@ public:
         if (dirty_count >= cfg.flush_threshold) flush();
 #endif
     }
-
+#endif
 
     float score_from_dist(float dist) const {
         if (cfg.metric == Metric::L2) return 1.0f/(1.0f+dist);
@@ -446,23 +449,34 @@ public:
         }
     }
 
-#if 0
+#if 1
 
     void remove(size_t label, size_t shard=0) {
         if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
         shards[shard]->remove(label);
     }
 
-//    void undelete(size_t label, size_t shard=0) {
-//        if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
-//        shards[shard]->undelete(label);
+    void markDelete(size_t label, size_t shard=0) {
+        if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
+        shards[shard]->markDelete(label);
+    }
+
+    void undelete(size_t label, size_t shard=0) {
+        if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
+        shards[shard]->undelete(label);
     }
 
     void delete_byAddress(int64_t address, size_t shard=0) {
         if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
         auto matches = shards[shard]->labels_byAddress(address);
-        for (auto lbl : matches) shards[shard]->remove(lbl);
+        for (auto lbl : matches) shards[shard]->markDelete(lbl);
     }
+
+    void remove_byAddress(int64_t address, size_t shard=0) {
+        if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
+        auto matches = shards[shard]->labels_byAddress(address);
+        for (auto lbl : matches) shards[shard]->remove(lbl);
+    }     
 
     void undelete_byAddress(int64_t address, size_t shard=0) {
         if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
@@ -536,10 +550,12 @@ public:
     }
     void append(const std::string&n,const std::string&s){get(n).append(s);}
 
-#if 0
+#if 1
     void remove(const std::string&n,size_t label,size_t shard=0){get(n).remove(label,shard);}
+    void markDelete(const std::string&n,size_t label,size_t shard=0){get(n).markDelete(label,shard);}
     void undelete(const std::string&n,size_t label,size_t shard=0){get(n).undelete(label,shard);}
     void delete_byAddress(const std::string&n,int64_t addr,size_t shard=0){get(n).delete_byAddress(addr,shard);}
+    void remove_byAddress(const std::string&n,int64_t addr,size_t shard=0){get(n).delete_byAddress(addr,shard);}
     void undelete_byAddress(const std::string&n,int64_t addr,size_t shard=0){get(n).undelete_byAddress(addr,shard);}
     size_t shard_count(const std::string&n){return get(n).shard_count();}
 #else
@@ -554,6 +570,8 @@ public:
     std::string text(const std::string&n,const SearchResult&r){return get(n).get_text(r);}
 };
 
+
+#if STANDALONE
 // ---------------- Main ----------------
 int main(int argc,char**argv){
     if(argc<2){std::cerr<<"Usage: "<<argv[0]<<" model.ggml\n";return 1;}
@@ -594,6 +612,7 @@ int main(int argc,char**argv){
 
     }
 }
+#endif
 
 
 /*
