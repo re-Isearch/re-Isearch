@@ -1,0 +1,597 @@
+// main.cpp
+// Sharded SBert (GGML) + HNSW search with kNN / radius / relative / adaptive
+// Build on macOS: link with -lbert -lggml -framework Accelerate, include hnswlib headers
+
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <memory>
+#include <cmath>
+#include <stdexcept>
+#include <algorithm>
+#include <sstream>
+#include <unordered_map>
+
+#include "bert.h"
+#include "hnswlib/hnswlib.h"
+
+static const float epsilon = std::numeric_limits<float>::epsilon() * 100.0f; // A common way to define epsilon
+
+
+// ---------------- SBert wrapper ----------------
+class SBertGGML {
+    bert_ctx * ctx;
+    int dim;
+public:
+    SBertGGML(const std::string& model_path) {
+        ctx = bert_load_from_file(model_path.c_str());
+        if (!ctx) throw std::runtime_error("Failed to load model");
+        dim = bert_n_embd(ctx);
+        std::cout << "Loaded SBERT GGML model. dim=" << dim << "\n";
+    }
+    ~SBertGGML(){ if(ctx) bert_free(ctx); }
+    int embedding_dim() const { return dim; }
+    bert_ctx* raw() const { return ctx; }
+
+    std::vector<float> encode_text(const std::string &text, bool debug=false) const {
+        const int MAX_TOKENS = 512;
+        bert_vocab_id tokens[MAX_TOKENS];
+        int32_t n_tokens = 0;
+        bert_tokenize(ctx, text.c_str(), tokens, &n_tokens, MAX_TOKENS);
+        if (n_tokens <= 0) throw std::runtime_error("Tokenization failed");
+
+        std::vector<float> emb((size_t)dim);
+        bert_eval(ctx, 4, tokens, n_tokens, emb.data());
+
+        double norm = 0.0;
+        for (float v : emb) norm += (double)v * (double)v;
+        norm = std::sqrt(norm);
+        if (norm > 0.0) for (auto &v : emb) v = (float)(v / (float)norm);
+
+        if (debug) std::cerr << "[DEBUG] encode_text(): n_tokens="<<n_tokens<<" norm="<<norm<<"\n";
+        return emb;
+    }
+};
+
+// ---------------- SearchResult ----------------
+struct SearchResult {
+    float score;
+    int64_t start;
+    int64_t end;
+};
+
+// ---------------- Metric + config ----------------
+enum class Metric { L2, InnerProduct, Cosine };
+
+struct HnswConfig {
+    size_t max_elements = 100000;
+    size_t M = 16;
+    size_t ef_construction = 200;
+    size_t ef_search = 50;
+    Metric metric = Metric::L2;
+    //
+    int max_tokens_per_chunk = 128;
+    float overlap_percent = 0.1f;
+    size_t knn_lookahead_scale = 5;
+    //
+    float  alpha = 0.8;
+    size_t minN = 3;
+    float  gapDelta = 0.1;
+    size_t relative_k = 500; // kNN for relative
+    //
+    size_t flush_threshold = 100;  // auto-flush after this many inserts/deletes
+    // 
+    bool debug = false;
+};
+
+// ---------------- Utility ----------------
+static bool file_exists(const std::string &p) {
+    std::ifstream f(p);
+    return f.good();
+}
+
+static std::vector<size_t> findPositionsInRange(const std::string& filename, int64_t x) {
+    std::vector<size_t> positions;
+    std::ifstream file(filename);
+    
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open file " << filename << std::endl;
+        return positions;
+    }
+    
+    int64_t first, second;
+    size_t position = 0;
+    
+    while (file >> first >> second) {
+        // Check if x is between first and second (inclusive)
+        if ((first <= x && x <= second) || (second <= x && x <= first)) {
+            positions.push_back(position);
+        }
+        position++;
+    }
+    
+    file.close();
+    return positions;
+}
+
+
+// ---------------- BertIndex (single shard) ----------------
+class BertIndex {
+    SBertGGML &embedder;
+    std::unique_ptr<hnswlib::SpaceInterface<float>> space;
+    std::unique_ptr<hnswlib::HierarchicalNSW<float>> index;
+    std::string sentences_path;
+    std::string index_path;
+    std::string offsets_path;
+    HnswConfig cfg;
+    size_t next_label;
+    std::vector<size_t> free_labels;
+    size_t dirty_count = 0;
+
+public:
+    BertIndex(SBertGGML &eb, const std::string &sentences, const std::string &idx, const std::string &offs, const HnswConfig &conf)
+        : embedder(eb), sentences_path(sentences), index_path(idx), offsets_path(offs), cfg(conf), next_label(0)
+    {
+        int dim = embedder.embedding_dim();
+        if (cfg.metric == Metric::L2) {
+            space = std::make_unique<hnswlib::L2Space>(dim);
+        } else {
+            space = std::make_unique<hnswlib::InnerProductSpace>(dim);
+        }
+    }
+
+    ~BertIndex() {
+        try {
+            flush();  // ensure final save
+        } catch (...) {
+            // don’t throw in destructor, just log
+            std::cerr << "[WARN] Failed to save index on destruction\n";
+        }
+    }
+
+    // sync the in-memory HNSW index to disk.
+    void flush() {
+        // We only re-write if the index on disk and in-memory are different
+        if (dirty_count && index) index->saveIndex(index_path);
+	dirty_count = 0;
+    }
+
+    void buildIfMissing() {
+        if (file_exists(index_path) && file_exists(offsets_path)) {
+            index = std::make_unique<hnswlib::HierarchicalNSW<float>>(space.get(), index_path);
+            index->setEf((uint32_t)cfg.ef_search);
+            std::ifstream fin(offsets_path, std::ios::binary | std::ios::ate);
+            size_t fsize = (size_t)fin.tellg();
+            size_t entries = fsize / 16;
+            fin.seekg(0);
+            for (size_t i = 0; i < entries; ++i) {
+                int64_t s=0, e=0;
+                fin.read((char*)&s,8);
+                fin.read((char*)&e,8);
+                if (s==0 && e==0) free_labels.push_back(i);
+            }
+            next_label = entries;
+        } else {
+            createEmpty();
+        }
+    }
+
+    void createEmpty() {
+        index = std::make_unique<hnswlib::HierarchicalNSW<float>>(space.get(), cfg.max_elements, cfg.M, cfg.ef_construction);
+        index->setEf((uint32_t)cfg.ef_search);
+        { std::ofstream ofs(offsets_path, std::ios::binary | std::ios::trunc); }
+        { std::ofstream sfs(sentences_path, std::ios::trunc); }
+        next_label = 0;
+        free_labels.clear();
+        dirty_count = 0;
+    }
+
+    size_t allocate_label() {
+        if (!free_labels.empty()) {
+            size_t id = free_labels.back();
+            free_labels.pop_back();
+            return id;
+        }
+        if (next_label >= cfg.max_elements) throw std::runtime_error("Reached max_elements");
+        return next_label++;
+    }
+
+    std::vector<std::vector<bert_vocab_id>> chunk_tokens(const std::string &sentence) const {
+        const int MAX_TOKENS = 512;
+        bert_vocab_id tokens[MAX_TOKENS];
+        int32_t n_tokens = 0;
+        bert_tokenize(embedder.raw(), sentence.c_str(), tokens, &n_tokens, MAX_TOKENS);
+
+        if (n_tokens <= cfg.max_tokens_per_chunk)
+            return { std::vector<bert_vocab_id>(tokens, tokens+n_tokens) };
+
+        int stride = std::max(1, (int)(cfg.max_tokens_per_chunk * (1.0f - cfg.overlap_percent)));
+        std::vector<std::vector<bert_vocab_id>> chunks;
+        for (int i=0; i<n_tokens; i+=stride) {
+            int end = std::min(i+cfg.max_tokens_per_chunk, n_tokens);
+            chunks.emplace_back(tokens+i, tokens+end);
+            if (end == n_tokens) break;
+        }
+        return chunks;
+    }
+
+    void append(const std::string &sentence) {
+        auto chunks = chunk_tokens(sentence);
+        for (auto &chunk : chunks) {
+            size_t label = allocate_label();
+
+            std::fstream sfs(sentences_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::app);
+            sfs.seekp(0,std::ios::end);
+            int64_t start = (int64_t)sfs.tellp();
+            sfs.write(sentence.data(), sentence.size());
+            sfs.put('\n');
+            int64_t end = (int64_t)sfs.tellp();
+            sfs.close();
+
+            std::fstream ofs(offsets_path, std::ios::in | std::ios::out | std::ios::binary);
+            if (!ofs) ofs.open(offsets_path, std::ios::out | std::ios::binary);
+            ofs.seekp((std::streamoff)label * 16);
+            ofs.write((char*)&start,8);
+            ofs.write((char*)&end,8);
+            ofs.close();
+
+            std::vector<float> emb(embedder.embedding_dim());
+            bert_eval(embedder.raw(), 4, chunk.data(), (int32_t)chunk.size(), emb.data());
+
+            double norm=0; for (float v:emb) norm+=v*v; norm=std::sqrt(norm);
+            if (norm>0) for (auto &v:emb) v/=norm;
+
+            index->addPoint(emb.data(), (hnswlib::labeltype)label);
+            if (++dirty_count > cfg.flush_threshold) flush();
+        }
+        // save(); // we defer this as its too expensve!
+    }
+
+#if 0
+
+void remove(size_t label) {
+    if (!index) throw std::runtime_error("Index not initialized");
+    index->markDelete((hnswlib::labeltype)label);
+    // zero offsets
+    std::fstream ofs(offsets_path, std::ios::in | std::ios::out | std::ios::binary);
+    ofs.seekp((std::streamoff)label * 16);
+    int64_t zero = 0;
+    ofs.write((char*)&zero, 8);
+    ofs.write((char*)&zero, 8);
+    ofs.close();
+    free_labels.push_back(label);
+    dirty_count++;
+    if (dirty_count >= cfg.flush_threshold) flush();
+}
+
+void undelete(size_t label) {
+    if (!index) throw std::runtime_error("Index not initialized");
+    index->unmarkDelete((hnswlib::labeltype)label);
+    dirty_count++;
+    if (dirty_count >= cfg.flush_threshold) flush();
+}
+
+std::vector<size_t> labels_byAddress(int64_t address) {
+    std::vector<size_t> matches;
+    std::ifstream fin(offsets_path, std::ios::binary);
+    fin.seekg(0, std::ios::end);
+    size_t count = fin.tellg() / 16;
+    fin.seekg(0);
+    for (size_t i=0; i<count; i++) {
+        int64_t s=0,e=0;
+        fin.read((char*)&s,8);
+        fin.read((char*)&e,8);
+        if (address >= s && address < e) {
+            matches.push_back(i);
+        }
+    }
+    return matches;
+}
+
+
+
+
+
+
+
+
+
+
+    // Remove by address. Need to go through all the offsets.
+    void remove_byAddress(int64_t gp) {
+      // iterate over the label count
+      // remove every label where (gp >= start && gp <= end)
+    }
+    void remove_byAddress(int64_t r_start, int64_t r_end) {
+      // iterate over the start and end in offset file
+      // and remove every label where (start >= r_start && end <= r_end)
+    }
+#endif
+
+    void remove(size_t label) {
+        if (!index) throw std::runtime_error("Index not initialized");
+
+        // Mark as deleted in HNSWlib
+        index->markDelete((hnswlib::labeltype)label);
+
+        // Zero out offsets on disk
+        std::fstream ofs(offsets_path, std::ios::in | std::ios::out | std::ios::binary);
+        if (!ofs) throw std::runtime_error("Failed to open offsets file for remove()");
+        ofs.seekp((std::streamoff)label * 16);
+        int64_t zero = 0;
+        ofs.write((char*)&zero, 8);
+        ofs.write((char*)&zero, 8);
+        ofs.close();
+
+        // Make label reusable
+        free_labels.push_back(label);
+
+        dirty_count++;
+#if 0 /* since we have 0,0 in the offset file and the search leaves it off we can defer */
+        if (dirty_count >= cfg.flush_threshold) flush();
+#endif
+    }
+
+
+    float score_from_dist(float dist) const {
+        if (cfg.metric == Metric::L2) return 1.0f/(1.0f+dist);
+        return 1.0f - dist;
+    }
+
+    std::vector<SearchResult> search_knn(const std::vector<float> &qemb, size_t k) const {
+        std::vector<SearchResult> out;
+        int look = (int)(k * cfg.knn_lookahead_scale);
+        auto pq = index->searchKnn(qemb.data(), look);
+        std::vector<std::pair<float,hnswlib::labeltype>> pairs;
+        while (!pq.empty()) { pairs.push_back(pq.top()); pq.pop(); }
+        std::sort(pairs.begin(), pairs.end(), [](auto&a,auto&b){return a.first<b.first;});
+        std::ifstream fin(offsets_path, std::ios::binary);
+        for (auto &pr:pairs) {
+            int64_t s=0,e=0;
+            fin.seekg((std::streamoff)pr.second*16);
+            fin.read((char*)&s,8); fin.read((char*)&e,8);
+            if (s==0 && e==0) continue;
+            out.push_back({score_from_dist(pr.first), s, e});
+            if (out.size()>=k) break;
+        }
+        return out;
+    }
+
+    std::vector<SearchResult> search_radius(const std::vector<float>&qemb,float minScore,size_t maxK=1000) const {
+        auto cands = search_knn(qemb,maxK);
+        std::vector<SearchResult> out;
+        for(auto&r:cands) if(r.score>=minScore) out.push_back(r);
+        return out;
+    }
+
+    void save() { flush(); /* We may also want to do something else here as well */ }
+
+    std::string get_text(const SearchResult&r) const {
+        std::ifstream f(sentences_path);
+        f.seekg(r.start);
+        std::string s((size_t)(r.end-r.start),'\0');
+        f.read(&s[0], s.size());
+        return s;
+    }
+};
+
+// ---------------- ShardedIndex ----------------
+class ShardedIndex {
+    SBertGGML &embedder;
+    std::string base;
+    HnswConfig cfg;
+    std::vector<std::unique_ptr<BertIndex>> shards;
+    std::string basename (size_t i)const{ return  i ? base+"_"+std::to_string(i) : base;}
+    std::string name_sent(size_t i)const{ return basename(i)+"_sentences.txt";}
+    std::string name_idx(size_t i)const{  return basename(i)+"_index.bin";}
+    std::string name_offs(size_t i)const{ return basename(i)+"_offsets.bin";}
+public:
+    ShardedIndex(SBertGGML &e,const std::string &b,HnswConfig c):embedder(e),base(b),cfg(c){
+        size_t i=0;
+        while(file_exists(name_idx(i))&&file_exists(name_offs(i))){
+            auto s=std::make_unique<BertIndex>(embedder,name_sent(i),name_idx(i),name_offs(i),cfg);
+            s->buildIfMissing();
+            shards.push_back(std::move(s));
+            i++;
+        }
+        if(shards.empty()) add_new();
+    }
+    void add_new(){
+        size_t i=shards.size();
+        auto s=std::make_unique<BertIndex>(embedder,name_sent(i),name_idx(i),name_offs(i),cfg);
+        s->buildIfMissing();
+        shards.push_back(std::move(s));
+    }
+    void append(const std::string&txt){
+        try{shards.back()->append(txt);}
+        catch(std::runtime_error&e){
+            if(std::string(e.what()).find("max_elements")!=std::string::npos){
+                add_new(); shards.back()->append(txt);
+            } else throw;
+        }
+    }
+
+#if 0
+
+void remove(size_t label, size_t shard=0) {
+    if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
+    shards[shard]->remove(label);
+}
+
+void undelete(size_t label, size_t shard=0) {
+    if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
+    shards[shard]->undelete(label);
+}
+
+void delete_byAddress(int64_t address, size_t shard=0) {
+    if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
+    auto matches = shards[shard]->labels_byAddress(address);
+    for (auto lbl : matches) shards[shard]->remove(lbl);
+}
+
+void undelete_byAddress(int64_t address, size_t shard=0) {
+    if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
+    auto matches = shards[shard]->labels_byAddress(address);
+    for (auto lbl : matches) shards[shard]->undelete(lbl);
+}
+
+size_t shard_count() const { return shards.size(); }
+
+#endif
+
+   void remove(size_t label){
+        // for simplicity assume single shard for label mapping
+        if(!shards.empty()) shards.back()->remove(label);
+    }
+    void flush() { for (auto &s : shards) { s->flush(); } }
+
+    std::vector<SearchResult> knn(const std::string&q,size_t k){
+        auto qemb=embedder.encode_text(q,cfg.debug);
+        std::vector<SearchResult>all;
+        for(auto&s:shards){auto part=s->search_knn(qemb,k);all.insert(all.end(),part.begin(),part.end());}
+        std::sort(all.begin(),all.end(),[](auto&a,auto&b){return a.score>b.score;});
+        if(all.size()>k)all.resize(k);return all;
+    }
+    std::vector<SearchResult> radius(const std::string&q,float minScore){
+        auto qemb=embedder.encode_text(q,cfg.debug);
+        std::vector<SearchResult>all;
+        for(auto&s:shards){auto part=s->search_radius(qemb,minScore);all.insert(all.end(),part.begin(),part.end());}
+        std::sort(all.begin(),all.end(),[](auto&a,auto&b){return a.score>b.score;});
+        return all;
+    }
+    std::vector<SearchResult> relative(const std::string&q,float alpha = 0.0f){
+        auto res=knn(q, cfg.relative_k);
+        if(res.empty())return{};
+        float my_alpha = std::abs(alpha) > epsilon ? alpha : cfg.alpha;
+        float cutoff=my_alpha*res.front().score;
+        std::vector<SearchResult>out;
+        for(auto&r:res)if(r.score>=cutoff)out.push_back(r);
+        return out;
+    }
+    std::vector<SearchResult> adaptive(const std::string&q,float alpha,size_t minN,size_t lookahead,float gapDelta){
+        float my_alpha = std::abs(alpha) > epsilon ? alpha : cfg.alpha;
+
+        auto res=relative(q,my_alpha);
+        if(res.empty())return{};
+        size_t stop=std::min(minN,res.size());
+        for(size_t i=1;i<std::min(lookahead,res.size());i++){
+            float gap=res[i-1].score-res[i].score;
+            if(gap>=gapDelta){stop=std::max(minN,i);break;}
+            stop=std::max(stop,i+1);
+        }
+        if(stop>res.size())stop=res.size();
+        return{res.begin(),res.begin()+stop};
+    }
+    std::string get_text(const SearchResult&r){for(auto&s:shards){auto t=s->get_text(r);if(!t.empty())return t;}return"";}
+};
+
+// ---------------- Manager ----------------
+class BertIndexManager {
+    SBertGGML embedder;
+    HnswConfig cfg;
+    std::unordered_map<std::string,std::unique_ptr<ShardedIndex>> idxs;
+public:
+    BertIndexManager(const std::string&model,HnswConfig c):embedder(model),cfg(c){}
+    ShardedIndex&get(const std::string&n){
+        if(!idxs.count(n)) idxs[n]=std::make_unique<ShardedIndex>(embedder,n,cfg);
+        return*idxs[n];
+    }
+    void append(const std::string&n,const std::string&s){get(n).append(s);}
+
+#if 0
+    void remove(const std::string&n,size_t label,size_t shard=0){get(n).remove(label,shard);}
+    void undelete(const std::string&n,size_t label,size_t shard=0){get(n).undelete(label,shard);}
+    void delete_byAddress(const std::string&n,int64_t addr,size_t shard=0){get(n).delete_byAddress(addr,shard);}
+    void undelete_byAddress(const std::string&n,int64_t addr,size_t shard=0){get(n).undelete_byAddress(addr,shard);}
+    size_t shard_count(const std::string&n){return get(n).shard_count();}
+#else
+    void remove(const std::string&n,size_t label){get(n).remove(label);}
+#endif
+    void flush(const std::string&n){get(n).flush();}
+
+    std::vector<SearchResult> knn(const std::string&n,const std::string&q,size_t k=5){return get(n).knn(q,k);}
+    std::vector<SearchResult> radius(const std::string&n,const std::string&q,float minScore){return get(n).radius(q,minScore);}
+    std::vector<SearchResult> relative(const std::string&n,const std::string&q,float alpha){return get(n).relative(q,alpha);}
+    std::vector<SearchResult> adaptive(const std::string&n,const std::string&q,float alpha,size_t minN,size_t lookahead,float gapDelta){return get(n).adaptive(q,alpha,minN,lookahead,gapDelta);}
+    std::string text(const std::string&n,const SearchResult&r){return get(n).get_text(r);}
+};
+
+// ---------------- Main ----------------
+int main(int argc,char**argv){
+    if(argc<2){std::cerr<<"Usage: "<<argv[0]<<" model.ggml\n";return 1;}
+    HnswConfig cfg; cfg.metric=Metric::Cosine; cfg.debug=false;
+    BertIndexManager man(argv[1],cfg);
+    std::string current="default";
+    std::cout<<"Commands: append <txt>, knn <k> <q>, radius <minScore> <q>, relative <alpha> <q>, adaptive <alpha> <minN> <lookahead> <gapDelta> <q>, quit\n";
+    for(std::string line;std::cout<<"["<<current<<"]> ",std::getline(std::cin,line);){
+        if(line=="quit")break;
+        if(line.rfind("append ",0)==0){man.append(current,line.substr(7));continue;}
+        if(line.rfind("knn ",0)==0){
+            std::istringstream iss(line.substr(4));
+            size_t k;iss>>k;std::string q;std::getline(iss,q);if(!q.empty()&&q[0]==' ')q=q.substr(1);
+            for(auto&r:man.knn(current,q,k))std::cout<<" - [score="<<r.score<<"] "<<man.text(current,r)<<"\n";
+            continue;
+        }
+        if(line.rfind("radius ",0)==0){
+            std::istringstream iss(line.substr(7));
+            float s;iss>>s;std::string q;std::getline(iss,q);if(!q.empty()&&q[0]==' ')q=q.substr(1);
+            for(auto&r:man.radius(current,q,s))std::cout<<" - [score="<<r.score<<"] "<<man.text(current,r)<<"\n";
+            continue;
+        }
+        if(line.rfind("relative ",0)==0){
+            std::istringstream iss(line.substr(9));
+            float a;iss>>a;std::string q;std::getline(iss,q);if(!q.empty()&&q[0]==' ')q=q.substr(1);
+            for(auto&r:man.relative(current,q,a))std::cout<<" - [score="<<r.score<<"] "<<man.text(current,r)<<"\n";
+            continue;
+        }
+        if(line.rfind("adaptive ",0)==0){
+            std::istringstream iss(line.substr(9));
+            float a,g;size_t m,l;iss>>a>>m>>l>>g;std::string q;std::getline(iss,q);if(!q.empty()&&q[0]==' ')q=q.substr(1);
+            for(auto&r:man.adaptive(current,q,a,m,l,g))std::cout<<" - [score="<<r.score<<"] "<<man.text(current,r)<<"\n";
+            continue;
+        }
+	// Assume a query
+        for(auto&r:man.knn(current,line,5))std::cout<<" - [score="<<r.score<<"] "<<man.text(current,r)<<"\n";
+            continue;
+
+    }
+}
+
+
+/*
+Notes & caveats
+
+The code assumes the presence of bert.h with the C-style functions:
+   bert_load_from_file, bert_tokenize, bert_eval, bert_free, bert_n_embd.
+Keep those symbols available at link time.
+
+A working bert is provided with this distribution.
+
+hnswlib::HierarchicalNSW constructors and methods are used as in header-only hnswlib (common distribution).
+If your hnswlib is built differently, adjust constructors accordingly (I used both file-based constructor
+and parameter-based creation).
+
+A working hnswlib is provided with this distribution
+
+Cosine similarity is implemented by normalizing embeddings — HNSW uses inner-product space, so Cosine behaves
+like InnerProduct on normalized vectors.
+
+If you choose --metric cos, set metric to Cosine and the code normalizes. For L2 we use L2Space.
+
+The offsets file stores pairs of 8-byte signed integers (start, end), so each entry is 16 bytes.
+Deletion marks offsets as zero and calls markDelete(label) on the HNSW index; freed labels are reused.
+When a shard reaches max_elements, a new shard is automatically created.
+--debug prints query norms, chunk norms, raw distances and offsets to stderr.
+
+Shards are only numbered after the first. Typically since we are creating a specific index per field
+and sharding is only when we have more than (in the default) 100000 elements, we will probably have no
+additional shards. NOTE: Performance across shards in linear..
+
+Right now we use sentences and start/end but when its wrapped into re-Isearch we'll dump the sentences
+as they are just for development and debugging and instead of start and end we'll store start GP and
+end GP, basically a FC. Each start GP encodes not just the start of the field in the file but also the
+identity of the file.
+
+*/
+
