@@ -75,9 +75,11 @@ struct HnswConfig {
     float overlap_percent = 0.1f;
     size_t knn_lookahead_scale = 5;
     //
-    float  alpha = 0.8;
-    size_t minN = 3;
-    float  gapDelta = 0.1;
+    float  alpha = 0.8; // relative threshold
+    size_t minN = 3; // always return at least 3
+    float  gapDelta = 0.1; // treat a 0.1 gap as significant
+    size_t adaptive_lookahead = 10 ; // check top 10 results for cluster drop-off
+    //
     size_t relative_k = 500; // kNN for relative
     //
     size_t flush_threshold = 100;  // auto-flush after this many inserts/deletes
@@ -191,6 +193,8 @@ public:
         if (!free_labels.empty()) {
             size_t id = free_labels.back();
             free_labels.pop_back();
+            // NOTE: We may want to set a flag to flush() after the new label is
+            // used. We don't do this yet but may..
             return id;
         }
         if (next_label >= cfg.max_elements) throw std::runtime_error("Reached max_elements");
@@ -250,63 +254,93 @@ public:
 
 #if 0
 
-void remove(size_t label) {
-    if (!index) throw std::runtime_error("Index not initialized");
-    index->markDelete((hnswlib::labeltype)label);
-    // zero offsets
-    std::fstream ofs(offsets_path, std::ios::in | std::ios::out | std::ios::binary);
-    ofs.seekp((std::streamoff)label * 16);
-    int64_t zero = 0;
-    ofs.write((char*)&zero, 8);
-    ofs.write((char*)&zero, 8);
-    ofs.close();
-    free_labels.push_back(label);
-    dirty_count++;
-    if (dirty_count >= cfg.flush_threshold) flush();
-}
-
-void undelete(size_t label) {
-    if (!index) throw std::runtime_error("Index not initialized");
-    index->unmarkDelete((hnswlib::labeltype)label);
-    dirty_count++;
-    if (dirty_count >= cfg.flush_threshold) flush();
-}
-
-std::vector<size_t> labels_byAddress(int64_t address) {
-    std::vector<size_t> matches;
-    std::ifstream fin(offsets_path, std::ios::binary);
-    fin.seekg(0, std::ios::end);
-    size_t count = fin.tellg() / 16;
-    fin.seekg(0);
-    for (size_t i=0; i<count; i++) {
-        int64_t s=0,e=0;
-        fin.read((char*)&s,8);
-        fin.read((char*)&e,8);
-        if (address >= s && address < e) {
-            matches.push_back(i);
-        }
+    void delete(size_t label) {
+        if (!index) throw std::runtime_error("Index not initialized (delete)");
+        index->markDelete((hnswlib::labeltype)label);
+        dirty_count++;
     }
-    return matches;
-}
 
+    // Remove the label from the graph and from the offsets.
+    void remove(size_t label) {
+        if (!index) throw std::runtime_error("Index not initialized (remove)");
+        index->markDelete((hnswlib::labeltype)label);
+        // zero offsets
+        std::fstream ofs(offsets_path, std::ios::in | std::ios::out | std::ios::binary);
+        ofs.seekp((std::streamoff)label * 16);
+        int64_t zero = 0;
+        ofs.write((char*)&zero, 8);
+        ofs.write((char*)&zero, 8);
+        ofs.close();
+        free_labels.push_back(label);
+        dirty_count++;
 
+        // We don't flush even if count as we want to defer
+        // if (dirty_count >= cfg.flush_threshold) flush();
+    }
 
+//    Can't undelete since the <start,end> was already zapped
+//    void undelete(size_t label) {
+//        if (!index) throw std::runtime_error("Index not initialized");
+//        index->unmarkDelete((hnswlib::labeltype)label);
+//        dirty_count++;
+//        if (dirty_count >= cfg.flush_threshold) flush();
+//    }
 
+   // Return the labels that have start,end range that contain address
+    std::vector<size_t> labels_byAddress(int64_t address) {
+        std::vector<size_t> matches;
+        std::ifstream fin(offsets_path, std::ios::binary);
+        fin.seekg(0, std::ios::end);
+        size_t count = fin.tellg() / 16;
+        fin.seekg(0);
+        for (size_t i=0; i<count; i++) {
+            int64_t s=0,e=0;
+            fin.read((char*)&s,8);
+            fin.read((char*)&e,8);
+            if (address >= s && address < e) {
+                matches.push_back(i);
+            }
+        }
+        return matches;
+    }
 
-
-
-
+    // Return the labels that are included in the range <start,end>
+    std::vector<size_t> labels_byAddress(int64_t start, int64_t end) {
+        std::vector<size_t> matches;
+        std::ifstream fin(offsets_path, std::ios::binary);
+        fin.seekg(0, std::ios::end);
+        size_t count = fin.tellg() / 16;
+        fin.seekg(0);
+        for (size_t i=0; i<count; i++) {
+            int64_t s=0,e=0;
+            fin.read((char*)&s,8);
+            fin.read((char*)&e,8);
+            if (s >= start && e <= end) {
+                matches.push_back(i);
+            }
+        }
+        return matches;
+    }
 
 
     // Remove by address. Need to go through all the offsets.
     void remove_byAddress(int64_t gp) {
-      // iterate over the label count
-      // remove every label where (gp >= start && gp <= end)
+        auto matches = labels_byAddress(gp);
+        for (auto lbl : matches) remove(lbl);
     }
-    void remove_byAddress(int64_t r_start, int64_t r_end) {
-      // iterate over the start and end in offset file
-      // and remove every label where (start >= r_start && end <= r_end)
+
+    void delete_byAddress(int64_t gp) {
+        auto matches = labels_byAddress(gp);
+        for (auto lbl : matches) delete(lbl);
     }
+
+
+
+//    void undelete_byAddress(int64_t gp) {
+//        auto matches = labels_byAddress(gp);
+//        for (auto lbl : matches) undelete(lbl);
+//    }
+
 #endif
 
     void remove(size_t label) {
@@ -414,29 +448,29 @@ public:
 
 #if 0
 
-void remove(size_t label, size_t shard=0) {
-    if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
-    shards[shard]->remove(label);
-}
+    void remove(size_t label, size_t shard=0) {
+        if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
+        shards[shard]->remove(label);
+    }
 
-void undelete(size_t label, size_t shard=0) {
-    if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
-    shards[shard]->undelete(label);
-}
+//    void undelete(size_t label, size_t shard=0) {
+//        if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
+//        shards[shard]->undelete(label);
+    }
 
-void delete_byAddress(int64_t address, size_t shard=0) {
-    if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
-    auto matches = shards[shard]->labels_byAddress(address);
-    for (auto lbl : matches) shards[shard]->remove(lbl);
-}
+    void delete_byAddress(int64_t address, size_t shard=0) {
+        if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
+        auto matches = shards[shard]->labels_byAddress(address);
+        for (auto lbl : matches) shards[shard]->remove(lbl);
+    }
 
-void undelete_byAddress(int64_t address, size_t shard=0) {
-    if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
-    auto matches = shards[shard]->labels_byAddress(address);
-    for (auto lbl : matches) shards[shard]->undelete(lbl);
-}
+    void undelete_byAddress(int64_t address, size_t shard=0) {
+        if (shard >= shards.size()) throw std::runtime_error("Invalid shard index");
+        auto matches = shards[shard]->labels_byAddress(address);
+        for (auto lbl : matches) shards[shard]->undelete(lbl);
+    }
 
-size_t shard_count() const { return shards.size(); }
+    size_t shard_count() const { return shards.size(); }
 
 #endif
 
@@ -469,15 +503,18 @@ size_t shard_count() const { return shards.size(); }
         for(auto&r:res)if(r.score>=cutoff)out.push_back(r);
         return out;
     }
-    std::vector<SearchResult> adaptive(const std::string&q,float alpha,size_t minN,size_t lookahead,float gapDelta){
-        float my_alpha = std::abs(alpha) > epsilon ? alpha : cfg.alpha;
+    std::vector<SearchResult> adaptive(const std::string&q,float alpha = 0.0f,size_t minN =0,size_t lookahead=0,float gapDelta = 0.0f){
+        const float my_alpha = std::abs(alpha) > epsilon ? alpha : cfg.alpha;
+        const float my_gap = std::abs(gapDelta) > epsilon ? gapDelta : cfg.gapDelta;
+        const size_t my_lookahead = lookahead ? lookahead : cfg.adaptive_lookahead;
+        const size_t my_minN =  minN ? minN : cfg.minN;
 
         auto res=relative(q,my_alpha);
         if(res.empty())return{};
-        size_t stop=std::min(minN,res.size());
-        for(size_t i=1;i<std::min(lookahead,res.size());i++){
+        size_t stop=std::min(my_minN,res.size());
+        for(size_t i=1;i<std::min(my_lookahead,res.size());i++){
             float gap=res[i-1].score-res[i].score;
-            if(gap>=gapDelta){stop=std::max(minN,i);break;}
+            if(gap>=my_gap){stop=std::max(my_minN,i);break;}
             stop=std::max(stop,i+1);
         }
         if(stop>res.size())stop=res.size();
