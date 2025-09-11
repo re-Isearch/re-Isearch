@@ -9,6 +9,19 @@
 // dense vectors will just demand a modern compiler. It probably makes no sense anyway
 // to want to support embeddings on these platforms as they simply won't have the memory.
 
+// This implementation supports shards. When the configured max_elements (see HnswConfig)
+// is reached (the reserved capacity) of the HNSW we start a new shard.   We have also a
+// number of methods to do search in parallel on these shards. The number of shards should
+// probably be at most 2 but should be under the number of CPU cores.
+// We also have a method to merge the last two shards: merge_last_two()
+// that works by also expanding the max_elements accordingly.
+// The method merge() keeps calling merge_last_two() as long as it can, effectively
+// creating a single index.
+//
+// For best performance, depending upon memory and cores, one should effectively limit
+// the number of shards on a single machine to a reasonable number and use multiple
+// machines to distribute the load.
+
 /*
  TODO:
 
@@ -39,9 +52,16 @@ not just theoretical we can extend the header with a 64-bit checksum.
 #include <algorithm>
 #include <sstream>
 #include <unordered_map>
+//#include <thread>
 
 #include "bert.h"
 #include "hnswlib/hnswlib.h"
+
+#define MT
+
+#ifdef MT
+# include <future>
+#endif
 
 #define STANDALONE 1 /* run this standalone */
 
@@ -717,9 +737,10 @@ public:
     }
     void flush() { for (auto &s : shards) { s->flush(); } }
 
-#if 0
+#ifdef MT
 
-std::vector<SearchResult> parallel_search(const std::string &query, size_t k) {
+/*
+   std::vector<SearchResult> parallel_search(const std::string &query, size_t k) {
     std::vector<std::future<std::vector<SearchResult>>> futures;
 
     for (auto &shard : shards) {
@@ -739,7 +760,8 @@ std::vector<SearchResult> parallel_search(const std::string &query, size_t k) {
                       [](auto &a, auto &b){ return a.score > b.score; });
     if (all.size() > k) all.resize(k);
     return all;
-}
+    }
+*/
 
     template <typename SearchFunc> std::vector<SearchResult> parallel_search(SearchFunc search_fn, size_t topN = 0) {
         std::vector<std::future<std::vector<SearchResult>>> futures;
@@ -775,24 +797,32 @@ std::vector<SearchResult> parallel_search(const std::string &query, size_t k) {
 
     // knn in a lamda
     std::vector<SearchResult> parallel_knn(const std::string &q, size_t k) {
-        return parallel_search( [&](BertIndex &shard) { return shard.search_knn(q, k);  /* per-shard logic */ },
-        k  /* global top-k */); }
+        auto qemb=embedder.encode_text(q,cfg.debug);
+        return parallel_search( [&](BertIndex &shard) { return shard.search_knn(qemb, k);  /* per-shard logic */ },
+        k  /* global top-k */);
+    }
 
     std::vector<SearchResult> parallel_radius(const std::string &q, float minScore) {
-        return parallel_search( [&](BertIndex &shard) { return shard.search_radius(q, minScore); );
+        auto qemb=embedder.encode_text(q,cfg.debug);
+        return parallel_search( [&](BertIndex &shard) { return shard.search_radius(qemb, minScore); }) ;
     }
 
     std::vector<SearchResult> parallel_relative(const std::string&q,float alpha = 0.0f){
+        auto qemb=embedder.encode_text(q,cfg.debug);
         float my_alpha = std::abs(alpha) > epsilon ? alpha : cfg.alpha;
-        return parallel_search( [&](BertIndex &shard) { return shard.search_relative(q, my_alpha); );
+        return parallel_search( [&](BertIndex &shard) { return shard.search_relative(qemb, my_alpha); }) ;
     }
 
-    std::vector<SearchResult> adaptive(const std::string&q,float alpha = 0.0f,size_t minN =0,size_t lookahead=0,float gapDelta = 0.0f){
+    std::vector<SearchResult> parallel_adaptive(const std::string&q,
+		float alpha = 0.0f,size_t minN =0,size_t lookahead=0,float gapDelta = 0.0f){
         const float my_alpha = std::abs(alpha) > epsilon ? alpha : cfg.alpha;
         const float my_gap = std::abs(gapDelta) > epsilon ? gapDelta : cfg.gapDelta;
         const size_t my_lookahead = lookahead ? lookahead : cfg.adaptive_lookahead;
         const size_t my_minN =  minN ? minN : cfg.minN;
+        auto qemb=embedder.encode_text(q,cfg.debug);
 
+        return parallel_search( [&](BertIndex &shard) {
+		return shard.search_adaptive(qemb, my_alpha, my_minN, my_lookahead, my_gap); }) ;
     }
 #endif
 
@@ -980,10 +1010,17 @@ public:
 
 
 #if STANDALONE
+
+//#include <thread>
 // ---------------- Main ----------------
 int main(int argc,char**argv){
     if(argc<2){std::cerr<<"Usage: "<<argv[0]<<" model.ggml\n";return 1;}
     HnswConfig cfg; cfg.metric=Metric::Cosine; cfg.debug=false;
+
+
+//  const auto processor_count = std::thread::hardware_concurrency();
+//  std::cout << "Cores: " << processor_count << "\n";
+
     BertIndexManager man(argv[1],cfg);
     std::string current="default";
     std::cout<<"Commands: append <txt>, knn <k> <q>, radius <minScore> <q>, relative <alpha> <q>, adaptive <alpha> <minN> <lookahead> <gapDelta> <q>, merge, quit\n";
