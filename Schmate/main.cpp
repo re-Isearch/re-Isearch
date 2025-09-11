@@ -595,6 +595,36 @@ public:
         return out;
     }
 
+    std::vector<SearchResult> search_relative(const std::vector<float>&q,float alpha = 0.0f){
+        auto res=search_knn(q, cfg.relative_k);
+        if(res.empty())return{};
+        float my_alpha = std::abs(alpha) > epsilon ? alpha : cfg.alpha;
+        float cutoff=my_alpha*res.front().score;
+        std::vector<SearchResult>out;
+        for(auto&r:res)if(r.score>=cutoff)out.push_back(r);
+        return out;
+    }
+
+    std::vector<SearchResult> search_adaptive(const std::vector<float>&q,float alpha = 0.0f,
+		size_t minN =0,size_t lookahead=0,float gapDelta = 0.0f){
+        const float my_alpha = std::abs(alpha) > epsilon ? alpha : cfg.alpha;
+        const float my_gap = std::abs(gapDelta) > epsilon ? gapDelta : cfg.gapDelta;
+        const size_t my_lookahead = lookahead ? lookahead : cfg.adaptive_lookahead;
+        const size_t my_minN =  minN ? minN : cfg.minN;
+
+        auto res=search_relative(q,my_alpha);
+        if(res.empty())return{};
+        size_t stop=std::min(my_minN,res.size());
+        for(size_t i=1;i<std::min(my_lookahead,res.size());i++){
+            float gap=res[i-1].score-res[i].score;
+            if(gap>=my_gap){stop=std::max(my_minN,i);break;}
+            stop=std::max(stop,i+1);
+        }
+        if(stop>res.size())stop=res.size();
+        return{res.begin(),res.begin()+stop};
+    }
+
+
     void save() { flush(); /* We may also want to do something else here as well */ }
 
     std::string get_text(const SearchResult&r) const {
@@ -687,6 +717,85 @@ public:
     }
     void flush() { for (auto &s : shards) { s->flush(); } }
 
+#if 0
+
+std::vector<SearchResult> parallel_search(const std::string &query, size_t k) {
+    std::vector<std::future<std::vector<SearchResult>>> futures;
+
+    for (auto &shard : shards) {
+        futures.push_back(std::async(std::launch::async, [&]() {
+            return shard->knn(query, k); // per-shard search
+        }));
+    }
+
+    std::vector<SearchResult> all;
+    for (auto &f : futures) {
+        auto partial = f.get();
+        all.insert(all.end(), partial.begin(), partial.end());
+    }
+
+    // merge top-k results globally
+    std::partial_sort(all.begin(), all.begin()+std::min(k,all.size()), all.end(),
+                      [](auto &a, auto &b){ return a.score > b.score; });
+    if (all.size() > k) all.resize(k);
+    return all;
+}
+
+    template <typename SearchFunc> std::vector<SearchResult> parallel_search(SearchFunc search_fn, size_t topN = 0) {
+        std::vector<std::future<std::vector<SearchResult>>> futures;
+
+        for (auto &shard : shards) {
+            futures.push_back(std::async(std::launch::async, [&]() {
+                return search_fn(*shard);
+            }));
+        }
+
+        std::vector<SearchResult> all;
+        for (auto &f : futures) {
+            auto partial = f.get();
+            all.insert(all.end(), partial.begin(), partial.end());
+        }
+
+        if (topN > 0 && all.size() > topN) {
+            std::partial_sort(all.begin(), all.begin() + topN, all.end(),
+                          [](const SearchResult &a, const SearchResult &b) {
+                              return a.score > b.score;
+                          });
+            all.resize(topN);
+        } else {
+            std::sort(all.begin(), all.end(),
+                  [](const SearchResult &a, const SearchResult &b) {
+                      return a.score > b.score;
+                  });
+        }
+
+        return all;
+    }
+
+
+    // knn in a lamda
+    std::vector<SearchResult> parallel_knn(const std::string &q, size_t k) {
+        return parallel_search( [&](BertIndex &shard) { return shard.search_knn(q, k);  /* per-shard logic */ },
+        k  /* global top-k */); }
+
+    std::vector<SearchResult> parallel_radius(const std::string &q, float minScore) {
+        return parallel_search( [&](BertIndex &shard) { return shard.search_radius(q, minScore); );
+    }
+
+    std::vector<SearchResult> parallel_relative(const std::string&q,float alpha = 0.0f){
+        float my_alpha = std::abs(alpha) > epsilon ? alpha : cfg.alpha;
+        return parallel_search( [&](BertIndex &shard) { return shard.search_relative(q, my_alpha); );
+    }
+
+    std::vector<SearchResult> adaptive(const std::string&q,float alpha = 0.0f,size_t minN =0,size_t lookahead=0,float gapDelta = 0.0f){
+        const float my_alpha = std::abs(alpha) > epsilon ? alpha : cfg.alpha;
+        const float my_gap = std::abs(gapDelta) > epsilon ? gapDelta : cfg.gapDelta;
+        const size_t my_lookahead = lookahead ? lookahead : cfg.adaptive_lookahead;
+        const size_t my_minN =  minN ? minN : cfg.minN;
+
+    }
+#endif
+
     std::vector<SearchResult> knn(const std::string&q,size_t k){
         auto qemb=embedder.encode_text(q,cfg.debug);
         std::vector<SearchResult>all;
@@ -701,6 +810,7 @@ public:
         std::sort(all.begin(),all.end(),[](auto&a,auto&b){return a.score>b.score;});
         return all;
     }
+
     std::vector<SearchResult> relative(const std::string&q,float alpha = 0.0f){
         auto res=knn(q, cfg.relative_k);
         if(res.empty())return{};
@@ -710,6 +820,7 @@ public:
         for(auto&r:res)if(r.score>=cutoff)out.push_back(r);
         return out;
     }
+
     std::vector<SearchResult> adaptive(const std::string&q,float alpha = 0.0f,size_t minN =0,size_t lookahead=0,float gapDelta = 0.0f){
         const float my_alpha = std::abs(alpha) > epsilon ? alpha : cfg.alpha;
         const float my_gap = std::abs(gapDelta) > epsilon ? gapDelta : cfg.gapDelta;
@@ -727,6 +838,8 @@ public:
         if(stop>res.size())stop=res.size();
         return{res.begin(),res.begin()+stop};
     }
+
+
     std::string get_text(const SearchResult&r){for(auto&s:shards){auto t=s->get_text(r);if(!t.empty())return t;}return"";}
 
     // We want to be able to merge the last two shards. This is maybe useful when the second shard
