@@ -2,6 +2,33 @@
 // Sharded SBert (GGML) + HNSW search with kNN / radius / relative / adaptive
 // Build on macOS: link with -lbert -lggml -framework Accelerate, include hnswlib headers
 
+
+// NOTE: Since this code depends upon a number of libs that use modern C++ we'll loosen
+// our restrictions and embrace it here.
+// The core engine will still compile and run using minimal compilers but the support of
+// dense vectors will just demand a modern compiler. It probably makes no sense anyway
+// to want to support embeddings on these platforms as they simply won't have the memory.
+
+/*
+ TODO:
+
+Write the name of the model used for the embeddings in the offset file.
+This is important since the HNSW index and embeeding search depend upon
+using the same sBert model.
+
+format:
+<magic><int8 for length><name> 
+magic is a byte: see src/magic.h for list we support 
+name is written without the tailing \0 if length is even. This way
+the offset is always 2 aligned:  2+strlen(name) + (strlen(name) % 2)
+ 
+NOTE: We use name and not full path as path won't be portable to another
+machine.
+If in the future we discover problems or a possible adverserial attack is
+not just theoretical we can extend the header with a 64-bit checksum.
+
+*/
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -19,6 +46,96 @@
 #define STANDALONE 1 /* run this standalone */
 
 static const float epsilon = std::numeric_limits<float>::epsilon() * 100.0f; // A common way to define epsilon
+
+// --------------- Portability helpers ----------
+
+// force little-endian storage
+
+// Instead of
+//   fin.read((char*)&s,8);
+// we write
+//   s = read_int64(fin);
+// Instead of  
+//   fin.read((char*)&s,8);
+// we write    
+//   s = read_int64(fin);
+    
+
+
+#if 1 /* Fast but less readable code */
+
+#if defined(_MSC_VER)
+    #include <intrin.h>
+    #define bswap64 _byteswap_uint64
+#elif defined(__clang__) || defined(__GNUC__)
+    #define bswap64 __builtin_bswap64
+#else
+    // fallback implementation
+    inline uint64_t bswap64(uint64_t x) {
+        return ((x & 0x00000000000000FFULL) << 56) |
+               ((x & 0x000000000000FF00ULL) << 40) |
+               ((x & 0x0000000000FF0000ULL) << 24) |
+               ((x & 0x00000000FF000000ULL) <<  8) |
+               ((x & 0x000000FF00000000ULL) >>  8) |
+               ((x & 0x0000FF0000000000ULL) >> 24) |
+               ((x & 0x00FF000000000000ULL) >> 40) |
+               ((x & 0xFF00000000000000ULL) >> 56);
+    }
+#endif
+
+inline uint64_t to_le64(uint64_t x) {
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    return bswap64(x);
+#else
+    return x;
+#endif
+}
+
+inline uint64_t from_le64(uint64_t x) {
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    return bswap64(x);
+#else
+    return x;
+#endif
+}
+
+// write int64_t in little-endian
+inline void write_int64(std::ostream &os, int64_t v) {
+    uint64_t u = to_le64(static_cast<uint64_t>(v));
+    os.write(reinterpret_cast<const char*>(&u), sizeof(u));
+}
+
+// read int64_t from little-endian
+inline int64_t read_int64(std::istream &is) {
+    uint64_t u = 0;
+    is.read(reinterpret_cast<char*>(&u), sizeof(u));
+    return static_cast<int64_t>(from_le64(u));
+}
+
+
+#else
+
+
+inline void write_int64(std::ostream &os, int64_t v) {
+    uint64_t u = static_cast<uint64_t>(v);
+    for (int i = 0; i < 8; i++) {
+        char byte = static_cast<char>((u >> (i * 8)) & 0xFF); // little-endian
+        os.put(byte);
+    }
+}
+
+inline int64_t read_int64(std::istream &is) {
+    uint64_t u = 0;
+    for (int i = 0; i < 8; i++) {
+        int c = is.get();
+        if (c == EOF) throw std::runtime_error("Unexpected EOF while reading int64");
+        u |= (static_cast<uint64_t>(c) & 0xFF) << (i * 8);
+    }
+    return static_cast<int64_t>(u);
+}
+
+#endif
+
 
 
 // ---------------- SBert wrapper ----------------
@@ -154,8 +271,29 @@ public:
         }
     }
 
+    // Helper methods for merging shards
+    // Return current size (max label used so far)
+    size_t size() const { return next_label; }
+
+    // Expose dimension and metric space for rebuilds
+    hnswlib::SpaceInterface<float>* getSpace() const { return space.get(); }
+
+    // Replace the HNSW index with a new one
+    void replaceIndex(std::unique_ptr<hnswlib::HierarchicalNSW<float>> newIdx) {
+       index = std::move(newIdx);
+       dirty_count++; // mark dirty since index changed
+   }
+
+   // Expose paths so ShardedIndex can clean up files
+   const std::string& get_sentences_path() const { return sentences_path; }
+   const std::string& get_offsets_path()   const { return offsets_path; }
+   const std::string& get_index_path()     const { return index_path; }
+
+   //
+
+
     // sync the in-memory HNSW index to disk.
-    void flush() {
+   void flush() {
         // We only re-write if the index on disk and in-memory are different
         if (dirty_count && index) index->saveIndex(index_path);
 	dirty_count = 0;
@@ -222,16 +360,70 @@ public:
         return chunks;
     }
 
+
+#if 1
+
+    void append(const std::string &sentence) {
+        auto chunks = chunk_tokens(sentence);
+
+        std::ofstream sfs(sentences_path, std::ios::binary | std::ios::app);
+        std::fstream ofs(offsets_path, std::ios::in | std::ios::out | std::ios::binary);
+        if (!ofs) {
+            ofs.open(offsets_path, std::ios::out | std::ios::binary); // create if missing
+        }
+
+        for (auto &chunk : chunks) {
+            size_t label = allocate_label();
+
+            // sentence append
+            sfs.seekp(0,std::ios::end);
+            int64_t start = (int64_t)sfs.tellp();
+            std::string chunk_text(chunk.size(), '\0');
+            for (size_t i=0;i<chunk.size();i++) {
+                chunk_text[i] = (char)chunk[i]; // <-- if you’re writing raw tokens
+            }
+            sfs.write(chunk_text.data(), chunk_text.size());
+            sfs.put('\n');
+            int64_t end = (int64_t)sfs.tellp();
+
+            // offsets append
+            ofs.seekp((std::streamoff)label * 16);
+            ofs.write((char*)&start,8);
+            ofs.write((char*)&end,8);
+
+            // embedding
+            std::vector<float> emb(embedder.embedding_dim());
+            bert_eval(embedder.raw(), 4, chunk.data(), (int32_t)chunk.size(), emb.data());
+
+            double norm=0; for (float v:emb) norm+=v*v; norm=std::sqrt(norm);
+            if (norm>0) for (auto &v:emb) v/=norm;
+
+            index->addPoint(emb.data(), (hnswlib::labeltype)label);
+
+            dirty_count++;
+            if (dirty_count >= cfg.flush_threshold) {
+                flush();
+            }
+        }
+        ofs.close();
+        sfs.close();
+    }
+
+#else
+
     void append(const std::string &sentence) {
         auto chunks = chunk_tokens(sentence);
         for (auto &chunk : chunks) {
             size_t label = allocate_label();
 
+#if 1
+            std::ofstream sfs(sentences_path, std::ios::binary | std::ios::app);
+#else
             std::fstream sfs(sentences_path, std::ios::in | std::ios::out | std::ios::binary | std::ios::app);
-            sfs.seekp(0,std::ios::end);
+#endif
+            sfs.seekp(0, std::ios::end);
             int64_t start = (int64_t)sfs.tellp();
-            sfs.write(sentence.data(), sentence.size());
-            sfs.put('\n');
+            sfs.write(sentence.data(), sentence.size()); sfs.put('\n');
             int64_t end = (int64_t)sfs.tellp();
             sfs.close();
 
@@ -253,6 +445,7 @@ public:
         }
         // save(); // we defer this as its too expensve!
     }
+#endif
 
 #if 1
 
@@ -535,6 +728,108 @@ public:
         return{res.begin(),res.begin()+stop};
     }
     std::string get_text(const SearchResult&r){for(auto&s:shards){auto t=s->get_text(r);if(!t.empty())return t;}return"";}
+
+    // We want to be able to merge the last two shards. This is maybe useful when the second shard
+    // is relatively small and there is probably sufficient memory (and we're using a fast SSD for
+    // swap) 
+    bool merge_last_two() {
+        if (shards.size() < 2) {
+            return false; // throw std::runtime_error("Not enough shards to merge");
+        }
+
+        size_t i1 = shards.size() - 2;
+        size_t i2 = shards.size() - 1;
+
+        auto &shard1 = shards[i1];
+        auto &shard2 = shards[i2];
+
+        // new capacity = combined size
+        size_t total_cap = shard1->size() + shard2->size();
+
+        auto newIndex = std::make_unique<hnswlib::HierarchicalNSW<float>>(
+		shard1->getSpace(), total_cap, cfg.M, cfg.ef_construction);
+
+        // get base offset for sentences
+        std::ifstream sfs1_in(shard1->get_sentences_path(), std::ios::binary | std::ios::ate);
+        int64_t base_offset = (int64_t)sfs1_in.tellg();
+        sfs1_in.close();
+
+        std::ofstream sfs1_append(shard1->get_sentences_path(), std::ios::app | std::ios::binary);
+        std::fstream ofs1(shard1->get_offsets_path(), std::ios::in | std::ios::out | std::ios::binary);
+
+        std::ifstream sfs2(shard2->get_sentences_path(), std::ios::binary);
+        std::ifstream ofs2(shard2->get_offsets_path(), std::ios::binary);
+
+        size_t idx = 0;
+        while (ofs2.peek() != EOF) {
+            int64_t start=0, end=0;
+            ofs2.read((char*)&start,8);
+            ofs2.read((char*)&end,8);
+
+            if (!ofs2) break;
+
+            if (start == 0 && end == 0) {
+                // allocate but mark deleted
+                size_t label = shard1->allocate_label();
+                std::vector<float> zero(embedder.embedding_dim(), 0.0f);
+                newIndex->addPoint(zero.data(), (hnswlib::labeltype)label);
+                newIndex->markDelete((hnswlib::labeltype)label);
+
+                int64_t zeroVal = 0;
+                ofs1.seekp((std::streamoff)label * 16);
+                ofs1.write((char*)&zeroVal,8);
+                ofs1.write((char*)&zeroVal,8);
+            } else {
+                // read sentence
+                std::string sentence(end - start, '\0');
+                sfs2.seekg(start);
+                sfs2.read(&sentence[0], sentence.size());
+
+                // append to shard1 sentences
+                sfs1_append.write(sentence.data(), sentence.size());
+                sfs1_append.put('\n');
+
+                int64_t newStart = base_offset;
+                int64_t newEnd   = base_offset + sentence.size() + 1;
+                base_offset = newEnd;
+
+                // update offsets
+                size_t label = shard1->allocate_label();
+                ofs1.seekp((std::streamoff)label * 16);
+                ofs1.write((char*)&newStart,8);
+                ofs1.write((char*)&newEnd,8);
+
+                // re-encode and add embedding
+                auto emb = embedder.encode_text(sentence, cfg.debug);
+                newIndex->addPoint(emb.data(), (hnswlib::labeltype)label);
+            }
+            idx++;
+        }
+
+        ofs1.close();
+        sfs1_append.close();
+
+        // swap in new index
+        shard1->replaceIndex(std::move(newIndex));
+
+        // remove shard2 files
+        std::remove(shard2->get_sentences_path().c_str());
+        std::remove(shard2->get_offsets_path().c_str());
+        std::remove(shard2->get_index_path().c_str());
+
+        // drop shard2
+        shards.pop_back();
+
+        return true; // OK
+    }
+
+   // Merge it all!!
+   bool merge() {
+     size_t count = 0;
+     while (merge_last_two()) count++;
+     return count ? true : false;
+   }
+
 };
 
 // ---------------- Manager ----------------
@@ -578,7 +873,7 @@ int main(int argc,char**argv){
     HnswConfig cfg; cfg.metric=Metric::Cosine; cfg.debug=false;
     BertIndexManager man(argv[1],cfg);
     std::string current="default";
-    std::cout<<"Commands: append <txt>, knn <k> <q>, radius <minScore> <q>, relative <alpha> <q>, adaptive <alpha> <minN> <lookahead> <gapDelta> <q>, quit\n";
+    std::cout<<"Commands: append <txt>, knn <k> <q>, radius <minScore> <q>, relative <alpha> <q>, adaptive <alpha> <minN> <lookahead> <gapDelta> <q>, merge, quit\n";
     for(std::string line;std::cout<<"["<<current<<"]> ",std::getline(std::cin,line);){
         if(line=="quit")break;
         if(line.rfind("append ",0)==0){man.append(current,line.substr(7));continue;}
@@ -606,6 +901,14 @@ int main(int argc,char**argv){
             for(auto&r:man.adaptive(current,q,a,m,l,g))std::cout<<" - [score="<<r.score<<"] "<<man.text(current,r)<<"\n";
             continue;
         }
+
+        if (line == "merge") {
+            if (man.get(current).merge_last_two())
+              std::cout << "Merged last two shards of index '" << current << "'.\n";
+           else std::cout << "No two shards to merge in '" << current <<  "'.\n";
+           continue;
+        }
+
 	// Assume a query
         for(auto&r:man.knn(current,line,5))std::cout<<" - [score="<<r.score<<"] "<<man.text(current,r)<<"\n";
             continue;
