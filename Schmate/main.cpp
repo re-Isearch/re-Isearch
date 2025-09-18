@@ -2,6 +2,7 @@
 // Sharded SBert (GGML) + HNSW search with kNN / radius / relative / adaptive
 // Build on macOS: link with -lbert -lggml -framework Accelerate, include hnswlib headers
 
+#define STANDALONE 1 /* run this standalone for testing */
 
 // NOTE: Since this code depends upon a number of libs that use modern C++ we'll loosen
 // our restrictions and embrace it here.
@@ -21,6 +22,23 @@
 // For best performance, depending upon memory and cores, one should effectively limit
 // the number of shards on a single machine to a reasonable number and use multiple
 // machines to distribute the load.
+
+
+// How to specify what fields are to be handled as dense embeddings?
+// In production:
+// we have two logics: inclusion and exclusion.
+//    inclusion: create X type indexes for fields so defined.
+//    exclusion: create X type indexes for all fields except those defined
+// This is addressed by
+// [DbInfo]
+// DefaultFieldType=<Fieldype to use when one is not defined>
+// If this is defined then any field whose fieldtype has not been defined get this as
+// its fieldtype.
+// So to define HNSW as the default field type it would be set as the default.
+// NOTE: All fields irrespective of the types get also indexed as text.
+//
+// See class FIELDTYPE in attrlist.hxx as well as the code in idbobj.hxx and doctype.cxx
+// 
 
 /*
  TODO:
@@ -52,18 +70,29 @@ not just theoretical we can extend the header with a 64-bit checksum.
 #include <algorithm>
 #include <sstream>
 #include <unordered_map>
-//#include <thread>
 
 #include "bert.h"
 #include "hnswlib/hnswlib.h"
 
-#define MT
-
-#ifdef MT
-# include <future>
+#ifndef MT
+# define MT 1 /* compile Async search over shards methods */
+#endif
+#ifndef USE_FAST_BYTE_SWAP
+# define USE_FAST_BYTE_SWAP 1
 #endif
 
-#define STANDALONE 1 /* run this standalone */
+
+#if MT
+# include <future>
+# include <thread> /* needed only for std::thread::hardware_concurrency(); */
+#endif
+
+// These will probably change in the distribution
+static const char sentences_ext[] = ".txt";
+static const char offsets_ext[]   = ".bfc";
+static const char index_ext[]     = ".hdx";
+// NOTE: the sentence file is ONLY here for debuging. The offsets will later be GPs
+// encoding an id to the file path and the offset addresses in the 64-bit integer..
 
 static const float epsilon = std::numeric_limits<float>::epsilon() * 100.0f; // A common way to define epsilon
 
@@ -76,13 +105,28 @@ static const float epsilon = std::numeric_limits<float>::epsilon() * 100.0f; // 
 // we write
 //   s = read_int64(fin);
 // Instead of  
-//   fin.read((char*)&s,8);
+//   ofs.write((char*)&s,8);
 // we write    
-//   s = read_int64(fin);
-    
+//   write_int64(ofs, s);
 
 
-#if 1 /* Fast but less readable code */
+// Jam these into an unamed namespace
+namespace {
+
+/*
+alternative (without normed read/write)
+
+inline int64_t read_int64(std::istream &is) {
+    uint64_t u = 0;
+    fin.read((char*)&s,8);
+    return u;
+}
+inline void  write_int64(std::ostream &os, int64_t u) {
+    os.write((char*)&u,8);
+}
+
+*/
+#if USE_FAST_BYTE_SWAP /* Fast but less readable code */
 
 #if defined(_MSC_VER)
     #include <intrin.h>
@@ -156,28 +200,37 @@ inline int64_t read_int64(std::istream &is) {
 
 #endif
 
+inline void write_zero128 (std::ostream &os) { write_int64(os, 0); write_int64(os, 0); }
+} // end unnamed namespace
 
 
 // ---------------- SBert wrapper ----------------
 class SBertGGML {
     bert_ctx * ctx;
     int dim;
+    int max_tokens;
 public:
     SBertGGML(const std::string& model_path) {
         ctx = bert_load_from_file(model_path.c_str());
         if (!ctx) throw std::runtime_error("Failed to load model");
         dim = bert_n_embd(ctx);
-        std::cout << "Loaded SBERT GGML model. dim=" << dim << "\n";
+        max_tokens = bert_n_max_tokens(ctx);
+        std::cout << "Loaded SBERT GGML model. dim=" << dim << " max_tokens=" << max_tokens << "\n";
     }
     ~SBertGGML(){ if(ctx) bert_free(ctx); }
     int embedding_dim() const { return dim; }
+    int embedding_capacity() const { return max_tokens; }
     bert_ctx* raw() const { return ctx; }
 
     std::vector<float> encode_text(const std::string &text, bool debug=false) const {
+#if 0
         const int MAX_TOKENS = 512;
         bert_vocab_id tokens[MAX_TOKENS];
+#else
+        bert_vocab_id tokens[max_tokens];
+#endif
         int32_t n_tokens = 0;
-        bert_tokenize(ctx, text.c_str(), tokens, &n_tokens, MAX_TOKENS);
+        bert_tokenize(ctx, text.c_str(), tokens, &n_tokens, max_tokens);
         if (n_tokens <= 0) throw std::runtime_error("Tokenization failed");
 
         std::vector<float> emb((size_t)dim);
@@ -204,13 +257,14 @@ struct SearchResult {
 enum class Metric { L2, InnerProduct, Cosine };
 
 struct HnswConfig {
+    std::string model =  "sbert.ggml";
     size_t max_elements = 100000;
     size_t M = 16;
     size_t ef_construction = 200;
     size_t ef_search = 50;
     Metric metric = Metric::L2;
     //
-    int max_tokens_per_chunk = 128;
+    int max_tokens_per_chunk = 128; // Needs to be less than the max_tokens
     float overlap_percent = 0.1f;
     size_t knn_lookahead_scale = 5;
     //
@@ -223,16 +277,37 @@ struct HnswConfig {
     //
     size_t flush_threshold = 100;  // auto-flush after this many inserts/deletes
     // 
+    // Use async search on shards when (3* number of cores/2) > number of shards. 
+    // ideally we want 1 thread perhaps 2 per core. Here we specify 1.5 times.
+    // Given how most machines these days have at least 2 or more cores and 3 shards
+    // would already be pushing things on such a machine...
+    bool search_async = true; // Only has a function when MT was defined true during compile
+    unsigned int processor_count = 1; // This gets filled with the hint by OS
+
+    //
     bool debug = false;
 };
 
 // ---------------- Utility ----------------
-static bool file_exists(const std::string &p) {
-    std::ifstream f(p);
-    return f.good();
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L)
+# include <filesystem>
+#elif defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+# include <unistd.h>
+#endif
+namespace {
+
+inline bool file_exists(const std::string &p) {
+#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L)
+    return std::filesystem::exists(p); // At least C++16
+#elif defined (__unix__) || (defined (__APPLE__) && defined (__MACH__))
+    return access(p.c_str(), F_OK) != -1;
+#else
+    std::ifstream f(p); return f.good();
+#endif
 }
 
-static std::vector<size_t> findPositionsInRange(const std::string& filename, int64_t x) {
+/*
+std::vector<size_t> findPositionsInRange(const std::string& filename, int64_t x) {
     std::vector<size_t> positions;
     std::ifstream file(filename);
     
@@ -255,7 +330,9 @@ static std::vector<size_t> findPositionsInRange(const std::string& filename, int
     file.close();
     return positions;
 }
+*/
 
+} // end unamed namespace
 
 // ---------------- BertIndex (single shard) ----------------
 class BertIndex {
@@ -280,6 +357,10 @@ public:
         } else {
             space = std::make_unique<hnswlib::InnerProductSpace>(dim);
         }
+        // Need to make sure that the configured max chunk is less than max_tokens
+        // anything greater would be truncated if we did not chunk it to at most max_tokens!
+        int max_tokens = embedder.embedding_capacity(); 
+        if (cfg.max_tokens_per_chunk > max_tokens) cfg.max_tokens_per_chunk = max_tokens;
     }
 
     ~BertIndex() {
@@ -328,9 +409,8 @@ public:
             size_t entries = fsize / 16;
             fin.seekg(0);
             for (size_t i = 0; i < entries; ++i) {
-                int64_t s=0, e=0;
-                fin.read((char*)&s,8);
-                fin.read((char*)&e,8);
+                int64_t s = read_int64(fin);
+                int64_t e = read_int64(fin);
                 if (s==0 && e==0) free_labels.push_back(i);
             }
             next_label = entries;
@@ -362,7 +442,8 @@ public:
     }
 
     std::vector<std::vector<bert_vocab_id>> chunk_tokens(const std::string &sentence) const {
-        const int MAX_TOKENS = 512;
+        const int MAX_TOKENS = embedder.embedding_capacity();
+//      const int MAX_TOKENS = 512; // BERT is designed for typically 512 
         bert_vocab_id tokens[MAX_TOKENS];
         int32_t n_tokens = 0;
         bert_tokenize(embedder.raw(), sentence.c_str(), tokens, &n_tokens, MAX_TOKENS);
@@ -381,6 +462,48 @@ public:
     }
 
 
+#if 0
+    // For production we don't have a sentences file and the start, end are
+    // re-Isearch addresses
+    void append(const std::string &sentence, int64_t start, int64_t end) {
+        auto chunks = chunk_tokens(sentence);
+
+        std::fstream ofs(offsets_path, std::ios::in | std::ios::out | std::ios::binary);
+        if (!ofs) {
+            ofs.open(offsets_path, std::ios::out | std::ios::binary); // create if missing
+        }
+
+        for (auto &chunk : chunks) {
+            size_t label = allocate_label();
+
+            // sentence append
+            std::string chunk_text(chunk.size(), '\0');
+            for (size_t i=0;i<chunk.size();i++) {
+                chunk_text[i] = (char)chunk[i]; // <-- if you’re writing raw tokens
+            }
+
+            // offsets append
+            ofs.seekp((std::streamoff)label * 16);
+            write_int64(ofs, start);
+            write_int64(ofs, end);
+
+            // embedding
+            std::vector<float> emb(embedder.embedding_dim());
+            bert_eval(embedder.raw(), 4, chunk.data(), (int32_t)chunk.size(), emb.data());
+
+            double norm=0; for (float v:emb) norm+=v*v; norm=std::sqrt(norm);
+            if (norm>0) for (auto &v:emb) v/=norm;
+
+            index->addPoint(emb.data(), (hnswlib::labeltype)label);
+
+            dirty_count++;
+            if (dirty_count >= cfg.flush_threshold) {
+                flush();
+            }
+        }
+        ofs.close();
+    }
+#endif
 #if 1
 
     void append(const std::string &sentence) {
@@ -408,8 +531,8 @@ public:
 
             // offsets append
             ofs.seekp((std::streamoff)label * 16);
-            ofs.write((char*)&start,8);
-            ofs.write((char*)&end,8);
+            write_int64(ofs, start);
+            write_int64(ofs, end);
 
             // embedding
             std::vector<float> emb(embedder.embedding_dim());
@@ -450,8 +573,8 @@ public:
             std::fstream ofs(offsets_path, std::ios::in | std::ios::out | std::ios::binary);
             if (!ofs) ofs.open(offsets_path, std::ios::out | std::ios::binary);
             ofs.seekp((std::streamoff)label * 16);
-            ofs.write((char*)&start,8);
-            ofs.write((char*)&end,8);
+            write_int64(ofs, start);
+            write_int64(ofs, end);
             ofs.close();
 
             std::vector<float> emb(embedder.embedding_dim());
@@ -483,9 +606,8 @@ public:
         // zero offsets
         std::fstream ofs(offsets_path, std::ios::in | std::ios::out | std::ios::binary);
         ofs.seekp((std::streamoff)label * 16);
-        int64_t zero = 0;
-        ofs.write((char*)&zero, 8);
-        ofs.write((char*)&zero, 8);
+        write_int64(ofs, 0);
+        write_int64(ofs, 0);
         ofs.close();
         free_labels.push_back(label);
         dirty_count++;
@@ -510,9 +632,8 @@ public:
         size_t count = fin.tellg() / 16;
         fin.seekg(0);
         for (size_t i=0; i<count; i++) {
-            int64_t s=0,e=0;
-            fin.read((char*)&s,8);
-            fin.read((char*)&e,8);
+            int64_t s = read_int64(fin);
+            int64_t e = read_int64(fin);
             if (address >= s && address < e) {
                 matches.push_back(i);
             }
@@ -528,9 +649,8 @@ public:
         size_t count = fin.tellg() / 16;
         fin.seekg(0);
         for (size_t i=0; i<count; i++) {
-            int64_t s=0,e=0;
-            fin.read((char*)&s,8);
-            fin.read((char*)&e,8);
+            int64_t s = read_int64(fin);
+            int64_t e = read_int64(fin);
             if (s >= start && e <= end) {
                 matches.push_back(i);
             }
@@ -569,9 +689,8 @@ public:
         std::fstream ofs(offsets_path, std::ios::in | std::ios::out | std::ios::binary);
         if (!ofs) throw std::runtime_error("Failed to open offsets file for remove()");
         ofs.seekp((std::streamoff)label * 16);
-        int64_t zero = 0;
-        ofs.write((char*)&zero, 8);
-        ofs.write((char*)&zero, 8);
+        write_int64(ofs, 0);
+        write_int64(ofs, 0);
         ofs.close();
 
         // Make label reusable
@@ -598,9 +717,9 @@ public:
         std::sort(pairs.begin(), pairs.end(), [](auto&a,auto&b){return a.first<b.first;});
         std::ifstream fin(offsets_path, std::ios::binary);
         for (auto &pr:pairs) {
-            int64_t s=0,e=0;
             fin.seekg((std::streamoff)pr.second*16);
-            fin.read((char*)&s,8); fin.read((char*)&e,8);
+            const int64_t s = read_int64(fin);
+            const int64_t e = read_int64(fin);
             if (s==0 && e==0) continue;
             out.push_back({score_from_dist(pr.first), s, e});
             if (out.size()>=k) break;
@@ -663,12 +782,19 @@ class ShardedIndex {
     HnswConfig cfg;
     std::vector<std::unique_ptr<BertIndex>> shards;
     std::string basename (size_t i)const{ return  i ? base+"_"+std::to_string(i) : base;}
-    std::string name_sent(size_t i)const{ return basename(i)+"_sentences.txt";}
-    std::string name_idx(size_t i)const{  return basename(i)+"_index.bin";}
-    std::string name_offs(size_t i)const{ return basename(i)+"_offsets.bin";}
+    std::string name_sent(size_t i)const{ return basename(i)+sentences_ext;}
+    std::string name_idx(size_t i)const{  return basename(i)+index_ext;}
+    std::string name_offs(size_t i)const{ return basename(i)+offsets_ext;}
 public:
     ShardedIndex(SBertGGML &e,const std::string &b,HnswConfig c):embedder(e),base(b),cfg(c){
         size_t i=0;
+#if MT
+        // default is at least one CPU/Core.
+        if (cfg.processor_count <= 1) cfg.processor_count = std::thread::hardware_concurrency();
+#if STANDALONE
+        if (cfg.debug) std::cout << "Cores: " << cfg.processor_count << "\n"; 
+#endif
+#endif
         while(file_exists(name_idx(i))&&file_exists(name_offs(i))){
             auto s=std::make_unique<BertIndex>(embedder,name_sent(i),name_idx(i),name_offs(i),cfg);
             s->buildIfMissing();
@@ -918,10 +1044,9 @@ public:
                 newIndex->addPoint(zero.data(), (hnswlib::labeltype)label);
                 newIndex->markDelete((hnswlib::labeltype)label);
 
-                int64_t zeroVal = 0;
                 ofs1.seekp((std::streamoff)label * 16);
-                ofs1.write((char*)&zeroVal,8);
-                ofs1.write((char*)&zeroVal,8);
+                write_int64(ofs1, 0);
+                write_int64(ofs1, 0);
             } else {
                 // read sentence
                 std::string sentence(end - start, '\0');
@@ -939,8 +1064,8 @@ public:
                 // update offsets
                 size_t label = shard1->allocate_label();
                 ofs1.seekp((std::streamoff)label * 16);
-                ofs1.write((char*)&newStart,8);
-                ofs1.write((char*)&newEnd,8);
+                write_int64(ofs1, newStart);
+                write_int64(ofs1, newEnd);
 
                 // re-encode and add embedding
                 auto emb = embedder.encode_text(sentence, cfg.debug);
@@ -981,12 +1106,18 @@ class BertIndexManager {
     HnswConfig cfg;
     std::unordered_map<std::string,std::unique_ptr<ShardedIndex>> idxs;
 public:
+    BertIndexManager(HnswConfig c) : BertIndexManager(c.model, c){};
     BertIndexManager(const std::string&model,HnswConfig c):embedder(model),cfg(c){}
     ShardedIndex&get(const std::string&n){
         if(!idxs.count(n)) idxs[n]=std::make_unique<ShardedIndex>(embedder,n,cfg);
         return*idxs[n];
     }
+#if 1 /* FOR TESTING */
     void append(const std::string&n,const std::string&s){get(n).append(s);}
+#else
+    // Production append
+    void append(const std::string&n,const std::string&s, int64_t start, int64_end){get(n).append(s, start, end);}
+#endif
 
 #if 1
     void remove(const std::string&n,size_t label,size_t shard=0){get(n).remove(label,shard);}
@@ -1008,18 +1139,91 @@ public:
     std::string text(const std::string&n,const SearchResult&r){return get(n).get_text(r);}
 };
 
+#if 1
+class EmbeddingIndexer
+{
+   BertIndexManager *man;
+   HnswConfig        config;
+public:
+   // db_hnsw, db_nsg, db_IVFFlat
+   EmbeddingIndexer(HnswConfig& cfg) : man(NULL) {
+     HnswConfig      config = cfg;
+   };
+
+  ~EmbeddingIndexer() {
+    if (man) delete man;
+  }
+   bool setModelPath(const std::string& path) {
+     if (file_exists(path)) {
+       config.model = path;
+       return true;
+     }
+     return false;
+   }
+
+   void flush(const std::string& fieldname) {
+     // We flush all the types we have
+     if (man) man->flush(fieldname); // Right now only Bert/HNSW
+   }
+
+   bool append(const std::string& buffer, const std::string& fieldname, int64_t start, int64_t end, int type) {
+       switch (type) {
+	case 0: if (man == NULL) man = new BertIndexManager(config);
+#if 0
+		// Production code
+	        man->append(buffer, fieldname, start, end);
+		return true;
+#endif
+	default:
+		return false;
+     }
+   }
+
+} ;
+
+
+#endif
 
 #if STANDALONE
 
-//#include <thread>
 // ---------------- Main ----------------
 int main(int argc,char**argv){
-    if(argc<2){std::cerr<<"Usage: "<<argv[0]<<" model.ggml\n";return 1;}
-    HnswConfig cfg; cfg.metric=Metric::Cosine; cfg.debug=false;
+   if(argc<2){
+usage:
+        std::cerr<<"Usage: "<<argv[0]<<" <sbert.ggml> [--metric l2|ip|cos] [--chunk max_tokens overlap] [--debug]\n";
+        return 1;
+    }   
 
+    HnswConfig cfg; 
 
-//  const auto processor_count = std::thread::hardware_concurrency();
-//  std::cout << "Cores: " << processor_count << "\n";
+    Metric chosen=Metric::L2; // Metric::Cosine
+    for(int i=2;i<argc;i++){
+        std::string arg=argv[i];
+        if(arg=="--metric" && i+1<argc){
+            std::string val=argv[++i];
+            if(val=="l2") chosen=Metric::L2;
+            else if(val=="ip") chosen=Metric::InnerProduct;
+            else if(val=="cos") chosen=Metric::Cosine;
+            else std::cerr << "Unknown metric: " << val << "\n";
+        } else if(arg=="--debug" || arg == "-d"){
+            cfg.debug=true;
+        } else if(arg=="--chunk" && i+2<argc){
+            // Need to look at max_seq_length of the sBert
+            if (( cfg.max_tokens_per_chunk=std::stoi(argv[++i])) > 512)
+              std::cerr << "Warning: large chunk size specified (normally at most 128-512 tokens)\n";
+            auto overlap = std::stof(argv[++i]);
+            if (overlap > 0.1f && overlap < 1.0f) cfg.overlap_percent = overlap;
+            else if (overlap < 100) cfg.overlap_percent=overlap/100.0f;
+            else {
+               std::cerr << "Absurd overlap specified: " << overlap << "% (recomended is 10-20)\n";
+               return -1;
+            }
+        }
+    }
+
+    cfg.metric=chosen;
+    std::cout<<"Using metric: "<<(cfg.metric==Metric::L2?"L2":cfg.metric==Metric::InnerProduct?"InnerProduct":"Cosine")<<"\n";
+    if(cfg.debug) std::cout<<"Debug mode ON\n";
 
     BertIndexManager man(argv[1],cfg);
     std::string current="default";
