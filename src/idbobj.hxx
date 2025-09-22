@@ -41,7 +41,7 @@ friend class atomicIRSET;
 friend class DOCTYPE;
 friend class METADATA;
 public:
-  IDBOBJ() { };
+  IDBOBJ() : useRelativePaths(false), defaultFieldType(FIELDTYPE::unknown) { };
   virtual ~IDBOBJ() { }
   virtual size_t GetIndexingMemory() const { return 0; }
   virtual void DfdtAddEntry(const DFD&) { }
@@ -396,6 +396,12 @@ public:
           return true;
   }
 
+  virtual bool    SetDefaultFieldType(const FIELDTYPE typ) {
+    if (typ.Defined()) defaultFieldType = typ;
+    else return false;
+    return true;
+  }
+
 protected:
   virtual void IndexingStatus(const t_IndexingStatus, const STRING&, const long = 0)  { };
   virtual void IndexingStatus(const t_IndexingStatus Status, const long Count = 0)  {
@@ -404,15 +410,16 @@ protected:
   STRING StoplistFileName; // @@@ edz
 
 private:
-  HASH    FieldTypes;
-  STRING  WorkingDirectory;
-  bool useRelativePaths;
+  HASH     FieldTypes;
+  FIELDTYPE defaultFieldType;
+  STRING   WorkingDirectory;
+  bool     useRelativePaths;
 //virtual PMDT GetMainMdt() { return 0; };
 //virtual PDFDT GetMainDfdt() { return 0; };
-  virtual void SelectRegions(const RECORD&, FCT *) { };
-  virtual GPTYPE ParseWords(const DOCTYPE_ID&, UCHR*, GPTYPE, GPTYPE,
+  virtual  void SelectRegions(const RECORD&, FCT *) { };
+  virtual  GPTYPE ParseWords(const DOCTYPE_ID&, UCHR*, GPTYPE, GPTYPE,
 		GPTYPE*, GPTYPE) { return 0; }; 
-  virtual size_t  ParseWords2(const STRING&, WORDSLIST *) const { return 0; }
+  virtual  size_t  ParseWords2(const STRING&, WORDSLIST *) const { return 0; }
 };
 
 typedef IDBOBJ* PIDBOBJ;

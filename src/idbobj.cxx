@@ -50,7 +50,20 @@ FIELDTYPE  IDBOBJ::GetFieldType(const STRING& FieldName)
   STRING field (FieldName);
   STRING s ( FieldTypes.GetValue(field.MakeUpper()) );
 
+#if 1
+  /* New general model for Schmate */
+  if (s.IsEmpty()) {
+     if (defaultFieldType.Defined())
+       {
+	  FieldTypes.AddEntry(FieldName,  defaultFieldType);
+	  return defaultFieldType;
+       }
+     return FIELDTYPE::any ;
+  }
+  return (BYTE)s.GetInt();
+#else
   return s.IsEmpty() ? FIELDTYPE::any : (BYTE)s.GetInt();
+#endif
 }
 
 bool IDBOBJ::_write_resource_path(const STRING& filepath, const RECORD& Filerecord, STRING *path) const

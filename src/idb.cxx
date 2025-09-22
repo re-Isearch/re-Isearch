@@ -158,6 +158,10 @@ static const STRING PluginsPathEntry    ("PluginsPath");
 static const STRING CacheDirEntry       ("CacheDir");
 static const STRING WorkingDirEntry     ("BaseDir");
 static const STRING useRelativePathsEntry ("useRelativePaths");
+//
+static const STRING defaultFieldTypeEntry ("DefaultFieldType");
+
+//
 
 static const STRING autoDeleteExpiredEntry ("AutoDeleteExpired");
 
@@ -496,6 +500,13 @@ bool IDB::Open (const STRING& NewPathName, const STRING& NewFileName,
 
   if (!SetLocale ((const char *)NULL))
     message_log(LOG_ERROR, "Could set set default locale, check environment!");
+
+#if 1
+  // Set default fieldtype -- also setable via DOCTYPE options
+  { FIELDTYPE typ (MainRegistry->ProfileGetString(DbInfoSection, defaultFieldTypeEntry));
+    if (typ.Defined() ) SetDefaultFieldType (typ);
+  }
+#endif
 
   // Get Indexing Bits
   {
@@ -3503,6 +3514,40 @@ bool IDB::Headline(const RESULT& ResultRecord, PSTRING StringBuffer) const
 #endif
 }
 
+#if 0
+
+STRLIST IDB::GetAllHits(const RESULT& ResultRecord, const STRING& Before, const STRING& After) const
+{
+  STRLIST list;
+  const size_t n = ResultRecord.GetHitTotal();
+  // Recall: Nth hit methods start count at 1(!)
+  for (size_t i = 1; i <=n; i++) {
+    STRING line;
+    if (ResultRecord.PresentNthHit(i, &line, NULL,Before, After,
+	 GetDocTypePtr( ResultRecord.GetDocumentType() ) == false)
+      break;
+    list += line;
+   }
+  return list;
+}
+
+STRLIST IDB::GetXMLAllHits(const RESULT& ResultRecord) const
+{
+
+  STRLIST list;
+  const size_t n = ResultRecord.GetHitTotal();
+  // Recall: Nth hit methods start count at 1(!)
+  for (size_t i = 1; i <=n; i++) { 
+    STRING line;
+    if (ResultRecord.XMLPresentNthHit(i, &line, "MATCH", NULL,
+	GetDocTypePtr( ResultRecord.GetDocumentType() ) == false)
+      break;    
+    list += line;
+   }      
+  return list;
+}             
+#endif
+
 
 // Context Match
 bool IDB::Context(const RESULT& ResultRecord, PSTRING Line, PSTRING Term,
@@ -3666,6 +3711,7 @@ STRING IDB::Description() const
   result = "Physical database level <database>.ini Options:\n";
   result << "[" << DbInfoSection << "]\n";
   result << DatabasesEntry << "=<Path to db stem (Physical Indexes)> # Default: same directory as .ini\n";
+  result << defaultFieldTypeEntry << "=<Fieldype to use when one is not defined>\n"; 
   result << WorkingDirEntry << "=<Base Directory> # WARNING: CRITICAL VALUE\n";
   result << useRelativePathsEntry << "=<bool> # Use relative paths (0 or 1)\n";
   result << autoDeleteExpiredEntry << "=<bool> # Automatically delete expired records (0 or 1)\n";

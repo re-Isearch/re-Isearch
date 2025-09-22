@@ -55,6 +55,9 @@ static const STRING GeneralSection ("General");
 static const STRING DbInfoSection  ("DbInfo"); // See idb.cxx
 static const STRING FieldTypeSection ("FieldTypes");
 
+// Moved to idbobj / idb
+//static const STRING DefaultFieldTypeEntry ("DefaultFieldType");
+
 
 STRING DOCTYPE::Getoption(const STRLIST *Strlist, const STRING& Entry, const STRING& Default) const
 {
@@ -258,6 +261,7 @@ Other groups are:\n\
   Field=Field1         # Map fields into others\n\
                        # Note: See also <db>.ini [BOUNDING-BOX]\n\n\
   [FieldTypes]\n\
+  General=<FieldType>      # define the type of all except those defined in Field or\n\
   Field=<FieldType>    # define the type: text, num, computed, num-range, time,\n\
                        # date, date-range, gpoly\n\
                        # Note: Bounding box elements must be explicitly defined as numeric\n\n\
@@ -373,6 +377,16 @@ void DOCTYPE::AddFieldDefs ()
 
   if (Db == NULL) return;
 
+
+//  if (tagRegistry)
+//    {
+//      STRING s;
+//      // Set the default if defined
+//      tagRegistry->ProfileGetString(GeneralSection, DefaultFieldTypeEntry, NulString, &s);
+//      if (!s.IsEmpty()) Db->setDefaultFieldType(s);
+//    }
+
+  // Now load the values
   if (tagRegistry)
     {
       STRLIST   fieldslist;
@@ -388,7 +402,6 @@ void DOCTYPE::AddFieldDefs ()
 	      Db->AddFieldType(p->Value(), fieldType);
 	    }
 	}
-
     }
 
   if (FieldTypeFilename.IsEmpty())
