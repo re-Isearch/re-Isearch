@@ -215,7 +215,12 @@ public:
         if (!ctx) throw std::runtime_error("Failed to load model");
         dim = bert_n_embd(ctx);
         max_tokens = bert_n_max_tokens(ctx);
+#if STANDALONE
         std::cout << "Loaded SBERT GGML model. dim=" << dim << " max_tokens=" << max_tokens << "\n";
+#else
+	message_log (LOG_INFO, "Loaded SBERT GGML model '%s'. dim=%d max_tokens=%d",
+		model_path.c_str(), dim, max_tokens);
+#endif
     }
     ~SBertGGML(){ if(ctx) bert_free(ctx); }
     int embedding_dim() const { return dim; }
@@ -257,6 +262,7 @@ struct SearchResult {
 enum class Metric { L2, InnerProduct, Cosine };
 
 struct HnswConfig {
+    std::string default = "default";
     std::string model =  "sbert.ggml";
     size_t max_elements = 100000;
     size_t M = 16;
@@ -462,7 +468,10 @@ public:
     }
 
 
-#if 0
+#if 0 /* PRODUCTION */
+
+
+search_knn( )
     // For production we don't have a sentences file and the start, end are
     // re-Isearch addresses
     void append(const std::string &sentence, int64_t start, int64_t end) {
@@ -1137,16 +1146,29 @@ public:
     std::vector<SearchResult> relative(const std::string&n,const std::string&q,float alpha){return get(n).relative(q,alpha);}
     std::vector<SearchResult> adaptive(const std::string&n,const std::string&q,float alpha,size_t minN,size_t lookahead,float gapDelta){return get(n).adaptive(q,alpha,minN,lookahead,gapDelta);}
     std::string text(const std::string&n,const SearchResult&r){return get(n).get_text(r);}
+
+    void merge(const std::string& n) { get(n).merge(); }
+    void merge_last_two(const std::string& n) { get(n).merge_last_two(); }
 };
 
 #if 1
+
+enum class SearchType { Adaptive, Knn, Radius, Relative };
+
 class EmbeddingIndexer
 {
    BertIndexManager *man;
    HnswConfig        config;
+   SearchType        modus;
+
+   bool              man_init() {
+     if (man || (file_exists(config.model) && (man = new BertIndexManager(config)) != NULL))
+	return true;
+     return false;
+   }
 public:
    // db_hnsw, db_nsg, db_IVFFlat
-   EmbeddingIndexer(HnswConfig& cfg) : man(NULL) {
+   EmbeddingIndexer(HnswConfig& cfg) : man(NULL), modus(SearchType::Knn) {
      HnswConfig      config = cfg;
    };
 
@@ -1165,18 +1187,57 @@ public:
      // We flush all the types we have
      if (man) man->flush(fieldname); // Right now only Bert/HNSW
    }
+   void merge_last_two(const std::string& fieldname) {
+     flush(fieldname);
+     if (man && man->merge_last_two(fieldname));
+   }
+   void merge(const std::string& fieldname) {
+     flush(fieldname);
+     if (man && man->merge(fieldname));
+   }
+   std::vector<SearchResult>  search_adaptive(const std::string& fieldname, const std::string& query) {
+     man_init();
+     return man ?  man->adaptive(fieldname, query) : NULL;
+   }
+   std::vector<SearchResult>  search_knn(const std::string& fieldname, const std::string& query) {
+     man_init();
+     return man ?  man->knn(fieldname, query) : NULL;
+   }
+   std::vector<SearchResult>  search_relative(const std::string& fieldname, const std::string& query) {
+     man_init();
+     return man ?  man->relative(fieldname, query) : NULL;
+   }
+   std::vector<SearchResult>  search_radius(const std::string& fieldname, const std::string& query) {
+     man_init();
+     return man ?  man->radius(fieldname, query) : NULL;
+   }    
+
+   std::vector<SearchResult>  adaptive_search(const std::string& fieldname, const std::string& query) {
+     if (query.empty()) return NULL;
+
+     if (fieldname.empty()) fieldname = cfg.default;
+     switch(modus) {
+        case SearchType:Adaptive:  return search_adaptive(fieldname, query);
+        case SearchType:relative:  return search_relative(fieldname, query);
+        case SearchType:radius:  return search_radius(fieldname, query);
+        case SearchType:Knn: default:  return search_knn(fieldname, query);
+     }
+   }
 
    bool append(const std::string& buffer, const std::string& fieldname, int64_t start, int64_t end, int type) {
        switch (type) {
-	case 0: if (man == NULL) man = new BertIndexManager(config);
+	case 0: man_init();
 #if 0
-		// Production code
-	        man->append(buffer, fieldname, start, end);
-		return true;
+	// Production code
+	if (man) {
+	  man->append(buffer, fieldname, start, end);
+	  return true;
+	}
+	break;
 #endif
-	default:
-		return false;
+	default: break;
      }
+     return false;
    }
 
 } ;
