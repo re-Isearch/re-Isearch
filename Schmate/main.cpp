@@ -200,7 +200,24 @@ inline int64_t read_int64(std::istream &is) {
 
 #endif
 
-inline void write_zero128 (std::ostream &os) { write_int64(os, 0); write_int64(os, 0); }
+inline void  write_int128(std::ostream &os, int64_t s, int64_t e) {
+    write_int64(os, s);
+    write_int64(os, e);
+}
+
+
+inline void offsets_append(std::ostream &os, size_t label, int64_t start, int64_t end) {
+  os.seekp((std::streamoff)label * 2*sizeof(int64_t) /* 16 */);
+  write_int128(os, start, end);
+}
+
+inline void write_zero128 (std::ostream &os) { write_int128(os, 0, 0); }
+
+inline void write_zero128( std::ostream &os, size_t label) {
+  offsets_append(os, label, 0, 0);
+}
+
+
 } // end unnamed namespace
 
 
@@ -252,6 +269,7 @@ public:
 };
 
 // ---------------- SearchResult ----------------
+
 struct SearchResult {
     float score;
     int64_t start;
@@ -262,7 +280,7 @@ struct SearchResult {
 enum class Metric { L2, InnerProduct, Cosine };
 
 struct HnswConfig {
-    std::string default = "default";
+    std::string default_field = "default";
     std::string model =  "sbert.ggml";
     size_t max_elements = 100000;
     size_t M = 16;
@@ -471,11 +489,13 @@ public:
 #if 0 /* PRODUCTION */
 
 
-search_knn( )
     // For production we don't have a sentences file and the start, end are
     // re-Isearch addresses
-    void append(const std::string &sentence, int64_t start, int64_t end) {
+    void append(const std::string &sentence, int64_t s, int64_t e) {
         auto chunks = chunk_tokens(sentence);
+        int64_t start = s;
+        int64_t end   = e;
+ 	size_t  off;
 
         std::fstream ofs(offsets_path, std::ios::in | std::ios::out | std::ios::binary);
         if (!ofs) {
@@ -485,16 +505,20 @@ search_knn( )
         for (auto &chunk : chunks) {
             size_t label = allocate_label();
 
+	    off = 0;
             // sentence append
             std::string chunk_text(chunk.size(), '\0');
             for (size_t i=0;i<chunk.size();i++) {
-                chunk_text[i] = (char)chunk[i]; // <-- if you’re writing raw tokens
+                if (chunk_text[i] = (char)chunk[i]) != '\0'); // <-- if you’re writing raw tokens
+		  off++;
             }
+	    if (start + off < e) end = start + off; 
+	    else end = e;
 
             // offsets append
-            ofs.seekp((std::streamoff)label * 16);
-            write_int64(ofs, start);
-            write_int64(ofs, end);
+	    offsets_append(ofs, label, start, end);
+
+	    start = end + 1 - std::max(0, (int)(cfg.max_tokens_per_chunk * (1.0f - cfg.overlap_percent)));
 
             // embedding
             std::vector<float> emb(embedder.embedding_dim());
@@ -1142,9 +1166,16 @@ public:
     void flush(const std::string&n){get(n).flush();}
 
     std::vector<SearchResult> knn(const std::string&n,const std::string&q,size_t k=5){return get(n).knn(q,k);}
-    std::vector<SearchResult> radius(const std::string&n,const std::string&q,float minScore){return get(n).radius(q,minScore);}
-    std::vector<SearchResult> relative(const std::string&n,const std::string&q,float alpha){return get(n).relative(q,alpha);}
-    std::vector<SearchResult> adaptive(const std::string&n,const std::string&q,float alpha,size_t minN,size_t lookahead,float gapDelta){return get(n).adaptive(q,alpha,minN,lookahead,gapDelta);}
+    std::vector<SearchResult> radius(const std::string&n,const std::string&q,float minScore = 0.0){
+        return get(n).radius(q,minScore);
+    }
+    std::vector<SearchResult> relative(const std::string&n,const std::string&q,float alpha = 0.0){
+        return get(n).relative(q,alpha);
+    }
+    std::vector<SearchResult> adaptive(const std::string&n,const std::string&q,
+	float alpha = 0.0,size_t minN = 0,size_t lookahead=0,float gapDelta=0){
+       return get(n).adaptive(q,alpha,minN,lookahead,gapDelta);
+    }
     std::string text(const std::string&n,const SearchResult&r){return get(n).get_text(r);}
 
     void merge(const std::string& n) { get(n).merge(); }
@@ -1157,9 +1188,10 @@ enum class SearchType { Adaptive, Knn, Radius, Relative };
 
 class EmbeddingIndexer
 {
-   BertIndexManager *man;
-   HnswConfig        config;
-   SearchType        modus;
+   BertIndexManager         *man;
+   HnswConfig                config;
+   SearchType                modus;
+   std::vector<SearchResult> empty;
 
    bool              man_init() {
      if (man || (file_exists(config.model) && (man = new BertIndexManager(config)) != NULL))
@@ -1189,38 +1221,37 @@ public:
    }
    void merge_last_two(const std::string& fieldname) {
      flush(fieldname);
-     if (man && man->merge_last_two(fieldname));
+     if (man)  man->merge_last_two(fieldname);
    }
    void merge(const std::string& fieldname) {
      flush(fieldname);
-     if (man && man->merge(fieldname));
+     if (man) man->merge(fieldname);
    }
    std::vector<SearchResult>  search_adaptive(const std::string& fieldname, const std::string& query) {
      man_init();
-     return man ?  man->adaptive(fieldname, query) : NULL;
+     return man ?  man->adaptive(fieldname, query) : empty;
    }
    std::vector<SearchResult>  search_knn(const std::string& fieldname, const std::string& query) {
      man_init();
-     return man ?  man->knn(fieldname, query) : NULL;
+     return man ?  man->knn(fieldname, query) : empty;
    }
    std::vector<SearchResult>  search_relative(const std::string& fieldname, const std::string& query) {
      man_init();
-     return man ?  man->relative(fieldname, query) : NULL;
+     return man ?  man->relative(fieldname, query) : empty;
    }
    std::vector<SearchResult>  search_radius(const std::string& fieldname, const std::string& query) {
      man_init();
-     return man ?  man->radius(fieldname, query) : NULL;
+     return man ?  man->radius(fieldname, query) : empty;
    }    
 
    std::vector<SearchResult>  adaptive_search(const std::string& fieldname, const std::string& query) {
-     if (query.empty()) return NULL;
-
-     if (fieldname.empty()) fieldname = cfg.default;
+     if (query.empty()) return empty;
+     std::string index = (fieldname.empty()) ? config.default_field : fieldname;
      switch(modus) {
-        case SearchType:Adaptive:  return search_adaptive(fieldname, query);
-        case SearchType:relative:  return search_relative(fieldname, query);
-        case SearchType:radius:  return search_radius(fieldname, query);
-        case SearchType:Knn: default:  return search_knn(fieldname, query);
+        case SearchType::Adaptive:  return search_adaptive(index, query);
+        case SearchType::Relative:  return search_relative(index, query);
+        case SearchType::Radius:  return search_radius(index, query);
+        case SearchType::Knn: default:  return search_knn(index, query);
      }
    }
 
