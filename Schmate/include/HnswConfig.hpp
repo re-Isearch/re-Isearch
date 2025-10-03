@@ -1,0 +1,37 @@
+#pragma once
+#include <cstddef>
+#include <string>
+
+enum class Metric {
+    L2,
+    InnerProduct,
+    Cosine
+};
+
+struct HnswConfig {
+    size_t max_elements = 100000;
+    size_t M = 16;
+    size_t ef_construction = 200;
+    size_t ef_search = 50;
+    Metric metric = Metric::Cosine;
+
+    // chunking
+    int max_tokens_per_chunk = 128;
+    float overlap_percent = 0.1f;
+
+    // debug
+    bool debug = true;  // default debug enabled
+
+    // search defaults
+    size_t default_k = 5;          // k for knn
+    float default_radius = 0.7f;   // min score for radius
+    float default_alpha = 0.8f;    // relative threshold multiplier
+    size_t default_minN = 3;       // adaptive: minimum results
+    size_t default_lookahead = 10; // adaptive: lookahead window
+    float default_gapDelta = 0.1f; // adaptive: gap threshold
+
+    // performance tuning
+    size_t knn_lookahead_scale = 5;
+    size_t flush_threshold = 100;
+};
+

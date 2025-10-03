@@ -1,0 +1,36 @@
+Directory structure:
+
+sbert_search/
+├── CMakeLists.txt
+├── README.md
+├── include/
+│   ├── hnswlib/          # vendored header-only HNSWlib
+│   ├── SBertGGML.hpp
+│   ├── BertIndex.hpp
+│   ├── ShardedIndex.hpp
+│   ├── BertIndexManager.hpp
+│   ├── HnswConfig.hpp
+│   └── HNSWIndexCache.hpp
+│   └── Util.hpp
+├── src/
+│   ├── SBertGGML.cpp
+│   ├── BertIndex.cpp
+│   ├── ShardedIndex.cpp
+│   ├── BertIndexManager.cpp
+│   ├── Util.cpp
+│   └── main.cpp
+└── tests/
+    └── run_test.sh
+
+
+Final notes & tips
+
+CMake: your CMakeLists.txt should compile all .cpp in src/ and include include/. Link to bert and ggml and -framework Accelerate on macOS, plus pthread if needed.
+
+Adjustments: depending on your hnswlib version and BERT C API signatures, you might need tiny name tweaks (e.g., cur_element_count vs getCurrentElementCount()); I tried to use common names but adapt if your headers differ.
+
+Testing: after building, run the test script (tests/run_test.sh)
+
+
+
+

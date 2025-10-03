@@ -1,0 +1,91 @@
+
+#include "BertIndexManager.hpp"
+#include <stdexcept>
+
+BertIndexManager::BertIndexManager(SBertGGML & e, HnswConfig &c)
+: embedder(e), cfg(c)
+{}
+
+ShardedIndex & BertIndexManager::getOrCreate(const std::string & name) {
+    auto it = indexes.find(name);
+    if (it != indexes.end()) return *it->second;
+    // create new
+    indexes[name] = std::make_unique<ShardedIndex>(embedder, cfg, name);
+    return *indexes[name];
+}
+
+void BertIndexManager::append(const std::string & name, const std::string & sentence) {
+    getOrCreate(name).append(sentence);
+}
+
+void BertIndexManager::append(const std::string & name, const std::string & sentence, int64_t sentence_id) {
+    getOrCreate(name).append(sentence, sentence_id);
+}
+
+void BertIndexManager::remove(const std::string & name, size_t label, size_t shard) {
+    getOrCreate(name).remove(label, shard);
+}
+
+void BertIndexManager::undelete(const std::string & name, size_t label, size_t shard) {
+    getOrCreate(name).undelete(label, shard);
+}
+
+void BertIndexManager::delete_byAddress(const std::string & name, int64_t addr, size_t shard) {
+    getOrCreate(name).delete_byAddress(addr, shard);
+}
+
+void BertIndexManager::undelete_byAddress(const std::string & name, int64_t addr, size_t shard) {
+    getOrCreate(name).undelete_byAddress(addr, shard);
+}
+
+std::vector<SearchResult> BertIndexManager::knn(const std::string & name, const std::string & query, size_t k) {
+    return getOrCreate(name).knn(query, k);
+}
+
+std::vector<SearchResult> BertIndexManager::pknn(const std::string & name, const std::string & query, size_t k) {
+    return getOrCreate(name).parallel_knn(query, k==0?cfg.default_k:k);
+}
+
+std::vector<SearchResult> BertIndexManager::radius(const std::string & name, const std::string & query, float minScore) {
+    return getOrCreate(name).radius(query, minScore);
+}
+
+std::vector<SearchResult> BertIndexManager::pradius(const std::string & name, const std::string & query, float minScore) {
+    return getOrCreate(name).parallel_radius(query, minScore<0?cfg.default_radius:minScore);
+}
+
+std::vector<SearchResult> BertIndexManager::relative(const std::string & name, const std::string & query, float alpha) {
+    return getOrCreate(name).relative(query, alpha);
+}
+
+std::vector<SearchResult> BertIndexManager::adaptive(const std::string & name, const std::string & query,
+                                                    float alpha, size_t minN, size_t lookahead, float gapDelta) {
+    return getOrCreate(name).adaptive(query, alpha, minN, lookahead, gapDelta);
+}
+
+void BertIndexManager::merge(const std::string & name) {
+    getOrCreate(name).merge_last_two();
+}
+
+void BertIndexManager::flush(const std::string & name) {
+    getOrCreate(name).flush();
+}
+
+size_t BertIndexManager::shard_count(const std::string & name) {
+    return getOrCreate(name).shard_count();
+}
+
+std::string BertIndexManager::get_text(const std::string & name, const SearchResult & r) {
+    // delegate to shards: search for non-empty text in shards
+    return getOrCreate(name).get_text(r);
+}
+
+std::string BertIndexManager::reconstruct_sid(const std::string & name, int64_t sid) {
+    return getOrCreate(name).reconstruct_sid(sid);
+}
+
+std::string BertIndexManager::reconstruct_label(const std::string & name, size_t label) {
+    return getOrCreate(name).reconstruct_label(label);
+}
+
+
