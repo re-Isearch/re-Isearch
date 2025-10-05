@@ -18,9 +18,9 @@ static void print_help() {
     "  append <sentence>\n"
     "  appendid <sid> <sentence>\n"
     "  knn [k] <query>\n"
-    "  pknn [k] <query>\n"
+//    "  pknn [k] <query>\n"
     "  radius [minScore] <query>\n"
-    "  pradius [minScore] <query>\n"
+//    "  pradius [minScore] <query>\n"
     "  relative [alpha] <query>\n"
     "  adaptive [alpha] [minN] [lookahead] [gapDelta] <query>\n"
     "  delete <label> [shard]\n"
@@ -38,12 +38,34 @@ static void print_help() {
     "  quit\n";
 }
 
+
+/*
+
+SearchResult r;
+r.score = d;
+r.label = label;
+
+auto it = label_to_entry.find(label);
+if (it != label_to_entry.end()) {
+    r.sentence_id = it->second.sid;
+    r.start_tok   = it->second.start_tok;
+    r.end_tok     = it->second.end_tok;
+    r.file_start  = it->second.file_start;
+    r.file_end    = it->second.file_end;
+} else {
+    r.sentence_id = -1; // unknown
+}
+
+
+*/
+
+
 int main(int argc, char **argv) {
     if (argc < 2) {
         cerr << "Usage: " << argv[0] << " <sbert.ggml> [--debug] [--metric l2|ip|cos]\n";
         return 1;
     }
-    string model = argv[1];
+    string model = find_ggml_model(argv[1], "../lib:../bin:lib/:.");;
     HnswConfig cfg;
     for (int i = 2; i < argc; ++i) {
         string a = argv[i];
@@ -112,6 +134,7 @@ int main(int argc, char **argv) {
                 continue;
             }
 
+#if 0
             if (line.rfind("pknn",0) == 0) {
                 string payload = (line.size() > 5) ? line.substr(5) : "";
                 istringstream iss(payload);
@@ -121,6 +144,23 @@ int main(int argc, char **argv) {
                 for (auto &r : res) cout << " - [score="<<r.score<<", sid="<<r.sentence_id<<", label="<<r.label<<", tokens=["<<r.token_start<<","<<r.token_end<<"]] "<< r.text << "\n";
                 continue;
             }
+#endif
+
+        // --- New: showfull command ---
+        if (line.rfind("showfull ", 0) == 0) {
+            std::string q = line.substr(9);
+            auto results = manager.knn(current, q, cfg.default_k);
+            std::cout << "Results for '" << q << "' (full sentences):\n";
+            for (auto &r : results) {
+                std::string sentence = manager.get_text(current, r, true); // full sentence
+
+                std::cout << " - [score=" << r.score
+                          << " sid=" << r.sentence_id
+                          << "] " << sentence << "\n\n";
+            }
+            continue;
+        }
+
 
             if (line.rfind("radius ",0) == 0) {
                 istringstream iss(line.substr(7));
@@ -131,6 +171,7 @@ int main(int argc, char **argv) {
                 continue;
             }
 
+#if 0
             if (line.rfind("pradius ",0) == 0) {
                 istringstream iss(line.substr(8));
                 float s; if (!(iss>>s)) s = cfg.default_radius;
@@ -139,6 +180,7 @@ int main(int argc, char **argv) {
                 for (auto &r : res) cout << " - [score="<<r.score<<", sid="<<r.sentence_id<<", label="<<r.label<<"] "<< r.text << "\n";
                 continue;
             }
+#endif
 
             if (line.rfind("relative ",0)==0) {
                 istringstream iss(line.substr(9));

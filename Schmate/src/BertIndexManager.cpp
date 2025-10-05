@@ -38,21 +38,35 @@ void BertIndexManager::undelete_byAddress(const std::string & name, int64_t addr
     getOrCreate(name).undelete_byAddress(addr, shard);
 }
 
+/*
+Can do 
+
+auto results = mgr.knn("default", "AI research", 3);
+for (auto &r : results) {
+    std::cout << "Chunk: " << mgr.get_text("default", r, false) << "\n";
+    std::cout << "Sentence: " << mgr.get_text("default", r, true) << "\n";
+}
+
+*/
 std::vector<SearchResult> BertIndexManager::knn(const std::string & name, const std::string & query, size_t k) {
     return getOrCreate(name).knn(query, k);
 }
 
+#if 0
 std::vector<SearchResult> BertIndexManager::pknn(const std::string & name, const std::string & query, size_t k) {
     return getOrCreate(name).parallel_knn(query, k==0?cfg.default_k:k);
 }
+#endif 
 
 std::vector<SearchResult> BertIndexManager::radius(const std::string & name, const std::string & query, float minScore) {
     return getOrCreate(name).radius(query, minScore);
 }
 
+#if 0
 std::vector<SearchResult> BertIndexManager::pradius(const std::string & name, const std::string & query, float minScore) {
     return getOrCreate(name).parallel_radius(query, minScore<0?cfg.default_radius:minScore);
 }
+#endif
 
 std::vector<SearchResult> BertIndexManager::relative(const std::string & name, const std::string & query, float alpha) {
     return getOrCreate(name).relative(query, alpha);
@@ -75,10 +89,11 @@ size_t BertIndexManager::shard_count(const std::string & name) {
     return getOrCreate(name).shard_count();
 }
 
-std::string BertIndexManager::get_text(const std::string & name, const SearchResult & r) {
+std::string BertIndexManager::get_text(const std::string &name, const SearchResult &r, bool full_sentence) {
     // delegate to shards: search for non-empty text in shards
-    return getOrCreate(name).get_text(r);
+    return getOrCreate(name).get_text(r, full_sentence);
 }
+
 
 std::string BertIndexManager::reconstruct_sid(const std::string & name, int64_t sid) {
     return getOrCreate(name).reconstruct_sid(sid);
