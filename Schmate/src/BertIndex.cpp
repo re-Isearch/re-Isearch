@@ -227,6 +227,8 @@ size_t BertIndex::append(const string & sentence) {
 
 std::vector<float> BertIndex::encode_text(const std::string& text)
 {
+   // std::cerr << "BertIndex::encode_text(" << text << ")\n";
+
    auto emb = embedder.encode_text(text, cfg.debug);
    // ---------------------------------------------------------------------
    // Normalize for cosine similarity if required.
@@ -242,6 +244,18 @@ std::vector<float> BertIndex::encode_text(const std::string& text)
         for (float v : emb) norm += v * v;
         LOG_DEBUG_S() << "embedding norm=" << std::sqrt(norm);
     }
+
+#if 0
+  if (cfg.debug) {
+    float norm = 0;
+    LOG_DEBUG_S() << "Embedding preview:";
+    for (int i = 0; i < 10; ++i) {
+        LOG_DEBUG_S() << "  e[" << i << "]=" << emb[i];
+        norm += emb[i] * emb[i];
+    }
+    LOG_DEBUG_S() << "embedding norm=" << sqrt(norm);
+   }
+#endif
     return emb;
 }
 
@@ -588,13 +602,16 @@ template<typename FilterFn>
 std::vector<SearchResult> BertIndex::filter_knn_results(const std::string &query,
                                                         size_t max_k,
                                                         FilterFn filter) {
+
+    // std::cerr << "QUERY=" << query << std::endl;
     std::vector<float> emb = encode_text(query); // embed(query); // embed(query);
     auto candidates = index->searchKnnCloserFirst(emb.data(), max_k);
 
     std::vector<SearchResult> results;
     results.reserve(max_k);
 
-    for (auto &[score, label] : candidates) {
+    for (auto &[dist, label] : candidates) {
+        float score = score_from_dist(dist);
         if (!filter(score)) continue;
 
         OffsetEntry e = offsets->get(label);
@@ -616,7 +633,6 @@ std::vector<SearchResult> BertIndex::filter_knn_results(const std::string &query
     }
 
 
-#if 1
 /*
 | Metric            | Meaning            | Best value         | Sort order       |
 | ----------------- | ------------------ | ------------------ | ---------------- |
@@ -638,13 +654,6 @@ std::vector<SearchResult> BertIndex::filter_knn_results(const std::string &query
 	      }
 	      return false; // Not defined case???
           });
-
-#else
-    std::sort(results.begin(), results.end(),
-              [](const SearchResult &a, const SearchResult &b) {
-                  return a.score < b.score; // lower distance = better
-              });
-#endif
 
     return results;
 }

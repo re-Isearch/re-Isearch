@@ -67,6 +67,7 @@ for (auto &r : results) {
 
 */
 std::vector<SearchResult> BertIndexManager::knn(const std::string & name, const std::string & query, size_t k) {
+std::cerr << "BertIndexManager::knn(" << name << ", " << query << ")\n";
     return getOrCreate(name).knn(query, k);
 }
 

@@ -30,14 +30,15 @@ struct SBertGGML {
     }
 
     std::vector<float> encode_text(const std::string & text, bool debug=false) {
-        std::vector<bert_vocab_id> tokens(512);
-        int32_t n_tokens = 512;
+        const int MAX_TOKENS = 512;
+        std::vector<bert_vocab_id> tokens(MAX_TOKENS);
+        int32_t n_tokens = 0; // was 512;
+	// std::cerr << "Encoding: \"" << text << "\"\n";
         bert_tokenize(ctx, text.c_str(), tokens.data(), &n_tokens, tokens.size());
 
         std::vector<float> emb(n_embd);
         // 4 = number of threads (can make configurable)
         bert_eval(ctx, 4, tokens.data(), n_tokens, emb.data());
-
         return emb;
     }
 };

@@ -129,28 +129,157 @@ int main(int argc, char **argv) {
                 continue;
             }
 
-            if (line.rfind("knn",0) == 0) {
-                string payload = (line.size() > 3) ? line.substr(4) : "";
-                istringstream iss(payload);
-                size_t k = 0;
-                if (!(iss >> k)) k = cfg.default_k;
-                string q; getline(iss, q); if (!q.empty() && q[0]==' ') q=q.substr(1);
-                auto res = manager.knn(current, q, k);
-                for (auto &r : res) cout << " - [score="<<r.score<<", sid="<<r.sentence_id<<", label="<<r.label<<", tokens=["<<r.token_start<<","<<r.token_end<<"]] "<< r.text << "\n";
-                continue;
-            }
 
-#if 0
-            if (line.rfind("pknn",0) == 0) {
-                string payload = (line.size() > 5) ? line.substr(5) : "";
-                istringstream iss(payload);
-                size_t k = 0; if (!(iss >> k)) k = cfg.default_k;
-                string q; getline(iss, q); if (!q.empty() && q[0]==' ') q=q.substr(1);
-                auto res = manager.pknn(current, q, k);
-                for (auto &r : res) cout << " - [score="<<r.score<<", sid="<<r.sentence_id<<", label="<<r.label<<", tokens=["<<r.token_start<<","<<r.token_end<<"]] "<< r.text << "\n";
-                continue;
-            }
-#endif
+// -------------------------------
+// KNN search
+// -------------------------------
+if (line.rfind("knn", 0) == 0) {
+    std::string payload = (line.size() > 3) ? line.substr(4) : "";
+    std::istringstream iss(payload);
+    std::string first;
+    size_t k = cfg.default_k;
+    std::string q;
+
+    if (iss >> first) {
+        if (std::all_of(first.begin(), first.end(), ::isdigit))
+            k = std::stoul(first);
+        else
+            q = first;
+        std::string tail;
+        std::getline(iss, tail);
+        q += tail;
+    }
+
+    if (!q.empty() && q[0] == ' ') q.erase(0, 1);
+    std::cerr << "[DEBUG] knn k=" << k << " q='" << q << "'\n";
+
+    auto res = manager.knn(current, q, k);
+    for (auto &r : res)
+        std::cout << " - [score=" << r.score << ", sid=" << r.sentence_id
+                  << ", label=" << r.label << ", tokens=[" << r.token_start << "," << r.token_end
+                  << "]] " << r.text << "\n";
+    continue;
+}
+
+// -------------------------------
+// RADIUS search
+// -------------------------------
+if (line.rfind("radius", 0) == 0) {
+    std::string payload = (line.size() > 6) ? line.substr(7) : "";
+    std::istringstream iss(payload);
+    std::string first;
+    float minScore = cfg.default_radius;
+    std::string q;
+
+    if (iss >> first) {
+        char* end;
+        float v = std::strtof(first.c_str(), &end);
+        if (end != first.c_str() && *end == '\0')
+            minScore = v;
+        else
+            q = first;
+        std::string tail;
+        std::getline(iss, tail);
+        q += tail;
+    }
+
+    if (!q.empty() && q[0] == ' ') q.erase(0, 1);
+    std::cerr << "[DEBUG] radius minScore=" << minScore << " q='" << q << "'\n";
+
+    auto res = manager.radius(current, q, minScore);
+    for (auto &r : res)
+        std::cout << " - [score=" << r.score << ", sid=" << r.sentence_id
+                  << ", label=" << r.label << ", tokens=[" << r.token_start << "," << r.token_end
+                  << "]] " << r.text << "\n";
+    continue;
+}
+
+// -------------------------------
+// RELATIVE search
+// -------------------------------
+if (line.rfind("relative", 0) == 0) {
+    std::string payload = (line.size() > 8) ? line.substr(9) : "";
+    std::istringstream iss(payload);
+    std::string first;
+    float alpha = cfg.default_alpha;
+    std::string q;
+
+    if (iss >> first) {
+        char* end;
+        float v = std::strtof(first.c_str(), &end);
+        if (end != first.c_str() && *end == '\0')
+            alpha = v;
+        else
+            q = first;
+        std::string tail;
+        std::getline(iss, tail);
+        q += tail;
+    }
+
+    if (!q.empty() && q[0] == ' ') q.erase(0, 1);
+    std::cerr << "[DEBUG] relative alpha=" << alpha << " q='" << q << "'\n";
+
+    auto res = manager.relative(current, q, alpha);
+    for (auto &r : res)
+        std::cout << " - [score=" << r.score << ", sid=" << r.sentence_id
+                  << ", label=" << r.label << ", tokens=[" << r.token_start << "," << r.token_end
+                  << "]] " << r.text << "\n";
+    continue;
+}
+
+// -------------------------------
+// ADAPTIVE search
+// -------------------------------
+if (line.rfind("adaptive", 0) == 0) {
+    std::string payload = (line.size() > 8) ? line.substr(9) : "";
+    std::istringstream iss(payload);
+    std::string first;
+    float alpha = cfg.default_alpha;
+    size_t minN = cfg.default_minN;
+    size_t lookahead = cfg.default_lookahead;
+    float gapDelta = cfg.default_gapDelta;
+    std::string q;
+
+    // Try reading up to 4 optional numeric params
+    std::vector<std::string> args;
+    std::string tok;
+    while (iss >> tok && args.size() < 4)
+        args.push_back(tok);
+    std::getline(iss, q);
+
+    auto parse_float = [](const std::string &s, float &out) {
+        char* end;
+        float v = std::strtof(s.c_str(), &end);
+        if (end != s.c_str() && *end == '\0') { out = v; return true; }
+        return false;
+    };
+    auto parse_int = [](const std::string &s, size_t &out) {
+        char* end;
+        long v = std::strtol(s.c_str(), &end, 10);
+        if (end != s.c_str() && *end == '\0') { out = v; return true; }
+        return false;
+    };
+
+    if (!args.empty()) {
+        parse_float(args[0], alpha);
+        if (args.size() > 1) parse_int(args[1], minN);
+        if (args.size() > 2) parse_int(args[2], lookahead);
+        if (args.size() > 3) parse_float(args[3], gapDelta);
+    }
+
+    if (!q.empty() && q[0] == ' ') q.erase(0, 1);
+    std::cerr << "[DEBUG] adaptive alpha=" << alpha
+              << " minN=" << minN << " lookahead=" << lookahead
+              << " gapDelta=" << gapDelta << " q='" << q << "'\n";
+
+    auto res = manager.adaptive(current, q, alpha, minN, lookahead, gapDelta);
+    for (auto &r : res)
+        std::cout << " - [score=" << r.score << ", sid=" << r.sentence_id
+                  << ", label=" << r.label << ", tokens=[" << r.token_start << "," << r.token_end
+                  << "]] " << r.text << "\n";
+    continue;
+}
+
 
         // --- New: showfull command ---
         if (line.rfind("showfull ", 0) == 0) {
@@ -167,48 +296,6 @@ int main(int argc, char **argv) {
             continue;
         }
 
-
-            if (line.rfind("radius ",0) == 0) {
-                istringstream iss(line.substr(7));
-                float s; if (!(iss>>s)) s = cfg.default_radius;
-                string q; getline(iss,q); if (!q.empty() && q[0]==' ') q=q.substr(1);
-                auto res = manager.radius(current, q, s);
-                for (auto &r : res) cout << " - [score="<<r.score<<", sid="<<r.sentence_id<<", label="<<r.label<<"] "<< r.text << "\n";
-                continue;
-            }
-
-#if 0
-            if (line.rfind("pradius ",0) == 0) {
-                istringstream iss(line.substr(8));
-                float s; if (!(iss>>s)) s = cfg.default_radius;
-                string q; getline(iss,q); if (!q.empty() && q[0]==' ') q=q.substr(1);
-                auto res = manager.pradius(current, q, s);
-                for (auto &r : res) cout << " - [score="<<r.score<<", sid="<<r.sentence_id<<", label="<<r.label<<"] "<< r.text << "\n";
-                continue;
-            }
-#endif
-
-            if (line.rfind("relative ",0)==0) {
-                istringstream iss(line.substr(9));
-                float a; if (!(iss>>a)) a = cfg.default_alpha;
-                string q; getline(iss,q); if (!q.empty() && q[0]==' ') q=q.substr(1);
-                auto res = manager.relative(current, q, a);
-                for (auto &r : res) cout << " - [score="<<r.score<<", sid="<<r.sentence_id<<", label="<<r.label<<"] "<< r.text << "\n";
-                continue;
-            }
-
-            if (line.rfind("adaptive ",0)==0) {
-                istringstream iss(line.substr(9));
-                float a; size_t m,l; float g;
-                if (!(iss>>a)) a = cfg.default_alpha;
-                if (!(iss>>m)) m = cfg.default_minN;
-                if (!(iss>>l)) l = cfg.default_lookahead;
-                if (!(iss>>g)) g = cfg.default_gapDelta;
-                string q; getline(iss,q); if (!q.empty() && q[0]==' ') q=q.substr(1);
-                auto res = manager.adaptive(current, q, a, m, l, g);
-                for (auto &r : res) cout << " - [score="<<r.score<<", sid="<<r.sentence_id<<", label="<<r.label<<"] "<< r.text << "\n";
-                continue;
-            }
 
             if (line.rfind("delete_addr ",0)==0) {
                 istringstream iss(line.substr(12));

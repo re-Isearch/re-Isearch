@@ -128,6 +128,12 @@ private:
     }
    std::vector<float> encode_text(const std::string& text);
 
+   // convert raw hnsw distance to a score (simple)
+   float score_from_dist(float dist) const {
+        if (cfg.metric == Metric::L2) return 1.0f/(1.0f + dist);
+        return 1.0f - dist;
+   }
+
 //    bool write_offsets(size_t, int64_t, size_t, size_t, int64_t, int64_t) ;
 //    bool load_offsets();
     std::unique_ptr<OffsetFile> offsets;
