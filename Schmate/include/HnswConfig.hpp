@@ -33,5 +33,28 @@ struct HnswConfig {
     // performance tuning
     size_t knn_lookahead_scale = 5;
     int    flush_threshold = 100; // Save index every, -1 only on explicit flush or exit.
+
+     //
+    bool parallel_merge = true;
+    unsigned merge_threads = 0; // 0 = auto
+    //
+    bool normalized_embeddings = false;
+};
+
+
+struct IndexMeta {
+    uint32_t       version = 1;
+    Metric         metric  = Metric::L2; // "L2", "cosine", "ip"
+    bool           normalized = false;
+    uint32_t       dim = 0;
+    uint64_t       count = 0;
+
+    void save(std::ofstream &ofs) const {
+        ofs.write(reinterpret_cast<const char*>(this), sizeof(IndexMeta));
+    }
+
+    void load(std::ifstream &ifs) {
+        ifs.read(reinterpret_cast<char*>(this), sizeof(IndexMeta));
+    }
 };
 

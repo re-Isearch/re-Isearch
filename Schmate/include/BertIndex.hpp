@@ -3,6 +3,7 @@
 #include "HnswConfig.hpp"
 #include "Util.hpp"
 #include "hnswlib/hnswlib.h"
+#include "OffsetFile.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -12,6 +13,12 @@
 #include <iostream>
 #include <atomic>
 #include <algorithm>
+
+struct IndexExtensions {
+  static constexpr const char* sentences= ".txt";
+  static constexpr const char* offsets  = ".obn";
+  static constexpr const char* hnsw     = ".hix";
+} ;
 
 struct SearchResult {
     float score;
@@ -30,20 +37,8 @@ struct Chunk {
     size_t end_token;
 };
 
-// This structure helps up maintain the sentence IDs
-// these are the GPs in re-Isearch
-struct OffsetEntry {
-    int64_t sid;         // persistent sentence ID
-    size_t  start_tok;   // token start in original sentence
-    size_t  end_tok;     // token end in original sentence
-    int64_t file_start;  // byte offset in sentences file
-    int64_t file_end;    // byte offset in sentences file
-};
-
-
-
-
 class BertIndex {
+friend class ShardedIndex;
     SBertGGML & embedder;
     HnswConfig & cfg;
     std::unique_ptr<hnswlib::HierarchicalNSW<float>> index;
@@ -55,14 +50,18 @@ class BertIndex {
     std::string index_path;
 
     size_t next_label = 0;
+    std::queue<size_t> free_labels;    // pool of reusable labels
+
     std::unordered_map<size_t, std::pair<int,int>> chunk_token_map;
     std::unordered_map<size_t,int64_t> chunk_sentence_map;
     std::atomic<int64_t> auto_sentence_id{0};
 
     std::vector<Chunk> chunk_tokens(const std::string &sentence);
 
+/*
     // MAP to manage SIDs
     std::unordered_map<size_t, OffsetEntry> label_to_entry;
+*/
 
     size_t dirty_count = 0;
 
@@ -78,7 +77,10 @@ public:
 
     // removal
     void remove(size_t label);
-    void undelete(size_t label);
+    void undelete(size_t label, const OffsetEntry &entry);
+
+    void delete_byAddress(const std::string &name, int64_t address, size_t shard = 0);
+    void undelete_byAddress(const std::string &name, int64_t address, size_t shard = 0);
 
     // accessors used by merge/reconstruct
     size_t label_count() const;               // how many labels were allocated (next_label)
@@ -91,9 +93,11 @@ public:
     void undelete(size_t label);
 #endif
 
+    size_t allocate_label();
+
     std::vector<SearchResult> knn(const std::string & query, size_t k=0);
     std::vector<SearchResult> radius(const std::string & query, float minScore=-1.0f);
-    std::vector<SearchResult> relative(const std::string & query, float alpha=-1.0f);
+    std::vector<SearchResult> relative(const std::string & query, float alpha=-1.0f, size_t maxK= 0);
     std::vector<SearchResult> adaptive(const std::string & query, float alpha=-1.0f,
                                        size_t minN=0, size_t lookahead=0, float gapDelta=-1.0f);
 
@@ -101,7 +105,7 @@ public:
 
     void flush();
     void save();
-    void load();
+//  void load();
 
     size_t size() const { return index ? (size_t) index->cur_element_count : 0; }
 
@@ -116,8 +120,19 @@ public:
     std::string get_text(const SearchResult &r, bool full_sentence=false) const;
 
 private:
-    bool write_offsets(size_t, int64_t, size_t, size_t, int64_t, int64_t) ;
-    bool load_offsets();
+   template<typename FilterFn>
+   std::vector<SearchResult> filter_knn_results(const std::string &query,
+        size_t max_k, FilterFn filter);
+    inline bool is_valid_entry(const OffsetEntry &e) const {
+      return !(e.sid == 0 || e.file_end <= e.file_start);
+    }
+   std::vector<float> encode_text(const std::string& text);
+
+//    bool write_offsets(size_t, int64_t, size_t, size_t, int64_t, int64_t) ;
+//    bool load_offsets();
+    std::unique_ptr<OffsetFile> offsets;
+
+    std::fstream sentences_file;
 };
 
 

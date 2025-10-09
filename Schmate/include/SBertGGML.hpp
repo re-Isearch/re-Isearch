@@ -3,6 +3,8 @@
 #include <vector>
 #include <stdexcept>
 #include <iostream>
+#include "Util.hpp"
+#include "Logger.hpp"
 
 // Forward declaration of bert C API
 extern "C" {
@@ -14,10 +16,13 @@ struct SBertGGML {
     int n_embd = 0;
 
     SBertGGML(const std::string & model_path) {
+#ifdef __APPLE__
+       relax_macos_malloc_zones();
+#endif
         ctx = bert_load_from_file(model_path.c_str());
         if (!ctx) throw std::runtime_error("Failed to load model " + model_path);
         n_embd = bert_n_embd(ctx);
-        std::cerr << "Loaded SBERT GGML model. dim=" << n_embd << std::endl;
+        LOG_INFO_S() << "Loaded SBERT GGML model. dim=" << n_embd;
     }
 
     ~SBertGGML() {
@@ -30,13 +35,9 @@ struct SBertGGML {
         bert_tokenize(ctx, text.c_str(), tokens.data(), &n_tokens, tokens.size());
 
         std::vector<float> emb(n_embd);
+        // 4 = number of threads (can make configurable)
         bert_eval(ctx, 4, tokens.data(), n_tokens, emb.data());
 
-        if (debug) {
-            float norm=0;
-            for (float v : emb) norm += v*v;
-            std::cerr << "[DEBUG] embedding norm=" << sqrt(norm) << std::endl;
-        }
         return emb;
     }
 };

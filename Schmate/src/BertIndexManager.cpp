@@ -6,7 +6,7 @@ BertIndexManager::BertIndexManager(SBertGGML & e, HnswConfig &c)
 : embedder(e), cfg(c)
 {}
 
-ShardedIndex & BertIndexManager::getOrCreate(const std::string & name) {
+ShardedIndex& BertIndexManager::getOrCreate(const std::string & name) {
     auto it = indexes.find(name);
     if (it != indexes.end()) return *it->second;
     // create new
@@ -26,10 +26,27 @@ void BertIndexManager::remove(const std::string & name, size_t label, size_t sha
     getOrCreate(name).remove(label, shard);
 }
 
-void BertIndexManager::undelete(const std::string & name, size_t label, size_t shard) {
-    getOrCreate(name).undelete(label, shard);
+
+void BertIndexManager::undelete(const std::string & name, size_t label, const OffsetEntry &entry, size_t shard =0) {
+    getOrCreate(name).undelete(label, entry, shard);
 }
 
+void BertIndexManager::undelete(const std::string &name, size_t label, size_t shard) {
+    auto &sharded = getOrCreate(name);
+
+    if (shard >= sharded.shard_count()) {
+        throw std::runtime_error("undelete: invalid shard index");
+    }
+
+    // retrieve the OffsetEntry for this label
+    OffsetEntry e = sharded.get_offset_entry(shard, label);
+
+    // pass it down to BertIndex
+    sharded.get_shard(shard).undelete(label, e);
+}
+
+
+/*
 void BertIndexManager::delete_byAddress(const std::string & name, int64_t addr, size_t shard) {
     getOrCreate(name).delete_byAddress(addr, shard);
 }
@@ -37,6 +54,7 @@ void BertIndexManager::delete_byAddress(const std::string & name, int64_t addr, 
 void BertIndexManager::undelete_byAddress(const std::string & name, int64_t addr, size_t shard) {
     getOrCreate(name).undelete_byAddress(addr, shard);
 }
+*/
 
 /*
 Can do 
@@ -103,4 +121,25 @@ std::string BertIndexManager::reconstruct_label(const std::string & name, size_t
     return getOrCreate(name).reconstruct_label(label);
 }
 
+//
+
+void BertIndexManager::delete_byAddress(const std::string &name, int64_t address, size_t shard) {
+    auto &sharded = getOrCreate(name);
+
+    if (shard >= sharded.shard_count()) {
+        throw std::runtime_error("delete_byAddress: invalid shard index");
+    }
+
+    sharded.delete_byAddress(address, shard);
+}
+
+void BertIndexManager::undelete_byAddress(const std::string &name, int64_t address, size_t shard) {
+    auto &sharded = getOrCreate(name);
+
+    if (shard >= sharded.shard_count()) {
+        throw std::runtime_error("undelete_byAddress: invalid shard index");
+    }
+
+    sharded.undelete_byAddress(address, shard);
+}
 

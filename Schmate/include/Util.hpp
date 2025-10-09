@@ -35,4 +35,9 @@ inline bool file_exists(const std::string &p) {
       return std::filesystem::exists(p);
 }
 
-
+#pragma once
+#ifdef __APPLE__
+void relax_macos_malloc_zones();
+#else
+inline void relax_macos_malloc_zones() {}
+#endif

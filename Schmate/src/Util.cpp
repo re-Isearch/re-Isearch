@@ -133,3 +133,32 @@ std::string find_ggml_model(const std::string &filename, const std::string& Path
   return filename; // NOT FOUND
 
 }
+
+
+
+#ifdef __APPLE__
+#include <malloc/malloc.h>
+#include <dlfcn.h>
+#include <iostream>
+
+// Optional safety shim in case we build on older SDKs.
+typedef void (*malloc_zone_pressure_relief_t)(void*, size_t);
+
+void relax_macos_malloc_zones() {
+    // On macOS 11+, malloc_zone_pressure_relief() is available.
+    void* handle = dlopen("/usr/lib/libSystem.dylib", RTLD_NOW);
+    if (!handle) return;
+
+    malloc_zone_pressure_relief_t fn =
+        (malloc_zone_pressure_relief_t)dlsym(handle, "malloc_zone_pressure_relief");
+
+    if (fn) {
+        malloc_zone_t* default_zone = malloc_default_zone();
+        // 0 means "release as much as you can"
+        fn(default_zone, 0);
+        // std::cerr << "[INFO] macOS allocator zones relaxed.\n";
+    }
+    dlclose(handle);
+}
+#endif
+

@@ -24,7 +24,7 @@ public:
     void append(const std::string & sentence, int64_t sentence_id);
 
     void remove(size_t label, size_t shard=0);
-    void undelete(size_t label, size_t shard=0);
+    void undelete(size_t label, const OffsetEntry &entry, size_t shard=0);
 
     void delete_byAddress(int64_t address, size_t shard=0);
     void undelete_byAddress(int64_t address, size_t shard=0);
@@ -46,6 +46,12 @@ public:
 
     void flush();
     bool merge_last_two();
+
+    OffsetEntry get_offset_entry(size_t shard, size_t label);
+private:
+     bool merge_last_two_parallel();
+     void add_shard(size_t i);
+     size_t discover_shards(const std::string &base_name) const;
 };
 
 

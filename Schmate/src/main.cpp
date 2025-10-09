@@ -8,6 +8,8 @@
 #include "SBertGGML.hpp"
 #include "HnswConfig.hpp"
 #include "BertIndexManager.hpp"
+#include "Logger.hpp"
+#include "StderrCapture.hpp"
 
 using namespace std;
 
@@ -77,6 +79,10 @@ int main(int argc, char **argv) {
             else if (m == "cos") cfg.metric = Metric::Cosine;
         }
     }
+
+   if (cfg.debug) Logger::instance().set_level(LogLevel::DEBUG);  // Show everything
+
+   //StderrCapture::instance().start(); // redirect stderr 
 
     try {
         // create embedder first

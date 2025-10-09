@@ -1,43 +1,34 @@
-cmake_minimum_required(VERSION 3.16)
-project(sbert_search)
+cmake_minimum_required(VERSION 3.15)
+project(SBERT_HNSW_Search CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(BERTCPP_DIR "Path to bert.cpp root directory" "../bert.cpp")
+option(HNSWLIB_DIR "Path to hnswlib root directory" "../hnswlib")
+option(GGML_LIB_DIR "Directory containing built libraries (libbert, libggml)" "${BERTCPP_DIR}/build")
 
-option(USE_THREADPOOL "Use cached thread pool for parallel_search" OFF)
-if(USE_THREADPOOL)
-    add_definitions(-DUSE_THREADPOOL)
+include_directories(${BERTCPP_DIR}/include)
+include_directories(${HNSWLIB_DIR})
+
+link_directories(${GGML_LIB_DIR})
+
+add_executable(sbert_search main.cpp)
+
+find_package(Threads REQUIRED)
+target_link_libraries(sbert_search PRIVATE Threads::Threads)
+
+# Link bert + ggml
+target_link_libraries(sbert_search PRIVATE bert ggml)
+
+# macOS Accelerate
+if(APPLE)
+    find_library(ACCELERATE_FRAMEWORK Accelerate)
+    if(ACCELERATE_FRAMEWORK)
+        target_link_libraries(sbert_search PRIVATE ${ACCELERATE_FRAMEWORK})
+    endif()
 endif()
 
-# Find libraries with error checking
-find_library(BERT NAMES bert PATHS ../lib lib)
-find_library(GGML NAMES ggml PATHS ../lib lib)
-
-if(NOT BERT)
-    message(FATAL_ERROR "libbert not found in ../lib or lib/")
-endif()
-if(NOT GGML)
-    message(FATAL_ERROR "libggml not found in ../lib or lib/")
-endif()
-
-# Collect sources (fix path)
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp)
-
-# Main executable
-add_executable(sbert_search ${SOURCES})
-target_include_directories(sbert_search PRIVATE include)
-target_link_libraries(sbert_search PRIVATE ${BERT} ${GGML} "-framework Accelerate")
-
-# Test executable
-add_executable(test_reconstruct 
-    tests/test_reconstruct.cpp
-    src/BertIndex.cpp
-    src/ShardedIndex.cpp
-    src/BertIndexManager.cpp
-    src/Util.cpp
-    src/SBertGGML.cpp)
-target_include_directories(test_reconstruct PRIVATE include)
-target_link_libraries(test_reconstruct PRIVATE ${BERT} ${GGML} "-framework Accelerate")
+set_target_properties(sbert_search PROPERTIES MACOSX_RPATH ON)
 
 

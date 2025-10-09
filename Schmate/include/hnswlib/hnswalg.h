@@ -682,9 +682,18 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         return size;
     }
 
+    // Modifications by edz for Schmate
     void saveIndex(const std::string &location) {
-        std::ofstream output(location, std::ios::binary);
+      std::ofstream output(location, std::ios::binary);
+      saveIndex(output);
+      output.close();
+
+    }
+    // edz: was just saveIndex(location) now stream
+    void saveIndex(std::ofstream &output) {
         std::streampos position;
+
+        if (!output.good()) throw std::runtime_error("saveIndex: invalid output stream");
 
         writeBinaryPOD(output, offsetLevel0_);
         writeBinaryPOD(output, max_elements_);
@@ -709,21 +718,25 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
             if (linkListSize)
                 output.write(linkLists_[i], linkListSize);
         }
-        output.close();
     }
 
 
-    void loadIndex(const std::string &location, SpaceInterface<dist_t> *s, size_t max_elements_i = 0) {
-        std::ifstream input(location, std::ios::binary);
+    // Modified to handle indexes not starting at offset 0!
+    void loadIndex(std::ifstream &input, SpaceInterface<dist_t> *s, size_t max_elements_i = 0) {
 
         if (!input.is_open())
-            throw std::runtime_error("Cannot open file");
+            throw std::runtime_error("Cannot open index");
 
         clear();
-        // get file size:
+        
+        // Store the starting position of the index in the stream
+        std::streampos index_start_pos = input.tellg();
+        
+        // get file size relative to current position:
         input.seekg(0, input.end);
-        std::streampos total_filesize = input.tellg();
-        input.seekg(0, input.beg);
+        std::streampos file_end_pos = input.tellg();
+        std::streampos total_filesize = file_end_pos - index_start_pos;
+        input.seekg(index_start_pos, input.beg);
 
         readBinaryPOD(input, offsetLevel0_);
         readBinaryPOD(input, max_elements_);
@@ -754,7 +767,10 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         /// Optional - check if index is ok:
         input.seekg(cur_element_count * size_data_per_element_, input.cur);
         for (size_t i = 0; i < cur_element_count; i++) {
-            if (input.tellg() < 0 || input.tellg() >= total_filesize) {
+            std::streampos current_pos = input.tellg();
+            std::streampos relative_pos = current_pos - index_start_pos;
+            
+            if (relative_pos < 0 || relative_pos >= total_filesize) {
                 throw std::runtime_error("Index seems to be corrupted or unsupported");
             }
 
@@ -766,7 +782,9 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         }
 
         // throw exception if it either corrupted or old index
-        if (input.tellg() != total_filesize)
+        std::streampos final_pos = input.tellg();
+        std::streampos relative_final_pos = final_pos - index_start_pos;
+        if (relative_final_pos != total_filesize)
             throw std::runtime_error("Index seems to be corrupted or unsupported");
 
         input.clear();
@@ -816,11 +834,17 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
             }
         }
 
-        input.close();
-
         return;
     }
 
+   void loadIndex(const std::string &location, SpaceInterface<dist_t> *s, size_t max_elements_i = 0) {
+       std::ifstream input(location, std::ios::binary);
+       if (!input.is_open()) throw std::runtime_error("Cannot open file");
+       loadIndex(input, s, max_elements_i);
+       input.close();
+    }
+
+   // edz: END MODIFICATIONS
 
     template<typename data_t>
     std::vector<data_t> getDataByLabel(labeltype label) const {

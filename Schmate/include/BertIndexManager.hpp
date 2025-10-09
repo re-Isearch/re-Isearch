@@ -24,7 +24,9 @@ public:
     void append(const std::string & name, const std::string & sentence, int64_t sentence_id);
 
     void remove(const std::string & name, size_t label, size_t shard = 0);
-    void undelete(const std::string & name, size_t label, size_t shard = 0);
+
+    void undelete(const std::string &name, size_t label, size_t shard = 0);
+    void undelete(const std::string & name, size_t label, const OffsetEntry &entry, size_t shard);
 
     void delete_byAddress(const std::string & name, int64_t addr, size_t shard = 0);
     void undelete_byAddress(const std::string & name, int64_t addr, size_t shard = 0);
