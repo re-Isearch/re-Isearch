@@ -1,0 +1,47 @@
+<?xml version="1.0" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="420" viewBox="0 0 900 420">
+<style>
+    .box { fill:#f8f9fb; stroke:#333; stroke-width:1.2px; }
+    .title { font: bold 14px sans-serif; }
+    .text { font: 12px monospace; }
+    .arrow { stroke:#333; stroke-width:1.2px; marker-end: url(#arrowhead); }
+</style>
+<defs>
+  <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+    <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+  </marker>
+</defs>
+
+<!-- Boxes -->
+<rect x="30" y="30" width="220" height="110" rx="6" class="box"/>
+<text x="40" y="50" class="title">SBertGGML</text>
+<text x="40" y="70" class="text">+ encode_text()</text>
+
+<rect x="320" y="30" width="260" height="150" rx="6" class="box"/>
+<text x="330" y="50" class="title">BertIndex</text>
+<text x="330" y="70" class="text">+ append()</text>
+<text x="330" y="90" class="text">+ knn()/radius()/adaptive()</text>
+<text x="330" y="110" class="text">+ flush()/save()/load()</text>
+
+<rect x="630" y="30" width="240" height="110" rx="6" class="box"/>
+<text x="640" y="50" class="title">hnswlib::HierarchicalNSW</text>
+<text x="640" y="70" class="text">+ addPoint()</text>
+<text x="640" y="90" class="text">+ searchKnnCloserFirst()</text>
+
+<rect x="320" y="210" width="260" height="100" rx="6" class="box"/>
+<text x="330" y="230" class="title">OffsetFile</text>
+<text x="330" y="250" class="text">+ get()/set()</text>
+<text x="330" y="270" class="text">+ get_mut()/flush()</text>
+
+<rect x="30" y="210" width="240" height="100" rx="6" class="box"/>
+<text x="40" y="230" class="title">ShardedIndex</text>
+<text x="40" y="250" class="text">+ add_shard()</text>
+<text x="40" y="270" class="text">+ merge_last_two()</text>
+
+<!-- Arrows -->
+<line x1="250" y1="80" x2="320" y2="80" class="arrow" />
+<line x1="580" y1="80" x2="630" y2="80" class="arrow" />
+<line x1="450" y1="190" x2="450" y2="210" class="arrow" />
+<line x1="150" y1="210" x2="320" y2="260" class="arrow" />
+
+</svg>
