@@ -15,6 +15,8 @@ struct HnswConfig {
     size_t ef_search = 50;
     Metric metric = Metric::Cosine;
 
+    size_t bert_n_threads = 4;
+
     // chunking
     int max_tokens_per_chunk = 128;
     float overlap_percent = 0.1f;

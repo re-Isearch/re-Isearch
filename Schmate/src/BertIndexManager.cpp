@@ -2,6 +2,19 @@
 #include "BertIndexManager.hpp"
 #include <stdexcept>
 
+
+
+/* re-Isearch will enter here
+
+  EmbeddingIndexer->append ( DocTypePtr->ParseBuffer(Buffer, FieldName, fc.Start(), fc.End(),type))
+
+NOTE: We write the chunks added to the index to a sentences file. This is for development/debuging.
+When we move to full integration into re-Isearch we'll dump the sentences file BUT maintain the
+start and end offsets. fc.Start() we will use for the SID. The offset file start will be 0 and end
+will be fc.End() - fc.Start() to represent the length;
+
+*/
+
 BertIndexManager::BertIndexManager(SBertGGML & e, HnswConfig &c)
 : embedder(e), cfg(c)
 {}
@@ -67,7 +80,6 @@ for (auto &r : results) {
 
 */
 std::vector<SearchResult> BertIndexManager::knn(const std::string & name, const std::string & query, size_t k) {
-std::cerr << "BertIndexManager::knn(" << name << ", " << query << ")\n";
     return getOrCreate(name).knn(query, k);
 }
 

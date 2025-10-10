@@ -37,10 +37,17 @@ struct SBertGGML {
         bert_tokenize(ctx, text.c_str(), tokens.data(), &n_tokens, tokens.size());
 
         std::vector<float> emb(n_embd);
+#if 1
+        eval(tokens.data(), n_tokens, emb.data());
+#else
         // 4 = number of threads (can make configurable)
         bert_eval(ctx, 4, tokens.data(), n_tokens, emb.data());
+#endif
         return emb;
     }
+
+   void encode( const char * texts, float * embeddings, int batch_size = 1);
+   void eval (bert_vocab_id * tokens, int32_t n_tokens, float * embeddings);
 };
 
 

@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <iomanip>
 #include <string>
 #include <vector>
 #include <cstdlib>
@@ -10,6 +11,11 @@
 #include "BertIndexManager.hpp"
 #include "Logger.hpp"
 #include "StderrCapture.hpp"
+#include "ParseArgs.hpp"
+
+#include <unistd.h>
+bool use_color = isatty(STDOUT_FILENO);
+//if (!use_color) #define NO_COLOR 
 
 using namespace std;
 
@@ -39,6 +45,51 @@ static void print_help() {
     "  help\n"
     "  quit\n";
 }
+
+
+// --- Optional ANSI color macros ---
+#ifndef NO_COLOR
+#define COLOR_RESET   "\033[0m"
+#define COLOR_SCORE   "\033[38;5;39m"   // blue
+#define COLOR_LABEL   "\033[38;5;208m"  // orange
+#define COLOR_TEXT    "\033[38;5;250m"  // gray
+#define COLOR_SID     "\033[38;5;82m"   // green
+#else
+#define COLOR_RESET   ""
+#define COLOR_SCORE   ""
+#define COLOR_LABEL   ""
+#define COLOR_TEXT    ""
+#define COLOR_SID     ""
+#endif
+
+// Unified printResults() for all search modes
+template <typename ResultVec>
+inline void printResults(const ResultVec &results, bool debug = false) {
+    using std::cout;
+    using std::endl;
+
+    if (results.empty()) {
+        cout << "(no results)" << endl;
+        return;
+    }
+
+    for (const auto &r : results) {
+        cout << " - [score=" << COLOR_SCORE << std::fixed << std::setprecision(6)
+             << r.score << COLOR_RESET
+             << ", sid=" << COLOR_SID << r.sentence_id << COLOR_RESET
+             << ", label=" << COLOR_LABEL << r.label << COLOR_RESET
+             << ", tokens=[" << r.token_start << "," << r.token_end << "]] ";
+
+        cout << COLOR_TEXT << r.text << COLOR_RESET << endl;
+
+        if (debug) {
+            cout << "   file=[" << r.file_start << "," << r.file_end << "]";
+            // if (r.address) cout << " addr=" << r.address;
+            cout << endl;
+        }
+    }
+}
+
 
 
 /*
@@ -133,150 +184,66 @@ int main(int argc, char **argv) {
 // -------------------------------
 // KNN search
 // -------------------------------
+
+// ---- KNN ----
 if (line.rfind("knn", 0) == 0) {
-    std::string payload = (line.size() > 3) ? line.substr(4) : "";
-    std::istringstream iss(payload);
-    std::string first;
+    auto parsed = parseCommandArgs(line.substr(4), 1);
     size_t k = cfg.default_k;
-    std::string q;
+    if (!parsed.args.empty()) parseInt(parsed.args[0], k);
+    std::cerr << "[DEBUG] knn k=" << k << " q='" << parsed.query << "'\n";
 
-    if (iss >> first) {
-        if (std::all_of(first.begin(), first.end(), ::isdigit))
-            k = std::stoul(first);
-        else
-            q = first;
-        std::string tail;
-        std::getline(iss, tail);
-        q += tail;
-    }
+    auto res = manager.knn(current, parsed.query, k);
 
-    if (!q.empty() && q[0] == ' ') q.erase(0, 1);
-    std::cerr << "[DEBUG] knn k=" << k << " q='" << q << "'\n";
+    printResults(res, cfg.debug);
 
-    auto res = manager.knn(current, q, k);
-    for (auto &r : res)
-        std::cout << " - [score=" << r.score << ", sid=" << r.sentence_id
-                  << ", label=" << r.label << ", tokens=[" << r.token_start << "," << r.token_end
-                  << "]] " << r.text << "\n";
     continue;
 }
 
-// -------------------------------
-// RADIUS search
-// -------------------------------
+// ---- RADIUS ----
 if (line.rfind("radius", 0) == 0) {
-    std::string payload = (line.size() > 6) ? line.substr(7) : "";
-    std::istringstream iss(payload);
-    std::string first;
+    auto parsed = parseCommandArgs(line.substr(7), 1);
     float minScore = cfg.default_radius;
-    std::string q;
+    if (!parsed.args.empty()) parseFloat(parsed.args[0], minScore);
+    std::cerr << "[DEBUG] radius minScore=" << minScore << " q='" << parsed.query << "'\n";
 
-    if (iss >> first) {
-        char* end;
-        float v = std::strtof(first.c_str(), &end);
-        if (end != first.c_str() && *end == '\0')
-            minScore = v;
-        else
-            q = first;
-        std::string tail;
-        std::getline(iss, tail);
-        q += tail;
-    }
+    auto res = manager.radius(current, parsed.query, minScore);
+    printResults(res, cfg.debug);
 
-    if (!q.empty() && q[0] == ' ') q.erase(0, 1);
-    std::cerr << "[DEBUG] radius minScore=" << minScore << " q='" << q << "'\n";
-
-    auto res = manager.radius(current, q, minScore);
-    for (auto &r : res)
-        std::cout << " - [score=" << r.score << ", sid=" << r.sentence_id
-                  << ", label=" << r.label << ", tokens=[" << r.token_start << "," << r.token_end
-                  << "]] " << r.text << "\n";
     continue;
 }
 
-// -------------------------------
-// RELATIVE search
-// -------------------------------
+// ---- RELATIVE ----
 if (line.rfind("relative", 0) == 0) {
-    std::string payload = (line.size() > 8) ? line.substr(9) : "";
-    std::istringstream iss(payload);
-    std::string first;
+    auto parsed = parseCommandArgs(line.substr(9), 1);
     float alpha = cfg.default_alpha;
-    std::string q;
+    if (!parsed.args.empty()) parseFloat(parsed.args[0], alpha);
+    std::cerr << "[DEBUG] relative alpha=" << alpha << " q='" << parsed.query << "'\n";
 
-    if (iss >> first) {
-        char* end;
-        float v = std::strtof(first.c_str(), &end);
-        if (end != first.c_str() && *end == '\0')
-            alpha = v;
-        else
-            q = first;
-        std::string tail;
-        std::getline(iss, tail);
-        q += tail;
-    }
-
-    if (!q.empty() && q[0] == ' ') q.erase(0, 1);
-    std::cerr << "[DEBUG] relative alpha=" << alpha << " q='" << q << "'\n";
-
-    auto res = manager.relative(current, q, alpha);
-    for (auto &r : res)
-        std::cout << " - [score=" << r.score << ", sid=" << r.sentence_id
-                  << ", label=" << r.label << ", tokens=[" << r.token_start << "," << r.token_end
-                  << "]] " << r.text << "\n";
+    auto res = manager.relative(current, parsed.query, alpha);
+    printResults(res, cfg.debug);
     continue;
 }
 
-// -------------------------------
-// ADAPTIVE search
-// -------------------------------
+// ---- ADAPTIVE ----
 if (line.rfind("adaptive", 0) == 0) {
-    std::string payload = (line.size() > 8) ? line.substr(9) : "";
-    std::istringstream iss(payload);
-    std::string first;
+    auto parsed = parseCommandArgs(line.substr(9), 4);
     float alpha = cfg.default_alpha;
     size_t minN = cfg.default_minN;
     size_t lookahead = cfg.default_lookahead;
     float gapDelta = cfg.default_gapDelta;
-    std::string q;
 
-    // Try reading up to 4 optional numeric params
-    std::vector<std::string> args;
-    std::string tok;
-    while (iss >> tok && args.size() < 4)
-        args.push_back(tok);
-    std::getline(iss, q);
+    if (parsed.args.size() > 0) parseFloat(parsed.args[0], alpha);
+    if (parsed.args.size() > 1) parseInt(parsed.args[1], minN);
+    if (parsed.args.size() > 2) parseInt(parsed.args[2], lookahead);
+    if (parsed.args.size() > 3) parseFloat(parsed.args[3], gapDelta);
 
-    auto parse_float = [](const std::string &s, float &out) {
-        char* end;
-        float v = std::strtof(s.c_str(), &end);
-        if (end != s.c_str() && *end == '\0') { out = v; return true; }
-        return false;
-    };
-    auto parse_int = [](const std::string &s, size_t &out) {
-        char* end;
-        long v = std::strtol(s.c_str(), &end, 10);
-        if (end != s.c_str() && *end == '\0') { out = v; return true; }
-        return false;
-    };
-
-    if (!args.empty()) {
-        parse_float(args[0], alpha);
-        if (args.size() > 1) parse_int(args[1], minN);
-        if (args.size() > 2) parse_int(args[2], lookahead);
-        if (args.size() > 3) parse_float(args[3], gapDelta);
-    }
-
-    if (!q.empty() && q[0] == ' ') q.erase(0, 1);
     std::cerr << "[DEBUG] adaptive alpha=" << alpha
               << " minN=" << minN << " lookahead=" << lookahead
-              << " gapDelta=" << gapDelta << " q='" << q << "'\n";
+              << " gapDelta=" << gapDelta << " q='" << parsed.query << "'\n";
 
-    auto res = manager.adaptive(current, q, alpha, minN, lookahead, gapDelta);
-    for (auto &r : res)
-        std::cout << " - [score=" << r.score << ", sid=" << r.sentence_id
-                  << ", label=" << r.label << ", tokens=[" << r.token_start << "," << r.token_end
-                  << "]] " << r.text << "\n";
+    auto res = manager.adaptive(current, parsed.query, alpha, minN, lookahead, gapDelta);
+    printResults(res, cfg.debug);
+
     continue;
 }
 
