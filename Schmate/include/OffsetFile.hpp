@@ -25,7 +25,6 @@ struct OffsetEntry {
 };
 
 
-
 // include/OffsetFile.hpp
 #pragma once
 #include <string>
@@ -49,8 +48,14 @@ public:
     std::vector<std::pair<size_t, OffsetEntry>> find_by_sid(int64_t sid) const;
 
     OffsetEntry get(size_t label) const;
+    OffsetEntry* get_mut(size_t label) const;
+
+    size_t entry_address(size_t label) const {
+      return header_size + label * entry_size;
+    }
+
     void set(size_t label, const OffsetEntry &entry);
-    void flush();
+    void flush(size_t label = 0);
 
     bool validate_offsets(bool fix = false, bool verbose = true);
 
@@ -62,4 +67,5 @@ private:
     size_t entry_size = sizeof(OffsetEntry);
     size_t max_entries;
 };
+
 

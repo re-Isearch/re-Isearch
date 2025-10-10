@@ -53,6 +53,12 @@ OffsetEntry OffsetFile::get(size_t label) const {
     return *((OffsetEntry*)(base + label * entry_size));
 }
 
+OffsetEntry* OffsetFile::get_mut(size_t label) const {
+    if (label >= max_entries) return nullptr;
+    char *base = (char*)map + header_size;
+    return reinterpret_cast<OffsetEntry*>(base + label * entry_size);
+}
+
 void OffsetFile::set(size_t label, const OffsetEntry &entry) {
     if (label >= max_entries) throw std::out_of_range("OffsetFile::set label OOB");
     char *base = (char*)map + header_size;
@@ -60,11 +66,15 @@ void OffsetFile::set(size_t label, const OffsetEntry &entry) {
     ::msync(base + label * entry_size, entry_size, MS_SYNC);
 }
 
-void OffsetFile::flush() {
+void OffsetFile::flush(size_t label) {
     if (map && map != MAP_FAILED) {
-        ::msync(map, filesize, MS_SYNC);
+      if (label >= max_entries || label == 0)
+        msync(map, filesize, MS_SYNC);
+      else
+        msync((char*)map + entry_address(label), entry_size, MS_SYNC);
     }
 }
+
 
 
 void OffsetFile::for_each(const std::function<void(size_t, const OffsetEntry &)> &fn) const {

@@ -14,8 +14,6 @@
 #include "ParseArgs.hpp"
 
 #include <unistd.h>
-bool use_color = isatty(STDOUT_FILENO);
-//if (!use_color) #define NO_COLOR 
 
 using namespace std;
 
@@ -46,30 +44,31 @@ static void print_help() {
     "  quit\n";
 }
 
-
-// --- Optional ANSI color macros ---
-#ifndef NO_COLOR
-#define COLOR_RESET   "\033[0m"
-#define COLOR_SCORE   "\033[38;5;39m"   // blue
-#define COLOR_LABEL   "\033[38;5;208m"  // orange
-#define COLOR_TEXT    "\033[38;5;250m"  // gray
-#define COLOR_SID     "\033[38;5;82m"   // green
-#else
-#define COLOR_RESET   ""
-#define COLOR_SCORE   ""
-#define COLOR_LABEL   ""
-#define COLOR_TEXT    ""
-#define COLOR_SID     ""
-#endif
-
 // Unified printResults() for all search modes
 template <typename ResultVec>
 inline void printResults(const ResultVec &results, bool debug = false) {
     using std::cout;
     using std::endl;
 
+#ifdef NO_COLOR 
+    bool use_color = false;
+#else
+    bool use_color = isatty(STDOUT_FILENO);
+#endif
+
+// --- Optional ANSI terminal colors  ---
+    static const char *COLOR_RESET = "\033[0m";
+    static const char *COLOR_ERROR = "\033[31;1;4m";
+    static const char *COLOR_SCORE = "\033[38;5;39m";  // blue
+    static const char *COLOR_LABEL = "\033[38;5;208m"; // orange
+    static const char *COLOR_TEXT  = "\033[38;5;250m"; // gray
+    static const char *COLOR_SID   = "\033[38;5;82m";  // green
+
+    if (!use_color)
+        COLOR_RESET = COLOR_ERROR = COLOR_SCORE = COLOR_LABEL = COLOR_TEXT = COLOR_SID = "";
+
     if (results.empty()) {
-        cout << "(no results)" << endl;
+        cout << " - " << COLOR_ERROR <<  "(no results)" << COLOR_RESET << " -" << endl;
         return;
     }
 

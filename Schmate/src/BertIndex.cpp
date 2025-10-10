@@ -541,8 +541,11 @@ void BertIndex::flush() {
  // Only need to flush when we have a diff with the HNSW on disk
   if (dirty_count) {
     save();
+
+    if (offsets) offsets->flush();
+
     sentences_file.flush();
-    // INCLUDE HERE CODE (WHEN IMPLEMENTED) to flush offsets
+
     if (cfg.debug)  LOG_DEBUG_S() <<  "Flushed index + offsets to disk";
   }
 }
@@ -602,12 +605,13 @@ template<typename FilterFn>
 std::vector<SearchResult> BertIndex::filter_knn_results(const std::string &query,
                                                         size_t max_k,
                                                         FilterFn filter) {
+    std::vector<SearchResult> results;
+    if (query.empty ()) return results; // Empty result
 
     // std::cerr << "QUERY=" << query << std::endl;
-    std::vector<float> emb = encode_text(query); // embed(query); // embed(query);
+    std::vector<float> emb = encode_text(query); 
     auto candidates = index->searchKnnCloserFirst(emb.data(), max_k);
 
-    std::vector<SearchResult> results;
     results.reserve(max_k);
 
     for (auto &[dist, label] : candidates) {

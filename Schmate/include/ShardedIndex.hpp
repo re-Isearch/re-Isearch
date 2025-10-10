@@ -45,13 +45,19 @@ public:
     std::string shard_basename(int shard = -1) const;
 
     void flush();
+
+    bool merge(); // Merge all the way
     bool merge_last_two();
 
     OffsetEntry get_offset_entry(size_t shard, size_t label);
 private:
-     bool merge_last_two_parallel();
-     void add_shard(size_t i);
-     size_t discover_shards(const std::string &base_name) const;
+    // merge shard n and shard n-1 into a new shard n-1 and remove n
+    // When this works the number of shards gets decremented.
+    bool merge_two_parallel(size_t n);
+    bool merge_two_serial(size_t n);
+
+    void add_shard(size_t i);
+    size_t discover_shards(const std::string &base_name) const;
 };
 
 

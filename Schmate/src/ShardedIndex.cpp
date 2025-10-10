@@ -278,12 +278,28 @@ static void remove_safe_indexes(const std::string &shard_prefix) {
 #include <future>
 #include <thread>
 
-bool  ShardedIndex::merge_last_two_parallel() {
-    size_t n = shards.size();
+bool ShardedIndex::merge()
+{
+   if (shards.size() < 2) return false;
+    while (shards.size() > 2) {
+      if (merge_last_two()) return false;
+    }
+   return true;
+}
+
+bool ShardedIndex::merge_last_two()
+{
+    const size_t n = shards.size();
     if (n < 2) {
-        LOG_WARN_S() << "merge_last_two: need at least 2 shards.";
+        LOG_WARN_S() << "merge_last_two(): need at least 2 shards to merge.";
         return false;
     }
+  if (cfg.parallel_merge) return merge_two_parallel(n);
+  return merge_two_serial(n);
+}
+
+bool  ShardedIndex::merge_two_parallel(size_t n) {
+    if (n < 2) return false;
 
     size_t first = n - 2;
     size_t second = n - 1;
@@ -362,12 +378,8 @@ bool  ShardedIndex::merge_last_two_parallel() {
 }
 
 
-bool ShardedIndex::merge_last_two() {
-    size_t n = shards.size();
-    if (n < 2) {
-        LOG_WARN_S() << "merge_last_two: need at least 2 shards.";
-        return false;
-    }
+bool ShardedIndex::merge_two_serial(size_t n) {
+    if (n < 2) return false;
 
     // Identify the shards
     size_t first = n - 2;
