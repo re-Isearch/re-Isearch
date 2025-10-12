@@ -23,12 +23,14 @@ static void print_help() {
     "  use <name>\n"
     "  append <sentence>\n"
     "  appendid <sid> <sentence>\n"
+    "  search <query>\n"
     "  knn [k] <query>\n"
 //    "  pknn [k] <query>\n"
     "  radius [minScore] <query>\n"
 //    "  pradius [minScore] <query>\n"
     "  relative [alpha] <query>\n"
     "  adaptive [alpha] [minN] [lookahead] [gapDelta] <query>\n"
+    "  epsilon [radius]\n"
     "  delete <label> [shard]\n"
     "  undelete <label> [shard]\n"
     "  delete_addr <address> [shard]\n"
@@ -181,8 +183,15 @@ int main(int argc, char **argv) {
 
 
 // -------------------------------
-// KNN search
+// search
 // -------------------------------
+
+if (line.rfind("search ", 0) == 0) {
+   string txt = line.substr(7);
+   auto res = manager.search(current, txt);
+   printResults(res, cfg.debug);
+   continue;
+}
 
 // ---- KNN ----
 if (line.rfind("knn", 0) == 0) {
@@ -241,6 +250,19 @@ if (line.rfind("adaptive", 0) == 0) {
               << " gapDelta=" << gapDelta << " q='" << parsed.query << "'\n";
 
     auto res = manager.adaptive(current, parsed.query, alpha, minN, lookahead, gapDelta);
+    printResults(res, cfg.debug);
+
+    continue;
+}
+
+// epsilon [value] <query>
+if (line.rfind("epsilon", 0) == 0) {
+    auto parsed = parseCommandArgs(line.substr(8), 1);
+    float epsilon = 0.0f;
+    if (!parsed.args.empty()) parseFloat(parsed.args[0], epsilon);
+//    std::cerr << "[DEBUG] epsilon epsilon=" << epsilon << " q='" << parsed.query << "'\n";
+
+    auto res = manager.epsilon_search(current, parsed.query, epsilon);
     printResults(res, cfg.debug);
 
     continue;

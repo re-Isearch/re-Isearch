@@ -35,6 +35,9 @@ OffsetFile::OffsetFile(const std::string &path, size_t max_entries)
 	  LOG_ERROR_S() << "Offset File magic \"" << buffer << "\"!=\"" << magic << "\"";
     }
 
+    if (ftruncate(fd, filesize) == -1)
+       throw std::runtime_error("Failed to extend OffsetFile");
+
     map = ::mmap(nullptr, filesize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (map == MAP_FAILED) throw std::runtime_error("OffsetFile: mmap failed");
 }

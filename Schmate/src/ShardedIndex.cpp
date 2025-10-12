@@ -212,6 +212,10 @@ vector<SearchResult> parallel_search(vector<unique_ptr<BertIndex>> &shards, Fn f
 #endif
 
 // search variants
+
+vector<SearchResult> ShardedIndex::search(const string & query) {
+    return parallel_search(shards, [&](BertIndex &sh){return sh.search(query);});
+}
 vector<SearchResult> ShardedIndex::knn(const string & query, size_t k) {
     return parallel_search(shards, [&](BertIndex &sh){return sh.knn(query,k);});
 }
@@ -226,6 +230,10 @@ vector<SearchResult> ShardedIndex::adaptive(const string & query,
                                             size_t lookahead, float gapDelta) {
     return parallel_search(shards, [&](BertIndex &sh){return sh.adaptive(query,alpha,minN,lookahead,gapDelta);});
 }
+vector<SearchResult> ShardedIndex::epsilon_search(const string & query, float epsilon) {
+    return parallel_search(shards, [&](BertIndex &sh){return sh.epsilon_search(query, epsilon);});
+} 
+
 
 string ShardedIndex::reconstruct_sid(int64_t sid) {
     for (auto &sh : shards) {

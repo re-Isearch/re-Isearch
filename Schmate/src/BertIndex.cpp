@@ -2,20 +2,94 @@
 #include "Util.hpp"
 #include "OffsetFile.hpp"
 #include "Logger.hpp"
+#include "StringUtils.hpp"
 
 #include <sstream>
 
 using namespace std;
 
-#define HNSW_META 1
+// If you are using a standard distribution of HNSWlib you must set this to 0
+// as it ONLY WORKS with our modified code. We added the possibility to save
+// and load the graphs to a stream.
+#define HNSW_META 1 /* THIS USES OUR MODIFIED HNSWlib !! */
 
-BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n)
-: embedder(emb), cfg(c), name(n) {
+
+// Check if valid query
+// ============================================================================
+/*
+ * Edge cases handled:
+ *    - Empty strings
+ *    - Whitespace-only (ASCII and some Unicode)
+ *    - Punctuation-only
+ *    - Mixed ASCII + UTF-8
+ *    - Emoji and special characters
+ *    - Invalid UTF-8 sequences (graceful degradation)
+ */
+inline bool is_valid_query(const std::string& query) {
+    // Empty check
+    if (query.empty()) return false;
+    
+    // Whitespace-only check
+    if (is_empty_or_whitespace_utf8(query)) return false;
+    
+    // Has meaningful content (works with UTF-8)
+    if (!has_printable_content(query)) return false;
+    
+    return true;
+}
+
+
+// ---------------------------------------------------------------------------
+// Convert raw HNSW distance to a normalized score in [0,1]
+// Handles cosine, L2, and inner product safely.
+// Automatically clamps and guards against NaN/inf values.
+// ---------------------------------------------------------------------------
+float BertIndex::score_from_dist(float dist) const {
+    // Safety first: guard against invalid or extreme distances
+    if (!std::isfinite(dist)) return 0.0f;
+    if (dist < -1e6f || dist > 1e6f) return 0.0f;
+
+    switch (cfg.metric) {
+        case Metric::L2:
+            // For L2 distance: smaller = closer. Map inversely.
+            // This keeps results in (0,1] for any reasonable range.
+            return 1.0f / (1.0f + dist);
+
+        case Metric::Cosine:
+            // For cosine: distance = 1 - cosine_similarity
+            // → similarity = 1 - distance
+            // Clamp to [0,1] to avoid minor numeric drift.
+	    // return (std::clamp(1.0f - dist, 0.0f, 1.0f) + 1.0f)/2.0f;
+	    return (2.0f - dist)/2.0f;
+
+        case Metric::InnerProduct:
+            // Inner product: higher = closer. HNSWlib may return negatives
+            // if embeddings aren't normalized. Clamp to [-1,1].
+            return std::clamp(dist, -1.0f, 1.0f);
+
+        default:
+            // Unknown metric
+            return 0.0f;
+    }
+}
+
+
+inline std::unique_ptr<hnswlib::SpaceInterface<float>> AllocateSpace(Metric metric, size_t dim)
+{
+    switch (metric) {
+       case Metric::L2:           return make_unique<hnswlib::L2Space>(dim);
+       case Metric::InnerProduct: return make_unique<hnswlib::InnerProductSpace>(dim);
+       case Metric::Cosine:       return make_unique<hnswlib::InnerProductSpace>(dim);
+    }
+    throw std::runtime_error("Allocate space unknow metric!");
+}
+
+BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n) : embedder(emb), cfg(c), name(n)
+{
     sentences_path = name + IndexExtensions::sentences;
     offsets_path   = name + IndexExtensions::offsets;
     index_path     = name + IndexExtensions::hnsw;
 
-#if 1
     // In BertIndex constructor
    if ( file_exists(index_path) ) {
 #if HNSW_META
@@ -50,22 +124,13 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n)
        meta.normalized = want_norm;
     }
 
-    switch (cfg.metric) {
-       case Metric::L2:           space = make_unique<hnswlib::L2Space>(embedder.n_embd); break;
-       case Metric::InnerProduct: space = make_unique<hnswlib::InnerProductSpace>(embedder.n_embd); break;
-       case Metric::Cosine:       space = make_unique<hnswlib::InnerProductSpace>(embedder.n_embd); break;
-    }
+    space = AllocateSpace(cfg.metric, embedder.n_embd);
 
     index = std::make_unique<hnswlib::HierarchicalNSW<float>>(space.get(), cfg.max_elements);
     index->loadIndex(ifs, space.get()); // proper stream-based load
     ifs.close();
 #else
-
-    switch (cfg.metric) {
-       case Metric::L2:           space = make_unique<hnswlib::L2Space>(embedder.n_embd); break;
-       case Metric::InnerProduct: space = make_unique<hnswlib::InnerProductSpace>(embedder.n_embd); break;
-       case Metric::Cosine:       space = make_unique<hnswlib::InnerProductSpace>(embedder.n_embd); break;
-    }
+    space = AllocateSpace(cfg.metric, embedder.n_embd);
     index = std::make_unique<hnswlib::HierarchicalNSW<float>>(
             space.get(), index_path, 0    // <-- note: pass space.get()
                 );   
@@ -73,12 +138,9 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n)
       if (cfg.debug) LOG_DEBUG_S() << "Loaded existing index: " << index_path;
       next_label = index->cur_element_count;
    } else {
-     // Did not have an existing index
-      switch (cfg.metric) {
-       case Metric::L2:           space = make_unique<hnswlib::L2Space>(embedder.n_embd); break;
-       case Metric::InnerProduct: space = make_unique<hnswlib::InnerProductSpace>(embedder.n_embd); break;
-       case Metric::Cosine:       space = make_unique<hnswlib::InnerProductSpace>(embedder.n_embd); break;
-      }
+      // Did not have an existing index
+
+      space = AllocateSpace(cfg.metric, embedder.n_embd);
       // create new index if not found
        index = std::make_unique<hnswlib::HierarchicalNSW<float>>(
         space.get(), cfg.max_elements, cfg.M, cfg.ef_construction);
@@ -88,22 +150,6 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n)
     sentences_file.open(sentences_path, ios::in|ios::out|ios::binary | ios::app);
     if (!sentences_file) throw runtime_error("Failed to open sentences file: " + sentences_path);
 
-#else // OLD CODE
-
-    if (file_exists(index_path)) {
-      index = std::make_unique<hnswlib::HierarchicalNSW<float>>(space.get(), index_path);
-      if (cfg.debug)  LOG_DEBUG_S() << "Loaded existing index " << index_path;
-    } else {
-      switch (cfg.metric) {
-        case Metric::L2:           space = make_unique<hnswlib::L2Space>(embedder.n_embd); break;
-        case Metric::InnerProduct: space = make_unique<hnswlib::InnerProductSpace>(embedder.n_embd); break;
-        case Metric::Cosine:       space = make_unique<hnswlib::InnerProductSpace>(embedder.n_embd); break;
-      }
-
-      index = make_unique<hnswlib::HierarchicalNSW<float>>(
-        space.get(), cfg.max_elements, cfg.M, cfg.ef_construction);
-    }
-#endif
 
   // Try to load offsets if they exist
   // was    load_offsets();
@@ -112,10 +158,11 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n)
   if (cfg.debug && !offsets->validate_offsets(/*fix=*/true))
      LOG_WARN_S() << "Offset file contained invalid entries; they were reset.";
 
+#if 0
    if (cfg.debug) offsets->for_each([](size_t lbl, const OffsetEntry &e){
     LOG_DEBUG_S() << "label=" << lbl << " sid=" << e.sid
               << " file=[" << e.file_start << "," << e.file_end << "]"; });
-
+#endif
 }
 
 
@@ -129,8 +176,6 @@ BertIndex::~BertIndex() {
 
 
 // --- chunking ---
-#if 1
-
 std::vector<Chunk> BertIndex::chunk_tokens(const std::string &sentence) {
     std::vector<Chunk> chunks;
 
@@ -168,50 +213,12 @@ std::vector<Chunk> BertIndex::chunk_tokens(const std::string &sentence) {
 }
 
 
-
-#else
-static vector<Chunk> chunk_tokens(const string & sentence,
-                                  int max_tokens=128,
-                                  float overlap=0.1f) {
-    // naive tokenizer: split on spaces
-    vector<string> tokens;
-    string cur;
-    for (char c : sentence) {
-        if (isspace((unsigned char)c)) {
-            if (!cur.empty()) { tokens.push_back(cur); cur.clear(); }
-        } else cur.push_back(c);
-    }
-    if (!cur.empty()) tokens.push_back(cur);
-
-    int step = max_tokens - int(overlap * max_tokens);
-    vector<Chunk> chunks;
-    for (size_t i=0;i<tokens.size();i+=step) {
-        size_t end = min(tokens.size(), i+max_tokens);
-        string text;
-        for (size_t j=i;j<end;j++) {
-            if (!text.empty()) text.push_back(' ');
-            text += tokens[j];
-        }
-        chunks.push_back({text, (int)i, (int)end});
-    }
-    return chunks;
-}
-#endif
-
 /// 
 
 #if 1
 
-#include "BertIndex.hpp"
-using namespace std;
-
-// --- existing constructor / helpers left unchanged ---
-
 // Append (auto generate sentence_id) -> returns label
 
-
-
-// BUG: TODO: Fix the auto_sentence_id to start somewhere 
 size_t BertIndex::append(const string & sentence) {
    if (auto_sentence_id == 0) {
      // compute max SID
@@ -228,6 +235,7 @@ size_t BertIndex::append(const string & sentence) {
 std::vector<float> BertIndex::encode_text(const std::string& text)
 {
    // std::cerr << "BertIndex::encode_text(" << text << ")\n";
+   if (text.empty()) return {}; // Empty text 
 
    auto emb = embedder.encode_text(text, cfg.debug);
    // ---------------------------------------------------------------------
@@ -238,7 +246,7 @@ std::vector<float> BertIndex::encode_text(const std::string& text)
         for (float v : emb) norm += v * v;
         norm = std::sqrt(norm);
         if (norm > 0.f) for (float &v : emb) v /= norm;
-        if (cfg.debug) LOG_DEBUG_S() << "embedding normalized (cosine)";
+//        if (cfg.debug) LOG_DEBUG_S() << "embedding normalized (cosine)";
     } else if (cfg.debug) {
         float norm = 0.f;
         for (float v : emb) norm += v * v;
@@ -289,7 +297,13 @@ size_t BertIndex::append(const std::string &sentence, int64_t sentence_id) {
                        chunk.end_token,
                        file_start,
                        file_end };
-        offsets->set(label, e);
+        offsets->set(label, e); // In-memory only: Writes into mmap region directly
+
+        // Incremental durability (the offset file is always consistent on disk)
+        // while deferring heavy I/O (HNSW saves) until necessary.
+
+        if (cfg.flush_offsets_each)
+	   offsets->flush(label); // Syncs only 16 bytes (1 entry) 
 
         if (cfg.debug) {
              LOG_DEBUG_S() << "append label=" << label
@@ -305,6 +319,7 @@ size_t BertIndex::append(const std::string &sentence, int64_t sentence_id) {
 
     dirty_count++;
     if (dirty_count >= cfg.flush_threshold) {
+        // dirty_count  Triggers index flush: Used to throttle HNSW saves
         flush();
     }
 
@@ -542,15 +557,19 @@ void BertIndex::flush() {
   if (dirty_count) {
     save();
 
-    if (offsets) offsets->flush();
+    // Flush offsets ONLY if not already sync'd 
+    if (!cfg.flush_offsets_each && offsets)
+      offsets->flush(); // msync during add
 
     sentences_file.flush();
 
-    if (cfg.debug)  LOG_DEBUG_S() <<  "Flushed index + offsets to disk";
+    if (cfg.debug)  LOG_DEBUG_S() <<  "Flushed index + sentences to disk";
   }
 }
 
 void BertIndex::save() {
+
+// Rewrites entire index: normally done in batches after X inserts
 #if HNSW_META
    std::ofstream ofs(index_path, std::ios::binary | std::ios::trunc);
    if (!ofs) throw std::runtime_error("Cannot open " + index_path + " for writing");
@@ -589,29 +608,18 @@ void BertIndex::load() {
 
 /// Search Methods
 
-#if 1 /* NEW VERSION using Offsets */
-
-
-/*
-for (auto &[dist, label] : topk) {
-    float score = dist;
-    if (cfg.metric == "cosine" || cfg.metric == "ip" || cfg.metric == "inner_product")
-        score = 1.0f - dist;  // convert from distance back to similarity
-    ...
-}
-*/
-
 template<typename FilterFn>
 std::vector<SearchResult> BertIndex::filter_knn_results(const std::string &query,
                                                         size_t max_k,
                                                         FilterFn filter) {
-    std::vector<SearchResult> results;
-    if (query.empty ()) return results; // Empty result
+    if (index->cur_element_count == 0 || !is_valid_query(query))
+        return {}; // Nothing to do 
 
     // std::cerr << "QUERY=" << query << std::endl;
     std::vector<float> emb = encode_text(query); 
     auto candidates = index->searchKnnCloserFirst(emb.data(), max_k);
 
+    std::vector<SearchResult> results;
     results.reserve(max_k);
 
     for (auto &[dist, label] : candidates) {
@@ -663,82 +671,25 @@ std::vector<SearchResult> BertIndex::filter_knn_results(const std::string &query
 }
 
 
+std::vector<SearchResult> BertIndex::search(const std::string &query) {
+  switch(cfg.default_search_mode) {
+	case SearchModes::Knn:      return knn(query);
+        case SearchModes::Radius:   return radius(query);
+        case SearchModes::Relative: return relative(query);
+        case SearchModes::Adaptive: return adaptive(query);
+        case SearchModes::Epsilon:  return epsilon_search(query);
+  }
+  LOG_ERROR_S() << "Unknown default search mode for BertIndex::search()";
+  return {};
+}
+
 
 std::vector<SearchResult> BertIndex::knn(const std::string &query, size_t k) {
     if (k <= 0) k = cfg.default_k;
     return filter_knn_results(query, k, [](float) { return true; });
 }
 
-/*
-std::vector<SearchResult> BertIndex::knn(const std::string &query, size_t k) {
-    std::vector<float> emb = encode_text(query); // embed(query);
 
-    // Depending on your HNSWlib, this returns a std::vector
-    auto topk = index->searchKnnCloserFirst(emb.data(), k);
-
-    std::vector<SearchResult> results;
-    results.reserve(k);
-
-    for (auto &[score, label] : topk) {
-        OffsetEntry e = offsets->get(label);
-
-        if (!is_valid_entry(e)) continue;
-
-        SearchResult r;
-        r.score      = score;
-        r.label      = label;
-        r.sentence_id= e.sid;
-        r.token_start= e.start_tok;
-        r.token_end  = e.end_tok;
-        r.file_start = e.file_start;
-        r.file_end   = e.file_end;
-        r.text       = get_text_by_label(label);
-
-        if (!r.text.empty()) {
-            results.push_back(std::move(r));
-        }
-    }
-
-// TODO: rework sort
-    std::sort(results.begin(), results.end(),
-              [](const SearchResult &a, const SearchResult &b) {
-                  return a.score < b.score; // HNSWlib returns smaller distance = better
-              });
-
-    return results;
-}
-*/
-
-#else
-
-vector<SearchResult> BertIndex::knn(const string & query, size_t k) {
-    if (k<=0) k = cfg.default_k;
-    auto emb = encode_text(query);
-
-    auto result = index->searchKnn(emb.data(), k);
-    vector<SearchResult> out;
-    while (!result.empty()) {
-        auto pr = result.top(); result.pop();
-        size_t label = pr.second;
-        float score = (cfg.metric==Metric::Cosine) ? 1.0f - pr.first : -pr.first;
-
-        ifstream sfs(sentences_path, ios::binary);
-        fstream ofs(offsets_path, ios::in|ios::binary);
-        ofs.seekg(label*16);
-        int64_t s=read_int64(ofs), e=read_int64(ofs);
-        string text(e-s, '\0');
-        sfs.seekg(s); sfs.read(&text[0], e-s);
-
-        auto ts=chunk_token_map[label].first;
-        auto te=chunk_token_map[label].second;
-        auto sid=chunk_sentence_map[label];
-
-        out.push_back({score,s,e,label,ts,te,sid,text});
-    }
-
-    return out;
-}
-#endif
 
 // radius, relative, adaptive are similar; stubbed for brevity
 
@@ -748,13 +699,6 @@ std::vector<SearchResult> BertIndex::radius(const std::string &query, float r) {
         return score <= r;
     });
 }
-
-/*
-vector<SearchResult> BertIndex::radius(const string & query, float minScore) {
-    if (minScore<0) minScore = cfg.default_radius;
-    return knn(query, cfg.default_k*cfg.knn_lookahead_scale); // filter later
-}
-*/
 
 
 std::vector<SearchResult> BertIndex::relative(const std::string &query, float alpha, size_t max_k) {
@@ -773,13 +717,6 @@ std::vector<SearchResult> BertIndex::relative(const std::string &query, float al
         return score <= threshold;
     });
 }
-
-/*
-vector<SearchResult> BertIndex::relative(const string & query, float alpha) {
-    if (alpha<0) alpha = cfg.default_alpha;
-    return knn(query, cfg.default_k*cfg.knn_lookahead_scale);
-}
-*/
 
 
 std::vector<SearchResult> BertIndex::adaptive(const std::string &query,
@@ -818,20 +755,88 @@ std::vector<SearchResult> BertIndex::adaptive(const std::string &query,
 }
 
 
-/*
+std::vector<SearchResult> BertIndex::epsilon_search(const std::string &query, float epsilon) {
+    size_t cur_count = index->cur_element_count;
+    if (cur_count == 0 || !is_valid_query(query) )
+        return {}; // Empty index or invalid query
 
+    size_t min_candidates = std::min(cfg.min_candidates, cur_count);
+    size_t max_candidates = cfg.max_candidates_cap > 0
+                        ? std::min(cfg.max_candidates_cap, cur_count)
+                        : cur_count;
 
-vector<SearchResult> BertIndex::adaptive(const string & query, float alpha,
-                                         size_t minN, size_t lookahead, float gapDelta) {
-    if (alpha<0) alpha=cfg.default_alpha;
-    if (minN==0) minN=cfg.default_minN;
-    if (lookahead==0) lookahead=cfg.default_lookahead;
-    if (gapDelta<0) gapDelta=cfg.default_gapDelta;
-    return knn(query, minN+lookahead);
+    if (epsilon <= 0.0f) {
+       switch (cfg.metric) {
+	case Metric::L2: epsilon = cfg.default_epsilonL2; break;
+        case Metric::InnerProduct:
+	case Metric::Cosine:
+	  epsilon = cfg.default_epsilonIP; break;
+       }
+       if (epsilon <= 0.0f && (epsilon = cfg.default_epsilon) <= 0.0f )
+          epsilon = cfg.default_radius;
+    }
+ 
+    if (cfg.metric == Metric::L2) epsilon = epsilon * epsilon; 
+    // if (cfg.metric == Metric::InnerProduct || cfg.metric == Metric::Cosine)  epsilon = -epsilon;
+
+    if (max_candidates == min_candidates && max_candidates > 3) min_candidates = max_candidates - 2;
+
+#if 0
+    if (cfg.debug) LOG_DEBUG_S() << "BEFORE SEARCH: query=" << query << " min_candidates=" << min_candidates
+              << " max_candidates=" << max_candidates
+              << " epsilon=" << epsilon;
+#endif
+
+    std::vector<float> emb = encode_text(query);
+
+    // Create a stop condition
+    hnswlib::EpsilonSearchStopCondition<float> stop_condition( epsilon, min_candidates, max_candidates);
+    auto candidates = index->searchStopConditionClosest(emb.data(), stop_condition);
+
+#if 0
+    LOG_DEBUG_S() << "=== RAW candidates from searchStopConditionClosest ===";
+    LOG_DEBUG_S() << "Returned " << candidates.size() << " candidates";
+    for (size_t i = 0; i < candidates.size(); i++) {
+        LOG_DEBUG_S() << "  [" << i << "] dist=" << candidates[i].first 
+                  << " label=" << candidates[i].second;
+    }
+#endif
+
+    std::vector<SearchResult> results;
+    results.reserve(candidates.size());
+
+    for (auto &[dist, label] : candidates) {
+
+        if (cfg.debug) LOG_DEBUG_S() << "dist=" << dist << " epsilon = " << epsilon
+		  << " metric=" << static_cast<int>(cfg.metric)
+                  << " score(before clamp)=" << (1.0f - dist);
+
+        if (cfg.metric == Metric::L2) dist = sqrt(dist);
+        float score = score_from_dist(dist);
+        
+        OffsetEntry e = offsets->get(label);
+        if (!is_valid_entry(e)) continue;
+        
+        if (cfg.debug) LOG_DEBUG_S() << "label=" << label << " sid=" << e.sid
+              << " score=" << score << " file=[" << e.file_start << "," << e.file_end << "]";
+        SearchResult r;
+        r.score      = score;
+        r.label      = label;
+        r.sentence_id= e.sid;
+        r.token_start= e.start_tok;
+        r.token_end  = e.end_tok;
+        r.file_start = e.file_start;
+        r.file_end   = e.file_end;
+        r.text       = get_text_by_label(label);
+
+        if (!r.text.empty()) results.push_back(std::move(r));
+    }
+    std::sort(results.begin(), results.end(),
+              [](auto &a, auto &b) { return a.score > b.score; });
+
+    return results;
 }
 
-
-*/
 
 ///
 // Reconstruct sentence

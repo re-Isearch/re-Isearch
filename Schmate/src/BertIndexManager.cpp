@@ -79,6 +79,11 @@ for (auto &r : results) {
 }
 
 */
+
+std::vector<SearchResult> BertIndexManager::search(const std::string & name, const std::string & query) {
+    return getOrCreate(name).search(query);
+}
+
 std::vector<SearchResult> BertIndexManager::knn(const std::string & name, const std::string & query, size_t k) {
     return getOrCreate(name).knn(query, k);
 }
@@ -107,6 +112,11 @@ std::vector<SearchResult> BertIndexManager::adaptive(const std::string & name, c
                                                     float alpha, size_t minN, size_t lookahead, float gapDelta) {
     return getOrCreate(name).adaptive(query, alpha, minN, lookahead, gapDelta);
 }
+
+std::vector<SearchResult> BertIndexManager::epsilon_search(const std::string &name, const std::string &query, float epsilon) {
+    return getOrCreate(name).epsilon_search(query, epsilon);
+}
+
 
 void BertIndexManager::merge(const std::string & name) {
     getOrCreate(name).merge_last_two();
