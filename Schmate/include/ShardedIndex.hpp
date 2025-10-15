@@ -14,7 +14,7 @@ class ShardedIndex {
     mutable std::mutex mtx;
 
 public:
-    ShardedIndex(SBertGGML & emb, HnswConfig & c, const std::string & name);
+    ShardedIndex(SBertGGML & emb, HnswConfig & c, const std::string & name, bool searchOnly = false);
 
     BertIndex & current_shard();
     BertIndex & get_shard(size_t i);
@@ -29,12 +29,15 @@ public:
     void delete_byAddress(int64_t address, size_t shard=0);
     void undelete_byAddress(int64_t address, size_t shard=0);
 
+    std::vector<SearchResult> search(const std::string & query); // Use config
+
     std::vector<SearchResult> knn(const std::string & query, size_t k=0);
     std::vector<SearchResult> radius(const std::string & query, float minScore=-1.0f);
     std::vector<SearchResult> relative(const std::string & query, float alpha=-1.0f);
     std::vector<SearchResult> adaptive(const std::string & query,
                                        float alpha=-1.0f, size_t minN=0,
                                        size_t lookahead=0, float gapDelta=-1.0f);
+    std::vector<SearchResult> epsilon_search(const std::string & query, float epsilon=-1.0f);
 
     std::string reconstruct_sid(int64_t sid);
 
@@ -56,7 +59,7 @@ private:
     bool merge_two_parallel(size_t n);
     bool merge_two_serial(size_t n);
 
-    void add_shard(size_t i);
+    void add_shard(size_t i, bool searchOnly = false);
     size_t discover_shards(const std::string &base_name) const;
 };
 

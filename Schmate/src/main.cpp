@@ -140,7 +140,13 @@ int main(int argc, char **argv) {
         // create embedder first
         SBertGGML embedder(model);
         // manager uses references to embedder? our manager takes embedder ref in constructor earlier.
+#if USE_LRUCACHE
+        size_t cache_size = determine_optimal_hnsw_cache_size(cfg);
+	if (cfg.debug) LOG_DEBUG_S() << "Optimal Index Cache Size: " << cache_size;
+        BertIndexManager manager(embedder, cfg, cache_size);
+#else
         BertIndexManager manager(embedder, cfg);
+#endif
 
         string current = "default";
         manager.getOrCreate(current);

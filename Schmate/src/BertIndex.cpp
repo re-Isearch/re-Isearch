@@ -74,6 +74,44 @@ float BertIndex::score_from_dist(float dist) const {
 }
 
 
+// Peek at the index file to get element count
+inline std::pair<size_t, size_t> peek_index_elements(std::istream& ifs) {
+    // Save current position
+    std::streampos original_pos = ifs.tellg();
+
+    // HNSWlib saves these values at the start of the file (in order):
+    size_t offset;
+    size_t max_elements;
+    size_t cur_element_count;
+    size_t size_data_per_element;
+    size_t label_offset;
+    size_t offsetLevel0;
+    size_t max_level;
+    size_t enterpoint_node;
+    size_t maxM;
+    size_t maxM0;
+    size_t M;
+    size_t mult;
+    size_t ef_construction;
+
+    // Read the header
+    ifs.read((char*)&offset, sizeof(size_t));
+    ifs.read((char*)&max_elements, sizeof(size_t));
+    ifs.read((char*)&cur_element_count, sizeof(size_t));
+    ifs.read((char*)&size_data_per_element, sizeof(size_t));
+
+    /* std::cout << "MAX elements = " << max_elements << " count=" << cur_element_count << 
+	" data_per_element=" << size_data_per_element << std::endl; */
+
+    // Restore position
+    ifs.seekg(original_pos);
+
+    return {cur_element_count,max_elements};
+}
+
+
+
+
 inline std::unique_ptr<hnswlib::SpaceInterface<float>> AllocateSpace(Metric metric, size_t dim)
 {
     switch (metric) {
@@ -84,8 +122,9 @@ inline std::unique_ptr<hnswlib::SpaceInterface<float>> AllocateSpace(Metric metr
     throw std::runtime_error("Allocate space unknow metric!");
 }
 
-BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n) : embedder(emb), cfg(c), name(n)
+BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool searchOnly) : embedder(emb), cfg(c), name(n)
 {
+    size_t max_elements = cfg.max_elements;
     sentences_path = name + IndexExtensions::sentences;
     offsets_path   = name + IndexExtensions::offsets;
     index_path     = name + IndexExtensions::hnsw;
@@ -99,11 +138,21 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n) : embedd
     IndexMeta meta;
     meta.load(ifs);
 
+    auto [expected_count, max_from_file] = peek_index_elements(ifs);
+
+
+    // Use the max from file (it already includes the saved max_elements)
+    max_elements = searchOnly ? max_from_file : std::max(max_from_file, cfg.max_elements);
+
+#if 0
     if (cfg.debug)
         LOG_DEBUG_S() << "Loaded index meta v." << meta.version << ": metric=" << (int)meta.metric
                       << " normalized=" << meta.normalized
                       << " dim=" << meta.dim
-                      << " count=" << meta.count;
+                      << " count=" << meta.count << " index_count=" << expected_count
+		      << " max from file=" << max_from_file;
+#endif
+
 
     // Validate metric, dim, normalization
     if (meta.dim != embedder.n_embd) {
@@ -126,9 +175,18 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n) : embedd
 
     space = AllocateSpace(cfg.metric, embedder.n_embd);
 
-    index = std::make_unique<hnswlib::HierarchicalNSW<float>>(space.get(), cfg.max_elements);
+    index = std::make_unique<hnswlib::HierarchicalNSW<float>>(space.get(), max_elements);
     index->loadIndex(ifs, space.get()); // proper stream-based load
     ifs.close();
+
+    if (cfg.debug) {
+        // Number of elements currently in the index:  index->cur_element_count
+        // Maximum capacity: index->max_elements_
+
+        LOG_DEBUG_S() << "Index contains " << index->cur_element_count << " / " <<  index->max_elements_ << " elements";
+        LOG_DEBUG_S() << "Fill ratio: " << (100.0 * index->cur_element_count /  index->max_elements_)
+		<< (searchOnly ? "%" : "% searchOnly Mode");
+    }
 #else
     space = AllocateSpace(cfg.metric, embedder.n_embd);
     index = std::make_unique<hnswlib::HierarchicalNSW<float>>(
@@ -136,15 +194,20 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n) : embedd
                 );   
 #endif
       if (cfg.debug) LOG_DEBUG_S() << "Loaded existing index: " << index_path;
-      next_label = index->cur_element_count;
+      next_label = index->cur_element_count; // Number of elements in the existing HNSW index
+      max_elements = next_label + 1;
    } else {
       // Did not have an existing index
+      // if searchOnly we could return here.. But for now we'll assume otherwise
+      if (searchOnly)
+	LOG_ERROR_S() <<
+	"BertIndex SearchOnly specified for a non-existant index: \"" << name << "\"?!";
 
       space = AllocateSpace(cfg.metric, embedder.n_embd);
       // create new index if not found
        index = std::make_unique<hnswlib::HierarchicalNSW<float>>(
-        space.get(), cfg.max_elements, cfg.M, cfg.ef_construction);
-       if (cfg.debug)  LOG_DEBUG_S() << "Created new index with capacity=" << cfg.max_elements;
+        space.get(), max_elements, cfg.M, cfg.ef_construction);
+       if (cfg.debug)  LOG_DEBUG_S() << "Created new index with capacity=" << max_elements;
     }
 
     sentences_file.open(sentences_path, ios::in|ios::out|ios::binary | ios::app);
@@ -153,7 +216,7 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n) : embedd
 
   // Try to load offsets if they exist
   // was    load_offsets();
-  offsets = std::make_unique<OffsetFile>(offsets_path, cfg.max_elements);
+  offsets = std::make_unique<OffsetFile>(offsets_path, max_elements);
 
   if (cfg.debug && !offsets->validate_offsets(/*fix=*/true))
      LOG_WARN_S() << "Offset file contained invalid entries; they were reset.";
@@ -297,6 +360,7 @@ size_t BertIndex::append(const std::string &sentence, int64_t sentence_id) {
                        chunk.end_token,
                        file_start,
                        file_end };
+std::cout << "Set label " << label << "\n";
         offsets->set(label, e); // In-memory only: Writes into mmap region directly
 
         // Incremental durability (the offset file is always consistent on disk)

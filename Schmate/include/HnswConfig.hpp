@@ -8,7 +8,17 @@ enum class Metric {
     Cosine
 };
 
+enum class SearchModes {
+    Knn,
+    Radius,
+    Relative,
+    Adaptive,
+    Epsilon
+};
+
 struct HnswConfig {
+    SearchModes default_search_mode = SearchModes::Knn;
+
     size_t max_elements = 100000;
     size_t M = 16;
     size_t ef_construction = 200;
@@ -32,11 +42,21 @@ struct HnswConfig {
     size_t default_lookahead = 10; // adaptive: lookahead window
     float default_gapDelta = 0.1f; // adaptive: gap threshold
 
+    // Epsilon search
+    float default_epsilon   = 0.15f; // epsilon, if < 0 then use radius
+    float default_epsilonL2 = 1.41;  // Distance threshold, this is then ^2
+    float default_epsilonIP = 0.5;  // 
+
+    size_t min_candidates = 10;    // Min candidates for epsilon
+    size_t max_candidates_cap = 0; // 0 = auto
+
     // performance tuning
     size_t knn_lookahead_scale = 5;
     int    flush_threshold = 100; // Save index every, -1 only on explicit flush or exit.
+    bool   flush_offsets_each = false;
 
-     //
+
+    //
     bool parallel_merge = true;
     unsigned merge_threads = 0; // 0 = auto
     //

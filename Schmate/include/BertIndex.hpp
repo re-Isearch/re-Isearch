@@ -58,15 +58,10 @@ friend class ShardedIndex;
 
     std::vector<Chunk> chunk_tokens(const std::string &sentence);
 
-/*
-    // MAP to manage SIDs
-    std::unordered_map<size_t, OffsetEntry> label_to_entry;
-*/
-
     size_t dirty_count = 0;
 
 public:
-    BertIndex(SBertGGML & emb, HnswConfig & c, const std::string & n);
+    BertIndex(SBertGGML & emb, HnswConfig & c, const std::string & n, bool searchOnly = false);
     ~BertIndex();
 
 #if 1
@@ -95,11 +90,15 @@ public:
 
     size_t allocate_label();
 
+    std::vector<SearchResult> search(const std::string & query); // Use config
+
     std::vector<SearchResult> knn(const std::string & query, size_t k=0);
     std::vector<SearchResult> radius(const std::string & query, float minScore=-1.0f);
     std::vector<SearchResult> relative(const std::string & query, float alpha=-1.0f, size_t maxK= 0);
     std::vector<SearchResult> adaptive(const std::string & query, float alpha=-1.0f,
                                        size_t minN=0, size_t lookahead=0, float gapDelta=-1.0f);
+    std::vector<SearchResult> epsilon_search(const std::string &query, float epsilon=-1.0f);
+
 
     std::string reconstruct_sentence(int64_t sentence_id) const;
 
@@ -128,11 +127,8 @@ private:
     }
    std::vector<float> encode_text(const std::string& text);
 
-   // convert raw hnsw distance to a score (simple)
-   float score_from_dist(float dist) const {
-        if (cfg.metric == Metric::L2) return 1.0f/(1.0f + dist);
-        return 1.0f - dist;
-   }
+   // convert raw hnsw distance to a score 
+   float score_from_dist(float dist) const;
 
 //    bool write_offsets(size_t, int64_t, size_t, size_t, int64_t, int64_t) ;
 //    bool load_offsets();

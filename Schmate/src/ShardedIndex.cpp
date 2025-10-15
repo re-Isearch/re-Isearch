@@ -27,31 +27,36 @@ std::string ShardedIndex::shard_basename(int shard) const
 size_t ShardedIndex::discover_shards(const std::string &base_name) const {
     size_t count = 0;
     while (true) {
-	// For now we look at the sentences file, later the offset
-	if (!file_exists(shard_basename(count) + ".txt" )) break;
+	// We look at the HNSW index file and offset file
+	if (!file_exists(shard_basename(count) + IndexExtensions::hnsw ) ||
+		!file_exists(shard_basename(count) + IndexExtensions::offsets )) break;
         count++;
     }
     return count;
 }
 
-void ShardedIndex::add_shard(size_t id) {
-    auto shard = make_unique<BertIndex>(embedder, cfg, shard_basename(id)) ;
+void ShardedIndex::add_shard(size_t id, bool searchOnly) {
+    auto shard = make_unique<BertIndex>(embedder, cfg, shard_basename(id), searchOnly) ;
     shards.emplace_back(std::move(shard));
 }
 
 // Creator
-ShardedIndex::ShardedIndex(SBertGGML & emb, HnswConfig & c, const string & name)
+ShardedIndex::ShardedIndex(SBertGGML & emb, HnswConfig & c, const string & name, bool searchOnly)
 : embedder(emb), cfg(c), base_name(name) {
 #if 1
     size_t found = discover_shards(base_name);
     if (found == 0) {
+        if (searchOnly) {
+	   LOG_ERROR_S() << "No Shards in \"" << name << "\". SearchOnly was set to true!";
+	   return;
+        }
         // No shards exist yet, create one
         add_shard(0);
         if (cfg.debug) LOG_INFO_S() << "Created initial shard: 0";
     } else {
         if (cfg.debug) LOG_INFO_S() << "Found " << found << " existing shards";
         for (size_t i = 0; i < found; ++i) {
-            add_shard(i);
+            add_shard(i, searchOnly);
         }
     }
 #else
@@ -249,11 +254,6 @@ string ShardedIndex::reconstruct_label(size_t label) {
         if (!s.empty()) return s;
     }   
     return "";
-}
-
-
-void ShardedIndex::flush() {
-    for (auto &sh : shards) sh->flush();
 }
 
 
@@ -603,5 +603,12 @@ void ShardedIndex::undelete_byAddress(int64_t address, size_t shard) {
             index.undelete(label, e);
         }
     });
+}
+
+void ShardedIndex::flush() {
+//     std::lock_guard<std::mutex> lock(mu);
+    for (auto &sh : shards) sh->flush();
+    if (cfg.debug)
+        LOG_DEBUG_S() << "Flushed all shards for index '" << base_name << "'";
 }
 

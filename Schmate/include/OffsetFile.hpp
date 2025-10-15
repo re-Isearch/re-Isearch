@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string>
 #include <functional>
+#include <shared_mutex>
+#include <mutex>
 
 
 
@@ -41,6 +43,8 @@ public:
     OffsetFile(const std::string &path, size_t max_entries);
     ~OffsetFile();
 
+    void resize(size_t new_capacity);
+
     // iterate through all valid entries
     void for_each(const std::function<void(size_t label, const OffsetEntry &)> &fn) const;
 
@@ -51,6 +55,7 @@ public:
     OffsetEntry* get_mut(size_t label) const;
 
     size_t entry_address(size_t label) const {
+      std::shared_lock<std::shared_mutex> rl(rwmutex);
       return header_size + label * entry_size;
     }
 
@@ -60,12 +65,23 @@ public:
     bool validate_offsets(bool fix = false, bool verbose = true);
 
 private:
+    size_t detect_used_entries() const;
+    size_t capacity(size_t length = 0) const {
+      if (length == 0) length = filesize;
+      return (length - header_size)/entry_size;
+    }
+    size_t maplen(size_t entries = 0) const {
+      if (entries == 0) entries = max_entries;
+      return header_size + entries * entry_size;
+    }
     int fd = -1;
     void *map = nullptr;
     size_t filesize = 0;
     size_t header_size = 16; // magic + entry_size
     size_t entry_size = sizeof(OffsetEntry);
     size_t max_entries;
+    size_t used_entries;     // number actually used
+    mutable std::shared_mutex rwmutex; // readers/writers lock
 };
 
 

@@ -15,23 +15,62 @@ will be fc.End() - fc.Start() to represent the length;
 
 */
 
-BertIndexManager::BertIndexManager(SBertGGML & e, HnswConfig &c)
-: embedder(e), cfg(c)
+#if USE_LRUCACHE
+
+/*
+| Feature             | Description                                                                                              |
+| ------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Thread Safety**   | Uses a single mutex. For high contention, could later use `std::shared_mutex` with fine-grained locking. |
+| **Eviction Policy** | Least Recently Used (oldest not accessed).                                                               |
+| **Eviction Action** | Calls `on_evict` callback to flush and release memory.                                                   |
+| **Value Type**      | Uses `shared_ptr<ShardedIndex>` to allow easy sharing across functions without double-loading.           |
+| **Performance**     | O(1) for both get and put operations.                                                                    |
+| **Extensible**      | Could later add stats (hits, misses, evictions).                                                         |
+
+*/
+
+BertIndexManager::BertIndexManager(SBertGGML & e, HnswConfig & c, size_t max_cached, bool s) : embedder(e), cfg(c),
+      searchOnly (s), index_cache(max_cached, [](const std::string &key, std::shared_ptr<ShardedIndex> idx) {
+          if (idx) {
+              LOG_INFO_S() << "Evicting index: " << key;
+              idx->flush();  // flush all shards before eviction
+          }
+      })
+{}
+
+
+ShardedIndex & BertIndexManager::getOrCreate(const std::string &name)
+{
+    auto idx = index_cache.get(name);
+    if (!idx) {
+        auto new_index = std::make_shared<ShardedIndex>(embedder, cfg, name, searchOnly);
+        index_cache.put(name, new_index);
+        return *new_index;
+    }
+    return *idx;
+}
+
+
+#else /* NOT LRU_CACHE */
+BertIndexManager::BertIndexManager(SBertGGML & e, HnswConfig &c) : embedder(e), cfg(c)
 {}
 
 ShardedIndex& BertIndexManager::getOrCreate(const std::string & name) {
     auto it = indexes.find(name);
     if (it != indexes.end()) return *it->second;
     // create new
-    indexes[name] = std::make_unique<ShardedIndex>(embedder, cfg, name);
+    indexes[name] = std::make_unique<ShardedIndex>(embedder, cfg, name, searchOnly);
     return *indexes[name];
 }
+#endif // LRU_CACHE
 
 void BertIndexManager::append(const std::string & name, const std::string & sentence) {
+    if (searchOnly) LOG_ERROR_S() << "BertIndexManager::append(" << name << ") called with searchOnly true (1)";
     getOrCreate(name).append(sentence);
 }
 
 void BertIndexManager::append(const std::string & name, const std::string & sentence, int64_t sentence_id) {
+    if (searchOnly) LOG_ERROR_S() << "BertIndexManager::append(" << name << ") called with searchOnly true (2)";
     getOrCreate(name).append(sentence, sentence_id);
 }
 
@@ -125,6 +164,15 @@ void BertIndexManager::merge(const std::string & name) {
 void BertIndexManager::flush(const std::string & name) {
     getOrCreate(name).flush();
 }
+
+#if USE_LRUCACHE
+void BertIndexManager::flush_all() {
+    index_cache.for_each([](auto &name, auto &idx) {
+        idx->flush();
+    });
+}
+#endif
+
 
 size_t BertIndexManager::shard_count(const std::string & name) {
     return getOrCreate(name).shard_count();

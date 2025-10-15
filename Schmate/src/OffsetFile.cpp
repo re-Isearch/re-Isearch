@@ -23,18 +23,23 @@ OffsetFile::OffsetFile(const std::string &path, size_t max_entries)
     struct stat st;
     if (fstat(fd, &st) < 0) throw std::runtime_error("OffsetFile: fstat failed");
 
-    if ((size_t)st.st_size < filesize) {
+    const off_t length = st.st_size;
+
+    if (length > filesize) {
+      max_entries = capacity(length);
+      filesize = header_size + max_entries * entry_size;
+    }
+    if (length < header_size) {
         // new file, write header + resize
         ::pwrite(fd, magic, 8, 0);
         ::pwrite(fd, &entry_size, sizeof(entry_size), 8);
-        if (ftruncate(fd, filesize) < 0) throw std::runtime_error("OffsetFile: ftruncate failed");
     } else {
+	// Have a header.. read and check magic
         char buffer[8];
         ::pread(fd, buffer, 8, 0);
         if (memcmp(buffer, magic, 8) != 0)
 	  LOG_ERROR_S() << "Offset File magic \"" << buffer << "\"!=\"" << magic << "\"";
     }
-
     if (ftruncate(fd, filesize) == -1)
        throw std::runtime_error("Failed to extend OffsetFile");
 
@@ -43,30 +48,78 @@ OffsetFile::OffsetFile(const std::string &path, size_t max_entries)
 }
 
 OffsetFile::~OffsetFile() {
+#if 1
+    size_t shrink_to    = detect_used_entries() ;
+    size_t new_filesize = maplen(shrink_to);
+
+    flush(0); // Sync
+    // Unmap before truncating
+    munmap(map, filesize);
+
+    if (filesize > new_filesize) {
+      // Shrink physical file
+      ftruncate(fd, new_filesize);
+      LOG_INFO_S() << "[OffsetFile] shrunk from " << max_entries << " to "
+	<< shrink_to << " entries (saved " << (filesize-new_filesize) << " bytes)";
+      filesize = new_filesize;
+    }
+#else
     if (map && map != MAP_FAILED) {
         ::msync(map, filesize, MS_SYNC);
         ::munmap(map, filesize);
     }
+#endif
     if (fd >= 0) ::close(fd);
 }
 
+
+void OffsetFile::resize(size_t new_capacity) {
+std::cerr << "RESIZE\n";
+    if (new_capacity <= capacity()) return;
+
+    // Unmap current region
+    if (map) munmap(map, filesize);
+
+    // Recompute sizes
+    max_entries = new_capacity;
+    filesize = maplen(max_entries);
+
+    if (ftruncate(fd, filesize) != 0)
+        throw std::runtime_error("Failed to resize offset file");
+    // Remap
+    map = (char *)mmap(nullptr, filesize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (map == MAP_FAILED) {
+        throw std::runtime_error("Failed to mmap after resize");
+    }
+    LOG_INFO_S() << "[OffsetFile] resized to " << max_entries << " entries";
+}
+
+
 OffsetEntry OffsetFile::get(size_t label) const {
+    std::shared_lock<std::shared_mutex> rl(rwmutex);
+    if (!map) throw std::runtime_error("OffsetFile not opened");
     if (label >= max_entries) throw std::out_of_range("OffsetFile::get label OOB");
     char *base = (char*)map + header_size;
     return *((OffsetEntry*)(base + label * entry_size));
 }
 
 OffsetEntry* OffsetFile::get_mut(size_t label) const {
+    if (!map) throw std::runtime_error("OffsetFile not opened");
     if (label >= max_entries) return nullptr;
     char *base = (char*)map + header_size;
     return reinterpret_cast<OffsetEntry*>(base + label * entry_size);
 }
 
 void OffsetFile::set(size_t label, const OffsetEntry &entry) {
-    if (label >= max_entries) throw std::out_of_range("OffsetFile::set label OOB");
+    // Fast path: check capacity under shared lock
+    std::shared_lock<std::shared_mutex> rl(rwmutex);
+std::cout << "LABEL = " << label << std::endl;
+std::cout << "MAX_ENTRIES = " << max_entries << std::endl;
+    if (label > max_entries) 
+      resize(label*3/2 + 100);
+
     char *base = (char*)map + header_size;
     memcpy(base + label * entry_size, &entry, entry_size);
-    ::msync(base + label * entry_size, entry_size, MS_SYNC);
 }
 
 void OffsetFile::flush(size_t label) {
@@ -81,6 +134,7 @@ void OffsetFile::flush(size_t label) {
 
 
 void OffsetFile::for_each(const std::function<void(size_t, const OffsetEntry &)> &fn) const {
+    std::shared_lock<std::shared_mutex> rl(rwmutex);
     const char *base = (const char*)map + header_size;
     for (size_t i = 0; i < max_entries; i++) {
         const OffsetEntry *e = reinterpret_cast<const OffsetEntry*>(base + i * entry_size);
@@ -150,3 +204,17 @@ bool OffsetFile::validate_offsets(bool fix, bool verbose) {
     return bad_count == 0;
 }
 
+
+
+// detect used entries without locking (caller must hold lock or accept race)
+size_t OffsetFile::detect_used_entries() const
+{
+    if (!map) return 0;
+
+    const char *base = (const char*)map + header_size; 
+    const OffsetEntry *entries = reinterpret_cast<const OffsetEntry *>(base);
+    for (size_t i = capacity(); i > 0; --i) {
+       if (entries[i - 1].sid != 0) return i;
+    }
+    return 0;
+}
