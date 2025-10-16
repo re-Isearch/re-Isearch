@@ -74,7 +74,7 @@ OffsetFile::~OffsetFile() {
 
 
 void OffsetFile::resize(size_t new_capacity) {
-std::cerr << "RESIZE\n";
+    // std::cerr << "RESIZE\n";
     if (new_capacity <= capacity()) return;
 
     // Unmap current region
@@ -113,8 +113,8 @@ OffsetEntry* OffsetFile::get_mut(size_t label) const {
 void OffsetFile::set(size_t label, const OffsetEntry &entry) {
     // Fast path: check capacity under shared lock
     std::shared_lock<std::shared_mutex> rl(rwmutex);
-std::cout << "LABEL = " << label << std::endl;
-std::cout << "MAX_ENTRIES = " << max_entries << std::endl;
+    // std::cout << "LABEL = " << label << std::endl;
+    // std::cout << "MAX_ENTRIES = " << max_entries << std::endl;
     if (label > max_entries) 
       resize(label*3/2 + 100);
 

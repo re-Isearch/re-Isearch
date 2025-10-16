@@ -118,6 +118,7 @@ inline std::unique_ptr<hnswlib::SpaceInterface<float>> AllocateSpace(Metric metr
        case Metric::L2:           return make_unique<hnswlib::L2Space>(dim);
        case Metric::InnerProduct: return make_unique<hnswlib::InnerProductSpace>(dim);
        case Metric::Cosine:       return make_unique<hnswlib::InnerProductSpace>(dim);
+       default: break;
     }
     throw std::runtime_error("Allocate space unknow metric!");
 }
@@ -360,7 +361,7 @@ size_t BertIndex::append(const std::string &sentence, int64_t sentence_id) {
                        chunk.end_token,
                        file_start,
                        file_end };
-std::cout << "Set label " << label << "\n";
+	// std::cout << "Set label " << label << "\n";
         offsets->set(label, e); // In-memory only: Writes into mmap region directly
 
         // Incremental durability (the offset file is always consistent on disk)
@@ -727,6 +728,7 @@ std::vector<SearchResult> BertIndex::filter_knn_results(const std::string &query
                   return a.score > b.score;
 		case Metric::L2:
                   return a.score < b.score;
+		default: break;
 	      }
 	      return false; // Not defined case???
           });
@@ -835,6 +837,8 @@ std::vector<SearchResult> BertIndex::epsilon_search(const std::string &query, fl
         case Metric::InnerProduct:
 	case Metric::Cosine:
 	  epsilon = cfg.default_epsilonIP; break;
+	case Metric::Undefined:
+	  epsilon = 0.0f;
        }
        if (epsilon <= 0.0f && (epsilon = cfg.default_epsilon) <= 0.0f )
           epsilon = cfg.default_radius;

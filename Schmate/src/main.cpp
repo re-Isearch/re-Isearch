@@ -8,6 +8,7 @@
 
 #include "SBertGGML.hpp"
 #include "HnswConfig.hpp"
+#include "ConfigBuilder.hpp"
 #include "BertIndexManager.hpp"
 #include "Logger.hpp"
 #include "StderrCapture.hpp"
@@ -41,6 +42,7 @@ static void print_help() {
     "  reconstruct_label <label>\n"
     "  reconstruct_sid <sid>\n"
     "  set <key> <value>\n"
+    "  list keys\n"
     "  show config\n"
     "  help\n"
     "  quit\n";
@@ -120,17 +122,25 @@ int main(int argc, char **argv) {
         return 1;
     }
     string model = find_ggml_model(argv[1], "../lib:../bin:lib/:.");;
-    HnswConfig cfg;
+
+    bool debug = false;
+    Metric metric = Metric::Undefined;
+
     for (int i = 2; i < argc; ++i) {
         string a = argv[i];
-        if (a == "--debug") cfg.debug = true;
+        if (a == "--debug") debug = true;
         if (a == "--metric" && i+1 < argc) {
             string m = argv[++i];
-            if (m == "l2") cfg.metric = Metric::L2;
-            else if (m == "ip") cfg.metric = Metric::InnerProduct;
-            else if (m == "cos") cfg.metric = Metric::Cosine;
+            if (m == "l2") metric = Metric::L2;
+            else if (m == "ip") metric = Metric::InnerProduct;
+            else if (m == "cos") metric = Metric::Cosine;
         }
     }
+
+    ConfigLoader loader;
+    HnswConfig cfg = loader.load(debug);
+    if (metric != Metric::Undefined) cfg.metric = metric;
+  
 
    if (cfg.debug) Logger::instance().set_level(LogLevel::DEBUG);  // Show everything
 
@@ -354,23 +364,25 @@ if (line.rfind("epsilon", 0) == 0) {
             if (line.rfind("set ",0)==0) {
                 istringstream iss(line.substr(4));
                 string key; iss>>key;
-                if (key=="default_k") { size_t v; iss>>v; cfg.default_k=v; cout<<"Set default_k="<<cfg.default_k<<"\n"; }
-                else if (key=="default_radius") { float v; iss>>v; cfg.default_radius=v; cout<<"Set default_radius="<<cfg.default_radius<<"\n"; }
-                else if (key=="default_alpha") { float v; iss>>v; cfg.default_alpha=v; cout<<"Set default_alpha="<<cfg.default_alpha<<"\n"; }
-                else if (key=="default_minN") { size_t v; iss>>v; cfg.default_minN=v; cout<<"Set default_minN="<<cfg.default_minN<<"\n"; }
-                else if (key=="default_lookahead") { size_t v; iss>>v; cfg.default_lookahead=v; cout<<"Set default_lookahead="<<cfg.default_lookahead<<"\n"; }
-                else if (key=="default_gapDelta") { float v; iss>>v; cfg.default_gapDelta=v; cout<<"Set default_gapDelta="<<cfg.default_gapDelta<<"\n"; }
-                else if (key=="debug") { string v; iss>>v; cfg.debug = (v=="1" || v=="true"); cout<<"Set debug="<<cfg.debug<<"\n"; }
-                else cout << "Unknown key\n";
-                continue;
-            }
-
+		string value; iss >> value;
+		if (cfg.set(key, value))
+		    std::cout << key << "=" << value << std::endl;
+		if (!cfg.validate()) 
+		    std::cout << "Invalid value set" << std::endl;
+		continue;
+	    }
+		
             if (line == "show config") {
-                cout << "default_k="<<cfg.default_k<<" default_radius="<<cfg.default_radius<<" default_alpha="<<cfg.default_alpha
-                     <<" default_minN="<<cfg.default_minN<<" default_lookahead="<<cfg.default_lookahead<<" default_gapDelta="<<cfg.default_gapDelta
-                     <<" debug="<<cfg.debug<<"\n";
+		cfg.print();
                 continue;
             }
+	    if (line == "list keys") {
+	        auto keys = cfg.get_all_keys();
+		for (string i: keys)
+		    std::cout << "\"" <<  i << "\" ";
+		std::cout << std::endl;
+                continue;
+            }   
 
             cout << "Unknown command. Type 'help'\n";
         }
