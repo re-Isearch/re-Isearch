@@ -4,6 +4,19 @@
 #include <fstream>
 #include <iostream>
 
+
+struct IndexFileExtensions {
+  static constexpr const char* sentences= ".txt"; // Text of strings for debugging
+  static constexpr const char* offsets  = ".obn"; // Offset file
+  static constexpr const char* hnsw     = ".hix"; // HNSW index including Meta
+  static constexpr const char* tuner    = ".eft"; // Ef search-time paramter learning
+  static constexpr const char* eps      = ".eps"; // Epsilon learning
+  static constexpr const char* hyparam  = ".hyp"; // Hyperparameters
+  static constexpr const char* lock     = ".lock"; // Lock, 0 length = unlocked
+
+} ;
+
+
 enum class Metric {
     L2,
     InnerProduct,
@@ -25,7 +38,15 @@ struct HnswConfig {
     size_t max_elements = 100000;
     size_t M = 16;
     size_t ef_construction = 200;
-    size_t ef_search = 50;
+
+/*   ef_search Rule of Thumb:
+    | Index Size | ef_search |
+    | ---------- | --------- |
+    | < 10 K     | 64–100    |
+    | 10 K–100 K | 100–200   |
+    | 100 K–1 M  | 200–400   |
+    | > 1 M      | 300–800+  | */
+    size_t ef_search = 64;
     Metric metric = Metric::Cosine;
 
     size_t bert_n_threads = 4;
@@ -64,6 +85,10 @@ struct HnswConfig {
     unsigned merge_threads = 0; // 0 = auto
     //
     bool normalized_embeddings = false;
+
+    // Dynamic auto-tuning
+    bool auto_tune_ef = true;
+    bool auto_tune_eps = true;
 
     // Validation
     bool validate() const;
@@ -139,7 +164,8 @@ struct HnswConfig {
             "default_epsilon", "default_epsilonL2", "default_epsilonIP",
             "min_candidates", "max_candidates_cap", "knn_lookahead_scale",
             "flush_threshold", "flush_offsets_each", "parallel_merge",
-            "merge_threads", "normalized_embeddings", "default_search_mode"
+            "merge_threads", "normalized_embeddings", "default_search_mode",
+            "auto_tune_ef", "auto_tune_eps"
         };
     }
 

@@ -50,7 +50,7 @@ OffsetFile::OffsetFile(const std::string &path, size_t max_entries)
 OffsetFile::~OffsetFile() {
 #if 1
     size_t shrink_to    = detect_used_entries() ;
-    size_t new_filesize = maplen(shrink_to);
+    size_t new_filesize = maplen(shrink_to + 1);
 
     flush(0); // Sync
     // Unmap before truncating

@@ -1,6 +1,7 @@
 
 #pragma once
 #include "BertIndex.hpp"
+#include "EfSearchTuner.hpp"
 #include <map>
 #include <memory>
 #include <mutex>
@@ -11,6 +12,8 @@ class ShardedIndex {
     std::string base_name;
 
     std::vector<std::unique_ptr<BertIndex>> shards;
+    std::vector<std::unique_ptr<EfSearchTuner>> shard_tuners;
+
     mutable std::mutex mtx;
 
 public:
@@ -54,6 +57,10 @@ public:
 
     OffsetEntry get_offset_entry(size_t shard, size_t label);
 private:
+
+template <typename Fn>
+    std::vector<SearchResult> parallel_search(std::vector<std::unique_ptr<BertIndex>> &shards, Fn fn);
+
     // merge shard n and shard n-1 into a new shard n-1 and remove n
     // When this works the number of shards gets decremented.
     bool merge_two_parallel(size_t n);

@@ -16,31 +16,10 @@
         if (ef_construction < M * 2) {
             LOG_WARN_S() << "ef_construction should be >= 2*M for good quality";
         }
-
-/*
-
-| Use Case                           | ef_search | Description                                               |
-| ---------------------------------- | --------- | --------------------------------------------------------- |
-| 🔹 **Speed-critical (real-time)**  | `16–64`   | Fast, but may miss some near neighbors.                   |
-| 🔹 **Balanced (default)**          | `100–200` | Common sweet spot (used by FAISS, sentence-transformers). |
-| 🔹 **High recall / offline batch** | `300–800` | High accuracy, slower query.                              |
-| 🔹 **Max recall / evaluation**     | `1000+`   | Nearly exact results, but 10× slower.                     |
-
-*/
         if (ef_search == 0) {
             LOG_ERROR_S() << "ef_search must be > 0";
             return false;
         }
-/*
-Rule of Thumb:
-| Index Size | ef_search |
-| ---------- | --------- |
-| < 10 K     | 64–100    |
-| 10 K–100 K | 100–200   |
-| 100 K–1 M  | 200–400   |
-| > 1 M      | 300–800+  |
-
-*/
 	if (ef_search > 900) {
 	    if (ef_search < 1500)
 	      LOG_WARN_S() << "ef_search " << ef_search << " is at least 10x slower than 300-800";
@@ -108,9 +87,49 @@ Rule of Thumb:
         // Version marker
         uint32_t version = 1;
         os.write((char*)&version, sizeof(version));
-        
         // Write all fields
+#if 1 
+        // Write each field individually (portable)
+        auto write_value = [&os](const auto& val) {
+            os.write((char*)&val, sizeof(val));
+        };
+        
+        write_value(default_search_mode);
+        write_value(max_elements);
+        write_value(M);
+        write_value(ef_construction);
+        write_value(ef_search);
+        write_value(metric);
+        write_value(bert_n_threads);
+        write_value(max_tokens_per_chunk);
+        write_value(overlap_percent);
+        write_value(debug);
+        write_value(default_k);
+        write_value(default_radius);
+        write_value(default_alpha);
+        write_value(default_minN);
+        write_value(default_lookahead);
+        write_value(default_gapDelta);
+        write_value(default_epsilon);
+        write_value(default_epsilonL2);
+        write_value(default_epsilonIP);
+        write_value(min_candidates);
+        write_value(max_candidates_cap);
+        write_value(knn_lookahead_scale);
+        write_value(flush_threshold);
+        write_value(flush_offsets_each);
+        write_value(parallel_merge);
+        write_value(merge_threads);
+        write_value(normalized_embeddings);
+
+        write_value(auto_tune_ef);
+        write_value(auto_tune_eps);
+
+#else // Less portable
+        // This is UNSAFE - writes raw struct including padding and pointers
+        // Different compilers/architectures have different layouts
         os.write((char*)this, sizeof(HnswConfig));
+#endif
     }
 
     void HnswConfig::load(std::istream& is) {
@@ -121,9 +140,47 @@ Rule of Thumb:
         if (version != 1) {
             throw std::runtime_error("Unsupported config version");
         }
+#if 1 
+// Read each field individually
+        auto read_value = [&is](auto& val) {
+            is.read((char*)&val, sizeof(val));
+        };
         
+        read_value(default_search_mode);
+        read_value(max_elements);
+        read_value(M);
+        read_value(ef_construction);
+        read_value(ef_search);
+        read_value(metric);
+        read_value(bert_n_threads);
+        read_value(max_tokens_per_chunk);
+        read_value(overlap_percent);
+        read_value(debug);
+        read_value(default_k);
+        read_value(default_radius);
+        read_value(default_alpha);
+        read_value(default_minN);
+        read_value(default_lookahead);
+        read_value(default_gapDelta);
+        read_value(default_epsilon);
+        read_value(default_epsilonL2);
+        read_value(default_epsilonIP);
+        read_value(min_candidates);
+        read_value(max_candidates_cap);
+        read_value(knn_lookahead_scale);
+        read_value(flush_threshold);
+        read_value(flush_offsets_each);
+        read_value(parallel_merge);
+        read_value(merge_threads);
+        read_value(normalized_embeddings);
+
+        read_value(auto_tune_ef);
+        read_value(auto_tune_eps);
+
+#else
         // Read all fields
         is.read((char*)this, sizeof(HnswConfig));
+#endif
         
         if (!validate()) {
             throw std::runtime_error("Loaded invalid configuration");
@@ -199,6 +256,9 @@ Rule of Thumb:
         OVERRIDE_IF_DIFFERENT(parallel_merge);
         OVERRIDE_IF_DIFFERENT(merge_threads);
         OVERRIDE_IF_DIFFERENT(normalized_embeddings);
+
+        OVERRIDE_IF_DIFFERENT(auto_tune_ef);
+        OVERRIDE_IF_DIFFERENT(auto_tune_eps);
         
         #undef OVERRIDE_IF_DIFFERENT
     }
@@ -243,6 +303,10 @@ Rule of Thumb:
         os << "  flush_offsets_each: " << (flush_offsets_each ? "yes" : "no") << "\n";
         os << "  parallel_merge: " << (parallel_merge ? "yes" : "no") << "\n";
         os << "  merge_threads: " << get_merge_threads() << "\n";
+
+        os << "\nTuning:\n";
+        os << "  auto_tune_ef: " << auto_tune_ef << "\n";
+        os << "  auto_tune_eps: " << auto_tune_eps << "\n"; 
         
         os << "\nDebug: " << (debug ? "enabled" : "disabled") << "\n";
    }
@@ -284,6 +348,9 @@ Rule of Thumb:
             if (key == "flush_offsets_each") { flush_offsets_each = parse_bool(value); return true; }
             if (key == "parallel_merge") { parallel_merge = parse_bool(value); return true; }
             if (key == "normalized_embeddings") { normalized_embeddings = parse_bool(value); return true; }
+
+            if (key == "auto_tune_ef") { auto_tune_ef = parse_bool(value); return true; }
+            if (key == "auto_tune_eps") { auto_tune_eps = parse_bool(value); return true; }
             
             // enum fields
             if (key == "metric") { metric = string_to_metric(value); return true; }
@@ -341,3 +408,13 @@ Rule of Thumb:
         throw std::runtime_error("Unknown config key: " + key);
     }
 
+/*
+Rule of Thumb:
+| Index Size | ef_search |
+| ---------- | --------- |
+| < 10 K     | 64–100    |
+| 10 K–100 K | 100–200   |
+| 100 K–1 M  | 200–400   |
+| > 1 M      | 300–800+  |
+
+*/

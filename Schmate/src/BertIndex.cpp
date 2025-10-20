@@ -5,6 +5,8 @@
 #include "StringUtils.hpp"
 
 #include <sstream>
+#include <chrono>
+
 
 using namespace std;
 
@@ -126,12 +128,21 @@ inline std::unique_ptr<hnswlib::SpaceInterface<float>> AllocateSpace(Metric metr
 BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool searchOnly) : embedder(emb), cfg(c), name(n)
 {
     size_t max_elements = cfg.max_elements;
-    sentences_path = name + IndexExtensions::sentences;
-    offsets_path   = name + IndexExtensions::offsets;
-    index_path     = name + IndexExtensions::hnsw;
+    sentences_path = name + IndexFileExtensions::sentences;
+    offsets_path   = name + IndexFileExtensions::offsets;
+    index_path     = name + IndexFileExtensions::hnsw;
+
+
+    search_ctrl.adaptive_ef = cfg.auto_tune_ef;
+    search_ctrl.adaptive_epsilon = cfg.auto_tune_eps;
+    if (cfg.ef_search) search_ctrl.set_ef(cfg.ef_search);
 
     // In BertIndex constructor
    if ( file_exists(index_path) ) {
+
+     // If auto tune enabled, load persist file if exists
+     search_ctrl.load(name);
+
 #if HNSW_META
     std::ifstream ifs(index_path, std::ios::binary);
     if (!ifs) throw std::runtime_error("Cannot open " + index_path);
@@ -140,7 +151,6 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool sea
     meta.load(ifs);
 
     auto [expected_count, max_from_file] = peek_index_elements(ifs);
-
 
     // Use the max from file (it already includes the saved max_elements)
     max_elements = searchOnly ? max_from_file : std::max(max_from_file, cfg.max_elements);
@@ -211,6 +221,8 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool sea
        if (cfg.debug)  LOG_DEBUG_S() << "Created new index with capacity=" << max_elements;
     }
 
+    if (index && search_ctrl.adaptive_ef) index->setEf(search_ctrl.get_ef());
+
     sentences_file.open(sentences_path, ios::in|ios::out|ios::binary | ios::app);
     if (!sentences_file) throw runtime_error("Failed to open sentences file: " + sentences_path);
 
@@ -231,8 +243,10 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool sea
 
 
 BertIndex::~BertIndex() {
+    search_ctrl.save(name);
     try {
         flush(); // persist any unsaved changes
+        remove_lockfile(); // We ignore if it fails since it is probably 0 from another process
     } catch (...) {
         // destructor should not throw
     }
@@ -296,10 +310,77 @@ size_t BertIndex::append(const string & sentence) {
 }
 
 
+bool BertIndex::acquire_lock() const {
+    if (!file_lock) {
+        std::string lock_path = name + IndexFileExtensions::lock;
+        file_lock = std::make_unique<FileLock>(lock_path);
+    }
+
+    if (!file_lock->try_lock()) {
+        throw std::runtime_error("Index locked by another process: " + name);
+        return false;
+    }
+
+    if (cfg.debug)
+        LOG_DEBUG_S() << "Lock acquired for write: " << name;
+    return true;
+}
+
+void BertIndex::release_lock() const {
+    if (file_lock) {
+        file_lock->unlock();
+        if (cfg.debug)
+            LOG_DEBUG_S() << "Lock released for write: " << name;
+    }
+}
+
+
+#include <signal.h>
+
+static bool pid_running(pid_t pid) {
+
+    while(waitpid(-1, 0, WNOHANG) > 0) {
+        // Wait for defunct....
+    }
+    if (kill(pid, 0) == -1 && errno == ESRCH)
+        return false; // process not exist
+    return true;
+}
+
+int BertIndex::wait_lock() const {
+    std::string lock_path = name + IndexFileExtensions::lock;
+    if (file_size (lock_path) > 0) {
+      std::ifstream ifs(lock_path);
+      int pid = -1;
+      ifs >> pid;
+      if (pid == ::getpid() || !pid_running(pid))
+	return 0; 
+      // File locked by another process
+      LOG_INFO_S() << "Index \"" << name
+	<< "\" locked by another process " << pid << " waiting";
+      if (!wait_for_file_removal(lock_path, std::chrono::seconds(60)))
+        return pid;
+     LOG_INFO_S() << "Index \"" << name << "\" append continuing.";
+    }
+    if (!acquire_lock()) return -1;
+    return 0;
+}
+
+bool BertIndex::remove_lockfile() const {
+   const std::string lock_path = name + IndexFileExtensions::lock;
+   if (file_exists(lock_path)) {
+     return  std::filesystem::remove(lock_path);
+   }
+   return true;
+}
+
+
 std::vector<float> BertIndex::encode_text(const std::string& text)
 {
    // std::cerr << "BertIndex::encode_text(" << text << ")\n";
    if (text.empty()) return {}; // Empty text 
+
+   // Need to check/set lock
 
    auto emb = embedder.encode_text(text, cfg.debug);
    // ---------------------------------------------------------------------
@@ -335,6 +416,12 @@ std::vector<float> BertIndex::encode_text(const std::string& text)
 #if 1
 
 size_t BertIndex::append(const std::string &sentence, int64_t sentence_id) {
+
+    if (wait_lock()) {
+        LOG_FATAL_S() << "Can't append, other process competing (race).";
+        return 0;
+    }
+
     auto chunks = chunk_tokens(sentence);
     size_t last_label = 0;
 
@@ -645,6 +732,7 @@ void BertIndex::save() {
    meta.normalized = (cfg.metric == Metric::Cosine);  // or cfg.normalized_embeddings flag
    meta.dim = embedder.n_embd;
    meta.count = this->size();
+
    meta.save(ofs);
    index->saveIndex(ofs);
    ofs.close();
@@ -654,6 +742,7 @@ void BertIndex::save() {
 
     dirty_count = 0; // Memory = disk
     if (cfg.debug)  LOG_DEBUG_S() << "saved index " << index_path;
+    release_lock();
 }
 
 /*
@@ -682,7 +771,14 @@ std::vector<SearchResult> BertIndex::filter_knn_results(const std::string &query
 
     // std::cerr << "QUERY=" << query << std::endl;
     std::vector<float> emb = encode_text(query); 
+
+    if (search_ctrl.adaptive_ef) index->setEf(search_ctrl.get_ef());
+
+    auto beg = std::chrono::high_resolution_clock::now();
     auto candidates = index->searchKnnCloserFirst(emb.data(), max_k);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto latency_ms = duration_cast<std::chrono::microseconds>(end - beg).count();
+    search_ctrl.update_after_knn(latency_ms, cfg.debug);
 
     std::vector<SearchResult> results;
     results.reserve(max_k);
@@ -821,6 +917,17 @@ std::vector<SearchResult> BertIndex::adaptive(const std::string &query,
 }
 
 
+/*
+
+In epsilon search we don't tune the ef_search!
+
+| Search Type          | Stopping Criterion                  | ef_search relevance                       |
+| -------------------- | ----------------------------------- | ----------------------------------------- |
+| **kNN**              | after collecting *k* best items     | ⚡ high (controls recall/latency)          |
+| **radius / epsilon** | after exploring all within distance | ⚠️ limited (distance threshold dominates) |
+
+*/
+
 std::vector<SearchResult> BertIndex::epsilon_search(const std::string &query, float epsilon) {
     size_t cur_count = index->cur_element_count;
     if (cur_count == 0 || !is_valid_query(query) )
@@ -831,6 +938,7 @@ std::vector<SearchResult> BertIndex::epsilon_search(const std::string &query, fl
                         ? std::min(cfg.max_candidates_cap, cur_count)
                         : cur_count;
 
+    if (cfg.auto_tune_eps) epsilon =  search_ctrl.get_epsilon();
     if (epsilon <= 0.0f) {
        switch (cfg.metric) {
 	case Metric::L2: epsilon = cfg.default_epsilonL2; break;
@@ -844,8 +952,7 @@ std::vector<SearchResult> BertIndex::epsilon_search(const std::string &query, fl
           epsilon = cfg.default_radius;
     }
  
-    if (cfg.metric == Metric::L2) epsilon = epsilon * epsilon; 
-    // if (cfg.metric == Metric::InnerProduct || cfg.metric == Metric::Cosine)  epsilon = -epsilon;
+    if (!cfg.auto_tune_eps && cfg.metric == Metric::L2) epsilon = epsilon * epsilon; 
 
     if (max_candidates == min_candidates && max_candidates > 3) min_candidates = max_candidates - 2;
 
@@ -860,6 +967,16 @@ std::vector<SearchResult> BertIndex::epsilon_search(const std::string &query, fl
     // Create a stop condition
     hnswlib::EpsilonSearchStopCondition<float> stop_condition( epsilon, min_candidates, max_candidates);
     auto candidates = index->searchStopConditionClosest(emb.data(), stop_condition);
+
+    // Update tuner based on result density
+/*
+    | Situation                          | Behavior                             |
+    | ---------------------------------- | ------------------------------------ |
+    | Too few results (<80% of target)   | Increase ε slightly (expand radius). |
+    | Too many results (>120% of target) | Shrink ε slightly (tighten radius).  |
+    | Stable result density              | ε converges.                         |
+*/
+    search_ctrl.update_after_epsilon(candidates.size(), cfg.debug);
 
 #if 0
     LOG_DEBUG_S() << "=== RAW candidates from searchStopConditionClosest ===";
@@ -1354,7 +1471,6 @@ size_t BertIndex::allocate_label() {
 size_t BertIndex::label_count() const {
   return next_label;
 } 
-
 
 /*
 

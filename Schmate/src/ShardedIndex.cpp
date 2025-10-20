@@ -28,8 +28,8 @@ size_t ShardedIndex::discover_shards(const std::string &base_name) const {
     size_t count = 0;
     while (true) {
 	// We look at the HNSW index file and offset file
-	if (!file_exists(shard_basename(count) + IndexExtensions::hnsw ) ||
-		!file_exists(shard_basename(count) + IndexExtensions::offsets )) break;
+	if (!file_exists(shard_basename(count) + IndexFileExtensions::hnsw ) ||
+		!file_exists(shard_basename(count) + IndexFileExtensions::offsets )) break;
         count++;
     }
     return count;
@@ -38,6 +38,8 @@ size_t ShardedIndex::discover_shards(const std::string &base_name) const {
 void ShardedIndex::add_shard(size_t id, bool searchOnly) {
     auto shard = make_unique<BertIndex>(embedder, cfg, shard_basename(id), searchOnly) ;
     shards.emplace_back(std::move(shard));
+    // For the shard based auto-tuner
+    shard_tuners.emplace_back(std::make_unique<EfSearchTuner>(cfg.ef_search));
 }
 
 // Creator
@@ -126,30 +128,33 @@ static ThreadPool pool;  // global cached pool
 
 // --- smarter parallel_search with optional (compile-time) thread-pool ---
 template <typename Fn>
-std::vector<SearchResult> parallel_search(std::vector<std::unique_ptr<BertIndex>> &shards, Fn fn) {
+std::vector<SearchResult> ShardedIndex::parallel_search(std::vector<std::unique_ptr<BertIndex>> &shards, Fn fn) {
     if (shards.empty()) {
         return {};
-    }
-    if (shards.size() == 1) {
-        return fn(*shards[0]);
     }
 
     std::vector<std::future<std::vector<SearchResult>>> futs;
     futs.reserve(shards.size());
 
+    for (size_t i = 0; i < shards.size(); ++i) {
+       auto shard_ptr = shards[i].get();
+       auto tuner_ptr = shard_tuners[i].get();
 #ifdef USE_THREADPOOL
-    for (auto &sh : shards) {
-        futs.push_back(pool.enqueue([&]() {
-            return fn(*sh);
-        }));
-    }
+       futs.push_back(pool.enqueue([=, &fn]()
 #else
-    for (auto &sh : shards) {
-        futs.push_back(std::async(std::launch::async, [&]() {
-            return fn(*sh);
-        }));
-    }
+       futs.push_back(std::async(std::launch::async, [=, &fn]()
 #endif
+       {
+          shard_ptr->index->setEf(tuner_ptr->current_ef);
+          auto start = std::chrono::high_resolution_clock::now();
+          auto results = fn(*shard_ptr);
+          auto end = std::chrono::high_resolution_clock::now();
+
+          double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
+          tuner_ptr->update_after_query(elapsed, shard_ptr->size(), shard_ptr->cfg.debug);
+          return results;
+         }));
+    }
 
     std::vector<SearchResult> all;
     for (auto &f : futs) {
@@ -278,9 +283,9 @@ static void remove_safe(const std::string &fname) {
 }
 
 static void remove_safe_indexes(const std::string &shard_prefix) {
-  remove_safe(shard_prefix + IndexExtensions::sentences);
-  remove_safe(shard_prefix + IndexExtensions::offsets);
-  remove_safe(shard_prefix + IndexExtensions::hnsw);
+  remove_safe(shard_prefix + IndexFileExtensions::sentences);
+  remove_safe(shard_prefix + IndexFileExtensions::offsets);
+  remove_safe(shard_prefix + IndexFileExtensions::hnsw);
 }
 
 #include <future>

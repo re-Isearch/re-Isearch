@@ -3,7 +3,9 @@
 #include "HnswConfig.hpp"
 #include "Util.hpp"
 #include "hnswlib/hnswlib.h"
+#include "FileLock.hpp"
 #include "OffsetFile.hpp"
+#include "AdaptiveSearchController.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -13,12 +15,6 @@
 #include <iostream>
 #include <atomic>
 #include <algorithm>
-
-struct IndexExtensions {
-  static constexpr const char* sentences= ".txt";
-  static constexpr const char* offsets  = ".obn";
-  static constexpr const char* hnsw     = ".hix";
-} ;
 
 struct SearchResult {
     float score;
@@ -118,6 +114,12 @@ public:
     // Otherwise return chunk text (unless sentence_id is set).
     std::string get_text(const SearchResult &r, bool full_sentence=false) const;
 
+    // Auto-tuning
+//    EfSearchTuner tuner;
+//    EpsilonTuner eps_tuner;
+    AdaptiveSearchController search_ctrl;
+
+
 private:
    template<typename FilterFn>
    std::vector<SearchResult> filter_knn_results(const std::string &query,
@@ -125,6 +127,13 @@ private:
     inline bool is_valid_entry(const OffsetEntry &e) const {
       return !(e.sid == 0 || e.file_end <= e.file_start);
     }
+
+   mutable std::unique_ptr<FileLock> file_lock;
+   bool acquire_lock() const;
+   void release_lock() const;
+   int  wait_lock() const;
+   bool remove_lockfile() const;
+
    std::vector<float> encode_text(const std::string& text);
 
    // convert raw hnsw distance to a score 

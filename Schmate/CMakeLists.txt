@@ -47,6 +47,7 @@ add_executable(test_reconstruct
     src/Util.cpp
     src/OffsetFile.cpp
     src/Logger.cpp
+    src/FileLock.cpp
     src/SBertGGML.cpp)
 target_include_directories(test_reconstruct PRIVATE include)
 target_link_libraries(test_reconstruct PRIVATE ${BERT} ${GGML} "-framework Accelerate")

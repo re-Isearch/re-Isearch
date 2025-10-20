@@ -31,8 +31,15 @@ inline int64_t read_int64(std::istream &is) {
 // If found returns the now qualified path else just the filename
 std::string find_ggml_model(const std::string &filename, const std::string  &search_paths);
 
+
+// File exist and length utils
 inline bool file_exists(const std::string &p) {
       return std::filesystem::exists(p);
+}
+// Does not exist? Return -1 else return its size
+inline off_t file_size(const std::string &p) {
+    if (!file_exists(p)) return -1;
+    return std::filesystem::file_size(p);
 }
 
 #pragma once
