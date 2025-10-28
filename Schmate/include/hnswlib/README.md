@@ -3,6 +3,9 @@ Header-only C++ HNSW implementation with python bindings, insertions and updates
 
 **NEWS:**
 
+**version 1.0 Schmate Fork
+This version has a number of tweaks as well as support of ARM vector instructions
+
 **version 0.8.0** 
 
 * Multi-vector document search and epsilon search (for now, only in C++)
