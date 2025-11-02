@@ -24,8 +24,11 @@ class MultiVectorL2Space : public BaseMultiVectorSpace<DOCIDTYPE> {
 
  public:
     MultiVectorL2Space(size_t dim) {
-        fstdistfunc_ = L2Sqr;
-#if defined(USE_SSE) || defined(USE_AVX) || defined(USE_AVX512)
+        // fstdistfunc_ = L2Sqr;
+#if defined(__ARM_FEATURE_SVE)
+        if (has_sve_runtime()) fstdistfunc_ = L2SqrSVE16Ext;
+        else fstdistfunc_ = L2SqrNEON16Ext; // Use Neon instead
+#elif defined(USE_SSE) || defined(USE_AVX) || defined(USE_AVX512)
     #if defined(USE_AVX512)
         if (AVX512Capable())
             L2SqrSIMD16Ext = L2SqrSIMD16ExtAVX512;
@@ -44,6 +47,10 @@ class MultiVectorL2Space : public BaseMultiVectorSpace<DOCIDTYPE> {
             fstdistfunc_ = L2SqrSIMD16ExtResiduals;
         else if (dim > 4)
             fstdistfunc_ = L2SqrSIMD4ExtResiduals;
+#elif defined(__ARM_NEON)
+        fstdistfunc_ = L2SqrNEON16Ext;
+#else
+        fstdistfunc_ = L2Sqr;
 #endif
         dim_ = dim;
         vector_size_ = dim * sizeof(float);
@@ -83,8 +90,11 @@ class MultiVectorInnerProductSpace : public BaseMultiVectorSpace<DOCIDTYPE> {
 
  public:
     MultiVectorInnerProductSpace(size_t dim) {
-        fstdistfunc_ = InnerProductDistance;
-#if defined(USE_AVX) || defined(USE_SSE) || defined(USE_AVX512)
+        // fstdistfunc_ = InnerProductDistance;
+#if defined(__ARM_FEATURE_SVE)
+        if ( has_sve_runtime()) fstdistfunc_ = InnerProductDistanceSVE;
+        else fstdistfunc_ = InnerProductDistanceNEON16Ext; // Use NEON
+#elif defined(USE_AVX) || defined(USE_SSE) || defined(USE_AVX512)
     #if defined(USE_AVX512)
         if (AVX512Capable()) {
             InnerProductSIMD16Ext = InnerProductSIMD16ExtAVX512;
@@ -114,6 +124,10 @@ class MultiVectorInnerProductSpace : public BaseMultiVectorSpace<DOCIDTYPE> {
             fstdistfunc_ = InnerProductDistanceSIMD16ExtResiduals;
         else if (dim > 4)
             fstdistfunc_ = InnerProductDistanceSIMD4ExtResiduals;
+#elif defined(__ARM_NEON)
+        fstdistfunc_ = InnerProductDistanceNEON16Ext;
+#else
+        fstdistfunc_ = InnerProductDistance;
 #endif
         vector_size_ = dim * sizeof(float);
         data_size_ = vector_size_ + sizeof(DOCIDTYPE);

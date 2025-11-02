@@ -219,10 +219,65 @@ AlgorithmInterface<dist_t>::searchKnnCloserFirst(const void* query_data, size_t 
 
     return result;
 }
+
+
+#if defined(__ARM_FEATURE_SVE) || defined (__ARM_NEON)
+
+#ifdef __linux__
+// Runtime detection (Linux only, requires system headers)
+#include <sys/auxv.h>
+
+inline bool has_sve_runtime() {
+#if defined(__ARM_FEATURE_SVE) && defined(__aarch64__)
+    #ifndef HWCAP_SVE
+    #define HWCAP_SVE (1 << 22)
+    #endif
+    return (getauxval(AT_HWCAP) & HWCAP_SVE) != 0;
+#endif
+    return false;
+}
+
+inline bool has_neon_runtime() {
+#ifdef __aarch64__
+    return true; // NEON is mandatory on ARM64
+#elif defined(__arm__)
+    #ifndef HWCAP_NEON
+    #define HWCAP_NEON (1 << 12)
+    #endif
+    return (getauxval(AT_HWCAP) & HWCAP_NEON) != 0;
+#else
+    return false;
+#endif
+}
+
+#else // Other Operating systems. Don't know how to detect
+
+inline bool has_sve_runtime() {
+#if defined(__ARM_FEATURE_SVE)
+    return true;
+#else
+    return false;
+#endif
+}
+
+inline bool has_neon_runtime() {
+    return true;
+}
+
+#endif // __linux__
+
+#endif // SVE or NEON
+
+
+
+
+
+
 }  // namespace hnswlib
 
 #include "space_l2.h"
 #include "space_ip.h"
+#include "space_quantized.h"
 #include "stop_condition.h"
 #include "bruteforce.h"
 #include "hnswalg.h"

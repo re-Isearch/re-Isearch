@@ -1,4 +1,4 @@
-// Modified version of hnswlib/space_l2.h with ARM NEON support
+// Modified version of hnswlib/space_l2.h with ARM NEON and SVE support
 // Drop-in replacement for the original space_l2.h
 
 #pragma once
@@ -7,6 +7,11 @@
 #ifdef __ARM_NEON
 #include <arm_neon.h>
 #endif
+#ifdef __ARM_FEATURE_SVE
+#include <arm_sve.h>
+#endif
+
+
 
 namespace hnswlib {
 
@@ -14,7 +19,7 @@ namespace hnswlib {
 // Scalar implementations (fallback)
 // ============================================================================
 
-static float L2Sqr(const void* pVect1v, const void* pVect2v, const void* qty_ptr) {
+static inline float L2Sqr(const void* pVect1v, const void* pVect2v, const void* qty_ptr) {
     float* pVect1 = (float*)pVect1v;
     float* pVect2 = (float*)pVect2v;
     size_t qty = *((size_t*)qty_ptr);
@@ -32,6 +37,7 @@ static float L2Sqr(const void* pVect1v, const void* pVect2v, const void* qty_ptr
 
 #ifdef __ARM_NEON
 
+// Works on both NEON and SVE via bridge
 static float L2SqrNEON(const void* pVect1v, const void* pVect2v, const void* qty_ptr) {
     float* pVect1 = (float*)pVect1v;
     float* pVect2 = (float*)pVect2v;
@@ -40,6 +46,9 @@ static float L2SqrNEON(const void* pVect1v, const void* pVect2v, const void* qty
     float32x4_t sum_vec = vdupq_n_f32(0.0f);
     
     size_t i = 0;
+    // Process 16 floats at a time
+    // On NEON: 4 vectors of 4 floats each
+    // On SVE (bridge): 4 SVE vectors (width depends on implementation)
     for (; i + 16 <= qty; i += 16) {
         float32x4_t v1_0 = vld1q_f32(pVect1 + i);
         float32x4_t v2_0 = vld1q_f32(pVect2 + i);
@@ -85,6 +94,127 @@ static float L2SqrNEON16Ext(const void* pVect1v, const void* pVect2v, const void
 }
 
 #endif
+
+#ifdef __ARM_FEATURE_SVE
+
+static float L2SqrSVE(const void* pVect1v, const void* pVect2v, const void* qty_ptr) {
+    float* pVect1 = (float*)pVect1v;
+    float* pVect2 = (float*)pVect2v;
+    size_t qty = *((size_t*)qty_ptr);
+    
+    // Get vector length (number of float32 elements per vector)
+    uint64_t vl = svcntw();
+    
+    // Initialize accumulator
+    svfloat32_t sum_vec = svdup_n_f32(0.0f);
+    
+    // Create predicate for full vectors
+    svbool_t pg_full = svptrue_b32();
+    
+    uint64_t i = 0;
+    
+    // Process full vectors
+    while (i + vl <= qty) {
+        svfloat32_t v1 = svld1_f32(pg_full, pVect1 + i);
+        svfloat32_t v2 = svld1_f32(pg_full, pVect2 + i);
+        svfloat32_t diff = svsub_f32_z(pg_full, v1, v2);
+        sum_vec = svmla_f32_z(pg_full, sum_vec, diff, diff);
+        i += vl;
+    }
+    
+    // Handle remaining elements with predication
+    if (i < qty) {
+        svbool_t pg_remain = svwhilelt_b32(i, qty);
+        svfloat32_t v1 = svld1_f32(pg_remain, pVect1 + i);
+        svfloat32_t v2 = svld1_f32(pg_remain, pVect2 + i);
+        svfloat32_t diff = svsub_f32_z(pg_remain, v1, v2);
+        sum_vec = svmla_f32_z(pg_remain, sum_vec, diff, diff);
+    }
+    
+    // Horizontal reduction
+    float sum = svaddv_f32(svptrue_b32(), sum_vec);
+    
+    return sum;
+}
+
+// Optimized version processing multiple vectors per iteration
+static float L2SqrSVE4Unroll(const void* pVect1v, const void* pVect2v, const void* qty_ptr) {
+    float* pVect1 = (float*)pVect1v;
+    float* pVect2 = (float*)pVect2v;
+    size_t qty = *((size_t*)qty_ptr);
+    
+    uint64_t vl = svcntw();
+    
+    // Four accumulators for better pipelining
+    svfloat32_t sum0 = svdup_n_f32(0.0f);
+    svfloat32_t sum1 = svdup_n_f32(0.0f);
+    svfloat32_t sum2 = svdup_n_f32(0.0f);
+    svfloat32_t sum3 = svdup_n_f32(0.0f);
+    
+    svbool_t pg = svptrue_b32();
+    
+    uint64_t i = 0;
+    
+    // Process 4 vectors at a time
+    while (i + 4 * vl <= qty) {
+        svfloat32_t v1_0 = svld1_f32(pg, pVect1 + i);
+        svfloat32_t v2_0 = svld1_f32(pg, pVect2 + i);
+        svfloat32_t diff0 = svsub_f32_z(pg, v1_0, v2_0);
+        sum0 = svmla_f32_z(pg, sum0, diff0, diff0);
+        
+        svfloat32_t v1_1 = svld1_f32(pg, pVect1 + i + vl);
+        svfloat32_t v2_1 = svld1_f32(pg, pVect2 + i + vl);
+        svfloat32_t diff1 = svsub_f32_z(pg, v1_1, v2_1);
+        sum1 = svmla_f32_z(pg, sum1, diff1, diff1);
+        
+        svfloat32_t v1_2 = svld1_f32(pg, pVect1 + i + 2 * vl);
+        svfloat32_t v2_2 = svld1_f32(pg, pVect2 + i + 2 * vl);
+        svfloat32_t diff2 = svsub_f32_z(pg, v1_2, v2_2);
+        sum2 = svmla_f32_z(pg, sum2, diff2, diff2);
+        
+        svfloat32_t v1_3 = svld1_f32(pg, pVect1 + i + 3 * vl);
+        svfloat32_t v2_3 = svld1_f32(pg, pVect2 + i + 3 * vl);
+        svfloat32_t diff3 = svsub_f32_z(pg, v1_3, v2_3);
+        sum3 = svmla_f32_z(pg, sum3, diff3, diff3);
+        
+        i += 4 * vl;
+    }
+    
+    // Combine accumulators
+    sum0 = svadd_f32_z(pg, sum0, sum1);
+    sum2 = svadd_f32_z(pg, sum2, sum3);
+    sum0 = svadd_f32_z(pg, sum0, sum2);
+    
+    // Process remaining full vectors
+    while (i + vl <= qty) {
+        svfloat32_t v1 = svld1_f32(pg, pVect1 + i);
+        svfloat32_t v2 = svld1_f32(pg, pVect2 + i);
+        svfloat32_t diff = svsub_f32_z(pg, v1, v2);
+        sum0 = svmla_f32_z(pg, sum0, diff, diff);
+        i += vl;
+    }
+    
+    // Handle remaining elements
+    if (i < qty) {
+        svbool_t pg_remain = svwhilelt_b32(i, qty);
+        svfloat32_t v1 = svld1_f32(pg_remain, pVect1 + i);
+        svfloat32_t v2 = svld1_f32(pg_remain, pVect2 + i);
+        svfloat32_t diff = svsub_f32_z(pg_remain, v1, v2);
+        sum0 = svmla_f32_z(pg_remain, sum0, diff, diff);
+    }
+    
+    // Horizontal reduction
+    float sum = svaddv_f32(svptrue_b32(), sum0);
+    
+    return sum;
+}
+
+static float L2SqrSVE16Ext(const void* pVect1, const void* pVect2, const void* qty_ptr) {
+    return L2SqrSVE4Unroll(pVect1, pVect2, qty_ptr);
+}
+
+#endif // __ARM_FEATURE_SVE
+
 
 // ============================================================================
 // AMD/Intel implementations 
@@ -281,7 +411,6 @@ L2SqrSIMD4ExtResiduals(const void *pVect1v, const void *pVect2v, const void *qty
 // L2Space class with automatic SIMD selection
 // ============================================================================
 
-#if 1
 class L2Space : public SpaceInterface<float> {
     DISTFUNC<float> fstdistfunc_;
     size_t data_size_;
@@ -290,7 +419,11 @@ class L2Space : public SpaceInterface<float> {
  public:
     L2Space(size_t dim) {
 //        fstdistfunc_ = L2Sqr;
-#if defined(USE_SSE) || defined(USE_AVX) || defined(USE_AVX512)
+        // Priority: SVE > AVX512 > AVX > NEON > Scalar
+#if defined(__ARM_FEATURE_SVE)
+        if (has_sve_runtime()) fstdistfunc_ = L2SqrSVE16Ext;
+        else fstdistfunc_ = L2SqrNEON16Ext; // Use Neon instead
+#elif defined(USE_SSE) || defined(USE_AVX) || defined(USE_AVX512)
     #if defined(USE_AVX512)
         if (AVX512Capable())
             L2SqrSIMD16Ext = L2SqrSIMD16ExtAVX512;
@@ -332,54 +465,6 @@ class L2Space : public SpaceInterface<float> {
 
     ~L2Space() {}
 };
-
-#else  
-
-class L2Space : public SpaceInterface<float> {
-    DISTFUNC<float> fstdistfunc_;
-    size_t data_size_;
-    size_t dim_;
-
-public:
-    L2Space(size_t dim) {
-        dim_ = dim;
-        data_size_ = dim * sizeof(float);
-        
-        // Automatically select best available implementation
-#if defined(USE_AVX512)
-        if (dim % 16 == 0) {
-            fstdistfunc_ = L2SqrSIMD16ExtAVX512;
-        } else {
-            fstdistfunc_ = L2SqrSIMD16ExtResiduals;
-        }
-#elif defined(USE_AVX)
-        if (dim % 16 == 0) {
-            fstdistfunc_ = L2SqrSIMD16Ext;
-        } else {
-            fstdistfunc_ = L2SqrSIMD16ExtResiduals;
-        }
-#elif defined(__ARM_NEON)
-        fstdistfunc_ = L2SqrNEON16Ext;
-#else
-        fstdistfunc_ = L2Sqr;
-#endif
-    }
-
-    size_t get_data_size() {
-        return data_size_;
-    }
-
-    DISTFUNC<float> get_dist_func() {
-        return fstdistfunc_;
-    }
-
-    void* get_dist_func_param() {
-        return &dim_;
-    }
-
-    ~L2Space() {}
-};
-#endif
 
 static int
 L2SqrI4x(const void *__restrict pVect1, const void *__restrict pVect2, const void *__restrict qty_ptr) {
