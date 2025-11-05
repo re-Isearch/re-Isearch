@@ -1402,7 +1402,7 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
     }
 
 
-    void checkIntegrity() {
+    bool checkIntegrity() {
         int connections_checked = 0;
         std::vector <int > inbound_connections_num(cur_element_count, 0);
         for (int i = 0; i < cur_element_count; i++) {
@@ -1418,6 +1418,10 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
                     s.insert(data[j]);
                     connections_checked++;
                 }
+                if (s.size() != size) {
+                    HNSWERR << "[HNSW CheckInregrity] s.size() != size  " << s.size() << "!=" << size;
+                    return false;
+                }
                 assert(s.size() == size);
             }
         }
@@ -1428,9 +1432,10 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
                 min1 = std::min(inbound_connections_num[i], min1);
                 max1 = std::max(inbound_connections_num[i], max1);
             }
-            std::cout << "Min inbound: " << min1 << ", Max inbound:" << max1 << "\n";
+            HNSWDEBUG << "Min inbound: " << min1 << ", Max inbound:" << max1 << "\n";
         }
-        std::cout << "integrity ok, checked " << connections_checked << " connections\n";
+        HNSWINFO << "integrity ok, checked " << connections_checked << " connections\n";
+        return true;
     }
 };
 }  // namespace hnswlib

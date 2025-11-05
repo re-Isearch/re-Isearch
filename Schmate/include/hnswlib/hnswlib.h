@@ -1,18 +1,27 @@
 #pragma once
 
-// https://github.com/nmslib/hnswlib/pull/508
-// This allows others to provide their own error stream (e.g. RcppHNSW)
+// This allows others to provide their own error/message streams (e.g. RcppHNSW)
 #ifndef HNSWLIB_ERR_OVERRIDE
   #define HNSWERR std::cerr
 #else
   #define HNSWERR HNSWLIB_ERR_OVERRIDE
 #endif
-
 #ifndef HNSWLIB_INFO_OVERRIDE
   #define HNSWINFO std::cout
 #else
   #define HNSWINFO HNSWLIB_INFO_OVERRIDE
 #endif
+#ifndef HNSWLIB_DEBUG_OVERRIDE
+  #define HNSWDEBUG std::cout
+#else
+  #define HNSWDEBUG HNSWLIB_DEBUG_OVERRIDE
+#endif
+#ifndef HNSWLIB_FATAL_OVERRIDE
+  #define HNSWFATAL std::cerr
+#else
+  #define HNSWFATAL HNSWLIB_FATAL_OVERRIDE
+#endif
+
 
 
 

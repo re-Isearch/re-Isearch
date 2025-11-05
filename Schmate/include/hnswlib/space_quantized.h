@@ -16,21 +16,7 @@
 #include "pearson_corr.h"
 
 /*
-Dimension: 384    Data points: 50000    Queries: 1000
-Params: M = 16, ef_construction = 200, ef_search = 50, k = 10
-
-Mode                  Build (ms)  Query (ms)    Recall Bytes/Vec Memory (KB)
-----------------------------------------------------------------------------
-BASELINE-L2 (FLOAT32)    23721.6                0.9864
-INT8-STANDARD            20131.5      385.61    0.9885       384       18750
-INT8-CENTROID            18394.2      362.73    0.9864       384       18750
-INT8-ROTATIONAL          19812.1      393.34    0.9872       384       18750
-INT4-STANDARD            77476.1     1326.30    0.9903       192        9375
-INT4-ROTATIONAL          80550.8     1363.41    0.9859       192        9375
-BIN1-STANDARD             4859.2       91.82    0.8504        48        2343
-BIN1-ROTATIONAL           8805.5      131.89    0.8452        48        2343
-BIN1-RABITQ               4297.5       74.56    0.9999       112        5468
-
+Performance:
 
 Dimension: 384    Data points: 50000    Queries: 1000
 Params: M = 32, ef_construction = 400, ef_search = 400, k = 10
@@ -43,17 +29,32 @@ INT8-CENTROID            18483.1      375.71    0.9864       384       18750
 INT8-ROTATIONAL          19952.2      413.05    0.9872       384       18750
 INT4-STANDARD            77728.5     1359.43    0.9903       192        9375
 INT4-ROTATIONAL          81096.9     1368.87    0.9859       192        9375
-BIN1-STANDARD             4811.4       81.30    0.8504        48        2343
-BIN1-ROTATIONAL           8810.6      131.49    0.8452        48        2343
-BIN1-RABITQ               4333.7       75.18    0.9999       112        5468
+BIN1-STANDARD             4884.9       83.97    0.8504        48        2343
+BIN1-BETTER               3380.7       49.37    0.6087        48        2343
+BIN1-CENTROID             4807.9       81.08    0.8205        48        2343
+BIN1-ROTATIONAL           8913.5      134.93    0.8452        48        2343
+BIN1-RABITQ               4324.5       76.55    0.9999       112        5468
+BIN1-RABITQ-EXT           7041.7      167.17    0.9987       304       14843
 
+=== Analysis ===
+Best recall: BIN1-RABITQ (0.9999)
+Fastest query: BIN1-BETTER (49.37 ms)
+Smallest memory: BIN1-STANDARD (2343 KB)
 
 Recommendations (derived from the test data):
 
-- ⭐ Use BIN1-RABITQ for production 
+- ⭐ Use BIN1-RABITQ for production
 - INT8-CENTROID is a good fallback if you need slightly better recall
-- ❌ Skip ROTATIONAL modes - they're slower with no accuracy benefit 
+- BIN1-BETTER is fast but really only suitable with rescoring.
+- ❌ Skip ROTATIONAL modes - they're slower with no accuracy benefit
 - ❌ Skip INT4 - it's 18× slower than BIN1-RABITQ with similar recall
+
+Rotation Matrix Computation: Uses Gram-Schmidt orthogonalization to create
+a random orthogonal matrix. We use PCA to find the optimal rotation, but for
+high dimensions the random orthogonal rotations work well.
+
+
+
 */
 
 #if defined(__AVX512F__)
@@ -73,7 +74,7 @@ Recommendations (derived from the test data):
 namespace hnswlib {
 
 enum class QuantMode { BIN1=0, INT158=1, INT4=2, INT8=3 };
-enum class OptBinMode  { STANDARD=0, BETTER=1, CENTROID=2, ROTATIONAL=3, RABITQ=4 };
+enum class OptBinMode  { STANDARD=0, BETTER=1, CENTROID=2, ROTATIONAL=3, RABITQ=4, RABITQ_EXTENDED=5 };
 
 // =============================================================================
 template<typename T=float>
@@ -123,13 +124,21 @@ public:
 
         assert(dim>0);
 
-	use_rotation_ = (bin_mode_ == OptBinMode::ROTATIONAL);
-	use_rabitq_ = (bin_mode_ == OptBinMode::RABITQ && qmode_ == QuantMode::BIN1);
-	residual_dims_ = use_rabitq_ ? std::min(size_t(16), dim_ / 8) : 0;
+        use_rotation_  = (bin_mode_ == OptBinMode::ROTATIONAL);
+        use_rabitq_    = (bin_mode_ == OptBinMode::RABITQ || bin_mode_ == OptBinMode::RABITQ_EXTENDED);
+        residual_dims_ = (use_rabitq_ ?
+                        (bin_mode_ == OptBinMode::RABITQ_EXTENDED ?
+                         std::min(size_t(64), dim_ / 4) :  // Extended: 64 dims or 25%
+                         std::min(size_t(16), dim_ / 8))   // Standard: 16 dims or 12.5%
+                        : 0) ;
         
         // Initialize RaBitQ residuals if needed
         if (use_rabitq_) {
-            std::cout << "  [RaBitQ: keeping " << residual_dims_ << " residual dims]" << std::flush;
+            if (bin_mode_ == OptBinMode::RABITQ_EXTENDED) {
+                HNSWDEBUG << "  [RaBitQ-Extended: keeping " << residual_dims_ << " residual dims]";
+            } else {
+                HNSWDEBUG << "  [RaBitQ: keeping " << residual_dims_ << " residual dims]";
+            }
         }
         
         // Initialize rotation matrix if needed
@@ -163,7 +172,7 @@ public:
                 if (sample_embeddings) {
                     train_centroid(*sample_embeddings);
                 }
-            } else if (bin_mode == OptBinMode::RABITQ) {
+            } else if (bin_mode == OptBinMode::RABITQ || bin_mode == OptBinMode::RABITQ_EXTENDED) {
                 // RaBitQ needs thresholds/centroid for reconstruction
                 centroid_.assign(dim, T(0));
                 sum_.assign(dim, T(0));
@@ -303,7 +312,7 @@ public:
         const size_t n = samples.size();
         if (n == 0) return;
         
-        std::cout << "  Computing rotation matrix via PCA..." << std::flush;
+        HNSWDEBUG << "  Computing rotation matrix via PCA...";
         
         // 1. Compute mean
         std::vector<T> mean(dim, 0);
@@ -361,7 +370,7 @@ public:
             }
         }
         
-        std::cout << " done" << std::flush;
+        HNSWDEBUG << " done" ;
     }
     
     void apply_rotation(const T* input, T* output) const {
@@ -583,7 +592,7 @@ private:
                                        reinterpret_cast<const uint8_t*>(p2));
         // Safety check
         if (std::isnan(dist) || std::isinf(dist)) {
-            std::cerr << "ERROR: Invalid distance computed: " << dist << std::endl;
+            HNSWERR << "Invalid distance computed by fstdist_ (SpaceQuantized): " << dist;
             return 1e9;
         }
         return dist;
@@ -608,16 +617,21 @@ private:
 #if defined(HNSW_SIMD_AVX2)
                 size_t i = 0;
                 __m256 sum = _mm256_setzero_ps();
+                
+                // Process 8 floats at a time
                 for (; i + 7 < residual_dims_; i += 8) {
                     __m256 va = _mm256_loadu_ps(res_a + i);
                     __m256 vb = _mm256_loadu_ps(res_b + i);
                     __m256 diff = _mm256_sub_ps(va, vb);
                     sum = _mm256_fmadd_ps(diff, diff, sum);
                 }
+                
+                // Horizontal sum
                 alignas(32) float tmp[8];
                 _mm256_store_ps(tmp, sum);
                 residual_dist = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6] + tmp[7];
                 
+                // Scalar remainder
                 for (; i < residual_dims_; ++i) {
                     float diff = res_a[i] - res_b[i];
                     residual_dist += diff * diff;
@@ -625,29 +639,37 @@ private:
 #elif defined(HNSW_SIMD_NEON)
                 size_t i = 0;
                 float32x4_t sum = vdupq_n_f32(0.0f);
+                
+                // Process 4 floats at a time
                 for (; i + 3 < residual_dims_; i += 4) {
                     float32x4_t va = vld1q_f32(res_a + i);
                     float32x4_t vb = vld1q_f32(res_b + i);
                     float32x4_t diff = vsubq_f32(va, vb);
                     sum = vmlaq_f32(sum, diff, diff);
                 }
+                
+                // Horizontal sum
                 float tmp[4];
                 vst1q_f32(tmp, sum);
                 residual_dist = tmp[0] + tmp[1] + tmp[2] + tmp[3];
                 
+                // Scalar remainder
                 for (; i < residual_dims_; ++i) {
                     float diff = res_a[i] - res_b[i];
                     residual_dist += diff * diff;
                 }
 #else
+                // Scalar fallback
                 for (size_t i = 0; i < residual_dims_; ++i) {
                     float diff = res_a[i] - res_b[i];
                     residual_dist += diff * diff;
                 }
 #endif
                 
-                // Combine: weight binary distance less since residuals correct it
-                base_dist = 0.7f * base_dist + 0.3f * residual_dist / residual_dims_;
+                // Adaptive weighting: more residuals = higher weight
+                float residual_weight = (bin_mode == OptBinMode::RABITQ_EXTENDED) ? 0.5f : 0.3f;
+                base_dist = (1.0f - residual_weight) * base_dist + 
+                           residual_weight * residual_dist / residual_dims_;
             }
             
             return base_dist;
@@ -775,7 +797,7 @@ private:
             if(bin_mode==OptBinMode::STANDARD){
                 std::nth_element(col.begin(),col.begin()+n/2,col.end());
                 thresholds[d]=col[n/2];
-            }else{
+            }else{ // bin_mode==OptBinMode::BETTER 
                 std::sort(col.begin(),col.end());
                 T best_thr=col[n/2]; float best_corr=-1;
                 for(int k=1;k<99;++k){
@@ -803,8 +825,8 @@ private:
         
         // Debug: Print scale info for first dimension
         if (dim > 0) {
-            std::cout << "  [Scale debug: dim0 range=[" << minval[0] << "," << (minval[0] + scale[0]*levels) 
-                      << "], scale=" << scale[0] << "]" << std::flush;
+            HNSWDEBUG << "  [Scale debug: dim0 range=[" << minval[0] << "," << (minval[0] + scale[0]*levels) 
+                      << "], scale=" << scale[0] << "]";
         }
     }
 
