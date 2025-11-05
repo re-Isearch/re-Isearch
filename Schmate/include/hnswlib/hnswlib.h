@@ -8,6 +8,14 @@
   #define HNSWERR HNSWLIB_ERR_OVERRIDE
 #endif
 
+#ifndef HNSWLIB_INFO_OVERRIDE
+  #define HNSWINFO std::cout
+#else
+  #define HNSWINFO HNSWLIB_INFO_OVERRIDE
+#endif
+
+
+
 #ifndef NO_MANUAL_VECTORIZATION
 #if (defined(__SSE__) || _M_IX86_FP > 0 || defined(_M_AMD64) || defined(_M_X64))
 #define USE_SSE

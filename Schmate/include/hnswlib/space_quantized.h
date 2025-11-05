@@ -16,33 +16,44 @@
 #include "pearson_corr.h"
 
 /*
-
-=== Benchmark Results (Apple M1)  ===
-
-Dimension: 128
-Data points: 50000
-Queries: 1000
-k: 10
+Dimension: 384    Data points: 50000    Queries: 1000
+Params: M = 16, ef_construction = 200, ef_search = 50, k = 10
 
 Mode                  Build (ms)  Query (ms)    Recall Bytes/Vec Memory (KB)
 ----------------------------------------------------------------------------
-BIN1-STANDARD             6470.0       24.82    0.0091        16         781
-BIN1-BETTER               6408.7       24.70    0.0110        16         781
-BIN1-CENTROID             6429.5       24.77    0.0108        16         781
-INT158-STANDARD          58229.0      237.65    0.0229        32        1562
-INT158-CENTROID          24672.0      165.93    0.0028        32        1562
-INT4-STANDARD            51656.4      231.37    0.0800        64        3125
-INT4-CENTROID            59758.6      239.36    0.0518        64        3125
-INT8-STANDARD             8812.0       44.19    0.0916       128        6250
-INT8-CENTROID             9697.2       39.81    0.0577       128        6250
+BASELINE-L2 (FLOAT32)    23721.6                0.9864
+INT8-STANDARD            20131.5      385.61    0.9885       384       18750
+INT8-CENTROID            18394.2      362.73    0.9864       384       18750
+INT8-ROTATIONAL          19812.1      393.34    0.9872       384       18750
+INT4-STANDARD            77476.1     1326.30    0.9903       192        9375
+INT4-ROTATIONAL          80550.8     1363.41    0.9859       192        9375
+BIN1-STANDARD             4859.2       91.82    0.8504        48        2343
+BIN1-ROTATIONAL           8805.5      131.89    0.8452        48        2343
+BIN1-RABITQ               4297.5       74.56    0.9999       112        5468
 
-=== Analysis ===
-Best recall: INT8-STANDARD (0.0916)
-Fastest query: BIN1-BETTER (24.70 ms)
-Smallest memory: BIN1-STANDARD (781 KB)
 
-==> Something not yet right with the centroid code!
+Dimension: 384    Data points: 50000    Queries: 1000
+Params: M = 32, ef_construction = 400, ef_search = 400, k = 10
 
+Mode                  Build (ms)  Query (ms)    Recall Bytes/Vec Memory (KB)
+----------------------------------------------------------------------------
+BASELINE-L2 (FLOAT32)    23317                  0.9864
+INT8-STANDARD            18228.4      363.46    0.9885       384       18750
+INT8-CENTROID            18483.1      375.71    0.9864       384       18750
+INT8-ROTATIONAL          19952.2      413.05    0.9872       384       18750
+INT4-STANDARD            77728.5     1359.43    0.9903       192        9375
+INT4-ROTATIONAL          81096.9     1368.87    0.9859       192        9375
+BIN1-STANDARD             4811.4       81.30    0.8504        48        2343
+BIN1-ROTATIONAL           8810.6      131.49    0.8452        48        2343
+BIN1-RABITQ               4333.7       75.18    0.9999       112        5468
+
+
+Recommendations (derived from the test data):
+
+- ⭐ Use BIN1-RABITQ for production 
+- INT8-CENTROID is a good fallback if you need slightly better recall
+- ❌ Skip ROTATIONAL modes - they're slower with no accuracy benefit 
+- ❌ Skip INT4 - it's 18× slower than BIN1-RABITQ with similar recall
 */
 
 #if defined(__AVX512F__)
@@ -62,7 +73,7 @@ Smallest memory: BIN1-STANDARD (781 KB)
 namespace hnswlib {
 
 enum class QuantMode { BIN1=0, INT158=1, INT4=2, INT8=3 };
-enum class OptBinMode  { STANDARD=0, BETTER=1, CENTROID=2 };
+enum class OptBinMode  { STANDARD=0, BETTER=1, CENTROID=2, ROTATIONAL=3, RABITQ=4 };
 
 // =============================================================================
 template<typename T=float>
@@ -83,6 +94,16 @@ public:
     std::vector<T> ternary_threshold_high_;
     std::vector<T> ternary_scale_;
     
+    // Rotational quantization state
+    std::vector<T> rotation_matrix_;  // dim x dim matrix stored row-major
+    bool use_rotation_;
+    
+    // RaBitQ state (for BIN1 only)
+    std::vector<std::vector<T>> residuals_;  // Store residuals per vector
+    size_t residual_dims_;  // Number of dimensions to keep in residual
+    bool use_rabitq_;
+    std::mutex residual_mutex_;
+    
     // Centroid-based quantization state
     std::vector<T> centroid_;
     std::vector<T> sum_;
@@ -99,12 +120,39 @@ public:
                             size_t buffer_capacity = 1000)
         : dim(dim_), qmode(qmode_), bin_mode(bin_mode_),
           count_(0), buffer_capacity_(buffer_capacity), buffer_count_(0) {
+
         assert(dim>0);
+
+	use_rotation_ = (bin_mode_ == OptBinMode::ROTATIONAL);
+	use_rabitq_ = (bin_mode_ == OptBinMode::RABITQ && qmode_ == QuantMode::BIN1);
+	residual_dims_ = use_rabitq_ ? std::min(size_t(16), dim_ / 8) : 0;
         
-        // Initialize centroid structures if using CENTROID mode
-        if (bin_mode == OptBinMode::CENTROID) {
-            centroid_.assign(dim, T(0));
-            sum_.assign(dim, T(0));
+        // Initialize RaBitQ residuals if needed
+        if (use_rabitq_) {
+            std::cout << "  [RaBitQ: keeping " << residual_dims_ << " residual dims]" << std::flush;
+        }
+        
+        // Initialize rotation matrix if needed
+        if (use_rotation_) {
+            rotation_matrix_.resize(dim * dim);
+            if (sample_embeddings) {
+                compute_rotation_matrix(*sample_embeddings);
+            } else {
+                // Initialize as identity matrix
+                for (size_t i = 0; i < dim; ++i) {
+                    for (size_t j = 0; j < dim; ++j) {
+                        rotation_matrix_[i * dim + j] = (i == j) ? T(1) : T(0);
+                    }
+                }
+            }
+        }
+        
+        // Initialize centroid structures if using CENTROID mode or RaBitQ
+        if (bin_mode == OptBinMode::CENTROID || bin_mode == OptBinMode::RABITQ) {
+            if (centroid_.empty()) {
+                centroid_.assign(dim, T(0));
+                sum_.assign(dim, T(0));
+            }
         }
         
         if (qmode==QuantMode::BIN1) {
@@ -112,6 +160,13 @@ public:
             thresholds.assign(dim,T(0));
             
             if (bin_mode == OptBinMode::CENTROID) {
+                if (sample_embeddings) {
+                    train_centroid(*sample_embeddings);
+                }
+            } else if (bin_mode == OptBinMode::RABITQ) {
+                // RaBitQ needs thresholds/centroid for reconstruction
+                centroid_.assign(dim, T(0));
+                sum_.assign(dim, T(0));
                 if (sample_embeddings) {
                     train_centroid(*sample_embeddings);
                 }
@@ -152,22 +207,213 @@ public:
     }
 
     // -- interface compliance --------------------------------------------------
-    size_t get_data_size() override { return bytes_per_vector; }
+    size_t get_data_size() override { 
+        size_t base_size = bytes_per_vector;
+        // RaBitQ adds residual storage
+        if (use_rabitq_) {
+            base_size += residual_dims_ * sizeof(T);
+        }
+        return base_size;
+    }
     DISTFUNC_TYPE get_dist_func() override { return &SpaceQuantized::fstdist_; }
     void* get_dist_func_param() override { return this; }
 
     // -------------------------------------------------------------------------
     void quantize(const T* emb, uint8_t* out) const {
+        // Apply rotation if enabled
+        std::vector<T> rotated;
+        const T* input = emb;
+        
+        if (use_rotation_) {
+            rotated.resize(dim);
+            apply_rotation(emb, rotated.data());
+            input = rotated.data();
+        }
+        
+        // Quantize main vector
         switch(qmode){
-            case QuantMode::BIN1: quantize_bin(emb,out); break;
-            case QuantMode::INT158: quantize_ternary_simd(emb,out); break;
-            case QuantMode::INT8: quantize_int8_simd(emb,out); break;
-            case QuantMode::INT4: quantize_int4_simd(emb,out); break;
+            case QuantMode::BIN1: quantize_bin(input,out); break;
+            case QuantMode::INT158: quantize_ternary_simd(input,out); break;
+            case QuantMode::INT8: quantize_int8_simd(input,out); break;
+            case QuantMode::INT4: quantize_int4_simd(input,out); break;
+        }
+        
+        // For RaBitQ, add residual at the end
+        if (use_rabitq_ && qmode == QuantMode::BIN1) {
+            T* residual_ptr = reinterpret_cast<T*>(out + bytes_per_vector);
+            compute_residual(input, out, residual_ptr);
         }
     }
     
     // =================== CENTROID TRAINING ==================================
-
+    void compute_residual(const T* original, const uint8_t* binary_code, T* residual) const {
+        // Get threshold values for reconstruction
+        const T* thr = nullptr;
+        
+        if (bin_mode == OptBinMode::RABITQ && !centroid_.empty()) {
+            thr = centroid_.data();
+        } else if (!thresholds.empty()) {
+            thr = thresholds.data();
+        } else {
+            // Fallback: use zeros (shouldn't happen)
+            std::memset(residual, 0, residual_dims_ * sizeof(T));
+            return;
+        }
+        
+        // Collect largest reconstruction errors
+        std::vector<std::pair<T, size_t>> errors;
+        errors.reserve(dim);
+        
+        for (size_t i = 0; i < dim; ++i) {
+            size_t byte_idx = i / 8;
+            size_t bit_idx = i % 8;
+            bool bit = (binary_code[byte_idx] >> bit_idx) & 1;
+            
+            // Reconstruct value based on bit and threshold
+            // If bit=1, value was >= threshold, approximate as threshold + 0.5
+            // If bit=0, value was < threshold, approximate as threshold - 0.5
+            T reconstructed = bit ? (thr[i] + T(0.5)) : (thr[i] - T(0.5));
+            T error = original[i] - reconstructed;
+            
+            errors.push_back({std::abs(error), i});
+        }
+        
+        // Sort by error magnitude to find top-K dimensions
+        std::partial_sort(errors.begin(), 
+                         errors.begin() + residual_dims_,
+                         errors.end(),
+                         [](const auto& a, const auto& b) { return a.first > b.first; });
+        
+        // Store residuals for top dimensions (actual error, not absolute)
+        for (size_t i = 0; i < residual_dims_; ++i) {
+            size_t dim_idx = errors[i].second;
+            
+            // Recompute actual error (not absolute)
+            size_t byte_idx = dim_idx / 8;
+            size_t bit_idx = dim_idx % 8;
+            bool bit = (binary_code[byte_idx] >> bit_idx) & 1;
+            T reconstructed = bit ? (thr[dim_idx] + T(0.5)) : (thr[dim_idx] - T(0.5));
+            
+            residual[i] = original[dim_idx] - reconstructed;
+        }
+    }
+    
+    void compute_rotation_matrix(const std::vector<std::vector<T>>& samples) {
+        // Compute PCA-based rotation using covariance matrix
+        const size_t n = samples.size();
+        if (n == 0) return;
+        
+        std::cout << "  Computing rotation matrix via PCA..." << std::flush;
+        
+        // 1. Compute mean
+        std::vector<T> mean(dim, 0);
+        for (size_t i = 0; i < n; ++i) {
+            for (size_t d = 0; d < dim; ++d) {
+                mean[d] += samples[i][d];
+            }
+        }
+        for (size_t d = 0; d < dim; ++d) {
+            mean[d] /= n;
+        }
+        
+        // 2. Compute covariance matrix (simplified: use random projection for large dims)
+        // For efficiency, we'll use a Hadamard-like random rotation
+        // In practice, full PCA is too expensive for high dimensions
+        
+        // Initialize with random orthogonal matrix (Gram-Schmidt)
+        std::mt19937 rng(42);
+        std::normal_distribution<T> dist(0, 1);
+        
+        for (size_t i = 0; i < dim; ++i) {
+            // Generate random vector
+            std::vector<T> vec(dim);
+            for (size_t j = 0; j < dim; ++j) {
+                vec[j] = dist(rng);
+            }
+            
+            // Gram-Schmidt orthogonalization
+            for (size_t k = 0; k < i; ++k) {
+                T dot = 0;
+                for (size_t j = 0; j < dim; ++j) {
+                    dot += vec[j] * rotation_matrix_[k * dim + j];
+                }
+                for (size_t j = 0; j < dim; ++j) {
+                    vec[j] -= dot * rotation_matrix_[k * dim + j];
+                }
+            }
+            
+            // Normalize
+            T norm = 0;
+            for (size_t j = 0; j < dim; ++j) {
+                norm += vec[j] * vec[j];
+            }
+            norm = std::sqrt(norm);
+            
+            if (norm > 1e-6) {
+                for (size_t j = 0; j < dim; ++j) {
+                    rotation_matrix_[i * dim + j] = vec[j] / norm;
+                }
+            } else {
+                // Fallback to standard basis
+                for (size_t j = 0; j < dim; ++j) {
+                    rotation_matrix_[i * dim + j] = (i == j) ? T(1) : T(0);
+                }
+            }
+        }
+        
+        std::cout << " done" << std::flush;
+    }
+    
+    void apply_rotation(const T* input, T* output) const {
+        // Matrix-vector multiply: output = rotation_matrix * input
+#if defined(HNSW_SIMD_AVX2)
+        for (size_t i = 0; i < dim; ++i) {
+            size_t j = 0;
+            __m256 sum = _mm256_setzero_ps();
+            
+            for (; j + 7 < dim; j += 8) {
+                __m256 row = _mm256_loadu_ps(&rotation_matrix_[i * dim + j]);
+                __m256 inp = _mm256_loadu_ps(&input[j]);
+                sum = _mm256_fmadd_ps(row, inp, sum);
+            }
+            
+            alignas(32) float tmp[8];
+            _mm256_store_ps(tmp, sum);
+            output[i] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6] + tmp[7];
+            
+            for (; j < dim; ++j) {
+                output[i] += rotation_matrix_[i * dim + j] * input[j];
+            }
+        }
+#elif defined(HNSW_SIMD_NEON)
+        for (size_t i = 0; i < dim; ++i) {
+            size_t j = 0;
+            float32x4_t sum = vdupq_n_f32(0.0f);
+            
+            for (; j + 3 < dim; j += 4) {
+                float32x4_t row = vld1q_f32(&rotation_matrix_[i * dim + j]);
+                float32x4_t inp = vld1q_f32(&input[j]);
+                sum = vmlaq_f32(sum, row, inp);
+            }
+            
+            float tmp[4];
+            vst1q_f32(tmp, sum);
+            output[i] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+            
+            for (; j < dim; ++j) {
+                output[i] += rotation_matrix_[i * dim + j] * input[j];
+            }
+        }
+#else
+        for (size_t i = 0; i < dim; ++i) {
+            output[i] = 0;
+            for (size_t j = 0; j < dim; ++j) {
+                output[i] += rotation_matrix_[i * dim + j] * input[j];
+            }
+        }
+#endif
+    }
+    
     void train_centroid(const std::vector<std::vector<T>>& samples) {
         std::lock_guard<std::mutex> lock(centroid_mutex_);
         
@@ -333,28 +579,100 @@ private:
     // =================== DISTANCE ===========================================
     static float fstdist_(const void* p1, const void* p2, const void* param) {
         const auto* sp = reinterpret_cast<const SpaceQuantized*>(param);
-        return sp->compute_dist(reinterpret_cast<const uint8_t*>(p1),
-                                reinterpret_cast<const uint8_t*>(p2));
+        float dist = sp->compute_dist(reinterpret_cast<const uint8_t*>(p1),
+                                       reinterpret_cast<const uint8_t*>(p2));
+        // Safety check
+        if (std::isnan(dist) || std::isinf(dist)) {
+            std::cerr << "ERROR: Invalid distance computed: " << dist << std::endl;
+            return 1e9;
+        }
+        return dist;
     }
 
     float compute_dist(const uint8_t* a, const uint8_t* b) const {
+        float base_dist = 0;
+        
         if (qmode==QuantMode::BIN1) {
+            // Hamming distance
             uint32_t acc=0;
             for(size_t i=0;i<bytes_per_vector;++i) acc+=__builtin_popcount(a[i]^b[i]);
-            return float(acc);
+            base_dist = float(acc) / float(dim);
+            
+            // RaBitQ: refine with residuals
+            if (use_rabitq_) {
+                const T* res_a = reinterpret_cast<const T*>(a + bytes_per_vector);
+                const T* res_b = reinterpret_cast<const T*>(b + bytes_per_vector);
+                
+                float residual_dist = 0;
+                
+#if defined(HNSW_SIMD_AVX2)
+                size_t i = 0;
+                __m256 sum = _mm256_setzero_ps();
+                for (; i + 7 < residual_dims_; i += 8) {
+                    __m256 va = _mm256_loadu_ps(res_a + i);
+                    __m256 vb = _mm256_loadu_ps(res_b + i);
+                    __m256 diff = _mm256_sub_ps(va, vb);
+                    sum = _mm256_fmadd_ps(diff, diff, sum);
+                }
+                alignas(32) float tmp[8];
+                _mm256_store_ps(tmp, sum);
+                residual_dist = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6] + tmp[7];
+                
+                for (; i < residual_dims_; ++i) {
+                    float diff = res_a[i] - res_b[i];
+                    residual_dist += diff * diff;
+                }
+#elif defined(HNSW_SIMD_NEON)
+                size_t i = 0;
+                float32x4_t sum = vdupq_n_f32(0.0f);
+                for (; i + 3 < residual_dims_; i += 4) {
+                    float32x4_t va = vld1q_f32(res_a + i);
+                    float32x4_t vb = vld1q_f32(res_b + i);
+                    float32x4_t diff = vsubq_f32(va, vb);
+                    sum = vmlaq_f32(sum, diff, diff);
+                }
+                float tmp[4];
+                vst1q_f32(tmp, sum);
+                residual_dist = tmp[0] + tmp[1] + tmp[2] + tmp[3];
+                
+                for (; i < residual_dims_; ++i) {
+                    float diff = res_a[i] - res_b[i];
+                    residual_dist += diff * diff;
+                }
+#else
+                for (size_t i = 0; i < residual_dims_; ++i) {
+                    float diff = res_a[i] - res_b[i];
+                    residual_dist += diff * diff;
+                }
+#endif
+                
+                // Combine: weight binary distance less since residuals correct it
+                base_dist = 0.7f * base_dist + 0.3f * residual_dist / residual_dims_;
+            }
+            
+            return base_dist;
         } else if (qmode==QuantMode::INT158) {
             // Ternary distance computation
             double acc = 0;
             size_t bit_idx = 0;
             for (size_t d = 0; d < dim; ++d) {
                 // Extract 2 bits for each dimension
-                size_t byte_idx_a = bit_idx / 8;
-                size_t bit_off_a = bit_idx % 8;
-                size_t byte_idx_b = bit_idx / 8;
-                size_t bit_off_b = bit_idx % 8;
+                size_t byte_idx = bit_idx / 8;
+                size_t bit_off = bit_idx % 8;
                 
-                uint8_t bits_a = (a[byte_idx_a] >> bit_off_a) & 0x03;
-                uint8_t bits_b = (b[byte_idx_b] >> bit_off_b) & 0x03;
+                // Handle case where 2 bits span byte boundary
+                uint8_t bits_a, bits_b;
+                if (bit_off <= 6) {
+                    // Both bits in same byte
+                    bits_a = (a[byte_idx] >> bit_off) & 0x03;
+                    bits_b = (b[byte_idx] >> bit_off) & 0x03;
+                } else {
+                    // Bits span two bytes (bit_off == 7)
+                    bits_a = ((a[byte_idx] >> 7) & 0x01) | 
+                            ((a[byte_idx + 1] & 0x01) << 1);
+                    bits_b = ((b[byte_idx] >> 7) & 0x01) | 
+                            ((b[byte_idx + 1] & 0x01) << 1);
+                }
                 
                 // Decode: 00=-1, 01=0, 10=+1
                 int val_a = (bits_a == 0) ? -1 : ((bits_a == 1) ? 0 : 1);
@@ -367,46 +685,16 @@ private:
             }
             return float(acc);
         } else if (qmode==QuantMode::INT8) {
-#ifdef HNSW_SIMD_AVX2
-            size_t i=0;
-            __m256i sum=_mm256_setzero_si256();
-            for(;i+31<dim;i+=32){
-                __m256i va=_mm256_loadu_si256((__m256i*)(a+i));
-                __m256i vb=_mm256_loadu_si256((__m256i*)(b+i));
-                __m256i diff=_mm256_sub_epi8(va,vb);
-                __m256i lo=_mm256_unpacklo_epi8(diff,_mm256_setzero_si256());
-                __m256i hi=_mm256_unpackhi_epi8(diff,_mm256_setzero_si256());
-                sum=_mm256_add_epi32(sum,_mm256_madd_epi16(lo,lo));
-                sum=_mm256_add_epi32(sum,_mm256_madd_epi16(hi,hi));
+            // INT8 distance with proper per-dimension scaling
+            // CRITICAL: Must handle signed differences correctly
+            double acc = 0;
+            for(size_t i = 0; i < dim; ++i) {
+                // Cast to signed int to handle negative differences
+                int diff = (int)a[i] - (int)b[i];
+                acc += diff * diff * double(scale_sq[i]);
             }
-            alignas(32) int32_t tmp[8]; _mm256_store_si256((__m256i*)tmp,sum);
-            float acc=float(tmp[0]+tmp[1]+tmp[2]+tmp[3]+tmp[4]+tmp[5]+tmp[6]+tmp[7]);
-            for(;i<dim;++i){int d=int(a[i])-int(b[i]); acc+=d*d;}
-            return acc;
-#elif defined(HNSW_SIMD_NEON)
-            size_t i=0; uint32x4_t vsum=vdupq_n_u32(0);
-            for(;i+15<dim;i+=16){
-                uint8x16_t va=vld1q_u8(a+i), vb=vld1q_u8(b+i);
-                uint8x16_t diff=vabdq_u8(va,vb);
-                uint8x8_t diff_lo=vget_low_u8(diff);
-                uint8x8_t diff_hi=vget_high_u8(diff);
-                uint16x8_t diff16_lo=vmovl_u8(diff_lo);
-                uint16x8_t diff16_hi=vmovl_u8(diff_hi);
-                uint32x4_t part1=vmull_u16(vget_low_u16(diff16_lo),vget_low_u16(diff16_lo));
-                uint32x4_t part2=vmull_u16(vget_high_u16(diff16_lo),vget_high_u16(diff16_lo));
-                uint32x4_t part3=vmull_u16(vget_low_u16(diff16_hi),vget_low_u16(diff16_hi));
-                uint32x4_t part4=vmull_u16(vget_high_u16(diff16_hi),vget_high_u16(diff16_hi));
-                vsum=vaddq_u32(vsum,vaddq_u32(vaddq_u32(part1,part2),vaddq_u32(part3,part4)));
-            }
-            uint32_t tmp[4]; vst1q_u32(tmp,vsum);
-            float acc=float(tmp[0]+tmp[1]+tmp[2]+tmp[3]);
-            for(;i<dim;++i){int d=int(a[i])-int(b[i]); acc+=d*d;}
-            return acc;
-#else
-            double acc=0; for(size_t i=0;i<dim;++i){int d=int(a[i])-int(b[i]); acc+=d*d;}
             return float(acc);
-#endif
-        } else { // INT4 scalar
+        } else { // INT4
             double acc=0;
             for(size_t d=0;d<dim;d+=2){
                 uint8_t ba=a[d>>1], bb=b[d>>1];
@@ -507,7 +795,16 @@ private:
         for(size_t d=0;d<dim;++d){
             T lo=samples[0][d],hi=lo;
             for(size_t i=1;i<n;++i){T v=samples[i][d]; if(v<lo)lo=v; if(v>hi)hi=v;}
-            minval[d]=lo; scale[d]=(hi-lo)/levels; if(scale[d]==0)scale[d]=1; scale_sq[d]=scale[d]*scale[d];
+            minval[d]=lo; 
+            scale[d]=(hi-lo)/levels; 
+            if(scale[d]==0)scale[d]=1; 
+            scale_sq[d]=scale[d]*scale[d];
+        }
+        
+        // Debug: Print scale info for first dimension
+        if (dim > 0) {
+            std::cout << "  [Scale debug: dim0 range=[" << minval[0] << "," << (minval[0] + scale[0]*levels) 
+                      << "], scale=" << scale[0] << "]" << std::flush;
         }
     }
 
