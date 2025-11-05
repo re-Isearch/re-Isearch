@@ -1,0 +1,31 @@
+unified-hnsw/
+├── unified_hnsw.hpp          # Header file with declarations
+├── unified_hnsw.cpp          # Implementation file
+├── example_usage.cpp         # Example usage program
+├── Makefile                  # Build configuration
+├── README.md                 # Documentation (from earlier)
+├── INSTALL.md               # Installation guide (from earlier)
+├── EXAMPLES.md              # Usage examples (from earlier)
+└── hnswlib/                 # HNSWlib directory (you need to add this)
+    └── hnswlib/
+        └── hnswlib.h
+
+
+Complete Feature Set:
+✅ Metrics: L2, IP, Cosine (L1 structure ready)
+✅ Quantization: None (float), Binary, Ternary
+✅ Binary Modes: STANDARD (median), BETTER (correlation-optimized)
+✅ Rescoring: Optional with original vectors stored
+✅ Epsilon Stop Condition: searchWithStopCondition(query, epsilon, min_cand, max_cand)
+✅ SIMD Optimization: AVX2, AVX-512, ARM NEON
+✅ Single File Storage: Everything in one file with magic header
+✅ Stream-based I/O: Compatible with your modified HNSWlib
+File Structure:
+Each saved index contains (in order):
+
+Magic header (0x484E5357)
+Version number
+Complete metadata
+Quantizer thresholds (binary: 1 threshold/dim, ternary: 2 thresholds/dim)
+Original vectors (if rescoring enabled)
+HNSW graph structure

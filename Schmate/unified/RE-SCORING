@@ -1,0 +1,32 @@
+// Stores original float vectors + quantized index
+auto index = std::make_unique<UnifiedIndex>(
+    Metric::Binary, dim, max_elements, 16, 200, 
+    true  // enable_rescoring
+);
+
+// Use re-scored search for best accuracy
+auto results = index->searchKnnWithRescoring(query.data(), k);
+
+
+Without re-scoring
+
+// Only stores quantized index
+auto index = std::make_unique<UnifiedIndex>(
+    Metric::Binary, dim, max_elements, 16, 200, 
+    false  // disable rescoring
+);
+
+// Regular search with quantized distances
+auto results = index->searchKnnCloserFirst(query.data(), k);
+
+
+
+Mode         	Binary    	Ternary    	Accuracy
+No rescoring	16 bytes	32 bytes	approx
+With rescoring	528 bytes	544 bytes	high
+
+
+Float L2	512 bytes  Exact accuracy	
+
+
+Best practice: Use re-scoring for Binary/Ternary when memory allows. It gives you speed of quantized search with accuracy close to full-precision!
