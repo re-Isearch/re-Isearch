@@ -9,22 +9,22 @@ Support for quantization: SpaceQuantized
 - Standard, Better, Centroid, Rotational and RaBitQ optimization
 Some additional vector instructions.
 
-Benchmarks: Apple M1
+##Benchmarks: Apple M1
 
-Dimension: 384    Data points: 50000    Queries: 1000
-Params: M = 32, ef_construction = 400, ef_search = 400, k = 10
+###Dimension: 384    Data points: 50000    Queries: 1000
+###Params: M = 32, ef_construction = 400, ef_search = 400, k = 10
 
-Mode                  Build (ms)  Query (ms)    Recall Bytes/Vec Memory (KB)
-----------------------------------------------------------------------------
-BASELINE-L2 (FLOAT32)    23317                  0.9864
-INT8-STANDARD            18228.4      363.46    0.9885       384       18750
-INT8-CENTROID            18483.1      375.71    0.9864       384       18750
-INT8-ROTATIONAL          19952.2      413.05    0.9872       384       18750
-INT4-STANDARD            77728.5     1359.43    0.9903       192        9375
-INT4-ROTATIONAL          81096.9     1368.87    0.9859       192        9375
-BIN1-STANDARD             4811.4       81.30    0.8504        48        2343
-BIN1-ROTATIONAL           8810.6      131.49    0.8452        48        2343
-BIN1-RABITQ               4333.7       75.18    0.9999       112        5468
+Mode                   | Build (ms)  | Query (ms)  | Recall | Bytes/Vec| Memory (KB)
+------------------------------------------------------------------------------------
+|BASELINE-L2 (FLOAT32) |   23317     |             | 0.9864 |          |
+|INT8-STANDARD         |   18228.4   |  363.46     | 0.9885 |  384     |   18750
+|INT8-CENTROID         |   18483.1   |  375.71     | 0.9864 |  384     |   18750
+|INT8-ROTATIONAL       |   19952.2   |  413.05     | 0.9872 |  384     |   18750
+|INT4-STANDARD         |   77728.5   | 1359.43     | 0.9903 |  192     |    9375
+|INT4-ROTATIONAL       |   81096.9   | 1368.87     | 0.9859 |  192     |    9375
+|BIN1-STANDARD         |    4811.4   |   81.30     | 0.8504 |   48     |    2343
+|BIN1-ROTATIONAL       |    8810.6   |  131.49     | 0.8452 |   48     |    2343
+|BIN1-RABITQ           |    4333.7   |   75.18     | 0.9999 |  112     |    5468
 
 Recommendations:
 
