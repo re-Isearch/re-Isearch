@@ -10,9 +10,83 @@
 #include <list>
 #include <memory>
 
+#ifndef WINDOWS
+#include <sys/mman.h>
+#include <errno.h>
+#include <unistd.h>
+#endif
+
+
 namespace hnswlib {
 typedef unsigned int tableint;
 typedef unsigned int linklistsizeint;
+
+// Locks the memory but allows swapping if the system
+// is under pressure: avoid the Linux OOM-killer.
+inline void _free_alloc(void *ptr, size_t size) {
+#ifndef WINDOWS
+    if (!ptr || size == 0)
+        return;
+
+    // Unlock pages
+    munlock(ptr, size);
+#endif
+    // Free the memory
+    free(ptr);
+}
+
+
+inline void *_allocator(size_t data_size)
+{
+#ifdef WINDOWS 
+    // Windows has PrefetchVirtualMemory so its a TO-DO
+    return malloc(data_size);
+#else
+    static long page_size = 0;
+    void *ptr = nullptr;
+
+    if (page_size == 0 && (page_size = sysconf(_SC_PAGESIZE)) == -1) {
+       HNSWERR << "Can't determine page size: " << strerror(errno);
+       page_size = 4096;
+    }
+    if (posix_memalign(&ptr, (size_t)page_size, data_size) == 0) {
+       if (mlock(ptr, data_size) == 0) {
+          madvise(ptr, data_size, MADV_WILLNEED);
+          madvise(ptr, data_size, MADV_RANDOM);
+       } else {
+          // Fall back to advice only
+          madvise(ptr, data_size, MADV_WILLNEED);
+       }
+    } else ptr = malloc(data_size);
+    return ptr;
+#endif
+}
+
+inline void * _reallocator(void *ptr, size_t old_size, size_t new_size)
+{
+#ifdef WINDOWS
+  return realloc(ptr, new_size);
+#else
+  void *old_ptr = ptr;
+  ptr = realloc(ptr, new_size);
+
+  if (ptr != old_ptr) {
+    // Memory moved - need to handle locking
+    munlock(old_ptr, old_size);  // Unlock old region
+    if (ptr != NULL) {
+        mlock(ptr, new_size);     // Lock new region
+    }
+  } else if (new_size > old_size) {
+    // Same location but expanded - lock the new portion
+      mlock((char *)ptr + old_size, new_size - old_size);
+  }
+  madvise(ptr, new_size, MADV_WILLNEED);
+  madvise(ptr, new_size, MADV_RANDOM);
+  return ptr;
+#endif
+}
+
+
 
 template<typename dist_t>
 class HierarchicalNSW : public AlgorithmInterface<dist_t> {
@@ -85,6 +159,16 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         loadIndex(location, s, max_elements);
     }
 
+    // Allows one to load the index at a position of a file
+    HierarchicalNSW(
+        SpaceInterface<dist_t> *s,
+        std::ifstream &input,
+        size_t max_elements = 0,
+        bool allow_replace_deleted = false)
+        : allow_replace_deleted_(allow_replace_deleted) {
+        loadIndex(input, s, max_elements);
+    }
+
 
     HierarchicalNSW(
         SpaceInterface<dist_t> *s,
@@ -123,8 +207,8 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         label_offset_ = size_links_level0_ + data_size_;
         offsetLevel0_ = 0;
 
-        data_level0_memory_ = (char *) malloc(max_elements_ * size_data_per_element_);
-        if (data_level0_memory_ == nullptr)
+        // Lock memory since HNSW does not like swapping
+        if ((data_level0_memory_ = (char *)_allocator(  max_elements_ * size_data_per_element_ )) == nullptr)
             throw std::runtime_error("Not enough memory");
 
         cur_element_count = 0;
@@ -135,9 +219,11 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         enterpoint_node_ = -1;
         maxlevel_ = -1;
 
-        linkLists_ = (char **) malloc(sizeof(void *) * max_elements_);
+        // Lock the linklists as well
+        linkLists_ = (char **) _allocator( sizeof(void *) * max_elements_ );
         if (linkLists_ == nullptr)
             throw std::runtime_error("Not enough memory: HierarchicalNSW failed to allocate linklists");
+
         size_links_per_element_ = maxM_ * sizeof(tableint) + sizeof(linklistsizeint);
         mult_ = 1 / log(1.0 * M_);
         revSize_ = 1.0 / mult_;
@@ -149,14 +235,18 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
     }
 
     void clear() {
-        free(data_level0_memory_);
-        data_level0_memory_ = nullptr;
-        for (tableint i = 0; i < cur_element_count; i++) {
-            if (element_levels_[i] > 0)
-                free(linkLists_[i]);
+        if (data_level0_memory_) {
+            _free_alloc(data_level0_memory_, max_elements_ * size_data_per_element_);
+            data_level0_memory_ = nullptr;
         }
-        free(linkLists_);
-        linkLists_ = nullptr;
+        if (linkLists_) {
+            for (tableint i = 0; i < cur_element_count; i++) {
+                if (element_levels_[i] > 0)
+                    free(linkLists_[i]);
+            }
+            _free_alloc(linkLists_, sizeof(void *) * max_elements_ );
+            linkLists_ = nullptr;
+        }
         cur_element_count = 0;
         visited_list_pool_.reset(nullptr);
     }
@@ -792,7 +882,7 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
 
         input.seekg(pos, input.beg);
 
-        data_level0_memory_ = (char *) malloc(max_elements * size_data_per_element_);
+        data_level0_memory_ = (char *) _allocator(max_elements * size_data_per_element_);
         if (data_level0_memory_ == nullptr)
             throw std::runtime_error("Not enough memory: loadIndex failed to allocate level0");
         input.read(data_level0_memory_, cur_element_count * size_data_per_element_);
@@ -805,7 +895,7 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
 
         visited_list_pool_.reset(new VisitedListPool(1, max_elements));
 
-        linkLists_ = (char **) malloc(sizeof(void *) * max_elements);
+        linkLists_ = (char **) _allocator(sizeof(void *) * max_elements);
         if (linkLists_ == nullptr)
             throw std::runtime_error("Not enough memory: loadIndex failed to allocate linklists");
         element_levels_ = std::vector<int>(max_elements);
@@ -1228,7 +1318,7 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         memcpy(getDataByInternalId(cur_c), data_point, data_size_);
 
         if (curlevel) {
-            linkLists_[cur_c] = (char *) malloc(size_links_per_element_ * curlevel + 1);
+            linkLists_[cur_c] = (char *) _allocator(size_links_per_element_ * curlevel + 1);
             if (linkLists_[cur_c] == nullptr)
                 throw std::runtime_error("Not enough memory: addPoint failed to allocate linklist");
             memset(linkLists_[cur_c], 0, size_links_per_element_ * curlevel + 1);

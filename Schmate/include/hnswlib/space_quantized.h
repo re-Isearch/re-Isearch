@@ -11,9 +11,11 @@
 #include <iostream>
 #include <fstream>
 #include <mutex>
+#include <random>
 
 #include "hnswlib.h"
 #include "pearson_corr.h"
+#include "int_storage.h"
 
 /*
 Performance:
@@ -49,12 +51,6 @@ Recommendations (derived from the test data):
 - ❌ Skip ROTATIONAL modes - they're slower with no accuracy benefit
 - ❌ Skip INT4 - it's 18× slower than BIN1-RABITQ with similar recall
 
-Rotation Matrix Computation: Uses Gram-Schmidt orthogonalization to create
-a random orthogonal matrix. We use PCA to find the optimal rotation, but for
-high dimensions the random orthogonal rotations work well.
-
-
-
 */
 
 #if defined(__AVX512F__)
@@ -73,8 +69,44 @@ high dimensions the random orthogonal rotations work well.
 
 namespace hnswlib {
 
-enum class QuantMode { BIN1=0, INT158=1, INT4=2, INT8=3 };
-enum class OptBinMode  { STANDARD=0, BETTER=1, CENTROID=2, ROTATIONAL=3, RABITQ=4, RABITQ_EXTENDED=5 };
+enum class QuantMode {
+    BIN1=0, INT158=1, INT4=2, INT8=3
+};
+
+// ---------------------------------------------------------------------
+// Conversion functions
+// ---------------------------------------------------------------------
+// StorageType → actual bit-packing representation (BIN1, INT2, INT4, INT8, etc.)
+// 
+// QuantMode → higher-level quantization modes (binary, 1.58-bit, 4-bit, 8-bit).
+
+inline std::optional<QuantMode> toQuantMode(StorageType st) noexcept {
+    switch (st) {
+        case StorageType::BIN1:  return QuantMode::BIN1;
+        case StorageType::INT2:  return QuantMode::INT158;
+        case StorageType::INT4:  return QuantMode::INT4;
+        case StorageType::INT8:  return QuantMode::INT8;
+        // Unsupported types (like FP16, FLOAT32).
+        default:                 return std::nullopt; // not mappable
+    }
+}
+inline std::optional<StorageType> toStorageType(QuantMode mode) noexcept {
+    switch (mode) {
+        case QuantMode::BIN1:  return StorageType::BIN1;
+        case QuantMode::INT158:return StorageType::INT2;
+        case QuantMode::INT4:  return StorageType::INT4;
+        case QuantMode::INT8:  return StorageType::INT8;
+    }
+}
+// Convenience overload throwing on invalid type
+inline QuantMode requireQuantMode(StorageType st) {
+    auto q = toQuantMode(st);
+    if (!q) throw std::invalid_argument("StorageType cannot be mapped to QuantMode");
+    return *q;
+}
+
+// PASS means the Float32 vectors were already quantized!
+enum class OptBinMode  { PASS=0, STANDARD, BETTER, CENTROID, ROTATIONAL, RABITQ, RABITQ_EXTENDED };
 
 // =============================================================================
 template<typename T=float>
@@ -163,8 +195,10 @@ public:
                 sum_.assign(dim, T(0));
             }
         }
-        
-        if (qmode==QuantMode::BIN1) {
+
+        if (bin_mode == OptBinMode::PASS) {
+	   // We do nothing
+        } else if (qmode==QuantMode::BIN1) {
             bytes_per_vector=(dim+7)/8;
             thresholds.assign(dim,T(0));
             
@@ -229,6 +263,13 @@ public:
 
     // -------------------------------------------------------------------------
     void quantize(const T* emb, uint8_t* out) const {
+        //
+        if (bin_mode == OptBinMode::PASS) {
+           auto st = toStorageType(qmode);
+           if (st) IntStorage::quantize(*st, emb, out, dim); // pack passthrough
+           return;
+        }
+
         // Apply rotation if enabled
         std::vector<T> rotated;
         const T* input = emb;
@@ -581,6 +622,7 @@ public:
         return in.good();
     }
     
+    std::vector<T> get_centroid() { return centroid_; }
     size_t get_centroid_count() const { return count_; }
     size_t get_buffer_count() const { return buffer_count_; }
 
@@ -790,6 +832,8 @@ private:
     }
     
     void compute_thresholds(const std::vector<std::vector<T>>& samples){
+        if (bin_mode == OptBinMode::PASS) return;
+
         const size_t n=samples.size();
         std::vector<T> col(n);
         for(size_t d=0;d<dim;++d){

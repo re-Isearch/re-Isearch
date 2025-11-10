@@ -292,6 +292,7 @@ inline bool has_neon_runtime() {
 
 }  // namespace hnswlib
 
+#include "space_l1.h"
 #include "space_l2.h"
 #include "space_ip.h"
 #include "space_quantized.h"
