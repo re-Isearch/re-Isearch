@@ -20,6 +20,8 @@
 #include <arm_neon.h>
 #endif
 
+#include "LSMVectorStorage.h"
+
 namespace hnswlib {
 
 enum class Metric { L1 = 0, L2 = 1, IP = 2, Cosine = 3 };
@@ -71,6 +73,12 @@ struct UnifiedIndexMeta {
     size_t dim_    = 0;
     size_t max_elements_ = 0;
     Metric metric_ = Metric::L2;
+
+    // Memory overhead:
+    // Each label set stores just sizeof(labeltype) per label:
+    // 10000 labels × 4 bytes = 40 KB per delta
+    // 10 deltas = 400 KB total
+    size_t flush_threshold_ = 10000;
 
     QuantizationType quantization_ = QuantizationType::NONE;
     BinMode bin_mode_ = BinMode::STANDARD;
@@ -176,7 +184,7 @@ struct UnifiedIndexMeta {
     }
 
 private:
-    const uint32_t magic_ = 0x484E5357;
+    const uint32_t magic_  = sizeof(size_t) == sizeof(uint64_t) ?  0x484E5357 : 0x57534E48;
     const uint8_t version_ = 1;
 };
 
@@ -192,7 +200,6 @@ std::pair<size_t, size_t> peek_index_elements(const std::string path);
 
 void normalize_l2(float* vec, size_t dim);
 void normalize_l2_batch(std::vector<std::vector<float>>& embeddings);
-float pearson_corr(const std::vector<float>& a, const std::vector<float>& b);
 
 void binarize_scalar(const float* emb, const float* thr, size_t dim, uint8_t* out);
 #ifdef __AVX2__
@@ -346,6 +353,10 @@ public:
 
 class UnifiedIndex {
 private:
+    LSMVectorStorage vector_storage_;
+    size_t additions_since_flush_ = 0;
+    size_t &flush_threshold_ = meta.flush_threshold_;
+
     UnifiedIndexMeta meta_;
     Metric &metric_ = meta_.metric_;
     size_t &dim_ = meta_.dim_;
@@ -376,8 +387,8 @@ private:
     std::priority_queue<std::pair<float, labeltype>> searchKnn_internal(
         const float* query, size_t k, bool use_rescoring);
     
-    static float cosine_similarity(const float* a, const float* b, size_t dim);
-    static float l2_distance(const float* a, const float* b, size_t dim);
+    // static float cosine_similarity(const float* a, const float* b, size_t dim);
+    // static float l2_distance(const float* a, const float* b, size_t dim);
 
 public:
 
@@ -389,7 +400,8 @@ public:
                  QuantizationType quantization = QuantizationType::NONE,
                  BinMode bin_mode = BinMode::STANDARD,
                  bool enable_rescoring = false,
-                 size_t M = 16, size_t ef_construction = 200);
+                 size_t M = 16, size_t ef_construction = 200,
+                 size_t flush_threshold = 10000);
     
     void fit_quantizer(const std::vector<std::vector<float>>& sample_embeddings);
     void addPoint(const float* data, labeltype label);
@@ -411,9 +423,11 @@ public:
       if (is_quantized()) return quant_index_->cur_element_count ;
       else return float_index_->cur_element_count ;
     }
-    // Index empty?
-    bool empty() const { return size() == 0; }
 
+    size_t bytes_per_vector() const;
+    inline size_t bytes_per_index() const { return bytes_per_vector() * max_elements_; }
+
+    inline bool empty() const { return size() == 0; }
     
     bool is_quantized() const { return quantization_ != QuantizationType::NONE; }
     bool is_binary() const { return quantization_ == QuantizationType::BINARY; }

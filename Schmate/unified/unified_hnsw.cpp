@@ -1,6 +1,9 @@
 #define DELAY_ALLOC  1
 
 #include "unified_hnsw.hpp"
+#include <hnswlib/cosine_similarity.h>
+#include <hnswlib/l2_distance.h>
+#include "pearson_corr.hpp"
 
 #ifdef __ARM_FEATURE_SVE
 # include "arm_sve_suport.hpp"
@@ -14,7 +17,6 @@ namespace hnswlib {
 // ============================================================================
 // Utility Functions
 // ============================================================================
-#if 1
 SimdKind detect_simd() {
 #ifdef __AVX512F__
     if (AVX512Capable()) return SimdKind::AVX512;
@@ -23,48 +25,16 @@ SimdKind detect_simd() {
     if (AVXCapable()) return SimdKind::AVX2;
 #endif
 #if defined(__ARM_FEATURE_SVE)
-    return SimdKind::SVE;
-#elif defined(__ARM_NEON)
+    if (has_sve_runtime()) return SimdKind::SVE;
+#endif
+#if defined(__ARM_NEON)
     return SimdKind::NEON;
-#else
+#endif
     return SimdKind::NONE;
-#endif
 }
 
 
-#else
-SimdKind detect_simd() {
-#ifdef __AVX512F__
-    return SimdKind::AVX512;
-#elif defined(__AVX2__)
-    return SimdKind::AVX2;
-#elif defined(__ARM_FEATURE_SVE)
-    return SimdKind::SVE;
-#elif defined(__ARM_NEON)
-    return SimdKind::NEON;
-#else
-    return SimdKind::NONE;
-#endif
-}
-#endif
-
-void normalize_l2(float* vec, size_t dim) {
-    float norm = 0.0f;
-    for (size_t i = 0; i < dim; i++) {
-        norm += vec[i] * vec[i];
-    }
-    norm = std::sqrt(norm + 1e-8f);
-    for (size_t i = 0; i < dim; i++) {
-        vec[i] /= norm;
-    }
-}
-
-void normalize_l2_batch(std::vector<std::vector<float>>& embeddings) {
-    for (auto& emb : embeddings) {
-        normalize_l2(emb.data(), emb.size());
-    }
-}
-
+#if 0 /* OFFLOADED */
 float pearson_corr(const std::vector<float>& a, const std::vector<float>& b) {
     assert(a.size() == b.size());
     float mean_a = std::accumulate(a.begin(), a.end(), 0.f) / a.size();
@@ -78,6 +48,7 @@ float pearson_corr(const std::vector<float>& a, const std::vector<float>& b) {
     }
     return num / std::sqrt(da2 * db2 + 1e-8f);
 }
+#endif
 
 // ============================================================================
 // Binarization Functions
@@ -206,7 +177,7 @@ void BinaryQuantizer::fit(const std::vector<std::vector<float>>& sample_embeddin
                 for (size_t i = 0; i < n; i++) 
                     bits[i] = col[i] > thr ? 1.f : 0.f;
                 
-                float corr = std::fabs(pearson_corr(bits, col));
+                float corr = std::fabs(simd_pearson::pearson_corr(bits, col));
                 if (corr > best_corr) {
                     best_corr = corr;
                     best_thr = thr;
@@ -492,6 +463,10 @@ void* TernarySpace::get_dist_func_param() {
 // ============================================================================
 
 void UnifiedIndex::create_float_space() {
+    if (dim_ == 0) {
+       throw std::runtime_error("Zero (0) dimension float vector space specified!!!!");
+       return; // This is evil
+    }
     switch (metric_) {
         case Metric::L1:
            float_space_ = std::make_unique<hnswlib::L1Space>(dim_);
@@ -510,6 +485,10 @@ void UnifiedIndex::create_float_space() {
 }
 
 void UnifiedIndex::create_quantized_space() {
+    if (dim_ == 0) {
+       throw std::runtime_error("Zero (0) dimension quant vector space specified!!!!");
+       return; // This is evil
+    } 
     if (quantization_ == QuantizationType::BINARY) {
         quant_space_ = std::make_unique<BinarySpace>(dim_);
         binary_quantizer_ = std::make_unique<BinaryQuantizer>(dim_, bin_mode_, normalize_);
@@ -531,6 +510,10 @@ void UnifiedIndex::create_index() {
     }
 }
 
+
+/*
+
+// These are now part of our extended HNSWlib
 float UnifiedIndex::cosine_similarity(const float* a, const float* b, size_t dim) {
     float dot = 0.0f, norm_a = 0.0f, norm_b = 0.0f;
     for (size_t i = 0; i < dim; i++) {
@@ -549,6 +532,9 @@ float UnifiedIndex::l2_distance(const float* a, const float* b, size_t dim) {
     }
     return std::sqrt(dist);
 }
+*/
+
+
 
 // ============================================================================
 // UnifiedIndex Implementation - Constructor
@@ -562,8 +548,8 @@ UnifiedIndex::UnifiedIndex(const UnifiedIndexMeta& meta) : meta_(meta) {
 #endif
 
 UnifiedIndex::UnifiedIndex(size_t dim, size_t max_elements, Metric metric,
-                           QuantizationType quantization, BinMode bin_mode,
-                           bool enable_rescoring, size_t M, size_t ef_construction) {
+    QuantizationType quantization, BinMode bin_mode, bool enable_rescoring,
+    size_t M, size_t ef_construction, size_t flush_threshold) {
     
     dim_ = dim;
     max_elements_ = max_elements;
@@ -574,6 +560,8 @@ UnifiedIndex::UnifiedIndex(size_t dim, size_t max_elements, Metric metric,
     M_ = M;
     ef_construction_ = ef_construction;
     ef_ = 10;
+
+    flush_threshold_ = flush_threshold;
  
     normalize_ = (metric == Metric::Cosine);
 
@@ -704,7 +692,7 @@ std::priority_queue<std::pair<float, labeltype>> UnifiedIndex::searchKnn_interna
         if (original_vectors_.find(label) != original_vectors_.end()) {
             float dist;
             if (metric_ == Metric::Cosine || metric_ == Metric::IP) {
-                float sim = cosine_similarity(query, original_vectors_[label].data(), dim_);
+                float sim = hnswlib::cosine_similarity(query, original_vectors_[label].data(), dim_);
                 dist = -sim;
             } else {
                 dist = l2_distance(query, original_vectors_[label].data(), dim_);
@@ -805,7 +793,7 @@ std::vector<std::pair<float, labeltype>> UnifiedIndex::searchWithStopCondition(
                 if (original_vectors_.find(label) != original_vectors_.end()) {
                     float true_dist;
                     if (metric_ == Metric::Cosine || metric_ == Metric::IP) {
-                        float sim = cosine_similarity(query_ptr, original_vectors_[label].data(), dim_);
+                        float sim = hnswlib::cosine_similarity(query_ptr, original_vectors_[label].data(), dim_);
                         true_dist = -sim;
                     } else {
                         true_dist = l2_distance(query_ptr, original_vectors_[label].data(), dim_);
@@ -868,7 +856,8 @@ size_t UnifiedIndex::getCurrentElementCount() const {
 void UnifiedIndex::saveIndex(const std::string& path) {
     std::ofstream ofs(path, std::ios::binary);
     if (!ofs.is_open()) {
-        throw std::runtime_error("Cannot open file for writing: " + path);
+        HNSWERR << "Can't save index: '" << path << "' cannot be opened for writing";
+        return; // Can't continue
     }
     meta_.save(ofs);
     
@@ -905,7 +894,7 @@ bool UnifiedIndex::loadIndex(const std::string& path, bool searchOnly) {
     bool changed = false;
     std::ifstream ifs(path, std::ios::binary);
     if (!ifs.is_open()) {
-        throw std::runtime_error("Cannot open file for reading: " + path);
+        HNSWERR << "Cannot load index: '" << path << "' cannot be opened for reading";
 	return false;
     }
     
@@ -914,7 +903,8 @@ bool UnifiedIndex::loadIndex(const std::string& path, bool searchOnly) {
 
     if (loaded_meta.dim_ != dim_) {
 #if DELAY_ALLOC == 1
-	HNSWERR << "Dimension mismatch. Expected " << std::to_string(dim_) <<
+	// dim_ == 0 means we wanted to load something
+	if (dim_ != 0) HNSWERR << "Dimension mismatch. Expected " << std::to_string(dim_) <<
                 " but got " << std::to_string(loaded_meta.dim_) << std::endl ;
 	changed = true;
 #else
@@ -1092,5 +1082,57 @@ std::pair<size_t, size_t> peek_index_elements(const std::string path) {
     }   
     return {};
 }
+
+
+/*
+Dimension of Common SBERT Models:
+
+all-MiniLM-L6-v2            384    Most popular, fast, good quality
+all-mpnet-base-v2           768    Higher quality, slower
+all-MiniLM-L12-v2           384    Balance of speed/quality
+paraphrase-MiniLM-L6-v2     384    Paraphrase detection
+paraphrase-mpnet-base-v2    768    Paraphrase detection
+multi-qa-MiniLM-L6-cos-v1   384    Question answering
+multi-qa-mpnet-base-cos-v1  768    Question answering
+
+For 384D SBERT vectors:
+
+Float32: 1,536 bytes                   (384 × 4) + 160 = 1,696 bytes 
+
+Binary:  48 bytes (32x compression)    (384 ÷ 8) + 160 = 208 bytes (-88% memory)
+Binary + rescoring --> 1,584 bytes (48 + 160 + 1,536) = 1744 bytes (+2% memory)
+
+Ternary: 96 bytes (16x compression)    (384 ÷ 4) + 160 = 256 bytes (-85% memory)
+Ternary + rescoring --> 1,584 bytes (96 + 160 + 1,536) = 1792 bytes (+6% memory)
+
+*/
+
+size_t UnifiedIndex::bytes_per_vector() const
+{
+    size_t vector_bytes = dim_ * sizeof(float);
+    if (is_quantized()) {
+        size_t quant_bytes;
+        if (is_quantized()) { 
+            quant_bytes = ((dim_ + 63) / 64) * 8;  // 48 bytes for 384D
+        } else {
+            quant_bytes = (dim_ + 3) / 4;           // 96 bytes for 384D
+        }
+        
+        size_t graph_overhead = M_ * 10;  // ~160 bytes for M=16
+        size_t total = quant_bytes + graph_overhead;
+        
+        if (enable_rescoring_) {
+            total += vector_bytes;  // Add original 1536 bytes for 384D
+        }
+        
+        return total;
+    } else {
+        // Float metrics
+        size_t graph_overhead = M_ * 10;  // ~160 bytes for M=16
+        return vector_bytes + graph_overhead;
+    }
+}
+
+
 
 } // namespace hnswlib
