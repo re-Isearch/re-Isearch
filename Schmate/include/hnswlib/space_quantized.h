@@ -1,19 +1,12 @@
 #pragma once
-#include <vector>
-#include <cmath>
-#include <cstdint>
-#include <cstring>
-#include <algorithm>
-#include <numeric>
-#include <thread>
-#include <atomic>
-#include <cassert>
-#include <iostream>
-#include <fstream>
+// Space L2 Quantized
+
+#include "quantized.h"
+
 #include <mutex>
 #include <random>
 
-#include "hnswlib.h"
+
 #include "pearson_corr.h"
 #include "int_storage.h"
 
@@ -68,45 +61,6 @@ Recommendations (derived from the test data):
 #endif
 
 namespace hnswlib {
-
-enum class QuantMode {
-    BIN1=0, INT158=1, INT4=2, INT8=3
-};
-
-// ---------------------------------------------------------------------
-// Conversion functions
-// ---------------------------------------------------------------------
-// StorageType → actual bit-packing representation (BIN1, INT2, INT4, INT8, etc.)
-// 
-// QuantMode → higher-level quantization modes (binary, 1.58-bit, 4-bit, 8-bit).
-
-inline std::optional<QuantMode> toQuantMode(StorageType st) noexcept {
-    switch (st) {
-        case StorageType::BIN1:  return QuantMode::BIN1;
-        case StorageType::INT2:  return QuantMode::INT158;
-        case StorageType::INT4:  return QuantMode::INT4;
-        case StorageType::INT8:  return QuantMode::INT8;
-        // Unsupported types (like FP16, FLOAT32).
-        default:                 return std::nullopt; // not mappable
-    }
-}
-inline std::optional<StorageType> toStorageType(QuantMode mode) noexcept {
-    switch (mode) {
-        case QuantMode::BIN1:  return StorageType::BIN1;
-        case QuantMode::INT158:return StorageType::INT2;
-        case QuantMode::INT4:  return StorageType::INT4;
-        case QuantMode::INT8:  return StorageType::INT8;
-    }
-}
-// Convenience overload throwing on invalid type
-inline QuantMode requireQuantMode(StorageType st) {
-    auto q = toQuantMode(st);
-    if (!q) throw std::invalid_argument("StorageType cannot be mapped to QuantMode");
-    return *q;
-}
-
-// PASS means the Float32 vectors were already quantized!
-enum class OptBinMode  { PASS=0, STANDARD, BETTER, CENTROID, ROTATIONAL, RABITQ, RABITQ_EXTENDED };
 
 // =============================================================================
 template<typename T=float>
@@ -196,7 +150,7 @@ public:
             }
         }
 
-        if (bin_mode == OptBinMode::PASS) {
+        if (bin_mode == OptBinMode::PASS || qmode == QuantMode::NONE) {
 	   // We do nothing
         } else if (qmode==QuantMode::BIN1) {
             bytes_per_vector=(dim+7)/8;
@@ -250,6 +204,9 @@ public:
     }
 
     // -- interface compliance --------------------------------------------------
+    size_t get_bytes_per_vector() override {
+       return  bytes_per_vector;
+    }
     size_t get_data_size() override { 
         size_t base_size = bytes_per_vector;
         // RaBitQ adds residual storage
@@ -262,9 +219,9 @@ public:
     void* get_dist_func_param() override { return this; }
 
     // -------------------------------------------------------------------------
-    void quantize(const T* emb, uint8_t* out) const {
+    void quantize(const T* emb, uint8_t* out) const override {
         //
-        if (bin_mode == OptBinMode::PASS) {
+        if (bin_mode == OptBinMode::PASS || qmode == QuantMode::NONE) {
            auto st = toStorageType(qmode);
            if (st) IntStorage::quantize(*st, emb, out, dim); // pack passthrough
            return;
@@ -286,6 +243,7 @@ public:
             case QuantMode::INT158: quantize_ternary_simd(input,out); break;
             case QuantMode::INT8: quantize_int8_simd(input,out); break;
             case QuantMode::INT4: quantize_int4_simd(input,out); break;
+	    case QuantMode::NONE: /* Should never be reached ! */ break;
         }
         
         // For RaBitQ, add residual at the end
@@ -625,6 +583,70 @@ public:
     std::vector<T> get_centroid() { return centroid_; }
     size_t get_centroid_count() const { return count_; }
     size_t get_buffer_count() const { return buffer_count_; }
+
+    // Fit/train the quantization parameters from sample embeddings
+    void fit(const std::vector<std::vector<T>>& sample_embeddings) override {
+        if (sample_embeddings.empty()) {
+            HNSWDEBUG << "  [SpaceQuantized::fit] Warning: empty sample set provided";
+            return;
+        }
+        
+        const size_t n = sample_embeddings.size();
+        HNSWDEBUG << "  [SpaceQuantized::fit] Training on " << n << " samples, dim=" << dim;
+        
+        // Initialize rotation matrix if needed
+        if (use_rotation_) {
+            compute_rotation_matrix(sample_embeddings);
+        }
+        
+        // Initialize centroid if using CENTROID or RaBitQ modes
+        if (bin_mode == OptBinMode::CENTROID || bin_mode == OptBinMode::RABITQ) {
+            train_centroid(sample_embeddings);
+        }
+        
+        // Compute quantization parameters based on mode
+        if (bin_mode == OptBinMode::PASS) {
+            HNSWDEBUG << "  [PASS] No quantization training needed";
+        } else if (qmode == QuantMode::BIN1) {
+            // Binary quantization
+            if (bin_mode == OptBinMode::CENTROID) {
+                // Centroid already trained above
+                HNSWDEBUG << "  [BIN1-CENTROID] Using centroid as thresholds";
+            } else if (bin_mode == OptBinMode::RABITQ || bin_mode == OptBinMode::RABITQ_EXTENDED) {
+                // RaBitQ: train centroid for reconstruction
+                if (centroid_.empty()) {
+                    centroid_.assign(dim, T(0));
+                    sum_.assign(dim, T(0));
+                    train_centroid(sample_embeddings);
+                }
+                HNSWDEBUG << "  [BIN1-RABITQ] Centroid trained for residual reconstruction";
+            } else {
+                // STANDARD or BETTER mode
+                compute_thresholds(sample_embeddings);
+                HNSWDEBUG << "  [BIN1] Thresholds computed";
+            }
+        } else if (qmode == QuantMode::INT158) {
+            // Ternary quantization
+            if (bin_mode == OptBinMode::CENTROID) {
+                compute_ternary_thresholds_from_centroid();
+            } else {
+                compute_ternary_thresholds(sample_embeddings);
+            }
+            HNSWDEBUG << "  [INT158] Ternary thresholds computed";
+        } else if (qmode == QuantMode::INT4 || qmode == QuantMode::INT8) {
+            // INT4/INT8 quantization
+            double levels = (qmode == QuantMode::INT8) ? 255.0 : 15.0;
+            if (bin_mode == OptBinMode::CENTROID) {
+                compute_scale_min_from_centroid(sample_embeddings, levels);
+            } else {
+                compute_scale_min(sample_embeddings, levels);
+            }
+            HNSWDEBUG << "  [" << (qmode == QuantMode::INT8 ? "INT8" : "INT4") 
+                      << "] Scale/min computed";
+        }
+        
+        HNSWDEBUG << "  [SpaceQuantized::fit] Training complete";
+    }
 
 private:
     // =================== DISTANCE ===========================================
@@ -1234,6 +1256,159 @@ private:
             }
         }
     }
+
+    // Persistance for Params
+
+    /*
+    // Train and save
+    space->fit(training_samples);
+    space->save_quantization_params("quant_params.bin");
+
+    // Later, load without retraining
+    auto space = new hnswlib::SpaceQuantized<float>(dim, qmode, bin_mode);
+    space->load_quantization_params("quant_params.bin");
+    */
+
+    // Save all quantization parameters
+
+    bool save_quantization_params(const std::string& filepath) const {
+        std::ofstream out(filepath, std::ios::binary);
+        // When writing directly to a file we may want to have a magic!
+        return save_quantization_params(out);
+    }
+
+bool save_quantization_params(std::ofstream &out) const override{
+    if (!out.is_open()) return false;
+    
+    // Write header
+    out.write(reinterpret_cast<const char*>(&dim), sizeof(dim));
+    int qmode_int = static_cast<int>(qmode);
+    int bin_mode_int = static_cast<int>(bin_mode);
+    out.write(reinterpret_cast<const char*>(&qmode_int), sizeof(qmode_int));
+    out.write(reinterpret_cast<const char*>(&bin_mode_int), sizeof(bin_mode_int));
+    out.write(reinterpret_cast<const char*>(&bytes_per_vector), sizeof(bytes_per_vector));
+    out.write(reinterpret_cast<const char*>(&use_rotation_), sizeof(use_rotation_));
+    out.write(reinterpret_cast<const char*>(&use_rabitq_), sizeof(use_rabitq_));
+    out.write(reinterpret_cast<const char*>(&residual_dims_), sizeof(residual_dims_));
+    
+    // Write quantization parameters based on mode
+    if (qmode == QuantMode::BIN1) {
+        out.write(reinterpret_cast<const char*>(thresholds.data()), dim * sizeof(T));
+    } else if (qmode == QuantMode::INT158) {
+        out.write(reinterpret_cast<const char*>(ternary_threshold_low_.data()), dim * sizeof(T));
+        out.write(reinterpret_cast<const char*>(ternary_threshold_high_.data()), dim * sizeof(T));
+        out.write(reinterpret_cast<const char*>(ternary_scale_.data()), dim * sizeof(T));
+    } else if (qmode == QuantMode::INT4 || qmode == QuantMode::INT8) {
+        out.write(reinterpret_cast<const char*>(scale.data()), dim * sizeof(T));
+        out.write(reinterpret_cast<const char*>(minval.data()), dim * sizeof(T));
+        out.write(reinterpret_cast<const char*>(scale_sq.data()), dim * sizeof(T));
+    }
+    
+    // Write rotation matrix if used
+    if (use_rotation_) {
+        out.write(reinterpret_cast<const char*>(rotation_matrix_.data()), 
+                  dim * dim * sizeof(T));
+    }
+    
+    // Write centroid if used
+    if (bin_mode == OptBinMode::CENTROID || bin_mode == OptBinMode::RABITQ) {
+        out.write(reinterpret_cast<const char*>(centroid_.data()), dim * sizeof(T));
+        out.write(reinterpret_cast<const char*>(sum_.data()), dim * sizeof(T));
+        out.write(reinterpret_cast<const char*>(&count_), sizeof(count_));
+    }
+    
+    return out.good();
+}
+
+// Load all quantization parameters
+
+bool load_quantization_params(const std::string& filepath) {
+    std::ifstream in(filepath, std::ios::binary);
+    // When reading directly fromfile we may want to have a magic and check it!
+    return load_quantization_params(in);
+}
+
+bool load_quantization_params(std::ifstream &in) override {
+    if (!in.is_open()) return false;
+    
+    // Read and verify header
+    size_t file_dim;
+    int qmode_int, bin_mode_int;
+    in.read(reinterpret_cast<char*>(&file_dim), sizeof(file_dim));
+    if (file_dim != dim) {
+        HNSWERR << "Dimension mismatch: expected " << dim << ", got " << file_dim;
+        return false;
+    }
+    
+    in.read(reinterpret_cast<char*>(&qmode_int), sizeof(qmode_int));
+    in.read(reinterpret_cast<char*>(&bin_mode_int), sizeof(bin_mode_int));
+    
+    if (static_cast<QuantMode>(qmode_int) != qmode) {
+        HNSWERR << "QuantMode mismatch";
+        return false;
+    }
+    if (static_cast<OptBinMode>(bin_mode_int) != bin_mode) {
+        HNSWERR << "OptBinMode mismatch";
+        return false;
+    }
+    
+    in.read(reinterpret_cast<char*>(&bytes_per_vector), sizeof(bytes_per_vector));
+    in.read(reinterpret_cast<char*>(&use_rotation_), sizeof(use_rotation_));
+    in.read(reinterpret_cast<char*>(&use_rabitq_), sizeof(use_rabitq_));
+    in.read(reinterpret_cast<char*>(&residual_dims_), sizeof(residual_dims_));
+    
+    // Read quantization parameters based on mode
+    if (qmode == QuantMode::BIN1) {
+        thresholds.resize(dim);
+        in.read(reinterpret_cast<char*>(thresholds.data()), dim * sizeof(T));
+    } else if (qmode == QuantMode::INT158) {
+        ternary_threshold_low_.resize(dim);
+        ternary_threshold_high_.resize(dim);
+        ternary_scale_.resize(dim);
+        in.read(reinterpret_cast<char*>(ternary_threshold_low_.data()), dim * sizeof(T));
+        in.read(reinterpret_cast<char*>(ternary_threshold_high_.data()), dim * sizeof(T));
+        in.read(reinterpret_cast<char*>(ternary_scale_.data()), dim * sizeof(T));
+    } else if (qmode == QuantMode::INT4 || qmode == QuantMode::INT8) {
+        scale.resize(dim);
+        minval.resize(dim);
+        scale_sq.resize(dim);
+        in.read(reinterpret_cast<char*>(scale.data()), dim * sizeof(T));
+        in.read(reinterpret_cast<char*>(minval.data()), dim * sizeof(T));
+        in.read(reinterpret_cast<char*>(scale_sq.data()), dim * sizeof(T));
+    }
+    
+    // Read rotation matrix if used
+    if (use_rotation_) {
+        rotation_matrix_.resize(dim * dim);
+        in.read(reinterpret_cast<char*>(rotation_matrix_.data()), 
+                dim * dim * sizeof(T));
+    }
+    
+    // Read centroid if used
+    if (bin_mode == OptBinMode::CENTROID || bin_mode == OptBinMode::RABITQ) {
+        centroid_.resize(dim);
+        sum_.resize(dim);
+        in.read(reinterpret_cast<char*>(centroid_.data()), dim * sizeof(T));
+        in.read(reinterpret_cast<char*>(sum_.data()), dim * sizeof(T));
+        in.read(reinterpret_cast<char*>(&count_), sizeof(count_));
+    }
+    
+    return in.good();
+}
+
+// Getters for inspection
+const std::vector<T>& get_thresholds() const { return thresholds; }
+const std::vector<T>& get_scale() const { return scale; }
+const std::vector<T>& get_minval() const { return minval; }
+const std::vector<T>& get_ternary_threshold_low() const { return ternary_threshold_low_; }
+const std::vector<T>& get_ternary_threshold_high() const { return ternary_threshold_high_; }
+const std::vector<T>& get_rotation_matrix() const { return rotation_matrix_; }
+bool is_using_rotation() const { return use_rotation_; }
+bool is_using_rabitq() const { return use_rabitq_; }
+size_t get_residual_dims() const { return residual_dims_; }
+
+
+
 };
 
 } // namespace hnswlib

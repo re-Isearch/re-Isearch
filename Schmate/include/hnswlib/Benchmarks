@@ -136,3 +136,21 @@ Testing InnerProductSpace:
   QPS: 3047 queries/sec
 
 === All Tests Complete ===
+
+
+150k vectors
+
+Mode                  Build (ms)  Query (ms)    Recall Bytes/Vec Memory (KB)
+----------------------------------------------------------------------------
+BIN1-STANDARD            22751.9      148.78    0.8290        48        7031
+BIN1-BETTER              12809.9       74.69    0.5517        48        7031
+BIN1-CENTROID            20880.2      141.43    0.7958        48        7031
+BIN1-ROTATIONAL          34803.0      197.89    0.7964        48        7031
+BIN1-RABITQ              18672.6      128.86    0.9993       112       16406
+BIN1-RABITQ-EXT          40994.8      334.51    0.9810       304       44531
+
+=== Analysis ===
+Best recall: BIN1-RABITQ (0.9993)
+Fastest query: BIN1-BETTER (74.69 ms)
+Smallest memory: BIN1-STANDARD (7031 KB)
+

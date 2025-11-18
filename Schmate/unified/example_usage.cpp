@@ -6,8 +6,8 @@
 #include <cstdlib>
 
 int main() {
-    const size_t dim = 128;
-    const size_t max_elements = 10000;
+    const size_t dim = 384;
+    const size_t max_elements = 5000;
     const size_t k = 10;
     
     // Detect SIMD
@@ -22,7 +22,7 @@ int main() {
     std::cout << " SIMD instructions\n\n";
     
     // Generate sample data
-    std::vector<std::vector<float>> sample_data(1000, std::vector<float>(dim));
+    std::vector<std::vector<float>> sample_data(max_elements, std::vector<float>(dim));
     for (auto& vec : sample_data) {
         for (auto& val : vec) {
             val = ((float)rand() / (float)RAND_MAX) * 2.0f - 1.0f;
@@ -38,7 +38,7 @@ int main() {
     std::cout << "=== Float Index (L2 Distance) ===\n";
     hnswlib::UnifiedIndex float_index(dim, max_elements, hnswlib::Metric::L2);
     
-    for (size_t i = 0; i < 1000; i++) {
+    for (size_t i = 0; i < max_elements; i++) {
         float_index.addPoint(sample_data[i].data(), i);
     }
     
@@ -56,7 +56,7 @@ int main() {
     std::cout << "\n=== Float Index (Cosine Similarity) ===\n";
     hnswlib::UnifiedIndex cosine_index(dim, max_elements, hnswlib::Metric::Cosine);
     
-    for (size_t i = 0; i < 1000; i++) {
+    for (size_t i = 0; i < max_elements; i++) {
         cosine_index.addPoint(sample_data[i].data(), i);
     }
     
@@ -75,14 +75,14 @@ int main() {
     hnswlib::UnifiedIndex binary_standard(
         dim, max_elements, 
         hnswlib::Metric::L2,
-        hnswlib::QuantizationType::BINARY,
-        hnswlib::BinMode::STANDARD,
+        hnswlib::QuantMode::BIN1,
+        hnswlib::OptBinMode::STANDARD,
         false  // no rescoring
     );
     
     binary_standard.fit_quantizer(sample_data);
     
-    for (size_t i = 0; i < 1000; i++) {
+    for (size_t i = 0; i < max_elements; i++) {
         binary_standard.addPoint(sample_data[i].data(), i);
     }
     
@@ -101,14 +101,14 @@ int main() {
     hnswlib::UnifiedIndex binary_better(
         dim, max_elements, 
         hnswlib::Metric::Cosine,
-        hnswlib::QuantizationType::BINARY,
-        hnswlib::BinMode::BETTER,
+        hnswlib::QuantMode::BIN1,
+        hnswlib::OptBinMode::BETTER,
         true  // enable rescoring
     );
     
     binary_better.fit_quantizer(sample_data);
     
-    for (size_t i = 0; i < 1000; i++) {
+    for (size_t i = 0; i < max_elements; i++) {
         binary_better.addPoint(sample_data[i].data(), i);
     }
     
@@ -135,14 +135,14 @@ int main() {
     hnswlib::UnifiedIndex ternary_index(
         dim, max_elements,
         hnswlib::Metric::L2,
-        hnswlib::QuantizationType::TERNARY,
-        hnswlib::BinMode::STANDARD,
+        hnswlib::QuantMode::INT158,
+        hnswlib::OptBinMode::STANDARD,
         false
     );
     
     ternary_index.fit_quantizer(sample_data);
     
-    for (size_t i = 0; i < 1000; i++) {
+    for (size_t i = 0; i < max_elements; i++) {
         ternary_index.addPoint(sample_data[i].data(), i);
     }
     
@@ -183,11 +183,12 @@ int main() {
     
     // Example 7: Load and verify
     std::cout << "\n=== Loading Binary Better Index ===\n";
+
     hnswlib::UnifiedIndex loaded_index(
         dim, max_elements,
         hnswlib::Metric::Cosine,
-        hnswlib::QuantizationType::BINARY,
-        hnswlib::BinMode::BETTER,
+        hnswlib::QuantMode::BIN1,
+        hnswlib::OptBinMode::BETTER,
         true
     );
     
@@ -221,7 +222,7 @@ int main() {
     std::cout << "  ✓ SIMD: AVX2, AVX-512, ARM NEON, ARM SVE\n";
     std::cout << "  ✓ Single file storage with stream I/O\n";
     std::cout << "\nEach index file contains:\n";
-    std::cout << "  1. Magic header (0x484E5357 = 'HNSW')\n";
+    std::cout << "  1. Magic header ('WSHN' for 64-bit,'HNSW' for 32-bit)\n";
     std::cout << "  2. Version number\n";
     std::cout << "  3. Full metadata\n";
     std::cout << "  4. Quantizer thresholds (if quantized)\n";

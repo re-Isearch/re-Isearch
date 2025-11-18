@@ -25,8 +25,18 @@
 namespace hnswlib {
 
 enum class Metric { L1 = 0, L2 = 1, IP = 2, Cosine = 3 };
-enum class QuantizationType { NONE = 0, BINARY = 1, TERNARY = 2 };
-enum class BinMode { STANDARD = 0, BETTER = 1 };
+
+// Conversion to and from string names
+std::string metric_to_string(Metric m);
+Metric string_to_metric(const std::string& s);
+
+// Quantization Mode conversions to and from string names
+QuantMode  string_to_quantzation(const std::string &s);
+std::string quantization_to_string(QuantMode mode);
+
+OptBinMode  string_to_bin_mode(const std::string& s);
+std::string bin_mode_to_string(OptBinMode mode);
+
 
 
 enum class SimdKind { NONE = 0, AVX2, AVX512, NEON, SVE };
@@ -80,8 +90,8 @@ struct UnifiedIndexMeta {
     // 10 deltas = 400 KB total
     size_t flush_threshold_ = 10000;
 
-    QuantizationType quantization_ = QuantizationType::NONE;
-    BinMode bin_mode_ = BinMode::STANDARD;
+    QuantMode quantization_ = QuantMode::NONE;
+    OptBinMode bin_mode_ = OptBinMode::STANDARD;
 
     bool   enable_rescoring_ = false; // Only effects quantized metrics
     bool   normalize_ = false; // Use normalized vectors, Always true for Cosine
@@ -101,8 +111,8 @@ struct UnifiedIndexMeta {
     UnifiedIndexMeta() {;}
     UnifiedIndexMeta(size_t dim, size_t max_elements,
 	Metric metric = Metric::L2,
-	QuantizationType quantization = QuantizationType::NONE,
-	BinMode bin_mode = BinMode::STANDARD,
+	QuantMode quantization = QuantMode::NONE,
+	OptBinMode bin_mode = OptBinMode::STANDARD,
 	bool enable_rescoring = false,
 	size_t M = 16,
 	size_t ef_construction = 200) :
@@ -196,155 +206,8 @@ std::pair<size_t, size_t> peek_index_elements(std::istream& ifs);
 // <curent_element_count, max_elements>
 std::pair<size_t, size_t> peek_index_elements(const std::string path);
 
-//SimdKind detect_simd();
-
 void normalize_l2(float* vec, size_t dim);
 void normalize_l2_batch(std::vector<std::vector<float>>& embeddings);
-
-void binarize_scalar(const float* emb, const float* thr, size_t dim, uint8_t* out);
-#ifdef __AVX2__
-void binarize_avx2(const float* emb, const float* thr, size_t dim, uint8_t* out);
-#endif
-#ifdef __AVX512F__
-void binarize_avx512(const float* emb, const float* thr, size_t dim, uint8_t* out);
-#endif
-#ifdef __ARM_NEON
-void binarize_neon(const float* emb, const float* thr, size_t dim, uint8_t* out);
-#endif
-
-class BinaryQuantizer {
-private:
-    size_t dim_;
-    std::vector<float> thresholds_;
-    SimdKind simd_;
-    BinMode mode_;
-    bool normalize_before_quantization_;
-    void quantize_internal(const float* emb, uint8_t* out) const;
-
-public:
-    BinaryQuantizer(size_t dim, BinMode mode = BinMode::STANDARD, 
-                    bool normalize_before_quantization = false);
-    void fit(const std::vector<std::vector<float>>& sample_embeddings);
-    void quantize(const float* emb, uint8_t* out) const;
-    size_t get_dim() const { return dim_; }
-    size_t get_nbytes() const { return (dim_ + 7) / 8; }
-    const std::vector<float>& get_thresholds() const { return thresholds_; }
-    void set_thresholds(const std::vector<float>& thresholds);
-    SimdKind get_simd() const { return simd_; }
-    BinMode get_mode() const { return mode_; }
-    bool get_normalize_before_quantization() const { return normalize_before_quantization_; }
-};
-
-class TernaryQuantizer {
-private:
-    size_t dim_;
-    std::vector<float> thresholds_pos_;
-    std::vector<float> thresholds_neg_;
-    bool normalize_before_quantization_;
-
-public:
-    TernaryQuantizer(size_t dim, bool normalize_before_quantization = false);
-    void fit(const std::vector<std::vector<float>>& sample_embeddings);
-    void quantize(const float* emb, uint8_t* out) const;
-    size_t get_dim() const { return dim_; }
-    size_t get_nbytes() const { return (dim_ * 2 + 7) / 8; }
-    const std::vector<float>& get_thresholds_pos() const { return thresholds_pos_; }
-    const std::vector<float>& get_thresholds_neg() const { return thresholds_neg_; }
-    void set_thresholds(const std::vector<float>& pos, const std::vector<float>& neg);
-};
-
-class HammingDistance {
-public:
-    static uint32_t compute(const uint8_t* a, const uint8_t* b, size_t nbytes);
-#ifdef __ARM_NEON
-    static uint32_t compute_neon(const uint8_t* a, const uint8_t* b, size_t nbytes);
-#endif
-#ifdef __AVX2__
-    static uint32_t compute_avx2(const uint8_t* a, const uint8_t* b, size_t nbytes);
-#endif
-    static uint32_t compute_optimized(const uint8_t* a, const uint8_t* b, size_t nbytes);
-};
-
-class TernaryDistance {
-public:
-    static uint32_t compute(const uint8_t* a, const uint8_t* b, size_t dim);
-};
-
-// ============================================
-// 1-bit SPACE 
-// ============================================
-
-class BinarySpace : public SpaceInterface<size_t> {
-private:
-    size_t dim_,nbytes_;
-    DISTFUNC<size_t> fstdistfunc_;
-    void* dist_func_param_;
-public:
-    BinarySpace(size_t dim);
-    size_t get_data_size() override;
-    DISTFUNC<size_t> get_dist_func() override;
-    void* get_dist_func_param() override;
-};
-
-// ============================================
-// 1.58 bit SPACE 
-// ============================================
-
-class TernarySpace : public SpaceInterface<size_t> {
-private:
-    size_t dim_, nbytes_;
-    DISTFUNC<size_t> fstdistfunc_;
-    void* dist_func_param_;
-public:
-    TernarySpace(size_t dim);
-    size_t get_data_size() override;
-    DISTFUNC<size_t> get_dist_func() override;
-    void* get_dist_func_param() override;
-};
-
-
-// ============================================
-// L1 SPACE (Manhattan Distance)
-// ============================================
-class L1Space : public SpaceInterface<float> {
-    DISTFUNC<float> fstdistfunc_;
-    size_t data_size_;
-    size_t dim_;
-
-public:
-    L1Space(size_t dim) {
-        fstdistfunc_ = [](const void *pVect1v, const void *pVect2v, const void *qty_ptr) -> float {
-            float *pVect1 = (float *) pVect1v;
-            float *pVect2 = (float *) pVect2v;
-            size_t qty = *((size_t *) qty_ptr);
-
-            float res = 0;
-            for (size_t i = 0; i < qty; i++) {
-                float diff = pVect1[i] - pVect2[i];
-                res += std::abs(diff);
-            }
-            return res;
-        };  
-            
-        dim_ = dim;
-        data_size_ = dim * sizeof(float);
-    }    
-        
-    size_t get_data_size() override {
-        return data_size_;
-    }
-    
-    DISTFUNC<float> get_dist_func() override {
-        return fstdistfunc_;
-    }
-
-    void *get_dist_func_param() override {
-        return &dim_;
-    }
-
-    ~L1Space() {}
-}; 
-
 
 // ============================================
 // UNIFIED INDEX (supports all metrics)
@@ -353,35 +216,35 @@ public:
 
 class UnifiedIndex {
 private:
-    LSMVectorStorage vector_storage_;
     size_t additions_since_flush_ = 0;
-    size_t &flush_threshold_ = meta.flush_threshold_;
+    size_t &flush_threshold_ = meta_.flush_threshold_;
 
     UnifiedIndexMeta meta_;
     Metric &metric_ = meta_.metric_;
     size_t &dim_ = meta_.dim_;
     bool &enable_rescoring_ = meta_.enable_rescoring_;
     bool &normalize_ = meta_.normalize_;
-    QuantizationType &quantization_ = meta_.quantization_;
-    BinMode &bin_mode_ = meta_.bin_mode_;
+    QuantMode &quantization_ = meta_.quantization_;
+    OptBinMode &bin_mode_ = meta_.bin_mode_;
     bool   &quantizer_fitted_ = meta_.quantizer_fitted_;
     // 
     size_t &max_elements_ = meta_.max_elements_;
     size_t &M_ = meta_.M_;
     size_t &ef_construction_ = meta_.ef_construction_;
     size_t &ef_ = meta_.ef_;
+
+    LSMVectorStorage vector_storage_;
     
-    std::unique_ptr<HierarchicalNSW<float>> float_index_;
-    std::unique_ptr<SpaceInterface<float>> float_space_;
-    std::unique_ptr<HierarchicalNSW<size_t>> quant_index_;
-    std::unique_ptr<SpaceInterface<size_t>> quant_space_;
-    std::unique_ptr<BinaryQuantizer> binary_quantizer_;
-    std::unique_ptr<TernaryQuantizer> ternary_quantizer_;
+    std::unique_ptr<HierarchicalNSW<float>> index_;
+    std::unique_ptr<SpaceInterface<float>> space_;
+
     std::unordered_map<labeltype, std::vector<float>> original_vectors_;
     
+    void create_space();
+    void create_index();
+
     void create_float_space();
     void create_quantized_space();
-    void create_index();
 
     void addPoint_internal(const float* data, labeltype label);
     std::priority_queue<std::pair<float, labeltype>> searchKnn_internal(
@@ -397,12 +260,12 @@ public:
 #endif
 
     UnifiedIndex(size_t dim, size_t max_elements, Metric metric = Metric::L2,
-                 QuantizationType quantization = QuantizationType::NONE,
-                 BinMode bin_mode = BinMode::STANDARD,
+                 QuantMode quantization = QuantMode::NONE,
+                 OptBinMode bin_mode = OptBinMode::STANDARD,
                  bool enable_rescoring = false,
                  size_t M = 16, size_t ef_construction = 200,
                  size_t flush_threshold = 10000);
-    
+
     void fit_quantizer(const std::vector<std::vector<float>>& sample_embeddings);
     void addPoint(const float* data, labeltype label);
     
@@ -419,23 +282,21 @@ public:
 
     void clear(); // This removes all elements leaving it empty.
     // How many elements? 
-    size_t size() const {
-      if (is_quantized()) return quant_index_->cur_element_count ;
-      else return float_index_->cur_element_count ;
-    }
+    size_t size() const { return index_->cur_element_count ; }
 
     size_t bytes_per_vector() const;
     inline size_t bytes_per_index() const { return bytes_per_vector() * max_elements_; }
 
     inline bool empty() const { return size() == 0; }
     
-    bool is_quantized() const { return quantization_ != QuantizationType::NONE; }
-    bool is_binary() const { return quantization_ == QuantizationType::BINARY; }
-    bool is_ternary() const { return quantization_ == QuantizationType::TERNARY; }
+    bool is_quantized() const { return quantization_ != QuantMode::NONE; }
     Metric get_metric() const { return metric_; }
     size_t get_dim() const { return dim_; }
     bool is_rescoring_enabled() const { return enable_rescoring_; }
     const UnifiedIndexMeta& get_meta() const { return meta_; }
+
+    inline bool is_binary() { return  (quantization_ == QuantMode::BIN1); };
+    inline bool is_ternary() { return (quantization_ == QuantMode::INT158); };
 };
 
 } // namespace hnswlib

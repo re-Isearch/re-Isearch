@@ -31,6 +31,9 @@ public:
         data_size_ = dim * sizeof(float);
     }
 
+    size_t get_bytes_per_vector() override {
+       return  data_size_;
+    }
     size_t get_data_size() override {
         return data_size_;
     }

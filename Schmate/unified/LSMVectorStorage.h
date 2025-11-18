@@ -47,12 +47,15 @@ private:
     size_t flush_threshold_;  // Your configurable X
     
 public:
+    LSMVectorStorage() {}
     LSMVectorStorage(size_t dim, size_t flush_threshold = 10000) 
         : dim_(dim), flush_threshold_(flush_threshold) {}
     
     ~LSMVectorStorage() {
         cleanup();
     }
+    void set_dim(size_t dim) { dim_ = dim; }
+    void set_flush_threshold(size_t flush_threshold) { flush_threshold_ = flush_threshold; }
     
     // Initial load from combined index file (not standalone)
     bool load_vectors(const std::string& filename, std::ifstream& ifs,

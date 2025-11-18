@@ -191,6 +191,7 @@ template<typename MTYPE>
 class SpaceInterface {
  public:
     // virtual void search(void *);
+    virtual size_t get_bytes_per_vector() { return get_data_size(); }; // Not always same as data size
     virtual size_t get_data_size() = 0;
 
     virtual DISTFUNC<MTYPE> get_dist_func() = 0;
@@ -198,6 +199,11 @@ class SpaceInterface {
     virtual void *get_dist_func_param() = 0;
 
     virtual ~SpaceInterface() {}
+ 
+    virtual void quantize(const MTYPE* emb, uint8_t* out) const {};
+    virtual void fit(const std::vector<std::vector<MTYPE>>& sample_embeddings) {};
+    virtual bool save_quantization_params(std::ofstream &out) const { return false;};
+    virtual bool load_quantization_params(std::ifstream &in) { return false;};
 };
 
 template<typename dist_t>
@@ -296,6 +302,7 @@ inline bool has_neon_runtime() {
 #include "space_l2.h"
 #include "space_ip.h"
 #include "space_quantized.h"
+#include "space_quantized_ip.h"
 #include "stop_condition.h"
 #include "bruteforce.h"
 #include "hnswalg.h"
