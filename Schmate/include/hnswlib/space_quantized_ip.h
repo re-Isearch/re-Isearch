@@ -160,6 +160,7 @@ public:
             norms_.reserve(10000); // Pre-allocate for efficiency
         }
         
+#if 0
         if (use_rabitq_) {
             if (bin_mode_ == OptBinModeIP::RABITQ_EXTENDED) {
                 HNSWDEBUG << "  [RaBitQ-Extended IP: keeping " << residual_dims_ << " residual dims]";
@@ -167,6 +168,7 @@ public:
                 HNSWDEBUG << "  [RaBitQ IP: keeping " << residual_dims_ << " residual dims]";
             }
         }
+#endif
         
         if (use_rotation_) {
             rotation_matrix_.resize(dim_ * dim_);
@@ -251,7 +253,8 @@ public:
 
     // -------------------------------------------------------------------------
     void quantize(const T* emb, uint8_t* out) const override {
-        if (bin_mode_ == OptBinModeIP::PASS) {
+        if (bin_mode_ == OptBinMode::PASS || qmode_ == QuantMode::NONE || 
+                qmode_ == QuantMode::FP16 || qmode_ == QuantMode::BF16) {
            auto st = toStorageType(qmode_);
            if (st) IntStorage::quantize(*st, emb, out, dim_);
            return;
@@ -273,6 +276,8 @@ public:
             case QuantModeIP::INT158: quantize_ternary_simd(input,out); break;
             case QuantModeIP::INT8: quantize_int8_simd(input,out); break;
             case QuantModeIP::INT4: quantize_int4_simd(input,out); break;
+            case QuantModeIP::FP16: IntStorage::quantize(StorageType::FP16, input, out, dim_); break;
+            case QuantModeIP::BF16: IntStorage::quantize(StorageType::BF16, input, out, dim_); break;
 	    case QuantModeIP::NONE: IntStorage::quantize(StorageType::FLOAT32, input, out, dim_); break;
         }
         
@@ -311,7 +316,7 @@ public:
             mean_[d] /= T(n);
         }
         
-        HNSWDEBUG << "  [Computed mean for IP quantization]";
+        // HNSWDEBUG << "  [Computed mean for IP quantization]";
     }
     
     // =================== RESIDUAL COMPUTATION ================================
@@ -357,7 +362,7 @@ public:
         const size_t n = samples.size();
         if (n == 0) return;
         
-        HNSWDEBUG << "  Computing rotation matrix via PCA...";
+        // HNSWDEBUG << "  Computing rotation matrix via PCA...";
         
         // Random orthogonal matrix using Gram-Schmidt
         std::mt19937 rng(42);
@@ -398,7 +403,7 @@ public:
             }
         }
         
-        HNSWDEBUG << " done";
+        // HNSWDEBUG << " done";
     }
     
     void apply_rotation(const T* input, T* output) const {
@@ -588,12 +593,12 @@ public:
 
   void fit(const std::vector<std::vector<T>>& sample_embeddings) override {
     if (sample_embeddings.empty()) {
-        HNSWDEBUG << "  [SpaceQuantizedIP::fit] Warning: empty sample set provided";
+        // HNSWDEBUG << "  [SpaceQuantizedIP::fit] Warning: empty sample set provided";
         return;
     }
     
     const size_t n = sample_embeddings.size();
-    HNSWDEBUG << "  [SpaceQuantizedIP::fit] Training on " << n << " samples, dim=" << dim_;
+    // HNSWDEBUG << "  [SpaceQuantizedIP::fit] Training on " << n << " samples, dim=" << dim_;
     
     // Compute mean
     compute_mean(sample_embeddings);
@@ -611,7 +616,7 @@ public:
     // Compute quantization parameters based on mode
     if (qmode_ == QuantModeIP::BIN1) {
         // Binary: mean is already computed
-        HNSWDEBUG << "  [BIN1] Using mean-centered binary quantization";
+        // HNSWDEBUG << "  [BIN1] Using mean-centered binary quantization";
     } else if (qmode_ == QuantModeIP::INT158) {
         // Ternary quantization
         if (bin_mode_ == OptBinModeIP::CENTROID) {
@@ -619,7 +624,7 @@ public:
         } else {
             compute_ternary_thresholds(sample_embeddings);
         }
-        HNSWDEBUG << "  [INT158] Ternary thresholds computed";
+        // HNSWDEBUG << "  [INT158] Ternary thresholds computed";
     } else if (qmode_ == QuantModeIP::INT4 || qmode_ == QuantModeIP::INT8) {
         // INT4/INT8 quantization
         double levels = (qmode_ == QuantModeIP::INT8) ? 255.0 : 15.0;
@@ -628,11 +633,10 @@ public:
         } else {
             compute_scale_offset(sample_embeddings, levels);
         }
-        HNSWDEBUG << "  [" << (qmode_ == QuantModeIP::INT8 ? "INT8" : "INT4") 
-                  << "] Scale/offset computed";
+        // HNSWDEBUG << "  [" << (qmode_ == QuantModeIP::INT8 ? "INT8" : "INT4") << "] Scale/offset computed";
     }
     
-    HNSWDEBUG << "  [SpaceQuantizedIP::fit] Training complete";
+    // HNSWDEBUG << "  [SpaceQuantizedIP::fit] Training complete";
   }
 
 private:
@@ -863,8 +867,7 @@ private:
         }
         
         if (dim_ > 0) {
-            HNSWDEBUG << "  [Scale debug IP: dim0 range=[" << -offset[0]*scale[0] 
-                      << "," << (levels-offset[0])*scale[0] << "], scale=" << scale[0] << "]";
+            // HNSWDEBUG << "  [Scale debug IP: dim0 range=[" << -offset[0]*scale[0] << "," << (levels-offset[0])*scale[0] << "], scale=" << scale[0] << "]";
         }
     }
 

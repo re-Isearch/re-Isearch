@@ -38,6 +38,8 @@ OptBinMode  string_to_bin_mode(const std::string& s);
 std::string bin_mode_to_string(OptBinMode mode);
 
 
+StorageType string_to_storage_type(const std::string& s);
+std::string storage_type_to_string(StorageType type) ;
 
 enum class SimdKind { NONE = 0, AVX2, AVX512, NEON, SVE };
 // AVX2:
@@ -75,6 +77,23 @@ enum class SimdKind { NONE = 0, AVX2, AVX512, NEON, SVE };
 // its processors), and even the specific Linux kernel being used on a device. 
 SimdKind detect_simd();
 
+// ============================================
+// Parse a Specification String: Metric, Storage,..
+// ============================================
+class SpecificationString {
+public:
+   Metric      metric_ = Metric::L2;
+   QuantMode   quantization_ = QuantMode::NONE;
+   OptBinMode  mode_ = OptBinMode::PASS ;
+   StorageType storage_type_ = StorageType::FLOAT32;
+   SpecificationString(const std::string& str) {
+     parse(str);
+   }
+   bool parse(const std::string& s);
+   operator std::string() const;
+private:
+    bool use_storage_ = false; // true if PASS case
+} ;
 
 // ============================================
 // UNIFIED INDEX META HEADER 
@@ -216,6 +235,7 @@ void normalize_l2_batch(std::vector<std::vector<float>>& embeddings);
 
 class UnifiedIndex {
 private:
+    std::string pathname_;
     size_t additions_since_flush_ = 0;
     size_t &flush_threshold_ = meta_.flush_threshold_;
 
@@ -249,6 +269,10 @@ private:
     void addPoint_internal(const float* data, labeltype label);
     std::priority_queue<std::pair<float, labeltype>> searchKnn_internal(
         const float* query, size_t k, bool use_rescoring);
+
+    std::vector<std::pair<float, labeltype>> searchKnnCloserFirst_internal(
+	const float* query, size_t k, BaseFilterFunctor* isIdAllowed, bool use_rescoring) const;
+
     
     // static float cosine_similarity(const float* a, const float* b, size_t dim);
     // static float l2_distance(const float* a, const float* b, size_t dim);
@@ -259,6 +283,11 @@ public:
    UnifiedIndex(const UnifiedIndexMeta& meta);
 #endif
 
+   UnifiedIndex(size_t dim, size_t max_elements, 
+	const std::string& specification, bool enable_rescoring = false,
+        size_t M = 16, size_t ef_construction = 200, size_t flush_threshold = 10000);
+
+
     UnifiedIndex(size_t dim, size_t max_elements, Metric metric = Metric::L2,
                  QuantMode quantization = QuantMode::NONE,
                  OptBinMode bin_mode = OptBinMode::STANDARD,
@@ -266,18 +295,36 @@ public:
                  size_t M = 16, size_t ef_construction = 200,
                  size_t flush_threshold = 10000);
 
-    void fit_quantizer(const std::vector<std::vector<float>>& sample_embeddings);
+    void fit(const std::vector<std::vector<float>>& sample_embeddings);
     void addPoint(const float* data, labeltype label);
     
     std::priority_queue<std::pair<float, labeltype>> searchKnn(
         const float* query, size_t k, bool use_rescoring = false);
-    
+
     std::vector<std::pair<float, labeltype>> searchWithStopCondition(
         const float* query, float epsilon, size_t min_cand, size_t max_cand);
+
+    std::vector<std::pair<float, labeltype>>
+        searchKnnCloserFirst(const float* query, size_t k, bool use_rescoring) const;
+
+    std::vector<std::pair<float, labeltype>>
+        searchKnnCloserFirst(const float* query, size_t k,
+        BaseFilterFunctor* isIdAllowed = nullptr, bool use_rescoring = false) const;
+
+
+    std::vector<std::pair<float, labeltype>> apply_rescoring( const float* query,
+	const std::vector<std::pair<float, labeltype>>& candidates) const;
     
     void setEf(size_t ef);
     size_t getCurrentElementCount() const;
-    void saveIndex(const std::string& path);
+
+    void        set_filepath(const std::string& path) { pathname_ = path; }
+    std::string get_filepath() const                  { return pathname_; }
+
+
+    bool save();
+    bool saveIndex(const std::string& path);
+    bool load(bool SearchOnly = false);
     bool loadIndex(const std::string& path, bool SearchOnly = false);
 
     void clear(); // This removes all elements leaving it empty.
@@ -297,6 +344,27 @@ public:
 
     inline bool is_binary() { return  (quantization_ == QuantMode::BIN1); };
     inline bool is_ternary() { return (quantization_ == QuantMode::INT158); };
+
+    float score_from_dist(float dist) const;
+
+static inline std::vector<std::pair<float, size_t>>
+sort_best_first(std::vector<std::pair<float, size_t>> &res_vector) {
+    return res_vector; // already sorted
+}
+
+static inline std::vector<std::pair<float, size_t>>
+sort_best_first(const std::priority_queue<std::pair<float,size_t>>& pq) {
+    auto tmp = pq;
+    std::vector<std::pair<float,size_t>> out;
+    out.reserve(tmp.size());
+    while (!tmp.empty()) {
+        out.push_back(tmp.top());
+        tmp.pop();
+    }
+    std::reverse(out.begin(), out.end());
+    return out;
+}
+
 };
 
 } // namespace hnswlib

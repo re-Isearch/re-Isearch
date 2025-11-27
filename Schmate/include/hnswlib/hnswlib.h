@@ -214,7 +214,7 @@ class AlgorithmInterface {
     virtual std::priority_queue<std::pair<dist_t, labeltype>>
         searchKnn(const void*, size_t, BaseFilterFunctor* isIdAllowed = nullptr) const = 0;
 
-    // Return k nearest neighbor in the order of closer fist
+    // Return k nearest neighbor in the order of closer first
     virtual std::vector<std::pair<dist_t, labeltype>>
         searchKnnCloserFirst(const void* query_data, size_t k, BaseFilterFunctor* isIdAllowed = nullptr) const;
 
@@ -298,6 +298,8 @@ inline bool has_neon_runtime() {
 
 }  // namespace hnswlib
 
+#include "quantized.h"
+#include "int_storage.h"
 #include "space_l1.h"
 #include "space_l2.h"
 #include "space_ip.h"

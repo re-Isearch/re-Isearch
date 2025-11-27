@@ -103,6 +103,29 @@ UnifiedIndex::UnifiedIndex(const UnifiedIndexMeta& meta) : meta_(meta) {
 }
 #endif
 
+UnifiedIndex::UnifiedIndex(size_t dim, size_t max_elements, 
+     const std::string& specification, bool enable_rescoring,
+     size_t M, size_t ef_construction, size_t flush_threshold)
+{
+    SpecificationString spec (specification);
+    dim_ = dim;
+    max_elements_ = max_elements;
+    metric_ = spec.metric_;
+    quantization_ = spec.quantization_;
+    bin_mode_ = spec.mode_;
+    enable_rescoring_ = enable_rescoring;
+    M_ = M;
+    ef_construction_ = ef_construction;
+    ef_ = 10;
+    flush_threshold_ = flush_threshold;
+    normalize_ = (metric_ == Metric::Cosine);
+    vector_storage_.set_dim(dim_);
+#if DELAY_ALLOC == 0
+    create_index();
+#endif
+
+}
+
 UnifiedIndex::UnifiedIndex(size_t dim, size_t max_elements, Metric metric,
     QuantMode quantization, OptBinMode bin_mode, bool enable_rescoring,
     size_t M, size_t ef_construction, size_t flush_threshold) {
@@ -132,12 +155,12 @@ UnifiedIndex::UnifiedIndex(size_t dim, size_t max_elements, Metric metric,
 // UnifiedIndex Implementation - Public Methods
 // ============================================================================
 
-void UnifiedIndex::fit_quantizer(const std::vector<std::vector<float>>& sample_embeddings) {
+void UnifiedIndex::fit(const std::vector<std::vector<float>>& sample_embeddings) {
     if (!space_) create_space(); 
 
   //// Train later when you have data
   // std::vector<std::vector<float>> samples = get_training_samples();
-  // index->fit_quantizer(samples);  // Now fully trained!
+  // index->fit(samples);  // Now fully trained!
 
     if (quantization_ != QuantMode::NONE) {
         space_->fit(sample_embeddings);
@@ -164,12 +187,78 @@ void UnifiedIndex::addPoint_internal(const float* data, labeltype label) {
     // Make sure we have an index, create if needed
     if (!index_) create_index ();
 #endif 
-    index_->addPoint(data, label);
+
+    if (is_quantized()) {
+      // Need to quantise "
+      std::vector<uint8_t> coded(space_->get_data_size());
+      space_->quantize(data, coded.data());
+      index_->addPoint(coded.data(), label);
+    } else
+      index_->addPoint(data, label);
 
     if (enable_rescoring_) {
         original_vectors_[label] = std::vector<float>(data, data + dim_);
     }
     additions_since_flush_++;
+#if 0
+    if (additions_since_flush_ > flush_threshold_ )
+       save();
+#endif
+}
+
+std::vector<std::pair<float, labeltype>>
+        UnifiedIndex::searchKnnCloserFirst(const float* query, size_t k,
+	bool use_rescoring) const {
+    return searchKnnCloserFirst(query, k, nullptr, use_rescoring);
+}
+
+std::vector<std::pair<float, labeltype>>
+	UnifiedIndex::searchKnnCloserFirst(const float* query, size_t k,
+	BaseFilterFunctor* isIdAllowed, bool use_rescoring) const {
+
+    if (!index_) return {};
+ 
+    if (normalize_) {
+        std::vector<float> normalized(query, query + dim_);
+        normalize_l2(normalized.data(), dim_);
+	return searchKnnCloserFirst_internal(normalized.data(), k, isIdAllowed, use_rescoring);
+    }
+
+    return searchKnnCloserFirst_internal(query, k, isIdAllowed, use_rescoring);
+}
+
+std::vector<std::pair<float, labeltype>>
+        UnifiedIndex::searchKnnCloserFirst_internal(const float* query, size_t k,
+        BaseFilterFunctor* isIdAllowed, bool use_rescoring) const {
+
+    if (quantization_ == QuantMode::NONE) {
+        return index_->searchKnnCloserFirst(query, k, isIdAllowed);
+    }
+
+
+    std::vector<uint8_t> quantized;
+    quantized.resize(space_->get_data_size()); // was get_bytes_per_vector());
+    space_->quantize(query, quantized.data());
+
+    // With PASS (pass-through we NEVER rescore)
+    if (!use_rescoring || bin_mode_ == OptBinMode::PASS) {
+	return index_->searchKnnCloserFirst(quantized.data(), k, isIdAllowed);
+    }
+
+     // Get more candidates for rescoring
+     size_t rescore_factor = std::max(size_t(3), k * 3);
+     size_t num_candidates = std::min(rescore_factor, index_->getCurrentElementCount());
+
+     auto candidates = index_->searchKnnCloserFirst(quantized.data(), num_candidates, isIdAllowed);
+
+     // Rescore using original vectors
+     auto rescored = apply_rescoring(query, candidates);
+        
+     // Return top-k
+     if (rescored.size() > k) {
+	rescored.resize(k);
+     }
+     return rescored;
 }
 
 std::priority_queue<std::pair<float, labeltype>> UnifiedIndex::searchKnn(
@@ -192,7 +281,7 @@ std::priority_queue<std::pair<float, labeltype>> UnifiedIndex::searchKnn_interna
     }
     
     std::vector<uint8_t> quantized;
-    quantized.resize(space_->get_bytes_per_vector());
+    quantized.resize(space_->get_data_size()); // was get_bytes_per_vector());
     space_->quantize(query, quantized.data());
     
     if (!use_rescoring || !enable_rescoring_) {
@@ -236,6 +325,47 @@ std::priority_queue<std::pair<float, labeltype>> UnifiedIndex::searchKnn_interna
     }
     
     return result;
+}
+
+
+std::vector<std::pair<float, labeltype>> UnifiedIndex::apply_rescoring(
+    const float* query,
+    const std::vector<std::pair<float, labeltype>>& candidates) const {
+    
+    if (!is_rescoring_enabled() || original_vectors_.empty()) {
+        return candidates;
+    }
+    
+    std::vector<std::pair<float, labeltype>> rescored;
+    rescored.reserve(candidates.size());
+    
+    // Rescore each candidate using original vectors
+    for (const auto& [approx_dist, label] : candidates) {
+        auto it = original_vectors_.find(label);
+        if (it != original_vectors_.end()) {
+            float dist;
+            
+            if (metric_ == Metric::Cosine || metric_ == Metric::IP) {
+                float sim = hnswlib::cosine_similarity(query, it->second.data(), dim_);
+                dist = (metric_ == Metric::Cosine) ? (1.0f - sim) : -sim;
+            } else if (metric_ == Metric::L2) {
+                dist = l2_distance(query, it->second.data(), dim_);
+            } else {
+                // Fallback to approximate distance
+                dist = approx_dist;
+            }
+            
+            rescored.emplace_back(dist, label);
+        } else {
+            // No original vector found, keep approximate distance
+            rescored.emplace_back(approx_dist, label);
+        }
+    }
+    
+    // Sort by distance (closest first)
+    std::sort(rescored.begin(), rescored.end());
+    
+    return rescored;
 }
 
 std::vector<std::pair<float, labeltype>> UnifiedIndex::searchWithStopCondition(
@@ -373,22 +503,33 @@ size_t UnifiedIndex::getCurrentElementCount() const {
     return 0;
 }
 
-void UnifiedIndex::saveIndex(const std::string& path) {
-    if (additions_since_flush_ == 0) return; // Nothing to do yet
+bool UnifiedIndex::save() {
+  if (pathname_.empty()) HNSWERR << "Can't flush index: no path yet defined!\n";
+  return saveIndex(pathname_);
+}
+
+bool UnifiedIndex::saveIndex(const std::string& path) {
+    const size_t  additions = additions_since_flush_;
+    if (path.empty()) return false;
+    if (pathname_.empty()) pathname_ = path; 
+
+    if (additions_since_flush_ == 0) return true; // Nothing to do yet
     if (!space_ || !index_) {
-       HNSWERR << "Unintialized Index. Nothing to save in '" << path << "'!";
-       return;
+       HNSWERR << "Unintialized Index. Nothing to save in '" << path << "'!\n";
+       return false;
     }
 
     std::ofstream ofs(path, std::ios::binary);
     if (!ofs.is_open()) {
-        HNSWERR << "Can't save index: '" << path << "' cannot be opened for writing";
-        return; // Can't continue
+        HNSWERR << "Can't save index: '" << path << "' cannot be opened for writing\n";
+        return false; // Can't continue
     }
     meta_.save(ofs);
 
+    if (meta_.enable_rescoring_ != enable_rescoring_) std::cerr << "WARNING WILL ROBINSON!!!!!!!";
+
     space_->save_quantization_params(ofs);
-    
+
     if (enable_rescoring_) {
         size_t num_vectors = original_vectors_.size();
         ofs.write(reinterpret_cast<const char*>(&num_vectors), sizeof(size_t));
@@ -399,26 +540,41 @@ void UnifiedIndex::saveIndex(const std::string& path) {
         }
     }
 
+
     index_->saveIndex(ofs);
+
     ofs.close();
+
+    additions_since_flush_ -= additions;
+
+    return true;
+}
+
+bool UnifiedIndex::load(bool searchOnly) {
+   return loadIndex(pathname_, searchOnly) ;
 }
 
 bool UnifiedIndex::loadIndex(const std::string& path, bool searchOnly) {
+    if (path.empty()) return false;
+
+    if (pathname_.empty()) pathname_ = path; 
+
     bool changed = false;
     std::ifstream ifs(path, std::ios::binary);
     if (!ifs.is_open()) {
-        HNSWERR << "Cannot load index: '" << path << "' cannot be opened for reading";
+        HNSWERR << "Cannot load index: '" << path << "' cannot be opened for reading: " << strerror(errno) << "\n";
 	return false;
     }
     
     UnifiedIndexMeta loaded_meta;
+
     if (!loaded_meta.load(ifs)) return false;
 
     if (loaded_meta.dim_ != dim_) {
 #if DELAY_ALLOC == 1
 	// dim_ == 0 means we wanted to load something
 	if (dim_ != 0) HNSWERR << "Dimension mismatch. Expected " << std::to_string(dim_) <<
-                " but got " << std::to_string(loaded_meta.dim_) << std::endl ;
+                " but got " << std::to_string(loaded_meta.dim_) << "\n" ;
 	changed = true;
 #else
 	throw std::runtime_error("Dimension mismatch. Expected " + std::to_string(dim_) +
@@ -454,8 +610,9 @@ bool UnifiedIndex::loadIndex(const std::string& path, bool searchOnly) {
         create_index();
     }
 #endif  
-    space_->load_quantization_params(ifs);
-    
+
+   space_->load_quantization_params(ifs);
+
     if (loaded_meta.enable_rescoring_) {
         size_t num_vectors;
         ifs.read(reinterpret_cast<char*>(&num_vectors), sizeof(size_t));
@@ -473,16 +630,21 @@ bool UnifiedIndex::loadIndex(const std::string& path, bool searchOnly) {
                 original_vectors_[label] = std::move(vec);
             }
         } else {
+
+#if 1
+	    ifs.seekg( num_vectors * (sizeof(labeltype) + dim_ * sizeof(float)), std::ios::cur) ;
+#else
             for (size_t i = 0; i < num_vectors; i++) {
                 ifs.seekg(sizeof(labeltype) + dim_ * sizeof(float), std::ios::cur);
             }
+#endif
         }
     }
-    
-    create_index(); // If index exists we write over it!
 
+    create_index(); // If index exists we write over it!
     index_->loadIndex(ifs, space_.get(), meta_.max_elements_);
     index_->setEf(meta_.ef_);
+
 
     ifs.close();
     return true;
@@ -631,6 +793,8 @@ std::string quantization_to_string(QuantMode mode)
      case QuantMode::INT158: return "Ternary";
      case QuantMode::INT4:   return "Nibble";
      case QuantMode::INT8:   return "Octet";
+     case QuantMode::FP16:   return "Fp16";
+     case QuantMode::BF16:   return "Bf16";
    }
 }
 
@@ -660,6 +824,194 @@ std::string bin_mode_to_string(OptBinMode mode)
   // NOT REACHED
   return "";
 }
+
+std::string storage_type_to_string(StorageType type)
+{
+   switch (type) {
+    case StorageType::BIN1:    return "BIN1";   // Binary
+    case StorageType::INT2:    return "INT2";   // 2-bit
+    case StorageType::INT3:    return "INT3";   // 3-bit
+    case StorageType::INT4:    return "INT4";   // 4-bit
+    case StorageType::INT5:    return "INT5";   // 5-bit
+    case StorageType::INT6:    return "INT6";   // 6-bit
+    case StorageType::INT8:    return "INT8";   // 8-bit
+    case StorageType::INT16:   return "INT16";  // 16-bit
+    case StorageType::FP16:    return "FP16";   // 16-bit float
+    case StorageType::BF16:    return "BF16";   // 16-bit float
+    case StorageType::FLOAT32: return "FP32";   // 32-bit float
+   }
+   // NOT REACHED
+   return "";
+};
+
+
+inline int parse_storage_bits(const std::string& str) {
+    if (str.empty()) {
+        throw std::invalid_argument("Empty storage string");
+        return 0;
+    }
+    // Check for valid prefixes
+    bool floating_point = (str.compare(0,2, "FP") == 0 || str.compare(0,2, "Fp") ||
+	str.compare(0,2, "BF") == 0 || str.compare(0,2, "Bf") == 0) ;
+    if (!floating_point && str.compare(0, 3, "INT") != 0 && str.compare(0, 3, "Int") !=0 &&
+	str.compare(0, 3, "BIN") != 0 && str.compare(0, 3, "Bin") !=0) {
+        throw std::invalid_argument("Storage string must start with FP, INT or BIN: " + str);
+        return 0;
+    }
+    
+    // Extract number after prefix
+    size_t prefix_len = floating_point ? 2 : 3; // "INT" or "BIN" (both are equivalent) or "FP"/"BF"
+    if (str.length() <= prefix_len) {
+        throw std::invalid_argument("No number after prefix in: " + str);
+        return 0;
+    }
+    std::string num_str = str.substr(prefix_len);
+    
+    try {
+        int bits = std::stoi(num_str);
+        if (bits <= 0) {
+            throw std::invalid_argument("Bit width must be positive: " + str);
+            return 0;
+        }
+        return bits;
+    } catch (const std::invalid_argument&) {
+        throw std::invalid_argument("Invalid number in storage string: " + str);
+    } catch (const std::out_of_range&) {
+        throw std::invalid_argument("Number too large in storage string: " + str);
+    }
+}
+
+StorageType string_to_storage_type(const std::string& s)
+{
+   int bits = parse_storage_bits(s);
+   // FP16 or FP32?
+   if (s.at(0) == 'F' && bits >= 16) {
+     if (bits == 16) return StorageType::FP16;
+     return StorageType::FLOAT32;
+   }
+   // BF16 ?
+   if (bits == 16 && (s.at(1) == 'F' || s.at(1) == 'f')) 
+     return StorageType::BF16;
+   switch (bits) {
+        case 1: return StorageType::BIN1;
+        case 2: return StorageType::INT2;
+        case 3: return StorageType::INT3;
+        case 4: return StorageType::INT4;
+        case 5: return StorageType::INT5;
+        case 6: return StorageType::INT6;
+        case 8: return StorageType::INT8;
+        case 16:return StorageType::INT16;
+	default:
+	   HNSWERR << "Support for INT"<< bits << " not implemented!\n";
+	   return StorageType::FLOAT32;
+   }
+}
+
+/*
+Case 1: "L2-BIN1-RABITQ"
+
+tokens = ["L2", "BIN1", "RABITQ"]
+
+quant = BIN1 → not PASS → parse mode
+
+storage unused
+
+Case 2: "L2-PASS-INT4"
+
+tokens = ["L2", "PASS", "INT4"]
+
+quant = PASS → use storage_type instead of mode
+*/
+
+bool SpecificationString::parse(const std::string& s) {
+    // Split on "-"
+    std::vector<std::string> tokens;
+    std::stringstream ss(s);
+    std::string item;
+
+    while (std::getline(ss, item, '-')) {
+        tokens.push_back(item);
+    }
+
+    if (tokens.size() != 3) {
+        // throw std::runtime_error("Invalid format: expected Metric-Quant-Mode|Storage");
+	return false;
+    }
+
+    // Parse metric 
+    metric_ = string_to_metric(tokens[0]);
+
+    // If quant == PASS, interpret the last token as StorageType
+    if (tokens[1] == "PASS" || tokens[1] == "pass") {
+        storage_type_ = string_to_storage_type(tokens[2]);
+        auto q = hnswlib::toQuantMode(storage_type_);
+	quantization_ =  q ? *q : QuantMode::NONE;
+
+        use_storage_ = true;
+    } else {
+        // Normal case: last tokens are bin/quant mode
+        quantization_  = string_to_quantzation(tokens[1]);
+        mode_ = string_to_bin_mode(tokens[2]);
+        use_storage_ = false;
+    }
+
+    return true;
+}
+
+SpecificationString::  operator std::string() const {
+    std::string result;
+    // Metric
+    result += metric_to_string(metric_);
+    result += "-";
+
+    if (use_storage_ && quantization_ != QuantMode::NONE)
+        result += bin_mode_to_string(mode_);
+    else // Quant
+        result += quantization_to_string(quantization_);
+    result += "-";
+
+    // Depending on PASS or not, pick mode vs storage
+    if (use_storage_)
+        result += storage_type_to_string(storage_type_);
+    else
+        result += bin_mode_to_string(mode_);
+
+    return result;
+
+}
+
+
+float UnifiedIndex::score_from_dist(float dist) const {
+    // Safety first: guard against invalid or extreme distances
+    if (!std::isfinite(dist) || dist > 1e6f) return 0.0f;
+    if (dist < -1e6f) return 1.0f;
+
+    switch (metric_) {
+        case Metric::L2:
+            // For L2 distance: smaller = closer. Map inversely.
+            // This keeps results in (0,1] for any reasonable range.
+            return 1.0f / (1.0f + dist);
+
+        case Metric::Cosine:
+            // For cosine: distance = 1 - cosine_similarity
+            // → similarity = 1 - distance
+            // Clamp to [0,1] to avoid minor numeric drift.
+            // return (std::clamp(1.0f - dist, 0.0f, 1.0f) + 1.0f)/2.0f;
+            return (2.0f - dist)/2.0f;
+
+        case Metric::IP:
+            // Inner product: higher = closer. HNSWlib may return negatives
+            // if embeddings aren't normalized. Clamp to [-1,1].
+            return std::clamp(dist, -1.0f, 1.0f);
+
+        default:
+            // Unknown metric
+            return 0.0f;
+    }
+}
+
+
+
 
 
 

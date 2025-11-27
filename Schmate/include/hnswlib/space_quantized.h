@@ -1,14 +1,12 @@
 #pragma once
 // Space L2 Quantized
 
-#include "quantized.h"
-
 #include <mutex>
 #include <random>
 
-
-#include "pearson_corr.h"
 #include "int_storage.h"
+#include "quantized.h"
+#include "pearson_corr.h"
 
 /*
 Performance:
@@ -119,6 +117,7 @@ public:
                         : 0) ;
         
         // Initialize RaBitQ residuals if needed
+#if 0
         if (use_rabitq_) {
             if (bin_mode_ == OptBinMode::RABITQ_EXTENDED) {
                 HNSWDEBUG << "  [RaBitQ-Extended: keeping " << residual_dims_ << " residual dims]";
@@ -126,6 +125,7 @@ public:
                 HNSWDEBUG << "  [RaBitQ: keeping " << residual_dims_ << " residual dims]";
             }
         }
+#endif
         
         // Initialize rotation matrix if needed
         if (use_rotation_) {
@@ -221,7 +221,8 @@ public:
     // -------------------------------------------------------------------------
     void quantize(const T* emb, uint8_t* out) const override {
         //
-        if (bin_mode == OptBinMode::PASS || qmode == QuantMode::NONE) {
+        if (bin_mode == OptBinMode::PASS || qmode == QuantMode::NONE || 
+		qmode == QuantMode::FP16 || qmode == QuantMode::BF16) {
            auto st = toStorageType(qmode);
            if (st) IntStorage::quantize(*st, emb, out, dim); // pack passthrough
            return;
@@ -239,11 +240,16 @@ public:
         
         // Quantize main vector
         switch(qmode){
-            case QuantMode::BIN1: quantize_bin(input,out); break;
+            case QuantMode::BIN1:   quantize_bin(input,out); break;
             case QuantMode::INT158: quantize_ternary_simd(input,out); break;
-            case QuantMode::INT8: quantize_int8_simd(input,out); break;
-            case QuantMode::INT4: quantize_int4_simd(input,out); break;
-	    case QuantMode::NONE: /* Should never be reached ! */ break;
+            case QuantMode::INT8:   quantize_int8_simd(input,out); break;
+            case QuantMode::INT4:   quantize_int4_simd(input,out); break;
+
+            // These should never be reached
+            case QuantMode::FP16: IntStorage::quantize(StorageType::FP16, input, out, dim); break;
+            case QuantMode::BF16: IntStorage::quantize(StorageType::BF16, input, out, dim); break;
+            case QuantMode::NONE: IntStorage::quantize(StorageType::FLOAT32, input, out, dim); break;
+
         }
         
         // For RaBitQ, add residual at the end
@@ -311,7 +317,7 @@ public:
         const size_t n = samples.size();
         if (n == 0) return;
         
-        HNSWDEBUG << "  Computing rotation matrix via PCA...";
+        // HNSWDEBUG << "  Computing rotation matrix via PCA...";
         
         // 1. Compute mean
         std::vector<T> mean(dim, 0);
@@ -369,7 +375,7 @@ public:
             }
         }
         
-        HNSWDEBUG << " done" ;
+        // HNSWDEBUG << " done" ;
     }
     
     void apply_rotation(const T* input, T* output) const {
@@ -587,12 +593,12 @@ public:
     // Fit/train the quantization parameters from sample embeddings
     void fit(const std::vector<std::vector<T>>& sample_embeddings) override {
         if (sample_embeddings.empty()) {
-            HNSWDEBUG << "  [SpaceQuantized::fit] Warning: empty sample set provided";
+            // HNSWDEBUG << "  [SpaceQuantized::fit] Warning: empty sample set provided";
             return;
         }
         
         const size_t n = sample_embeddings.size();
-        HNSWDEBUG << "  [SpaceQuantized::fit] Training on " << n << " samples, dim=" << dim;
+        // HNSWDEBUG << "  [SpaceQuantized::fit] Training on " << n << " samples, dim=" << dim;
         
         // Initialize rotation matrix if needed
         if (use_rotation_) {
@@ -606,12 +612,12 @@ public:
         
         // Compute quantization parameters based on mode
         if (bin_mode == OptBinMode::PASS) {
-            HNSWDEBUG << "  [PASS] No quantization training needed";
+            // HNSWDEBUG << "  [PASS] No quantization training needed";
         } else if (qmode == QuantMode::BIN1) {
             // Binary quantization
             if (bin_mode == OptBinMode::CENTROID) {
                 // Centroid already trained above
-                HNSWDEBUG << "  [BIN1-CENTROID] Using centroid as thresholds";
+                // HNSWDEBUG << "  [BIN1-CENTROID] Using centroid as thresholds";
             } else if (bin_mode == OptBinMode::RABITQ || bin_mode == OptBinMode::RABITQ_EXTENDED) {
                 // RaBitQ: train centroid for reconstruction
                 if (centroid_.empty()) {
@@ -619,11 +625,11 @@ public:
                     sum_.assign(dim, T(0));
                     train_centroid(sample_embeddings);
                 }
-                HNSWDEBUG << "  [BIN1-RABITQ] Centroid trained for residual reconstruction";
+                // HNSWDEBUG << "  [BIN1-RABITQ] Centroid trained for residual reconstruction";
             } else {
                 // STANDARD or BETTER mode
                 compute_thresholds(sample_embeddings);
-                HNSWDEBUG << "  [BIN1] Thresholds computed";
+                // HNSWDEBUG << "  [BIN1] Thresholds computed";
             }
         } else if (qmode == QuantMode::INT158) {
             // Ternary quantization
@@ -632,7 +638,7 @@ public:
             } else {
                 compute_ternary_thresholds(sample_embeddings);
             }
-            HNSWDEBUG << "  [INT158] Ternary thresholds computed";
+            // HNSWDEBUG << "  [INT158] Ternary thresholds computed";
         } else if (qmode == QuantMode::INT4 || qmode == QuantMode::INT8) {
             // INT4/INT8 quantization
             double levels = (qmode == QuantMode::INT8) ? 255.0 : 15.0;
@@ -641,11 +647,10 @@ public:
             } else {
                 compute_scale_min(sample_embeddings, levels);
             }
-            HNSWDEBUG << "  [" << (qmode == QuantMode::INT8 ? "INT8" : "INT4") 
-                      << "] Scale/min computed";
+            // HNSWDEBUG << "  [" << (qmode == QuantMode::INT8 ? "INT8" : "INT4") << "] Scale/min computed";
         }
         
-        HNSWDEBUG << "  [SpaceQuantized::fit] Training complete";
+        // HNSWDEBUG << "  [SpaceQuantized::fit] Training complete\n";
     }
 
 private:
@@ -891,8 +896,7 @@ private:
         
         // Debug: Print scale info for first dimension
         if (dim > 0) {
-            HNSWDEBUG << "  [Scale debug: dim0 range=[" << minval[0] << "," << (minval[0] + scale[0]*levels) 
-                      << "], scale=" << scale[0] << "]";
+            // HNSWDEBUG << "  [Scale debug: dim0 range=[" << minval[0] << "," << (minval[0] + scale[0]*levels) << "], scale=" << scale[0] << "]";
         }
     }
 

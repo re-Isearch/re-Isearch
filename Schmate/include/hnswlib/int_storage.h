@@ -30,6 +30,7 @@ enum class StorageType : uint32_t {
     INT8,     // 8-bit
     INT16,    // 16-bit
     FP16,     // 16-bit float
+    BF16,     // 16-bit float (but 8-bit exponent, 7-bit mantissa, 1-bit sign)
     FLOAT32   // 32-bit float
 };
 
@@ -66,8 +67,9 @@ public:
             case StorageType::INT5: return 5;
             case StorageType::INT6: return 6;
             case StorageType::INT8: return 8;
-            case StorageType::INT16: return 16;
+            case StorageType::INT16:return 16;
             case StorageType::FP16: return 16;
+	    case StorageType::BF16: return 16;
             case StorageType::FLOAT32: return 32;
         }
         return 0;
@@ -139,6 +141,15 @@ static void quantize(StorageType type, const T* emb, uint8_t* out, size_t dim) {
     #endif
             break;
         }
+
+       case StorageType::BF16:
+#if defined(__AVX512BF16__)
+	pack_bf16_avx512bf16(emb, out, dim);
+#else
+	pack_bf16_to(emb, out, dim);
+#endif
+	break;
+
         case StorageType::FLOAT32:
             std::memcpy(out, emb, dim * sizeof(float));
             break;
@@ -221,6 +232,20 @@ private:
     // ---------------------------------------------------------------
     // helpers
     // ---------------------------------------------------------------
+
+    static inline uint16_t float_to_bf16(float f) {
+        uint32_t bits;
+        std::memcpy(&bits, &f, sizeof(bits));
+        return uint16_t(bits >> 16);
+    }
+
+    static inline float bf16_to_float(uint16_t b) {
+        uint32_t bits = uint32_t(b) << 16;
+        float out;
+        std::memcpy(&out, &bits, sizeof(out));
+        return out;
+    }
+
     static inline uint16_t float_to_half_bits(float f) {
         uint32_t x;
         std::memcpy(&x, &f, sizeof(x));
@@ -512,6 +537,40 @@ inline void unpack_fp16_from(const uint8_t* in, float* dst, size_t dim) const {
             dst[i] = half_bits_to_float(in16[i]);
     #endif
 }   
+
+template<typename T>
+static  void pack_bf16_to(const T* src, uint8_t* out, size_t dim) {
+    uint16_t* out16 = reinterpret_cast<uint16_t*>(out);
+    for (size_t i = 0; i < dim; ++i)
+        out16[i] = float_to_bf16(float(src[i]));
+}
+
+inline void unpack_bf16_from(const uint8_t* in, float* dst, size_t dim) const {
+    const uint16_t* p = reinterpret_cast<const uint16_t*>(in);
+    for (size_t i = 0; i < dim; ++i)
+        dst[i] = bf16_to_float(p[i]);
+}
+
+
+// SIMD is only availabel on x86. ARM has not yet implemented BF16.
+#if defined(__AVX512BF16__)
+#include <immintrin.h>
+
+template<typename T>
+inline void pack_bf16_avx512bf16(const T* src, uint8_t* out, size_t dim) {
+    uint16_t* out16 = reinterpret_cast<uint16_t*>(out);
+    size_t i = 0;
+    for (; i + 32 <= dim; i += 32) {
+        __m512 vf = _mm512_loadu_ps((const float*)(src + i));
+        __m256i bf = _mm512_cvtneps_pbh(vf);   // convert 32 fp32 → 32 bf16
+        _mm256_storeu_si256((__m256i*)(out16 + i), bf);
+    }
+    for (; i < dim; ++i)
+        out16[i] = float_to_bf16(float(src[i]));
+}
+#endif
+
+
 
 
 template<typename T>
