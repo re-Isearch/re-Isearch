@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <cstdio>
+#include <shared_mutex>
 
 /*
 The whole point of this class is to provide a flexible storage model for vectors
@@ -42,13 +43,13 @@ enum class VectorStorageMode {
 struct VectorStorageConfig {
     VectorStorageMode mode = VectorStorageMode::DISABLED;
     size_t dimension = 0;
-    size_t flush_threshold = 10000; // Flush to deleta (to reduce memory footprint)
+    size_t flush_threshold = 10000; // Flush to delta (to reduce memory footprint)
     // every flush_threshold*compact_threshold we compact
     size_t compact_threshold = 20; // How many deltas before we compact??
     bool auto_compact_on_save = true;
 
     // Enable streaming compaction (avoid building all vectors in RAM)
-    bool use_streaming_compaction = false;
+    bool use_streaming_compaction = true; // false;
 };
 
 class LSMVectorStorage {
@@ -79,7 +80,16 @@ private:
     // Versioned compact files management
     std::vector<std::string> compact_files_;     // list of available compact files (sorted ascending)
     std::string current_vectors_file_;           // currently mmapped vectors file (if any)
-    unsigned compact_version_counter_ = 0;       // next version to use for new compact file
+    // unsigned compact_version_counter_ = 0;       // next version to use for new compact file
+
+    // version counters
+    std::atomic<unsigned> delta_version_counter_{0};
+    std::atomic<unsigned> compact_version_counter_{0};
+
+
+    // --- synchronization for SWMR ---
+    // Readers take shared_lock, writers take unique_lock.
+    mutable std::shared_mutex rw_mutex_;
 
 public:
     LSMVectorStorage() {}
@@ -130,6 +140,7 @@ public:
     }
 
     bool load_vectors(std::ifstream& ifs, size_t num_vectors) {
+        if (!ifs) return false; // No stream
         if (base_filename_.empty()) {
             HNSWERR << "Can't load vectors: No filename set!\n";
             return false;
@@ -137,10 +148,10 @@ public:
         if (!ifs.good()) return false;
 
         if (storage_mode_ == VectorStorageMode::DISABLED) {
-            for (size_t i = 0; i < num_vectors; i++) {
-                ifs.seekg(sizeof(labeltype) + dim_ * sizeof(float), std::ios::cur);
-            }
-            return true;
+	   // Skip the vector section
+	   std::streamoff skip = static_cast<std::streamoff>(num_vectors) * (sizeof(labeltype) + dim_ * sizeof(float));
+           ifs.seekg(skip, std::ios::cur);
+           return true;
         }
 
         if (storage_mode_ == VectorStorageMode::IN_MEMORY) {
@@ -221,15 +232,37 @@ private:
     // ------------------------
     // Discover and naming helpers
     // ------------------------
-    // These two can be changed without breaking the code!
+    // These can be changed without breaking the code!
     static constexpr char vector_pred[] = ".vectors.";
     static constexpr char tmp_suffix[]  = ".tmp";
+    static constexpr char delta_pred[]  = ".delta.";
 
     static std::string format_version(uint64_t v) {
         std::ostringstream ss;
         ss << std::setw(5) << std::setfill('0') << v;
         return ss.str();
     }
+
+
+    // the predicate ".delta." can be changed without breaking anthing
+    // since we push its name onto a list (vector of strings).
+    std::string make_delta_filename(size_t num) const {
+#if 0
+        namespace fs = std::filesystem;
+        fs::path base(base_filename_);
+        fs::path dir = base.parent_path();
+        if (dir.empty()) dir = ".";
+#endif
+	// We have max NN deltas (99)
+        std::ostringstream ss;
+        ss << std::setw(2) << std::setfill('0') << num;
+        return base_filename_ + delta_pred + ss.str();
+    }
+    std::string make_temp_delta_filename(size_t num) const {
+        return make_delta_filename(num) + tmp_suffix;
+    }
+
+
 
     std::string make_compact_filename(uint64_t ver) const {
         return base_filename_ + vector_pred + format_version(ver);
@@ -239,47 +272,78 @@ private:
         return make_compact_filename(ver) + tmp_suffix;
     }
 
-    void discover_compact_files() {
-        compact_files_.clear();
+
+//  General method to discover and build lists: first for compact and vector files
+    unsigned discover_files(std::vector<std::string> &list, const char *predicate) const {
+
+        unsigned max_version = 0;
 
         try {
             std::filesystem::path p(base_filename_);
             auto dir = p.parent_path();
             if (dir.empty()) dir = ".";
 
-            std::string base_stem = p.string() + vector_pred;
+            std::string base_stem = p.string() + predicate;
 
             for (auto &entry : std::filesystem::directory_iterator(dir)) {
                 if (!entry.is_regular_file()) continue;
-                std::string fname = entry.path().string();
+                std::string path_str = entry.path().string();
+                std::string fname = std::filesystem::path(path_str).filename().string();
 
                 if (fname.rfind(base_stem, 0) == 0) {
                     const size_t slen = sizeof(tmp_suffix)-1;
+                    // Want to ignore the temporary files (denoted by suffic)
                     if (fname.size() >= slen && fname.substr(fname.size()-slen) == tmp_suffix) continue;
-                    compact_files_.push_back(fname);
+
+                    // Want to make sure that the file has a numeric counter suffix
+                    std::string suffix = fname.substr(base_stem.size());
+                    bool digits = !suffix.empty();
+                    for (char c : suffix) { if (!std::isdigit(static_cast<unsigned char>(c))) { digits = false; break; } }
+                    if (!digits) continue;
+                    unsigned version;
+                    try { version  = std::stoull(suffix); } catch(...) { version = 0; }
+                    if (version) {
+//                      HNSWDEBUG << "Adding '" << fname << "' to list\n";
+                        list.push_back(path_str);
+                        if (version > max_version) max_version = version;
+                    } 
+//                      else HNSWDEBUG << "File '" << fname << "' does not fit pattern\n";
                 }
             }
         } catch (...) {
             // ignore
         }
 
-        std::sort(compact_files_.begin(), compact_files_.end());
-
-        if (!compact_files_.empty()) {
-            const std::string &last = compact_files_.back();
-            auto pos = last.rfind(vector_pred);
-            if (pos != std::string::npos) {
-                std::string verstr = last.substr(pos + 9);
-                unsigned parsed = 0;
-                try { parsed = std::stoull(verstr); } catch(...) { parsed = 0; }
-                compact_version_counter_ = std::max(compact_version_counter_, parsed);
-            } else {
-                compact_version_counter_ = 0;
-            }
-        } else {
-            compact_version_counter_ = 0;
-        }
+//        std::sort(list.begin(), list.end());
+//      HNSWDEBUG << "MAX VERSION: " << max_version << "\n";
+        return max_version;
     }
+
+    bool  discover_compact_files() {
+        std::unique_lock lk(rw_mutex_); // writer lock while we mutate compact_files_ and counter
+
+        compact_files_.clear(); // Empty
+	compact_version_counter_ = 0;
+        unsigned  ver = discover_files(compact_files_, vector_pred);
+        if (compact_files_.empty()) return false; 
+
+        std::sort(compact_files_.begin(), compact_files_.end());
+        compact_version_counter_.store(ver, std::memory_order_relaxed);
+
+        return ver > 0;
+    }
+
+    bool discover_delta_files () {
+        std::unique_lock lk(rw_mutex_);
+
+        delta_files_.clear();
+        unsigned  ver = discover_files(compact_files_, vector_pred);
+        std::sort(delta_files_.begin(), delta_files_.end());
+        delta_version_counter_.store(ver, std::memory_order_relaxed);
+        return ver > 0;
+    }
+
+
 
     // ------------------------
     // Mmap setup / cleanup
@@ -435,13 +499,11 @@ private:
 	HNSWERR << "vectors-file header: num_vectors=" << num_vectors << ", entry_size=" << entry_size << "\n";
 	size_t printed = 0;
 	for (const auto &kv : main_offsets_) {
-    	if (printed++ < 10) HNSWERR << "  label=" << kv.first << " offset=" << kv.second << "\n";
-    		else break;
+    	   if (printed++ < 10) {
+		 HNSWERR << "  label=" << kv.first << " offset=" << kv.second << "\n";
+	   } else break;
 	}
 #endif
-
-
-
 
         #ifdef _WIN32
         bool ok = setup_mmap_windows();
@@ -495,6 +557,7 @@ private:
     // ------------------------
     bool load_in_memory(std::ifstream& ifs, size_t num_vectors) {
         current_delta_.clear();
+	// Loads all the vectors from ifs into current_delta_
         for (size_t i = 0; i < num_vectors; i++) {
             labeltype label;
             ifs.read(reinterpret_cast<char*>(&label), sizeof(labeltype));
@@ -525,11 +588,12 @@ public:
 
     bool flush_delta() {
         if (current_delta_.empty()) return true;
+        const size_t delta_version_counter_ = delta_files_.size() + 1;
 
-        // the predicate ".delta." can be changed without breaking anthing
-        // since we push its name onto a list (vector of strings).
-        std::string delta_file = base_filename_ + ".delta." + std::to_string(delta_files_.size());
-        std::ofstream ofs(delta_file, std::ios::binary);
+	const std::string delta_file = make_delta_filename (delta_version_counter_);
+        std::string tmpname = make_temp_delta_filename(delta_version_counter_);
+
+        std::ofstream ofs(tmpname, std::ios::binary);
         if (!ofs) return false;
 
         size_t num_vectors = current_delta_.size();
@@ -539,10 +603,27 @@ public:
             ofs.write(reinterpret_cast<const char*>(&label), sizeof(labeltype));
             ofs.write(reinterpret_cast<const char*>(vec.data()), dim_ * sizeof(float));
         }
+	ofs.flush();
+	bool ok = ofs.good();
+	ofs.close();
 
-        if (!ofs.good()) return false;
+        if (!ok) {
+	    HNSWERR << "flush_delta: flush I/O failed!\n";
+	    std::filesystem::remove(tmpname);
+	} else {
+	    std::error_code ec;
+	    std::filesystem::rename(tmpname, delta_file, ec);
+            if (ec) {
+                HNSWERR << "flush_delta: rename failed " << tmpname << " -> " << delta_file << " err=" << ec.message() << "\n";
+	        ok = false;
+	    }
+	}
+	if (!ok) {
+	    std::filesystem::remove(tmpname);
+            return false;
+	}
 
-        delta_files_.push_back(delta_file);
+        delta_files_.push_back(delta_file); // Add name to the delta_files_ list
         delta_caches_.push_back(std::move(current_delta_));
 
         std::unordered_set<labeltype> label_set;
@@ -608,7 +689,7 @@ public:
     // ------------------------
     bool save_vectors_to_stream(std::ofstream& ofs) {
 	if (!ofs) return false;
-#if 1
+
         size_t count = 0;
         const std::streampos original_pos = ofs.tellp();
 
@@ -628,17 +709,6 @@ public:
 
         // 4. Now seek to end
         ofs.seekp(end_pos); 
-#else
-        auto all_vectors = get_all_vectors();
-
-        size_t num_vectors = all_vectors.size();
-        ofs.write(reinterpret_cast<const char*>(&num_vectors), sizeof(size_t));
-
-        for (const auto& [label, vec] : all_vectors) {
-            ofs.write(reinterpret_cast<const char*>(&label), sizeof(labeltype));
-            ofs.write(reinterpret_cast<const char*>(vec.data()), dim_ * sizeof(float));
-        }
-#endif
 
         return ofs.good();
     }
@@ -757,6 +827,7 @@ private:
 
         discover_compact_files();
         uint64_t version = compact_version_counter_++;
+
         std::string tmpfile = make_temp_compact_filename(version);
         std::string newfile = make_compact_filename(version);
 
@@ -1036,6 +1107,7 @@ private:
         // 6. Success
         return true;
     }
+
 
 }; // class LSMVectorStorage
 

@@ -10,6 +10,8 @@
 
 #define UNIFIED_INDEX_ 0 /* Set to 1 when we activate the code */
 
+#define LSMVECTORSTORAGE 1
+
 
 namespace hnswlib {
 
@@ -197,14 +199,40 @@ void UnifiedIndex::addPoint_internal(const float* data, labeltype label) {
       index_->addPoint(data, label);
 
     if (enable_rescoring_) {
+#if LSMVECTORSTORAGE
+       vector_storage_.addPoint(label, data);
+#else
         original_vectors_[label] = std::vector<float>(data, data + dim_);
+#endif
     }
-    additions_since_flush_++;
+    if (++additions_since_flush_ > flush_threshold_ )
+      flush();
+}
+
+
+bool UnifiedIndex::flush() {
+   if (additions_since_flush_ == 0) return true;
+
+   // Could do something here ...
+
+   additions_since_flush_ = 0;
+   return true;
+}
+
 #if 0
-    if (additions_since_flush_ > flush_threshold_ )
-       save();
+// Get vector for rescoring
+const float* UnifiedIndex::getOriginalVector(labeltype label) const {
+    if (!enable_rescoring_) return nullptr;
+#if LSMVECTORSTORAGE
+    return vector_storage_.get_vector(label);
+#else
+    return original_vectors_[label].first;
 #endif
 }
+#endif
+
+
+
 
 std::vector<std::pair<float, labeltype>>
         UnifiedIndex::searchKnnCloserFirst(const float* query, size_t k,
@@ -327,6 +355,45 @@ std::priority_queue<std::pair<float, labeltype>> UnifiedIndex::searchKnn_interna
     return result;
 }
 
+#if LSMVECTORSTORAGE
+// Rescore candidates
+
+std::vector<std::pair<float, labeltype>> UnifiedIndex::apply_rescoring(
+    const float* query_ptr,
+    const std::vector<std::pair<float, labeltype>>& all_candidates) const {
+
+    if (!enable_rescoring_) {
+        return  all_candidates;
+    }
+
+    std::vector<std::pair<float, labeltype>> rescored;
+    rescored.reserve(all_candidates.size());
+
+    for (const auto& [dist, label] : all_candidates) {
+        const float* vec_ptr = vector_storage_.get_vector(label); // Original vector
+
+        if (vec_ptr != nullptr) {
+            float true_dist;
+            if (metric_ == Metric::Cosine || metric_ == Metric::IP) {
+                float sim = hnswlib::cosine_similarity(query_ptr, vec_ptr, dim_);
+                true_dist = -sim;
+            } else {
+                true_dist = l2_distance(query_ptr, vec_ptr, dim_);
+            }
+            rescored.emplace_back(true_dist, label);
+        } else {
+            // Fallback to approximate distance if vector not found
+            rescored.emplace_back(dist, label);
+        }
+    }
+
+   // Sort by distance (closest first)
+   std::sort(rescored.begin(), rescored.end());
+
+   return rescored;
+}
+
+#else
 
 std::vector<std::pair<float, labeltype>> UnifiedIndex::apply_rescoring(
     const float* query,
@@ -367,6 +434,9 @@ std::vector<std::pair<float, labeltype>> UnifiedIndex::apply_rescoring(
     
     return rescored;
 }
+
+
+#endif
 
 std::vector<std::pair<float, labeltype>> UnifiedIndex::searchWithStopCondition(
     const float* query, float epsilon, size_t min_cand, size_t max_cand) {
@@ -531,6 +601,14 @@ bool UnifiedIndex::saveIndex(const std::string& path) {
     space_->save_quantization_params(ofs);
 
     if (enable_rescoring_) {
+
+#if LSMVECTORSTORAGE
+        // vector_storage_.compact();
+        if (! vector_storage_.save_vectors_to_stream(ofs)) {
+	    HNSWERR << "Save vectors to '" << path << "' FAILED.\n";
+	    return false; // Write failed;
+        }
+#else
         size_t num_vectors = original_vectors_.size();
         ofs.write(reinterpret_cast<const char*>(&num_vectors), sizeof(size_t));
         
@@ -538,6 +616,7 @@ bool UnifiedIndex::saveIndex(const std::string& path) {
             ofs.write(reinterpret_cast<const char*>(&label), sizeof(labeltype));
             ofs.write(reinterpret_cast<const char*>(vec.data()), dim_ * sizeof(float));
         }
+#endif
     }
 
 
@@ -566,6 +645,7 @@ bool UnifiedIndex::loadIndex(const std::string& path, bool searchOnly) {
 	return false;
     }
     
+    // 1. Load Metadata
     UnifiedIndexMeta loaded_meta;
 
     if (!loaded_meta.load(ifs)) return false;
@@ -611,12 +691,23 @@ bool UnifiedIndex::loadIndex(const std::string& path, bool searchOnly) {
     }
 #endif  
 
+   // 2. Load Quantisation Parameters
    space_->load_quantization_params(ifs);
 
+
+    // 3. Load Vectors
     if (loaded_meta.enable_rescoring_) {
+
+#if LSMVECTORSTORAGE
+      // if rescoring: Pass the open stream (reads labels, then mmaps)
+      // else skip
+      vector_storage_.load_vectors(path, ifs,
+	enable_rescoring_ ? VectorStorageMode::MEMORY_MAPPED : VectorStorageMode::DISABLED);
+#else
         size_t num_vectors;
         ifs.read(reinterpret_cast<char*>(&num_vectors), sizeof(size_t));
-        
+
+        // Know now the number of vectors
         if (enable_rescoring_) {
             original_vectors_.clear();
             for (size_t i = 0; i < num_vectors; i++) {
@@ -630,17 +721,12 @@ bool UnifiedIndex::loadIndex(const std::string& path, bool searchOnly) {
                 original_vectors_[label] = std::move(vec);
             }
         } else {
-
-#if 1
 	    ifs.seekg( num_vectors * (sizeof(labeltype) + dim_ * sizeof(float)), std::ios::cur) ;
-#else
-            for (size_t i = 0; i < num_vectors; i++) {
-                ifs.seekg(sizeof(labeltype) + dim_ * sizeof(float), std::ios::cur);
-            }
-#endif
         }
+#endif
     }
 
+    // 4. Load HNSW Index
     create_index(); // If index exists we write over it!
     index_->loadIndex(ifs, space_.get(), meta_.max_elements_);
     index_->setEf(meta_.ef_);
@@ -725,22 +811,24 @@ multi-qa-mpnet-base-cos-v1  768    Question answering
 
 size_t UnifiedIndex::bytes_per_vector() const
 {
-    size_t vector_bytes = dim_ * sizeof(float);
-    size_t graph_overhead = M_ * 10;  // ~160 bytes for M=16
+    const size_t vector_bytes = dim_ * sizeof(float);
+    const size_t graph_overhead = M_ * 10;  // ~160 bytes for M=16
+    size_t total = graph_overhead;
 
     if (is_quantized()) {
-       size_t quant_bytes =  space_->get_data_size();
-
-       size_t total = quant_bytes + graph_overhead;
-        if (enable_rescoring_) {
-            total += vector_bytes;  // Add original 1536 bytes for 384D
-        }
-        return total;
+       // Add quant bytes
+       total +=  space_->get_data_size(); // This includes RaBitQ residuals
+        if (enable_rescoring_) 
+#if LSMVECTORSTORAGE
+          total += vector_storage_.bytes_per_vector();
+#else
+          total += vector_bytes;  // Add original 1536 bytes for 384D
+#endif
     } else {
         // Float metrics
-        size_t graph_overhead = M_ * 10;  // ~160 bytes for M=16
-        return vector_bytes + graph_overhead;
+        total += vector_bytes;
     }
+   return total;
 }
 
 
@@ -1008,6 +1096,25 @@ float UnifiedIndex::score_from_dist(float dist) const {
             // Unknown metric
             return 0.0f;
     }
+}
+
+
+// Statistics
+void UnifiedIndex::printStats() const {
+    auto stats = vector_storage_.get_stats();
+  
+    std::cout << "Space:\n";
+    std::cout << "   Metric: " << metric_to_string(metric_) << "\n";
+    std::cout << "   Dim: " << dim_ << "\n";
+    std::cout << "   Storage: " << quantization_to_string(quantization_) << "\n";
+    std::cout << "   Mode: " << bin_mode_to_string(bin_mode_) << "\n";
+
+    std::cout << "Additions since flush: " << additions_since_flush_ << "\n";
+    std::cout << "Vector Storage Stats:\n";
+    std::cout << "  Main vectors: " << stats.main_vectors << "\n";
+    std::cout << "  Delta files: " << stats.delta_files << "\n";
+    std::cout << "  Pending additions: " << stats.pending_additions << "\n";
+    std::cout << "  Total vectors: " << stats.total_vectors << "\n";
 }
 
 

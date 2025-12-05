@@ -64,6 +64,21 @@ bool vec_equal(const float *a, const std::vector<float> &b, size_t dim) {
 // ------------------------------------------
 // End-to-end test for streaming compaction
 // ------------------------------------------
+
+void cleanup() {
+   // cleanup old files
+    for (auto &f : std::filesystem::directory_iterator(".")) {
+        std::string path_str = f.path().string();
+        std::string fname = std::filesystem::path(path_str).filename().string();
+	// Removes  tmp_test_index* files
+        if (fname.rfind("tmp_test_index", 0) == 0) {
+	    std::cout << "Removing '" << fname << "'\n";
+            std::filesystem::remove(fname);
+        }
+    }
+}
+
+
 void test_streaming_compaction() {
     std::cout << "\n===== TEST: STREAMING COMPACTION =====\n";
 
@@ -72,12 +87,7 @@ void test_streaming_compaction() {
     const std::string clean_glob = "tmp_test_index.bin*";
 
     // cleanup old files
-    for (auto &f : std::filesystem::directory_iterator(".")) {
-        std::string s = f.path().string();
-        if (s.rfind("tmp_test_index", 0) == 0) {
-            std::filesystem::remove(s);
-        }
-    }
+    cleanup();
 
     // 1) Write unified index with initial items
     std::vector<std::pair<labeltype, std::vector<float>>> initial = {
@@ -128,11 +138,11 @@ void test_streaming_compaction() {
         assert(vec_equal(store.get_vector(30), p30.second, dim));
 
         // label 20 must be the UPDATED vector we wrote
-        std::vector<float> updated20 = make_vec(dim, 999);
+        std::vector<float> updated20 = make_vec(dim, 999); // A)
         assert(vec_equal(store.get_vector(20), updated20, dim));
 
         // label 40 must exist and match
-        std::vector<float> v40 = make_vec(dim, 40);
+        std::vector<float> v40 = make_vec(dim, 40); // B)
         assert(vec_equal(store.get_vector(40), v40, dim));
     }
 
@@ -142,14 +152,11 @@ void test_streaming_compaction() {
     int count = 0;
     for (auto &f : std::filesystem::directory_iterator(".")) {
 	const char name[] = "tmp_test_index.bin.vectors.";
-        size_t off = 0;
-        std::string str = f.path().string();
-        const char *s = str.c_str();
-        if (s[0] == '.' && s[1] == '/') s++;
-        while (*s == '/') s++;
-        if (memcmp(name, s, sizeof(name) - 1) == 0) { 
+        std::string path_str = f.path().string();
+        std::string fname = std::filesystem::path(path_str).filename().string();
+        if (fname.rfind(name, 0) == 0) {
             count++;
-            std::cout << "Found compact file: " << s << "\n";
+            std::cout << "Found compact file: " << fname << "\n";
         }
     }
 
@@ -165,8 +172,10 @@ void test_streaming_compaction() {
         // discover it again
         bool ok = store2.load_vectors(base, *(new std::ifstream(base, std::ios::binary)),
                             VectorStorageMode::MEMORY_MAPPED);
-        auto v20 = make_vec(dim, 20); // was 999
+        auto v20 = make_vec(dim, 999); // see A) above
         assert(vec_equal(store2.get_vector(20), v20, dim));
+	auto v40 = make_vec(dim, 40); // See B)
+        assert(vec_equal(store2.get_vector(40), v40, dim));
 
         std::cout << "[Reload after compact OK]\n";
     }
@@ -178,6 +187,8 @@ void test_streaming_compaction() {
 // MAIN
 // ------------------------------------------
 int main() {
+    cleanup();
+
     test_streaming_compaction();
 
     std::cout << "ALL TESTS PASSED\n";

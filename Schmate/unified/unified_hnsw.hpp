@@ -107,7 +107,7 @@ struct UnifiedIndexMeta {
     // Each label set stores just sizeof(labeltype) per label:
     // 10000 labels × 4 bytes = 40 KB per delta
     // 10 deltas = 400 KB total
-    size_t flush_threshold_ = 10000;
+    size_t flush_threshold_ =100000;
 
     QuantMode quantization_ = QuantMode::NONE;
     OptBinMode bin_mode_ = OptBinMode::STANDARD;
@@ -225,8 +225,8 @@ std::pair<size_t, size_t> peek_index_elements(std::istream& ifs);
 // <curent_element_count, max_elements>
 std::pair<size_t, size_t> peek_index_elements(const std::string path);
 
-void normalize_l2(float* vec, size_t dim);
-void normalize_l2_batch(std::vector<std::vector<float>>& embeddings);
+//void normalize_l2(float* vec, size_t dim);
+//void normalize_l2_batch(std::vector<std::vector<float>>& embeddings);
 
 // ============================================
 // UNIFIED INDEX (supports all metrics)
@@ -326,6 +326,12 @@ public:
     bool saveIndex(const std::string& path);
     bool load(bool SearchOnly = false);
     bool loadIndex(const std::string& path, bool SearchOnly = false);
+
+    bool flush();
+
+    // Get vector for rescoring
+    // const float* getOriginalVector(labeltype label) const;
+    void printStats() const; // Only relevant with LSM VectorStorage
 
     void clear(); // This removes all elements leaving it empty.
     // How many elements? 
