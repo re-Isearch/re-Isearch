@@ -219,7 +219,6 @@ bool UnifiedIndex::flush() {
    return true;
 }
 
-#if 0
 // Get vector for rescoring
 const float* UnifiedIndex::getOriginalVector(labeltype label) const {
     if (!enable_rescoring_) return nullptr;
@@ -229,9 +228,6 @@ const float* UnifiedIndex::getOriginalVector(labeltype label) const {
     return original_vectors_[label].first;
 #endif
 }
-#endif
-
-
 
 
 std::vector<std::pair<float, labeltype>>
@@ -332,6 +328,20 @@ std::priority_queue<std::pair<float, labeltype>> UnifiedIndex::searchKnn_interna
     while (!binary_results.empty()) {
         auto [hamming_dist, label] = binary_results.top();
         binary_results.pop();
+
+#if 1
+        const float *data = getOriginalVector(label);
+        if (data != nullptr) {
+            float dist; 
+            if (metric_ == Metric::Cosine || metric_ == Metric::IP) {
+                float sim = hnswlib::cosine_similarity(query, data, dim_);
+                dist = -sim;
+            } else { 
+                dist = l2_distance(query, data, dim_);
+            }
+            rescored.emplace_back(dist, label);
+       }
+#else
         
         if (original_vectors_.find(label) != original_vectors_.end()) {
             float dist;
@@ -343,6 +353,7 @@ std::priority_queue<std::pair<float, labeltype>> UnifiedIndex::searchKnn_interna
             }
             rescored.emplace_back(dist, label);
         }
+#endif
     }
     
     std::sort(rescored.begin(), rescored.end());
@@ -512,6 +523,19 @@ std::vector<std::pair<float, labeltype>> UnifiedIndex::searchWithStopCondition(
         if (enable_rescoring_) {
             std::vector<std::pair<float, labeltype>> rescored;
             for (const auto& [dist, label] : all_candidates) {
+#if 1
+               const float *data = getOriginalVector(label);
+               if (data != nullptr) {
+                  float true_dist;
+                    if (metric_ == Metric::Cosine || metric_ == Metric::IP) {
+                        float sim = hnswlib::cosine_similarity(query_ptr, data, dim_);
+                        true_dist = -sim;
+                    } else {
+                        true_dist = l2_distance(query_ptr, data, dim_);
+                    } 
+                    rescored.emplace_back(true_dist, label);
+                }
+#else
                 if (original_vectors_.find(label) != original_vectors_.end()) {
                     float true_dist;
                     if (metric_ == Metric::Cosine || metric_ == Metric::IP) {
@@ -522,6 +546,7 @@ std::vector<std::pair<float, labeltype>> UnifiedIndex::searchWithStopCondition(
                     }
                     rescored.emplace_back(true_dist, label);
                 }
+#endif
             }
             
             if (!rescored.empty()) {
@@ -739,7 +764,13 @@ bool UnifiedIndex::loadIndex(const std::string& path, bool searchOnly) {
 // This removes all elements leaving it empty.
 void UnifiedIndex::clear() {
    // We re-use the space
-   if (is_quantized()) original_vectors_.clear();
+   if (is_quantized()) {
+#if LSMVECTORSTORAGE
+     vector_storage_.clear();
+#else
+     original_vectors_.clear();
+#endif
+   }
    create_index();
 }   
 

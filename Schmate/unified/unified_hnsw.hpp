@@ -258,7 +258,7 @@ private:
     std::unique_ptr<HierarchicalNSW<float>> index_;
     std::unique_ptr<SpaceInterface<float>> space_;
 
-    std::unordered_map<labeltype, std::vector<float>> original_vectors_;
+    // std::unordered_map<labeltype, std::vector<float>> original_vectors_;
     
     void create_space();
     void create_index();
@@ -267,6 +267,7 @@ private:
     void create_quantized_space();
 
     void addPoint_internal(const float* data, labeltype label);
+
     std::priority_queue<std::pair<float, labeltype>> searchKnn_internal(
         const float* query, size_t k, bool use_rescoring);
 
@@ -298,6 +299,7 @@ public:
     void fit(const std::vector<std::vector<float>>& sample_embeddings);
     void addPoint(const float* data, labeltype label);
     
+    // We don't want to use searchKnn but the CloserFirst variant!
     std::priority_queue<std::pair<float, labeltype>> searchKnn(
         const float* query, size_t k, bool use_rescoring = false);
 
@@ -330,7 +332,7 @@ public:
     bool flush();
 
     // Get vector for rescoring
-    // const float* getOriginalVector(labeltype label) const;
+    const float* getOriginalVector(labeltype label) const;
     void printStats() const; // Only relevant with LSM VectorStorage
 
     void clear(); // This removes all elements leaving it empty.
