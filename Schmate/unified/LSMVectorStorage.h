@@ -30,6 +30,31 @@ performance.
 Since we want to support additions we create deltas. Since the deltas can get out of
 the control we can compact them into a new vector store.  When later on saving the index
 we gather all the vectors and write them into the combined index.
+
+
+Design summary:
+
+ - Every delta flush is written to disk as a versioned delta file: <base>.delta.<ver>
+   with zero-padded version numbers (e.g. .delta.00001).
+
+    Each delta file contains the same binary format we use for compact files (and the
+    portion in the unfified index file): size_t num_vectors; [ labeltype, float*dim ] * num_vectors
+
+    We maintain an in-memory counter delta_version_counter_ that is initialized on startup by
+    scanning existing delta files (via discover_delta_files()) and set to the highest version found.
+
+ - On each flush we ++delta_version_counter_ and write *.tmp then rename() to .delta.<ver> (atomic on POSIX).
+
+ - On startup / load we call discover_delta_files() then load_delta_files_on_startup() which:
+   finds delta files in ascending version order, loads them into delta_caches_ (oldest first), and builds
+   delta_label_sets_, ensures later delta files override earlier ones when compaction runs (we keep them in order).
+
+ - During compaction we merge main + deltas; on successful compaction we remove the delta files
+   that were merged (and clear caches). If compaction fails, deltas remain intact.
+
+ - get_vector() checks current_delta_ then delta_caches_ newest-first; that behavior stays correct
+   after replay as we load delta_caches_ in the natural order (oldest → newest) so newest is at the back.
+
 */
 
 namespace hnswlib {
@@ -122,20 +147,30 @@ public:
     // ------------------------
     bool load_vectors(const std::string& filename, std::ifstream& ifs,
                       size_t num_vectors, VectorStorageMode mode, size_t flush_threshold = 0) {
+        std::unique_lock lk(rw_mutex_);
+
         base_filename_   = filename;
         storage_mode_    = mode;
         if (flush_threshold) flush_threshold_ = flush_threshold;
+
+        lk.unlock();
+
         return load_vectors(ifs, num_vectors);
     }
 
     bool load_vectors(const std::string& filename, std::ifstream& ifs,
                       VectorStorageMode mode = VectorStorageMode::MEMORY_MAPPED, size_t flush_threshold = 0) {
+        std::unique_lock lk(rw_mutex_);
+
         base_filename_   = filename;
         storage_mode_    = mode;
         if (flush_threshold) flush_threshold_ = flush_threshold;
 
         size_t num_vectors;
         ifs.read(reinterpret_cast<char*>(&num_vectors), sizeof(size_t));
+
+        lk.unlock();
+
         return load_vectors(ifs, num_vectors);
     }
 
@@ -153,6 +188,12 @@ public:
            ifs.seekg(skip, std::ios::cur);
            return true;
         }
+
+        // Discover and load delta files
+        if (!load_delta_files_on_startup()) {
+            HNSWERR << "load_vectors: failed to load delta files on startup\n";
+            return false;
+        }   
 
         if (storage_mode_ == VectorStorageMode::IN_MEMORY) {
             return load_in_memory(ifs, num_vectors);
@@ -586,7 +627,61 @@ public:
         }
     }
 
+
+    // Load a .delta file into cache
+    bool load_delta_file_into_cache(const std::string &path) {
+        // exclusive lock because we modify delta_caches_
+        std::unique_lock lk(rw_mutex_);
+
+        std::ifstream ifs(path, std::ios::binary);
+        if (!ifs.good()) {
+            HNSWERR << "load_delta_file_into_cache: can't open " << path << "\n";
+            return false;
+        }
+        size_t n;
+        ifs.read(reinterpret_cast<char*>(&n), sizeof(size_t));
+        if (!ifs.good()) {
+            HNSWERR << "load_delta_file_into_cache: header read failed " << path << "\n";
+            return false;
+        }
+
+        std::unordered_map<labeltype, std::vector<float>> cache;
+        cache.reserve(n);
+        for (size_t i = 0; i < n; ++i) {
+            labeltype lbl;
+            ifs.read(reinterpret_cast<char*>(&lbl), sizeof(labeltype));
+            std::vector<float> vec(dim_);
+            ifs.read(reinterpret_cast<char*>(vec.data()), dim_ * sizeof(float));
+            if (!ifs.good()) {
+                HNSWERR << "load_delta_file_into_cache: premature EOF " << path << "\n";
+                return false;
+            }
+            cache.emplace(lbl, std::move(vec));
+        }
+
+        delta_caches_.push_back(std::move(cache));
+        std::unordered_set<labeltype> label_set;
+        for (const auto &kv : delta_caches_.back()) label_set.insert(kv.first);
+        delta_label_sets_.push_back(std::move(label_set));
+        return true;
+    }
+
+    // Find .delta files and load them
+    bool load_delta_files_on_startup() { 
+        // load each delta file; we call discover_delta_files() before this, typically.
+        delta_version_counter_ =  discover_delta_files();
+        for (const auto &df : delta_files_) {
+            if (!load_delta_file_into_cache(df)) {
+                HNSWERR << "load_delta_files_on_startup: failed to load " << df << "\n";
+                return false;
+            }       
+        }
+        return true;
+    }
+
     bool flush_delta() {
+        std::unique_lock lk(rw_mutex_);
+
         if (current_delta_.empty()) return true;
         const size_t delta_version_counter_ = delta_files_.size() + 1;
 
@@ -636,9 +731,13 @@ public:
     }
 
     const float* get_vector(labeltype label) const {
+        std::shared_lock lk(rw_mutex_);
+
+        // 1. Current Delta in memory
         auto it = current_delta_.find(label);
         if (it != current_delta_.end()) return it->second.data();
 
+        // 2. Delta caches, newest-first
         for (size_t i = delta_caches_.size(); i > 0; --i) {
             size_t idx = i - 1;
             if (delta_label_sets_[idx].find(label) == delta_label_sets_[idx].end()) continue;
@@ -646,6 +745,7 @@ public:
             if (dit != delta_caches_[idx].end()) return dit->second.data();
         }
 
+        // 3. Use MMAPED 
         if (storage_mode_ == VectorStorageMode::MEMORY_MAPPED && main_mmap_ptr_) {
             auto mit = main_offsets_.find(label);
             if (mit != main_offsets_.end()) {
@@ -656,12 +756,16 @@ public:
             }
         }
 
+        // NOTFOUND
         return nullptr;
     }
 
 private:
     // Helper to read vector for a label from the main source (mmap preferred, else unified-file read)
     bool read_main_vector_to_buffer(labeltype label, std::vector<float>& out_buf) const {
+        // reader: use shared lock because it reads main_offsets_ and main_mmap_ptr_
+        std::shared_lock lk(rw_mutex_);
+
         auto mit = main_offsets_.find(label);
         if (mit == main_offsets_.end()) return false;
 
@@ -689,6 +793,9 @@ public:
     // ------------------------
     bool save_vectors_to_stream(std::ofstream& ofs) {
 	if (!ofs) return false;
+
+        // exclusive writer lock
+        std::unique_lock lk(rw_mutex_);
 
         size_t count = 0;
         const std::streampos original_pos = ofs.tellp();
@@ -751,9 +858,17 @@ public:
 template <typename Fn>
 void for_each_vector(Fn fn) {
     // 1. Flush active delta so caches are consistent
-    if (!current_delta_.empty()) {
-        flush_delta();
-    }
+    {
+        std::shared_lock lk(rw_mutex_);
+        if (!current_delta_.empty()) {
+            // release shared lock and call flush under exclusive lock
+            lk.unlock();
+            flush_delta();
+        }
+     }
+
+    // Now enumerate under shared lock
+    std::shared_lock lk(rw_mutex_);
 
     // 2. Track which labels we’ve emitted (so delta-only labels are covered)
     // A small unordered_map or set; does NOT store vectors.
@@ -793,6 +908,13 @@ void for_each_vector(Fn fn) {
     }
 }
 
+    void clear() {
+        cleanup_deltas();
+        cleanup_mmap();
+       // Need to remove current
+       std::remove(current_vectors_file_.c_str());
+       compact_files_.clear();
+    }
 
 private:
     void cleanup_deltas() {
@@ -808,6 +930,7 @@ public:
     // Supports streaming compaction mode controlled by config_.use_streaming_compaction
     // ------------------------
     bool compact() {
+
         if (delta_files_.empty() && current_delta_.empty()) {
             return true;
         }
