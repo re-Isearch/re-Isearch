@@ -6,12 +6,33 @@
 
 /* re-Isearch will enter here
 
-  EmbeddingIndexer->append ( DocTypePtr->ParseBuffer(Buffer, FieldName, fc.Start(), fc.End(),type))
+  EmbeddingIndexer->append ( DocTypePtr->ParseBuffer(Buffer), FieldName, fc.Start(), fc.End(),type))
 
 NOTE: We write the chunks added to the index to a sentences file. This is for development/debuging.
 When we move to full integration into re-Isearch we'll dump the sentences file BUT maintain the
 start and end offsets. fc.Start() we will use for the SID. The offset file start will be 0 and end
 will be fc.End() - fc.Start() to represent the length;
+
+        // create embedder first
+        SBertGGML embedder(model);
+        // manager uses references to embedder? our manager takes embedder ref in constructor earlier.
+#if USE_LRUCACHE
+        size_t cache_size = determine_optimal_hnsw_cache_size(cfg, embedder.n_embd);
+        if (cfg.debug) LOG_DEBUG_S() << "Optimal Index Cache Size: " << cache_size;
+        BertIndexManager manager(embedder, cfg, cache_size);
+#else  
+        BertIndexManager manager(embedder, cfg);
+#endif
+
+
+Above as pointer: this way we can have the Manager persist.
+
+void HNSWIndex::append( const string& buffer, const string& fieldname,  GPTYPE id, GPTYPE end) {
+     Manager->append(fieldname, buffer, id);
+
+}
+
+
 
 */
 
@@ -212,5 +233,11 @@ void BertIndexManager::undelete_byAddress(const std::string &name, int64_t addre
     }
 
     sharded.undelete_byAddress(address, shard);
+}
+
+
+void BertIndexManager::clear(const std::string &name) {
+    auto &idx = getOrCreate(name);
+    idx.clear();
 }
 

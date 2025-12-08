@@ -27,12 +27,17 @@ public:
     HnswConfigBuilder& with_M(size_t m) { cfg.M = m; return *this; }
     HnswConfigBuilder& with_ef_construction(size_t ef) { cfg.ef_construction = ef; return *this; }
     HnswConfigBuilder& with_ef_search(size_t ef) { cfg.ef_search = ef; return *this; }
-    HnswConfigBuilder& with_metric(Metric m) { cfg.metric = m; return *this; }
+    HnswConfigBuilder& with_metric(MetricSpace m) { cfg.metric = m; return *this; }
     HnswConfigBuilder& with_search_mode(SearchModes m) { cfg.default_search_mode = m; return *this; }
     HnswConfigBuilder& with_debug(bool d) { cfg.debug = d; return *this; }
-    HnswConfigBuilder& with_normalized_embeddings(bool n) { cfg.normalized_embeddings = n; return *this; }
+    HnswConfigBuilder& with_normalize_embeddings(bool n) { cfg.normalize_embeddings = n; return *this; }
     HnswConfigBuilder& with_default_k(size_t k) { cfg.default_k = k; return *this; }
     HnswConfigBuilder& with_epsilon(float e) { cfg.default_epsilon = e; return *this; }
+    HnswConfigBuilder& with_epsilonL2(float e) { cfg.default_epsilonL2 = e; return *this; }
+    HnswConfigBuilder& with_epsilonIP(float e) { cfg.default_epsilonIP = e; return *this; }
+    HnswConfigBuilder& with_epsilonB(float e) { cfg.default_epsilonB = e; return *this; }
+    HnswConfigBuilder& with_epsilonT(float e) { cfg.default_epsilonT = e; return *this; }
+
     HnswConfigBuilder& with_flush_threshold(int t) { cfg.flush_threshold = t; return *this; }
     
     HnswConfig build() {

@@ -5,6 +5,10 @@
 #include <fstream>
 #include <stdexcept>
 
+#include "hnswlib/int_storage.h"
+#include "gguf_reader.hpp"
+
+
 inline void write_int64(std::ostream &os, int64_t v) {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     int64_t out = v;
@@ -24,12 +28,30 @@ inline int64_t read_int64(std::istream &is) {
 #endif
 }
 
-#include <filesystem>
+struct GmmlHparams {
+    uint32_t magic;           // 'ggml' = 0x67676d6c
+    int32_t n_vocab;          // Vocabulary size
+    int32_t n_max_tokens;     // Max sequence length
+    int32_t n_embd;           // Embedding dimensions
+    int32_t n_intermediate;   // Intermediate/FFN dimensions
+    int32_t n_head;           // Number of attention heads
+    int32_t n_layer;          // Number of layers
+    int32_t f16;              // Quantization type: 0=F32, 1=F16, 2=Q4_0, 3=Q4_1, etc.
+};
 
+
+std::optional<GmmlHparams> read_ggml_info(const std::string &path);
 
 // Search for a filename in a UNIX style path (dir1:dir2) and confirm it's .ggml
 // If found returns the now qualified path else just the filename
-std::string find_ggml_model(const std::string &filename, const std::string  &search_paths);
+enum GGML_TYPE { UNKNOWN = 0, GGML, GGUF};
+std::pair <std::string, enum GGML_TYPE> find_ggml_model(const std::string &filename, const std::string  &search_paths);
+
+// Get the storage type/quantization of a GGML model
+std::pair<hnswlib::StorageType, std::string> get_ggml_model_quant(const std::string &filename) ;
+
+
+#include <filesystem>
 
 
 // File exist and length utils

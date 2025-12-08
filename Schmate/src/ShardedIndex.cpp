@@ -32,6 +32,8 @@ size_t ShardedIndex::discover_shards(const std::string &base_name) const {
 		!file_exists(shard_basename(count) + IndexFileExtensions::offsets )) break;
         count++;
     }
+    // TODO: Look for simple holes: 1 2 4 5...
+
     return count;
 }
 
@@ -66,6 +68,15 @@ ShardedIndex::ShardedIndex(SBertGGML & emb, HnswConfig & c, const string & name,
     shards.push_back(make_unique<BertIndex>(embedder, cfg, shard_basename(0)));
 #endif
 }
+
+
+void ShardedIndex::clear() {
+    for (auto &shard : shards) {
+        shard->clear();
+    }
+    shards.clear();
+}
+
 
 BertIndex & ShardedIndex::current_shard() {
     lock_guard<mutex> lock(mtx);
@@ -307,8 +318,19 @@ bool ShardedIndex::merge_last_two()
         LOG_WARN_S() << "merge_last_two(): need at least 2 shards to merge.";
         return false;
     }
-  if (cfg.parallel_merge) return merge_two_parallel(n);
-  return merge_two_serial(n);
+    size_t available_shards = discover_shards(base_name);
+    if (n < available_shards) {
+      LOG_ERROR_S() << "Another process already merged (" 
+	<< available_shards << "<" << n << ") \"" << base_name << "\"";
+      return false;
+    } else if (n != available_shards) {
+      LOG_ERROR_S() << "Another process is appending to new shards on \""
+	<< base_name << "\". Merge not available now.";
+      return false;
+    }
+
+    if (cfg.parallel_merge) return merge_two_parallel(n);
+    return merge_two_serial(n);
 }
 
 bool  ShardedIndex::merge_two_parallel(size_t n) {
@@ -319,6 +341,20 @@ bool  ShardedIndex::merge_two_parallel(size_t n) {
     auto &A = *shards[first];
     auto &B = *shards[second];
 
+    if (A.get_data_size() != B.get_data_size()) {
+      LOG_WARN_S() << "[merge] Can't merge " << first << " and " << second << " shards as they have different sizes ("
+	<< A.get_data_size() << "!=" << B.get_data_size() << "!";
+      return false;
+    }
+
+    if (A.metric != B.metric) {
+      LOG_WARN_S() << "[merge] Can't merge shards made with different metrics ("
+	<< HnswConfig::metric_space_to_string(A.metric)
+	<< "!="
+	<< HnswConfig::metric_space_to_string(B.metric) << ")";
+      return false;
+    }
+
     if (cfg.debug) LOG_INFO_S()  << "Parallel merging shards " << first << " + " << second << "...";
 
     size_t sizeA = A.size();
@@ -326,7 +362,12 @@ bool  ShardedIndex::merge_two_parallel(size_t n) {
 
     HnswConfig merged_cfg = cfg;
     merged_cfg.max_elements = sizeA + sizeB + 1024; // safety margin
-    std::string merged_name = base_name + "_merged_tmp";
+
+    std::string merged_name = base_name + IndexFileExtensions::merge;
+    if (file_exists(merged_name)) {
+      LOG_ERROR_S() << "Another process is already doing a merge: " << base_name;
+      return false;
+    }
     auto merged = std::make_unique<BertIndex>(embedder, merged_cfg, merged_name);
 
     // Collect entries first to avoid holding locks
@@ -409,7 +450,13 @@ bool ShardedIndex::merge_two_serial(size_t n) {
     // Create a new merged index
     HnswConfig merged_cfg = cfg;
     merged_cfg.max_elements = sizeA + sizeB + 1024; // some headroom
-    std::string merged_name = base_name + "_merged_tmp";
+
+    std::string merged_name = base_name + IndexFileExtensions::merge;
+    if (file_exists(merged_name)) {
+      LOG_ERROR_S() << "Another process is already doing a merge: " << base_name;
+      return false;
+    }
+
     auto merged = std::make_unique<BertIndex>(embedder, merged_cfg, merged_name);
 
     // Merge all sentences and offsets from both
@@ -417,7 +464,7 @@ bool ShardedIndex::merge_two_serial(size_t n) {
     A.offsets->for_each([&](size_t lbl, const OffsetEntry &e) {
         if (e.file_end <= e.file_start) return; // skip deleted
         std::string text = A.get_text_by_label(lbl);
-        merged->append(text, e.sid);
+        merged->append(text, e.sid); // If we had a race the append has it's own lock 
     });
     B.offsets->for_each([&](size_t lbl, const OffsetEntry &e) {
         if (e.file_end <= e.file_start) return; // skip deleted

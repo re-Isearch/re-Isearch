@@ -13,16 +13,32 @@ struct IndexFileExtensions {
   static constexpr const char* eps      = ".eps"; // Epsilon learning
   static constexpr const char* hyparam  = ".hyp"; // Hyperparameters
   static constexpr const char* lock     = ".lock"; // Lock, 0 length = unlocked
+  static constexpr const char* merge    ="_merged_tmp"; // Merge temp file
 
 } ;
 
 
-enum class Metric {
-    L2,
-    InnerProduct,
-    Cosine,
+// MetricSpace enum - now with Binary and Ternary
+// so also need for these to set re_scoring enabled or not
+enum class MetricSpace {
+    L1,           // L1: Manhattan distance (sum of absolute differences)
+    L2,           // L2 squared: Euclidean distance squared
+    InnerProduct, // Negative inner product: For similarity search
+    Cosine,       // Cosine similarity
+    Binary,       // 1-bit quantization with Hamming
+    Ternary,      // 1.58 bits quantized : Preserves sign information (-1, 0, +1)
     Undefined
 };
+
+
+// L1: Manhattan distance (sum of absolute differences)
+// L2 squared: Euclidean distance squared
+// Negative inner product: For similarity search
+enum class DistanceMetric {
+    L1,
+    L2,
+    IP
+} ;
 
 enum class SearchModes {
     Knn,
@@ -47,13 +63,15 @@ struct HnswConfig {
     | 100 K–1 M  | 200–400   |
     | > 1 M      | 300–800+  | */
     size_t ef_search = 64;
-    Metric metric = Metric::Cosine;
+    MetricSpace metric = MetricSpace::Cosine;
 
     size_t bert_n_threads = 4;
 
     // chunking
     int max_tokens_per_chunk = 128;
     float overlap_percent = 0.1f;
+
+    bool lock_on_append = true;
 
     // debug
     bool debug = true;  // default debug enabled
@@ -66,13 +84,31 @@ struct HnswConfig {
     size_t default_lookahead = 10; // adaptive: lookahead window
     float default_gapDelta = 0.1f; // adaptive: gap threshold
 
-    // Epsilon search
+    // epsilon controls how aggressively the Epsilon search stops when candidates are
+    // within a certain distance tolerance of the best current match.
+    //
+    // A smaller epsilon → stricter search, fewer results (like a tighter radius).
+    //
+    // A larger epsilon → looser search, potentially many more candidates (and longer runtime).
+    //
+    // Epsilon here is relative to the distance scale of your space:
+    //
+    // For L2 distance, typical values are in 0.001–0.1 range.
+    // For cosine similarity, the “distance” HNSW uses is often 1 - cosine, so the effective
+    // range is 0 → 2 (but normally results cluster in 0–0.5).
+    //
+    // NOTE: We have some methods for runtime tuning of these values!
+
     float default_epsilon   = 0.15f; // epsilon, if < 0 then use radius
     float default_epsilonL2 = 1.41;  // Distance threshold, this is then ^2
-    float default_epsilonIP = 0.5;  // 
+    float default_epsilonIP = 0.5f;  // 
+    float default_epsilonB  = 0.0f;  // Binary Quantized
+    float default_epsilonT  = 0.0f;  // 1.58
 
     size_t min_candidates = 10;    // Min candidates for epsilon
     size_t max_candidates_cap = 0; // 0 = auto
+
+    bool enable_rescoring = true;   // To re-score or not (Only applies to 1-bit and 1.58bit)
 
     // performance tuning
     size_t knn_lookahead_scale = 5;
@@ -84,15 +120,21 @@ struct HnswConfig {
     bool parallel_merge = true;
     unsigned merge_threads = 0; // 0 = auto
     //
-    bool normalized_embeddings = false;
+    bool normalize_embeddings = false;
 
     // Dynamic auto-tuning
-    bool auto_tune_ef = true;
-    bool auto_tune_eps = true;
+    bool auto_tune_ef = false;
+    bool auto_tune_eps = false;
+
+    void set_autotune(bool val = true) {
+      auto_tune_ef  = val;
+      auto_tune_eps = val;
+    }
 
     // Validation
     bool validate() const;
 
+    float get_epsilon (MetricSpace val) const;
     // Get epsilon for current metric
     float get_epsilon() const;
 
@@ -143,8 +185,8 @@ struct HnswConfig {
         return set(key, value ? "true" : "false");
     }
     
-    bool set(const std::string& key, Metric value) {
-        return set(key, metric_to_string(value));
+    bool set(const std::string& key, MetricSpace value) {
+        return set(key, metric_space_to_string(value));
     }
     
     bool set(const std::string& key, SearchModes value) {
@@ -162,14 +204,28 @@ struct HnswConfig {
             "debug", "default_k", "default_radius", "default_alpha",
             "default_minN", "default_lookahead", "default_gapDelta",
             "default_epsilon", "default_epsilonL2", "default_epsilonIP",
+            "default_epsilonB",  "default_epsilonT", "enable_rescoring",
             "min_candidates", "max_candidates_cap", "knn_lookahead_scale",
             "flush_threshold", "flush_offsets_each", "parallel_merge",
-            "merge_threads", "normalized_embeddings", "default_search_mode",
+            "merge_threads", "normalize_embeddings", "default_search_mode",
             "auto_tune_ef", "auto_tune_eps"
         };
     }
 
+    // String conversions
+    static std::string metric_space_to_string(MetricSpace m) {
+        switch (m) {
+            case MetricSpace::L2: return "L2";
+            case MetricSpace::InnerProduct: return "InnerProduct";
+            case MetricSpace::Cosine: return "Cosine";
+            case MetricSpace::Binary: return "Binary";
+            case MetricSpace::Ternary: return "Ternary";
+            default: return "Undefined";
+        }
+    }
+
 private:
+
     static bool parse_bool(const std::string& s) {
         std::string lower = s;
         std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
@@ -178,14 +234,13 @@ private:
         throw std::runtime_error("Invalid boolean value: " + s);
     }
 
-    // String conversions
-    static std::string metric_to_string(Metric m) {
-        switch (m) {
-            case Metric::L2: return "L2";
-            case Metric::InnerProduct: return "InnerProduct";
-            case Metric::Cosine: return "Cosine";
-            default: return "Unknown";
-        }
+    static std::string distance_metric_to_string(DistanceMetric m) {
+       switch(m) {
+           case DistanceMetric::L1: return "L1";
+           case DistanceMetric::L2: return "L2";
+           case DistanceMetric::IP: return "IP";
+           default: return "Unknown";
+       }
     }
 
     static std::string search_mode_to_string(SearchModes m) {
@@ -199,11 +254,21 @@ private:
         }
     }
 
-    static Metric string_to_metric(const std::string& s) {
-        if (s == "L2" || s == "l2") return Metric::L2;
-        if (s == "InnerProduct" || s == "IP" || s == "ip") return Metric::InnerProduct;
-        if (s == "Cosine" || s == "cosine") return Metric::Cosine;
+    static MetricSpace string_to_metric_space(const std::string& s) {
+        if (s == "L2" || s == "l2") return MetricSpace::L2;
+        if (s == "InnerProduct" || s == "IP" || s == "ip") return MetricSpace::InnerProduct;
+        if (s == "Cosine" || s == "cosine") return MetricSpace::Cosine;
+        if (s == "Binary" || s == "binary") return MetricSpace::Binary;
+        if (s == "Ternary" || s == "Ternary" || s == "b1.58" || "1.58" ) return MetricSpace::Ternary;
+        if (s == "Undefined") return MetricSpace::Undefined;
         throw std::runtime_error("Unknown metric: " + s);
+    }
+
+    static DistanceMetric string_to_distance_metric(const std::string& s) {
+        if (s == "L1" || s == "l1") return DistanceMetric::L1;
+        if (s == "L2" || s == "l2") return DistanceMetric::L2;
+        if (s == "IP" || s == "ip") return DistanceMetric::IP;
+        throw std::runtime_error("Unknown distance metric: " + s);
     }
 
     static SearchModes string_to_search_mode(const std::string& s) {
@@ -220,7 +285,7 @@ private:
 
 struct IndexMeta {
     uint32_t       version = 1;
-    Metric         metric  = Metric::L2; // "L2", "cosine", "ip"
+    MetricSpace    metric  = MetricSpace::L2; // "L2", "cosine", "ip"
     bool           normalized = false;
     uint32_t       dim = 0;
     uint64_t       count = 0;

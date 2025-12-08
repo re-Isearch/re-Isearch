@@ -240,12 +240,66 @@ inline size_t determine_hnsw_cache_size_custom(size_t your_index_size_mb) {
 }
 #endif
 
-// Use the cfg to guess actual size of index
-inline size_t determine_optimal_hnsw_cache_size(const HnswConfig &cfg)
+
+
+/*
+Dimension of Common SBERT Models:
+
+all-MiniLM-L6-v2            384    Most popular, fast, good quality
+all-mpnet-base-v2           768    Higher quality, slower
+all-MiniLM-L12-v2           384    Balance of speed/quality
+paraphrase-MiniLM-L6-v2     384    Paraphrase detection
+paraphrase-mpnet-base-v2    768    Paraphrase detection
+multi-qa-MiniLM-L6-cos-v1   384    Question answering
+multi-qa-mpnet-base-cos-v1  768    Question answering
+
+For 384D SBERT vectors:
+
+Float32: 1,536 bytes                   (384 × 4) + 160 = 1,696 bytes 
+
+Binary:  48 bytes (32x compression)    (384 ÷ 8) + 160 = 208 bytes (-88% memory)
+Binary + rescoring --> 1,584 bytes (48 + 160 + 1,536) = 1744 bytes (+2% memory)
+
+Ternary: 96 bytes (16x compression)    (384 ÷ 4) + 160 = 256 bytes (-85% memory)
+Ternary + rescoring --> 1,584 bytes (96 + 160 + 1,536) = 1792 bytes (+6% memory)
+
+*/
+
+inline size_t bytes_per_vector(const HnswConfig &cfg, size_t dim)
 {
-  // TODO: Add fot Config: max_cache_size to limit things
-  //
-  size_t size_for_index = (size_t) (0.5 + (2.0f*cfg.max_elements*cfg.M)/16) * 1024;
-  return HNSWCacheConfig::calculate_cache_size(size_for_index).max_cache_size;
+    size_t vector_bytes = dim * sizeof(float);
+    
+    if (cfg.metric == MetricSpace::Binary || cfg.metric == MetricSpace::Ternary) {
+        size_t quant_bytes;
+        if (cfg.metric == MetricSpace::Binary) {
+            quant_bytes = ((dim + 63) / 64) * 8;  // 48 bytes for 384D
+        } else {
+            quant_bytes = (dim + 3) / 4;           // 96 bytes for 384D
+        }
+        
+        size_t graph_overhead = cfg.M * 10;  // ~160 bytes for M=16
+        size_t total = quant_bytes + graph_overhead;
+        
+        if (cfg.enable_rescoring) {
+            total += vector_bytes;  // Add original 1536 bytes for 384D
+        }
+        
+        return total;
+    } else {
+        // Float metrics
+        size_t graph_overhead = cfg.M * 10;  // ~160 bytes for M=16
+        return vector_bytes + graph_overhead;
+    }
 }
-  
+
+inline size_t determine_optimal_hnsw_cache_size(const HnswConfig &cfg, size_t dim = 384)
+{
+  const size_t size = bytes_per_vector(cfg, dim);
+  const size_t size_for_index = size*cfg.max_elements;
+
+  if (cfg.debug) LOG_DEBUG_S() << "Avg. consumption per "
+        << dim << "D " << HnswConfig::metric_space_to_string(cfg.metric)
+        << " vector: ~" << size << " bytes";
+    
+    return HNSWCacheConfig::calculate_cache_size(size_for_index).max_cache_size;
+}

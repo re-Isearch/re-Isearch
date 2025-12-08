@@ -1,8 +1,6 @@
-#include "hnswlib/hnswlib.h"
-#include <vector>
-#include <iostream>
-#include <cmath>
+#pragma once
 #include <algorithm>
+#include <cmath>
 
 // Distance to score conversion functions
 namespace scoring {
@@ -54,6 +52,11 @@ namespace scoring {
 }
 
 /*
+
+#include <vector>
+#include <iostream>
+#include "hnswlib/hnswlib.h"
+
 int main() {
     int dim = 128;
     int max_elements = 10000;

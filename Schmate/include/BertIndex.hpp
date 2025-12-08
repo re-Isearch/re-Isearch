@@ -1,20 +1,20 @@
 #pragma once
+
+#define HNSWLIB_ERR_OVERRIDE LOG_ERROR_S()
+
 #include "SBertGGML.hpp"
 #include "HnswConfig.hpp"
 #include "Util.hpp"
-#include "hnswlib/hnswlib.h"
+#include "unified-hnsw2.hpp"
 #include "FileLock.hpp"
 #include "OffsetFile.hpp"
 #include "AdaptiveSearchController.hpp"
 
 #include <unordered_map>
-#include <vector>
 #include <string>
-#include <memory>
 #include <fstream>
 #include <iostream>
 #include <atomic>
-#include <algorithm>
 
 struct SearchResult {
     float score;
@@ -33,10 +33,22 @@ struct Chunk {
     size_t end_token;
 };
 
+/* To use instead Llama.cpp instead of bert.cpp
+
+// Previously:
+SBertGGML embedder("sbert.ggml");
+
+// Now:
+LlamaEmbedder embedder("llama-2-7b.Q4_K_M.gguf");
+
+*/
+
 class BertIndex {
 friend class ShardedIndex;
     SBertGGML & embedder;
     HnswConfig & cfg;
+
+    MetricSpace metric = MetricSpace::Undefined;
     std::unique_ptr<hnswlib::HierarchicalNSW<float>> index;
     std::unique_ptr<hnswlib::SpaceInterface<float>> space;
 
@@ -59,6 +71,8 @@ friend class ShardedIndex;
 public:
     BertIndex(SBertGGML & emb, HnswConfig & c, const std::string & n, bool searchOnly = false);
     ~BertIndex();
+
+    size_t get_data_size() { return space ? space->get_data_size() : 0;}
 
 #if 1
 
@@ -97,6 +111,8 @@ public:
 
 
     std::string reconstruct_sentence(int64_t sentence_id) const;
+
+    void clear(); // Zap the contents and reset everything
 
     void flush();
     void save();

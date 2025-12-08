@@ -23,6 +23,8 @@ public:
     BertIndex & get_shard(size_t i);
     size_t shard_count() const;
 
+    void clear();
+
     void append(const std::string & sentence);
     void append(const std::string & sentence, int64_t sentence_id);
 

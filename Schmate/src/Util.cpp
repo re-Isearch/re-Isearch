@@ -1,60 +1,153 @@
-// Util.cpp 
-
 #include "Util.hpp"
+#include "Logger.hpp"
 
 
-static bool isSBERTGGMLFile(const std::string& filepath) {
-    std::ifstream file(filepath, std::ios::binary);
+#include <sys/mman.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <cstring>
+#include <stdexcept>
+#include <string>
 
-    // GGML files start with a magic number (4 bytes): "ggml" or "ggjt" or other variants
-    uint32_t magic;
-    file.read(reinterpret_cast<char*>(&magic), sizeof(magic));
-    
+using namespace hnswlib;
+
+/*
+
+GGML Codes:
+
+| Code (`f16` value) | Quantization Type | Bits per weight | Description                     |
+| :----------------: | :---------------- | :-------------: | :------------------------------ |
+|        **0**       | `F32`             |        32       | Full precision                  |
+|        **1**       | `F16`             |        16       | Half precision                  |
+|        **2**       | `Q4_0`            |        4        | 4-bit block quantization        |
+|        **3**       | `Q4_1`            |        4        | 4-bit with scale + bias         |
+|        **6**       | `Q5_0`            |        5        | 5-bit quantization              |
+|        **7**       | `Q5_1`            |        5        | 5-bit w/ bias                   |
+|        **8**       | `Q8_0`            |        8        | 8-bit uniform                   |
+|        **9**       | `Q8_1`            |        8        | 8-bit w/ bias                   |
+|       **10**       | `Q2_K`            |        2        | 2-bit “K-block” quantization    |
+|       **11**       | `Q3_K`            |        3        | 3-bit K-block                   |
+|       **12**       | `Q4_K`            |        4        | 4-bit K-block base              |
+|       **13**       | `Q5_K`            |        5        | 5-bit K-block                   |
+|       **14**       | `Q6_K`            |        6        | 6-bit K-block                   |
+|       **15**       | `Q8_K`            |        8        | 8-bit K-block                   |
+|       **16**       | `IQ2_XXS`         |        2        | “Improved Quantization” variant |
+|       **17**       | `IQ2_XS`          |        2        |                                 |
+|       **18**       | `IQ3_XS`          |        3        |                                 |
+|       **19**       | `IQ1_S`           |        1        | 1-bit ultra-low precision       |
+|       **20**       | `BF16`            |        16       | bfloat16                        |
+
+*/
+
+static std::string ggml_quant_name(uint32_t code) {
+    switch (code) {
+        case 0: return "F32";
+        case 1: return "F16";
+        case 2: return "Q4_0";
+        case 3: return "Q4_1";
+        case 6: return "Q5_0";
+        case 7: return "Q5_1";
+        case 8: return "Q8_0";
+        case 9: return "Q8_1";
+        case 10: return "Q2_K";
+        case 11: return "Q3_K";
+        case 12: return "Q4_K";
+        case 13: return "Q5_K";
+        case 14: return "Q6_K";
+        case 15: return "Q8_K";
+        case 16: return "IQ2_XXS";
+        case 17: return "IQ2_XS";
+        case 18: return "IQ3_XS";
+        case 19: return "IQ1_S";
+        case 20: return "BF16";
+        default: return "Unknown(" + std::to_string(code) + ")";
+    }
+}
+
+
+static StorageType ggml_quant_type(uint32_t code) {
+    switch (code) {
+        case  1: return StorageType::FP16;
+        case  2: return StorageType::INT4;
+        case  3: return StorageType::INT4;
+        case  6: return StorageType::INT5;           
+        case  7: return StorageType::INT5;           
+        case  8: return StorageType::INT8;           
+        case  9: return StorageType::INT8;           
+        case 10: return StorageType::INT2;
+        case 11: return StorageType::INT3;          
+        case 12: return StorageType::INT4;          
+        case 13: return StorageType::INT5;          
+        case 14: return StorageType::INT6;          
+        case 15: return StorageType::INT8;          
+        case 16: return StorageType::INT2;
+        case 17: return StorageType::INT2;
+        case 18: return StorageType::INT3;
+        case 19: return StorageType::BIN1;
+        case 20: return StorageType::FP16;          
+        case  0:
+        default:
+            return StorageType::FLOAT32;
+    }
+}
+
+
+std::optional<GmmlHparams> read_ggml_info(const std::string& path) {
+   GmmlHparams info;
+
+   if (file_size(path) > sizeof(GmmlHparams)) {
+       std::ifstream fin(path, std::ios::binary);
+       if (fin) {
+           GmmlHparams info; 
+           fin.read(reinterpret_cast<char*>(&info), sizeof(info));
+           return info;
+        }
+    }
+   return std::nullopt;
+}
+
+std::pair<hnswlib::StorageType, std::string>
+	get_ggml_model_quant(const std::string &filepath)
+{
+    auto hdr = read_ggml_info (filepath);
+    return  {  ggml_quant_type(hdr->f16), ggml_quant_name(hdr->f16) };
+}
+
+
+static GGML_TYPE FileType(const std::string& filepath) {
+    enum GGML_TYPE type = GGML_TYPE::UNKNOWN;
     // Check for valid GGML magic numbers
     const uint32_t GGML_MAGIC = 0x67676d6c; // "ggml" in little-endian
     const uint32_t GGJT_MAGIC = 0x67676a74; // "ggjt" in little-endian
     const uint32_t GGLA_MAGIC = 0x67676c61; // "ggla" in little-endian
     const uint32_t GGMF_MAGIC = 0x67676d66; // "ggmf" in little-endian
     const uint32_t GGUF_MAGIC = 0x46554747; // "GGUF" in little-endian
-    
-    bool valid_magic = (magic == GGML_MAGIC || magic == GGJT_MAGIC || 
+
+    auto hdr = read_ggml_info (filepath);
+    if (hdr) {
+        uint32_t magic = hdr->magic;
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+        magic = __builtin_bswap32(magic);
+#endif
+        bool valid_magic = (magic == GGML_MAGIC || magic == GGJT_MAGIC || 
                         magic == GGLA_MAGIC || magic == GGMF_MAGIC ||
                         magic == GGUF_MAGIC);
-    
-    if (!valid_magic) {
-        std::cerr << "Invalid magic number: 0x" << std::hex << magic << std::dec << std::endl;
-        return false;
-    }
-    
-    // Read version (4 bytes)
-    uint32_t version;
-    file.read(reinterpret_cast<char*>(&version), sizeof(version));
-    
-    // For older GGML formats (not GGUF), the next fields are hyperparameters
-    // The order is typically: n_vocab, n_embd, n_mult, n_head, n_layer, n_rot, ftype
-    int32_t n_vocab, n_embd, n_mult, n_head, n_layer;
-    file.read(reinterpret_cast<char*>(&n_vocab), sizeof(n_vocab));
-    file.read(reinterpret_cast<char*>(&n_embd), sizeof(n_embd));
-    file.read(reinterpret_cast<char*>(&n_mult), sizeof(n_mult));
-    file.read(reinterpret_cast<char*>(&n_head), sizeof(n_head));
-    file.read(reinterpret_cast<char*>(&n_layer), sizeof(n_layer));
-
-    file.close();
-    
-    std::cerr << "Magic: 0x" << std::hex << magic << std::dec << std::endl;
-    std::cerr << "Version: " << version << std::endl;
-    std::cerr << "n_vocab = " << n_vocab << ", n_embd = " << n_embd 
-              << ", n_mult = " << n_mult << ", n_head = " << n_head 
-              << ", n_layer = " << n_layer << std::endl;
-    
+        if (!valid_magic) {
+            std::cerr << "Invalid magic number: 0x" << std::hex << magic << std::dec << std::endl;
+            return type ;
+        }
+        type = ( magic == GGUF_MAGIC) ? GGML_TYPE::GGUF : GGML_TYPE::GGML;
+     }
+#if 1
+   return type ;
+#else
     // Validate the values make sense
-    // n_mult is typically 4 * n_embd (for FFN intermediate size)
-    return n_embd > 0 && n_embd <= 16384 &&
-           n_layer > 0 && n_layer <= 128 &&
-           n_vocab > 0 && n_vocab <= 200000 &&
-           n_head > 0 && n_head <= 256 &&
-           n_mult >= 0 && n_mult <= 65536 &&
-           (n_embd % n_head == 0);  // n_embd must be divisible by n_head
+    return hdr.n_embd > 0 && hdr.n_embd <= 16384 &&
+           hdr.n_layer > 0 && hdr.n_layer <= 128 &&
+           hdr.n_vocab > 0 && hdr.n_vocab <= 200000 &&
+           hdr.n_head > 0 && hdr.n_head <= 256 &&
+           (hdr.n_embd % hdr.n_head == 0) ? type : GGML_TYPE::UNKNOWN;  // n_embd must be divisible by n_head
+#endif
 }
 
 
@@ -84,17 +177,18 @@ static std::vector<std::string> splitPath(const std::string& pathStr, char delim
     return paths;
 }
 
-static std::optional<std::string> findSBERTFile(const std::string& searchPaths, 
-                                          const std::string& filename) {
+std::pair <std::string, enum GGML_TYPE>
+	find_ggml_model(const std::string& filename, const std::string& searchPaths ){
     auto paths = splitPath(searchPaths);
     
     for (const auto& directory : paths) {
+        enum GGML_TYPE type;
         try {
             for (const auto& entry : fs::directory_iterator(directory)) {
                 if (entry.is_regular_file() && 
                     entry.path().filename() == filename &&
-                    isSBERTGGMLFile(entry.path().string())) {
-                    return entry.path().string();
+                    (type = FileType(entry.path().string())) != GGML_TYPE::UNKNOWN) {
+                    return {entry.path().string(), type};
                 }
             }
         } catch (const fs::filesystem_error&) {
@@ -103,19 +197,8 @@ static std::optional<std::string> findSBERTFile(const std::string& searchPaths,
         }
     }
     
-    return std::nullopt;
+    return {filename,  GGML_TYPE::UNKNOWN};
 }
-
-
-std::string find_ggml_model(const std::string &filename, const std::string& Path)
-{
-  auto result = findSBERTFile(Path, filename);
-  if (result) return *result;
-  return filename; // NOT FOUND
-
-}
-
-
 
 #ifdef __APPLE__
 #include <malloc/malloc.h>
@@ -204,6 +287,5 @@ int getThreadCount() {
         return 1; // Default fallback
     #endif
 }
-
 
 

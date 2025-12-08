@@ -3,6 +3,13 @@
 #include <thread>
 
 
+#ifndef WINDOWS
+extern "C" {
+#include <sys/utsname.h>
+}
+#endif
+
+
     // Validation
     bool HnswConfig::validate() const {
         if (max_elements == 0) {
@@ -49,21 +56,37 @@
 
     // Get epsilon for current metric
     float HnswConfig::get_epsilon() const {
-        if (default_epsilon >= 0.0f) {
-            return default_epsilon;
-        }
-        
-        // Fall back to metric-specific epsilon
-        switch (metric) {
-            case Metric::L2:
-                return default_epsilonL2 * default_epsilonL2; // Square it
-            case Metric::InnerProduct:
-            case Metric::Cosine:
-                return default_epsilonIP;
-            default:
-                return 0.15f;
-        }
+      return get_epsilon(metric);
     }
+    float HnswConfig::get_epsilon(MetricSpace val) const {
+        const float lowI = 0.000001f;
+        const float lowC = 0.00001f;
+        const float lowX = 0.001f;
+        // Use metric-specific epsilon
+        switch (val) {
+            case MetricSpace::L2:
+                if (default_epsilonL2 < lowX) break;  // Under threshold
+		return default_epsilonL2 * default_epsilonL2; // Square it
+            case MetricSpace::Cosine:
+		if (default_epsilonIP < lowI) break; // Under threshold
+            case MetricSpace::InnerProduct:
+		if (default_epsilonIP < lowC) break; // Under threshold
+		return default_epsilonIP;
+            case MetricSpace::Binary:
+		if (default_epsilonB < lowX) break;
+                return default_epsilonB;
+            case MetricSpace::Ternary:
+		if (default_epsilonT < lowX) break;
+                return default_epsilonT;
+            default:
+                break;
+        }
+        if (default_epsilon >= lowX) return default_epsilon;
+        if (default_radius >= lowX)  return default_radius;;
+        // Default
+        return 0.15f;
+    }
+
 
     // Get effective max_candidates (with cap applied)
     size_t HnswConfig::get_max_candidates(size_t request) const {
@@ -113,14 +136,17 @@
         write_value(default_epsilon);
         write_value(default_epsilonL2);
         write_value(default_epsilonIP);
+        write_value(default_epsilonB);
+        write_value(default_epsilonT);
         write_value(min_candidates);
         write_value(max_candidates_cap);
+	write_value(enable_rescoring);
         write_value(knn_lookahead_scale);
         write_value(flush_threshold);
         write_value(flush_offsets_each);
         write_value(parallel_merge);
         write_value(merge_threads);
-        write_value(normalized_embeddings);
+        write_value(normalize_embeddings);
 
         write_value(auto_tune_ef);
         write_value(auto_tune_eps);
@@ -165,14 +191,17 @@
         read_value(default_epsilon);
         read_value(default_epsilonL2);
         read_value(default_epsilonIP);
+	read_value(default_epsilonB);
+        read_value(default_epsilonT);
         read_value(min_candidates);
         read_value(max_candidates_cap);
+        read_value(enable_rescoring); 
         read_value(knn_lookahead_scale);
         read_value(flush_threshold);
         read_value(flush_offsets_each);
         read_value(parallel_merge);
         read_value(merge_threads);
-        read_value(normalized_embeddings);
+        read_value(normalize_embeddings);
 
         read_value(auto_tune_ef);
         read_value(auto_tune_eps);
@@ -248,14 +277,17 @@
         OVERRIDE_IF_DIFFERENT(default_epsilon);
         OVERRIDE_IF_DIFFERENT(default_epsilonL2);
         OVERRIDE_IF_DIFFERENT(default_epsilonIP);
+        OVERRIDE_IF_DIFFERENT(default_epsilonB);
+        OVERRIDE_IF_DIFFERENT(default_epsilonT);
         OVERRIDE_IF_DIFFERENT(min_candidates);
         OVERRIDE_IF_DIFFERENT(max_candidates_cap);
+        OVERRIDE_IF_DIFFERENT(enable_rescoring);
         OVERRIDE_IF_DIFFERENT(knn_lookahead_scale);
         OVERRIDE_IF_DIFFERENT(flush_threshold);
         OVERRIDE_IF_DIFFERENT(flush_offsets_each);
         OVERRIDE_IF_DIFFERENT(parallel_merge);
         OVERRIDE_IF_DIFFERENT(merge_threads);
-        OVERRIDE_IF_DIFFERENT(normalized_embeddings);
+        OVERRIDE_IF_DIFFERENT(normalize_embeddings);
 
         OVERRIDE_IF_DIFFERENT(auto_tune_ef);
         OVERRIDE_IF_DIFFERENT(auto_tune_eps);
@@ -266,14 +298,14 @@
     // Print configuration
     void HnswConfig::print(std::ostream& os) const {
         os << "=== HNSW Configuration ===\n";
-        os << "Search mode: " << search_mode_to_string(default_search_mode) << "\n";
+        os << "Default search mode: " << search_mode_to_string(default_search_mode) << "\n";
         os << "\nIndex parameters:\n";
         os << "  max_elements: " << max_elements << "\n";
         os << "  M: " << M << "\n";
         os << "  ef_construction: " << ef_construction << "\n";
         os << "  ef_search: " << ef_search << "\n";
-        os << "  metric: " << metric_to_string(metric) << "\n";
-        os << "  normalized_embeddings: " << (normalized_embeddings ? "yes" : "no") << "\n";
+        os << "  metric: " << metric_space_to_string(metric) << "\n";
+        os << "  normalize_embeddings: " << (normalize_embeddings ? "yes" : "no") << "\n";
         
         os << "\nEmbedding:\n";
         os << "  bert_n_threads: " << bert_n_threads << "\n";
@@ -289,11 +321,15 @@
         os << "  minN (adaptive): " << default_minN << "\n";
         os << "  lookahead (adaptive): " << default_lookahead << "\n";
         os << "  gapDelta (adaptive): " << default_gapDelta << "\n";
+        os << "  enable_rescoring (Binary & Ternary): "
+		<< (enable_rescoring ? "yes" : "no" ) << "\n";
         
         os << "\nEpsilon search:\n";
         os << "  epsilon: " << default_epsilon << "\n";
         os << "  epsilonL2: " << default_epsilonL2 << "\n";
         os << "  epsilonIP: " << default_epsilonIP << "\n";
+        os << "  epsilonB: " << default_epsilonB << "\n";
+        os << "  epsilonT: " << default_epsilonB << "\n";
         os << "  min_candidates: " << min_candidates << "\n";
         os << "  max_candidates_cap: " << max_candidates_cap << "\n";
         
@@ -305,10 +341,33 @@
         os << "  merge_threads: " << get_merge_threads() << "\n";
 
         os << "\nTuning:\n";
-        os << "  auto_tune_ef: " << auto_tune_ef << "\n";
-        os << "  auto_tune_eps: " << auto_tune_eps << "\n"; 
+        os << "  auto_tune_ef: " << (auto_tune_ef ? "yes" : "no") << "\n";
+        os << "  auto_tune_eps: " << (auto_tune_eps ? "yes" : "no") << "\n"; 
         
         os << "\nDebug: " << (debug ? "enabled" : "disabled") << "\n";
+
+        os << "\n===   This Platform    ===\nOS: ";
+#ifdef _WIN32
+        os << "Windows 32-bit\n";
+#elif _WIN64
+        os << "Windows 64-bit\n";
+#else       
+        utsname u;      // declare the variable to hold the result
+        uname(&u);      // call the uname() function to fill the struct
+        os  << u.sysname << " " << u.release << '\n';
+        os << "Hardware: " << u.machine << " / "
+		<< std::thread::hardware_concurrency() << " cores\n";
+#endif  
+        // Print SIMD capability
+#ifdef __AVX512F__
+        os << "SIMD: AVX-512 enabled\n\n";
+#elif defined(__AVX2__)
+        os  << "SIMD: AVX2 enabled\n\n";
+#elif defined(__ARM_NEON)
+        os  << "SIMD: ARM NEON enabled\n\n";
+#else   
+       os  << "SIMD: Scalar implementation (no SIMD)\n\n";
+#endif      
    }
 
 
@@ -342,18 +401,21 @@
             if (key == "default_epsilon") { default_epsilon = std::stof(value); return true; }
             if (key == "default_epsilonL2") { default_epsilonL2 = std::stof(value); return true; }
             if (key == "default_epsilonIP") { default_epsilonIP = std::stof(value); return true; }
+            if (key == "default_epsilonB") { default_epsilonB = std::stof(value); return true; }
+            if (key == "default_epsilonT") { default_epsilonT = std::stof(value); return true; }
             
             // bool fields
             if (key == "debug") { debug = parse_bool(value); return true; }
             if (key == "flush_offsets_each") { flush_offsets_each = parse_bool(value); return true; }
             if (key == "parallel_merge") { parallel_merge = parse_bool(value); return true; }
-            if (key == "normalized_embeddings") { normalized_embeddings = parse_bool(value); return true; }
+            if (key == "normalize_embeddings") { normalize_embeddings = parse_bool(value); return true; }
+            if (key == "enable_rescoring") { enable_rescoring = parse_bool(value); return true; }
 
             if (key == "auto_tune_ef") { auto_tune_ef = parse_bool(value); return true; }
             if (key == "auto_tune_eps") { auto_tune_eps = parse_bool(value); return true; }
             
             // enum fields
-            if (key == "metric") { metric = string_to_metric(value); return true; }
+            if (key == "metric") { metric = string_to_metric_space(value); return true; }
             if (key == "default_search_mode") { default_search_mode = string_to_search_mode(value); return true; }
             
             std::cerr << "Unknown config key: " << key << "\n";
@@ -378,13 +440,16 @@
         if (key == "default_minN") return std::to_string(default_minN);
         if (key == "default_lookahead") return std::to_string(default_lookahead);
         if (key == "min_candidates") return std::to_string(min_candidates);
-        if (key == "max_candidates_cap") return std::to_string(max_candidates_cap);
+
+
         if (key == "knn_lookahead_scale") return std::to_string(knn_lookahead_scale);
         if (key == "merge_threads") return std::to_string(merge_threads);
         
         // int fields
         if (key == "max_tokens_per_chunk") return std::to_string(max_tokens_per_chunk);
         if (key == "flush_threshold") return std::to_string(flush_threshold);
+	if (key == "max_candidates_cap") return max_candidates_cap > 0 ?
+		std::to_string(max_candidates_cap) : "auto";
         
         // float fields
         if (key == "overlap_percent") return std::to_string(overlap_percent);
@@ -394,15 +459,21 @@
         if (key == "default_epsilon") return std::to_string(default_epsilon);
         if (key == "default_epsilonL2") return std::to_string(default_epsilonL2);
         if (key == "default_epsilonIP") return std::to_string(default_epsilonIP);
+        if (key == "default_epsilonB") return std::to_string(default_epsilonB);
+        if (key == "default_epsilonT") return std::to_string(default_epsilonT);
+
         
         // bool fields
         if (key == "debug") return debug ? "true" : "false";
         if (key == "flush_offsets_each") return flush_offsets_each ? "true" : "false";
         if (key == "parallel_merge") return parallel_merge ? "true" : "false";
-        if (key == "normalized_embeddings") return normalized_embeddings ? "true" : "false";
+        if (key == "normalize_embeddings") return normalize_embeddings ? "true" : "false";
+        if (key == "enable_rescoring") return enable_rescoring ? "true" : "false";
+	if (key == "auto_tune_ef") return auto_tune_ef ? "enabled" : "off";
+	if (key == "auto_tune_eps") return auto_tune_eps ? "enabled" : "off";
         
         // enum fields
-        if (key == "metric") return metric_to_string(metric);
+        if (key == "metric") return metric_space_to_string(metric);
         if (key == "default_search_mode") return search_mode_to_string(default_search_mode);
         
         throw std::runtime_error("Unknown config key: " + key);

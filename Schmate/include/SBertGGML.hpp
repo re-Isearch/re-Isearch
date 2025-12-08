@@ -23,6 +23,20 @@ struct SBertGGML {
         if (!ctx) throw std::runtime_error("Failed to load model " + model_path);
         n_embd = bert_n_embd(ctx);
         LOG_INFO_S() << "Loaded SBERT GGML model. dim=" << n_embd;
+#if 0
+
+// The bert_ctx structure contains the model
+// Access the tensors through ctx->model
+// For example, check the embedding weights:
+if (ctx && ctx->model.word_embeddings) {
+    enum ggml_type type = ctx->model.word_embeddings->type;
+    printf("Word embeddings type: %d\n", type);
+    
+    if (type == GGML_TYPE_Q4_0 || type == GGML_TYPE_Q4_1) {
+        printf("Model uses 4-bit quantization\n");
+    }
+}
+#endif
     }
 
     ~SBertGGML() {

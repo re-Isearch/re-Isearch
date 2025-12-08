@@ -56,7 +56,9 @@ OffsetFile::~OffsetFile() {
     // Unmap before truncating
     munmap(map, filesize);
 
-    if (filesize > new_filesize) {
+    if (shrink_to == 0) {
+      ftruncate(fd, 0);
+    } else if (filesize > new_filesize) {
       // Shrink physical file
       ftruncate(fd, new_filesize);
       LOG_INFO_S() << "[OffsetFile] shrunk from " << max_entries << " to "

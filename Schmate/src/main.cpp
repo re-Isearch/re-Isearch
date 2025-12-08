@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -38,7 +37,7 @@ static void print_help() {
     "  undelete_addr <address> [shard]\n"
     "  merge\n"
     "  flush\n"
-    "  shard_count\n"
+    "  shard_count [name]\n"
     "  reconstruct_label <label>\n"
     "  reconstruct_sid <sid>\n"
     "  set <key> <value>\n"
@@ -121,25 +120,25 @@ int main(int argc, char **argv) {
         cerr << "Usage: " << argv[0] << " <sbert.ggml> [--debug] [--metric l2|ip|cos]\n";
         return 1;
     }
-    string model = find_ggml_model(argv[1], "../lib:../bin:lib/:.");;
+    string model = find_ggml_model(argv[1], "../lib:../bin:lib/:.").first;
 
     bool debug = false;
-    Metric metric = Metric::Undefined;
+    MetricSpace metric = MetricSpace::Undefined;
 
     for (int i = 2; i < argc; ++i) {
         string a = argv[i];
         if (a == "--debug") debug = true;
         if (a == "--metric" && i+1 < argc) {
             string m = argv[++i];
-            if (m == "l2") metric = Metric::L2;
-            else if (m == "ip") metric = Metric::InnerProduct;
-            else if (m == "cos") metric = Metric::Cosine;
+            if (m == "l2") metric = MetricSpace::L2;
+            else if (m == "ip") metric = MetricSpace::InnerProduct;
+            else if (m == "cos") metric = MetricSpace::Cosine;
         }
     }
 
     ConfigLoader loader;
     HnswConfig cfg = loader.load(debug);
-    if (metric != Metric::Undefined) cfg.metric = metric;
+    if (metric != MetricSpace::Undefined) cfg.metric = metric;
   
 
    if (cfg.debug) Logger::instance().set_level(LogLevel::DEBUG);  // Show everything
@@ -151,7 +150,7 @@ int main(int argc, char **argv) {
         SBertGGML embedder(model);
         // manager uses references to embedder? our manager takes embedder ref in constructor earlier.
 #if USE_LRUCACHE
-        size_t cache_size = determine_optimal_hnsw_cache_size(cfg);
+        size_t cache_size = determine_optimal_hnsw_cache_size(cfg, embedder.n_embd);
 	if (cfg.debug) LOG_DEBUG_S() << "Optimal Index Cache Size: " << cache_size;
         BertIndexManager manager(embedder, cfg, cache_size);
 #else
@@ -346,8 +345,11 @@ if (line.rfind("epsilon", 0) == 0) {
                 cout << "Flushed.\n";
                 continue;
             }
-            if (line == "shard_count") {
-                cout << "Shard count: " << manager.shard_count(current) << "\n";
+            if (line.rfind ("shard_count", 0) == 0) {
+                istringstream iss(line.substr(11));
+                string index; iss>>index;
+		if (index.empty()) index = current;
+                cout << "Index \"" << index << "\" shard count: " << manager.shard_count(index) << "\n";
                 continue;
             }
             if (line.rfind("reconstruct_label ",0)==0) {

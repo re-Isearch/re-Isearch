@@ -64,9 +64,13 @@ void Logger::close_file() {
     }
 }
 
-void Logger::log(LogLevel level, const std::string& msg) {
-    if (level < min_level) return;
-    
+void Logger::log(LogLevel level, const std::string& message) {
+    if (level < min_level || message.empty()) return;
+
+    // Remove trailing \n from the string.
+    std::string msg (message);
+    if (msg.back() == '\n') msg.pop_back();
+
     std::lock_guard<std::mutex> lock(mutex_);
     
     std::string timestamp = format_timestamp();

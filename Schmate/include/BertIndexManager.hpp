@@ -14,6 +14,28 @@
 #include "LRUCache.hpp"
 #endif
 
+/* To use instead Llama.cpp instead of bert.cpp
+
+// Previously:
+SBertGGML embedder("sbert.ggml");
+
+// Now:
+LlamaEmbedder embedder("llama-2-7b.Q4_K_M.gguf");
+
+
+| Topic             | Recommendation 
+| ----------------- | --------------------------------------------------------------------------------------- |
+| **Model Choice**  | Use a **LLaMA model trained or fine-tuned for embeddings** (e.g., `mxbai-embed-large`,  |
+|                   | `nomic-embed-text-v1.5.gguf`) rather than a chat model.                                 |
+| **Performance**   | LLaMA embeddings are slower than SBERT in `bert.cpp`, but higher quality.               |
+|                   | Use `ctx_params.n_threads` for tuning.                                                  |
+| **Normalization** | If you use cosine similarity in HNSW, normalize the embedding after retrieval.          |
+| **Memory**        | LLaMA models require more RAM — ensure `--n-gpu-layers` is 0 if running CPU-only.       |
+
+
+*/
+
+
 class BertIndexManager {
     SBertGGML & embedder;
     HnswConfig & cfg;
@@ -30,6 +52,8 @@ public:
 #else
     BertIndexManager(SBertGGML & e, HnswConfig &c);
 #endif
+
+    void clear(const std::string &name);
 
     // get or create a named index
     ShardedIndex & getOrCreate(const std::string & name);
