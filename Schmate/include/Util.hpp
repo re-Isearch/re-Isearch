@@ -6,8 +6,6 @@
 #include <stdexcept>
 
 #include "hnswlib/int_storage.h"
-#include "gguf_reader.hpp"
-
 
 inline void write_int64(std::ostream &os, int64_t v) {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -38,6 +36,18 @@ struct GmmlHparams {
     int32_t n_layer;          // Number of layers
     int32_t f16;              // Quantization type: 0=F32, 1=F16, 2=Q4_0, 3=Q4_1, etc.
 };
+
+struct GGUFInfo {
+    std::string architecture;
+    uint32_t embedding_length = 0;
+    std::string quant_type;     // Human-readable ("F16", "Q4_0", ...)
+};
+
+// Codes <-> names and names -> quant type
+const std::string    ggml_quant_name(uint32_t code); // Takes code and returns name
+hnswlib::StorageType ggml_quant_type(uint32_t code); // Takes code and returns storage type
+int                  ggml_name_to_quant(const std::string& name); // Takes name and returns code
+hnswlib::StorageType ggml_name_to_quant_type(const std::string &name);
 
 
 std::optional<GmmlHparams> read_ggml_info(const std::string &path);

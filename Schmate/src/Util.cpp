@@ -9,6 +9,10 @@
 #include <stdexcept>
 #include <string>
 
+#include <string>
+#include <unordered_map>
+#include <array>
+
 using namespace hnswlib;
 
 /*
@@ -39,57 +43,155 @@ GGML Codes:
 
 */
 
-static std::string ggml_quant_name(uint32_t code) {
-    switch (code) {
-        case 0: return "F32";
-        case 1: return "F16";
-        case 2: return "Q4_0";
-        case 3: return "Q4_1";
-        case 6: return "Q5_0";
-        case 7: return "Q5_1";
-        case 8: return "Q8_0";
-        case 9: return "Q8_1";
-        case 10: return "Q2_K";
-        case 11: return "Q3_K";
-        case 12: return "Q4_K";
-        case 13: return "Q5_K";
-        case 14: return "Q6_K";
-        case 15: return "Q8_K";
-        case 16: return "IQ2_XXS";
-        case 17: return "IQ2_XS";
-        case 18: return "IQ3_XS";
-        case 19: return "IQ1_S";
-        case 20: return "BF16";
-        default: return "Unknown(" + std::to_string(code) + ")";
+
+namespace {
+    struct QuantMapping {
+        uint32_t             code;         // 32-bit int code in the .gmml file
+        const char*          name;         // Quantization Type name (.gguf)
+        hnswlib::StorageType storage_type; // Int storage (important for pass-through)
+    };
+    
+
+// The major issue is code 20. In older .ggml files it was BF16. In newer that slot
+// is a 4-bit quantization type and BF16 is code 30.
+//
+// So depending upon version. 20 can be 4-bit int or a 16-bit floating point!
+// Luckily GGUF uses string names so we only need to worry about .gmml files.
+#define NEW_CODES 1
+#if NEW_CODES
+    constexpr std::array<QuantMapping, 30> quant_mappings = {{
+        {0, "F32", StorageType::FLOAT32},
+        {1, "F16", StorageType::FP16},
+        {2, "Q4_0", StorageType::INT4},
+        {3, "Q4_1", StorageType::INT4},
+        // Codes 4 and 5 are not defined in GGML
+        {6, "Q5_0", StorageType::INT5},
+        {7, "Q5_1", StorageType::INT5},
+        {8, "Q8_0", StorageType::INT8},
+        {9, "Q8_1", StorageType::INT8},
+        {10, "Q2_K", StorageType::INT2},
+        {11, "Q3_K", StorageType::INT3},
+        {12, "Q4_K", StorageType::INT4},
+        {13, "Q5_K", StorageType::INT5},
+        {14, "Q6_K", StorageType::INT6},
+        {15, "Q8_K", StorageType::INT8},
+        {16, "IQ2_XXS", StorageType::INT2},
+        {17, "IQ2_XS", StorageType::INT2},
+        {18, "IQ3_XXS", StorageType::INT3},
+        {19, "IQ1_S", StorageType::BIN1},
+        {20, "IQ4_NL", StorageType::INT4},  // Note: original code had "BF16" here
+        {21, "IQ3_S", StorageType::INT3},
+        {22, "IQ2_S", StorageType::INT2},
+        {23, "IQ4_XS", StorageType::INT4},
+        {24, "I8", StorageType::INT8},
+        {25, "I16", StorageType::INT16},
+        {26, "I32", StorageType::INT32},
+        {27, "I64", StorageType::INT64},
+        {28, "F64", StorageType::FLOAT64},
+        {29, "IQ1_M", StorageType::BIN1},
+        {30, "BF16", StorageType::FP16}  // BFloat16 support added here, waas 20
+    }};
+#else
+    constexpr std::array<QuantMapping, 21> quant_mappings = {{
+        {0,  "F32",     hnswlib::StorageType::FLOAT32},
+        {1,  "F16",     hnswlib::StorageType::FP16},
+        {2,  "Q4_0",    hnswlib::StorageType::INT4},
+        {3,  "Q4_1",    hnswlib::StorageType::INT4},
+        // Codes 4 and 5 are not defined in GGML
+        {6,  "Q5_0",    hnswlib::StorageType::INT5},
+        {7,  "Q5_1",    hnswlib::StorageType::INT5},
+        {8,  "Q8_0",    hnswlib::StorageType::INT8},
+        {9,  "Q8_1",    hnswlib::StorageType::INT8},
+        {10, "Q2_K",    hnswlib::StorageType::INT2},
+        {11, "Q3_K",    hnswlib::StorageType::INT3},
+        {12, "Q4_K",    hnswlib::StorageType::INT4},
+        {13, "Q5_K",    hnswlib::StorageType::INT5},
+        {14, "Q6_K",    hnswlib::StorageType::INT6},
+        {15, "Q8_K",    hnswlib::StorageType::INT8},
+        {16, "IQ2_XXS", hnswlib::StorageType::INT2},
+        {17, "IQ2_XS",  hnswlib::StorageType::INT2},
+        {18, "IQ3_XS",  hnswlib::StorageType::INT3},
+        {19, "IQ1_S",   hnswlib::StorageType::BIN1},
+        {20, "BF16",    hnswlib::StorageType::BF16} // Some newer have  IQ4_NL
+    }};
+#endif
+}
+
+enum GGMLType : uint32_t {
+    GGML_TYPE_F32 = 0,
+    GGML_TYPE_F16 = 1,
+    GGML_TYPE_Q4_0 = 2,
+    GGML_TYPE_Q4_1 = 3,
+    GGML_TYPE_Q5_0 = 6,
+    GGML_TYPE_Q5_1 = 7,
+    GGML_TYPE_Q8_0 = 8,
+};
+
+static const std::unordered_map<uint32_t,std::string> GGML_TYPE_NAMES = {
+    {0, "F32"}, {1, "F16"}, {2, "Q4_0"}, {3, "Q4_1"},
+    {6, "Q5_0"}, {7, "Q5_1"}, {8, "Q8_0"},
+};
+
+// Utility to read little-endian values
+template<typename T>
+inline T read_le(std::ifstream &f) {
+    T v;
+    f.read(reinterpret_cast<char*>(&v), sizeof(T));
+    return v;
+}
+
+const std::string ggml_quant_name(uint32_t code) {
+    for (const auto& mapping : quant_mappings) {
+        if (mapping.code == code) {
+            return mapping.name;
+        }
     }
+    return "Unknown(" + std::to_string(code) + ")";
+}
+
+int ggml_name_to_quant(const std::string& name) {
+    static std::unordered_map<std::string, int> name_map;
+    
+    // Build map on first call
+    if (name_map.empty()) {
+        for (const auto& mapping : quant_mappings) {
+            name_map[mapping.name] = mapping.code;
+        }
+    }
+    
+    auto it = name_map.find(name);
+    return (it != name_map.end()) ? it->second : -1;
 }
 
 
-static StorageType ggml_quant_type(uint32_t code) {
-    switch (code) {
-        case  1: return StorageType::FP16;
-        case  2: return StorageType::INT4;
-        case  3: return StorageType::INT4;
-        case  6: return StorageType::INT5;           
-        case  7: return StorageType::INT5;           
-        case  8: return StorageType::INT8;           
-        case  9: return StorageType::INT8;           
-        case 10: return StorageType::INT2;
-        case 11: return StorageType::INT3;          
-        case 12: return StorageType::INT4;          
-        case 13: return StorageType::INT5;          
-        case 14: return StorageType::INT6;          
-        case 15: return StorageType::INT8;          
-        case 16: return StorageType::INT2;
-        case 17: return StorageType::INT2;
-        case 18: return StorageType::INT3;
-        case 19: return StorageType::BIN1;
-        case 20: return StorageType::FP16;          
-        case  0:
-        default:
-            return StorageType::FLOAT32;
+
+hnswlib::StorageType ggml_quant_type(uint32_t code) {
+    for (const auto& mapping : quant_mappings) {
+        if (mapping.code == code) {
+            return mapping.storage_type;
+        }
     }
+    return hnswlib::StorageType::FLOAT32;  // Default for unknown codes
 }
+
+
+// The below could have also used the above.. 
+hnswlib::StorageType ggml_name_to_quant_type(const std::string& name) {
+    static std::unordered_map<std::string, StorageType> type_map;
+    
+    // Build map on first call
+    if (type_map.empty()) {
+        for (const auto& mapping : quant_mappings) {
+            type_map[mapping.name] = mapping.storage_type;
+        }
+    }
+    
+    auto it = type_map.find(name);
+    return (it != type_map.end()) ? it->second : StorageType::FLOAT32;
+}
+
+
+///////////
 
 
 std::optional<GmmlHparams> read_ggml_info(const std::string& path) {
@@ -110,7 +212,8 @@ std::pair<hnswlib::StorageType, std::string>
 	get_ggml_model_quant(const std::string &filepath)
 {
     auto hdr = read_ggml_info (filepath);
-    return  {  ggml_quant_type(hdr->f16), ggml_quant_name(hdr->f16) };
+    int code = hdr ? hdr->f16 : 0;
+    return  {  ggml_quant_type(code), ggml_quant_name(code) };
 }
 
 
@@ -148,6 +251,89 @@ static GGML_TYPE FileType(const std::string& filepath) {
            hdr.n_head > 0 && hdr.n_head <= 256 &&
            (hdr.n_embd % hdr.n_head == 0) ? type : GGML_TYPE::UNKNOWN;  // n_embd must be divisible by n_head
 #endif
+}
+
+std::optional<GGUFInfo> read_gguf_info(const std::string &path) {
+    std::ifstream f(path, std::ios::binary);
+    if (!f) return std::nullopt;
+
+    // --- GGUF header ---
+    uint32_t magic = read_le<uint32_t>(f);
+    if (magic != 0x46554747) {   // "GGUF"
+        return std::nullopt; // Not a GGUF file
+    }
+
+    uint32_t version = read_le<uint32_t>(f);
+    uint64_t n_kv = read_le<uint64_t>(f);
+    uint64_t n_tensors = read_le<uint64_t>(f);
+
+    GGUFInfo info;
+
+    // ---- Read key/value metadata ----
+    for (uint64_t i = 0; i < n_kv; i++) {
+        uint32_t key_len = read_le<uint32_t>(f);
+        std::string key(key_len, 0);
+        f.read(&key[0], key_len);
+
+        uint32_t vtype = read_le<uint32_t>(f);  // GGUF_METADATA_TYPE_*
+
+        // Only reading strings + integers (all we need)
+        if (vtype == 0) {  // string
+            uint32_t vlen = read_le<uint32_t>(f);
+            std::string value(vlen, 0);
+            f.read(&value[0], vlen);
+
+            if (key == "general.architecture")
+                info.architecture = value;
+
+        } else if (vtype == 2) {   // uint32
+            uint32_t v = read_le<uint32_t>(f);
+
+            if (key == "llama.embedding_length" ||
+                key == "bert.embedding_length" ||
+                key == "embedding_length")
+                info.embedding_length = v;
+        }
+        else {
+            // skip unsupported types
+            uint64_t skip = 0;
+            switch (vtype) {
+                case 1: skip = read_le<uint32_t>(f); break;   // array — skip length then each element
+                case 3: skip = sizeof(float); break;
+                case 4: skip = 1; break;
+                case 5: skip = 8; break;
+                default: break;
+            }
+            f.seekg(skip, std::ios::cur);
+        }
+    }
+
+    // --- Now read first tensor to get quantization ---
+    // Each tensor record:
+    //   uint32 name_len
+    //   char[name_len] name
+    //   uint32 n_dims
+    //   uint32 dims[n_dims]
+    //   uint32 type (ggml_type)
+    //   uint64 offset
+
+    if (n_tensors > 0) {
+        uint32_t name_len = read_le<uint32_t>(f);
+        f.seekg(name_len, std::ios::cur);  // skip name
+
+        uint32_t n_dims = read_le<uint32_t>(f);
+        f.seekg(sizeof(uint32_t) * n_dims, std::ios::cur);  // skip dims
+
+        uint32_t type = read_le<uint32_t>(f);
+        info.quant_type =
+            GGML_TYPE_NAMES.count(type) ? GGML_TYPE_NAMES.at(type) :
+            ("UNKNOWN(" + std::to_string(type) + ")");
+
+        // skip offset
+        f.seekg(sizeof(uint64_t), std::ios::cur);
+    }
+
+    return info;
 }
 
 
