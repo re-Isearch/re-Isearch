@@ -26,6 +26,69 @@ inline int64_t read_int64(std::istream &is) {
 #endif
 }
 
+
+template<typename T>
+inline T read_le(std::ifstream &f) {
+    static_assert(std::is_trivially_copyable_v<T>, "Type must be trivially copyable");
+    
+    T value;
+    f.read(reinterpret_cast<char*>(&value), sizeof(T));
+    
+    #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    if constexpr (sizeof(T) == 2) {
+        value = __builtin_bswap16(value);
+    } else if constexpr (sizeof(T) == 4) {
+        value = __builtin_bswap32(value);
+    } else if constexpr (sizeof(T) == 8) {
+        value = __builtin_bswap64(value);
+    }
+    #endif
+    
+    return value;
+}
+
+template<typename T>
+inline std::optional<T> read_le_safe(std::ifstream &f) {
+    static_assert(std::is_trivially_copyable_v<T>, "Type must be trivially copyable");
+    
+    T value;
+    if (!f.read(reinterpret_cast<char*>(&value), sizeof(T))) {
+        return std::nullopt;  // Read failed
+    }
+    
+    #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    if constexpr (sizeof(T) == 2) {
+        value = __builtin_bswap16(value);
+    } else if constexpr (sizeof(T) == 4) {
+        value = __builtin_bswap32(value);
+    } else if constexpr (sizeof(T) == 8) {
+        value = __builtin_bswap64(value);
+    }
+    #endif
+    
+    return value;
+}
+
+template<typename T>
+inline void write_le(std::ofstream &f, T value) {
+    static_assert(std::is_trivially_copyable_v<T>, "Type must be trivially copyable");
+    
+    #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+    if constexpr (sizeof(T) == 2) {
+        value = __builtin_bswap16(value);
+    } else if constexpr (sizeof(T) == 4) {
+        value = __builtin_bswap32(value);
+    } else if constexpr (sizeof(T) == 8) {
+        value = __builtin_bswap64(value);
+    }
+    #endif
+    
+    f.write(reinterpret_cast<const char*>(&value), sizeof(T));
+}
+
+
+
+// See struct bert_hparams in bert.cpp
 struct GmmlHparams {
     uint32_t magic;           // 'ggml' = 0x67676d6c
     int32_t n_vocab;          // Vocabulary size
@@ -34,14 +97,18 @@ struct GmmlHparams {
     int32_t n_intermediate;   // Intermediate/FFN dimensions
     int32_t n_head;           // Number of attention heads
     int32_t n_layer;          // Number of layers
-    int32_t f16;              // Quantization type: 0=F32, 1=F16, 2=Q4_0, 3=Q4_1, etc.
+    int32_t f16;              // Quantization type codes: 0=F32, 1=F16, 2=Q4_0, 3=Q4_1, etc.
 };
+
 
 struct GGUFInfo {
     std::string architecture;
     uint32_t embedding_length = 0;
     std::string quant_type;     // Human-readable ("F16", "Q4_0", ...)
 };
+
+
+// NOTE: bert.cpp only supports f16 values in {0, 1, 2, 3}
 
 // Codes <-> names and names -> quant type
 const std::string    ggml_quant_name(uint32_t code); // Takes code and returns name

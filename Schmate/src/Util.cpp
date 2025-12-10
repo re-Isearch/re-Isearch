@@ -25,6 +25,7 @@ GGML Codes:
 |        **1**       | `F16`             |        16       | Half precision                  |
 |        **2**       | `Q4_0`            |        4        | 4-bit block quantization        |
 |        **3**       | `Q4_1`            |        4        | 4-bit with scale + bias         |
+|      Beyond here bert.cpp does not provide support (4&5 are not even defined)              |
 |        **6**       | `Q5_0`            |        5        | 5-bit quantization              |
 |        **7**       | `Q5_1`            |        5        | 5-bit w/ bias                   |
 |        **8**       | `Q8_0`            |        8        | 8-bit uniform                   |
@@ -39,7 +40,8 @@ GGML Codes:
 |       **17**       | `IQ2_XS`          |        2        |                                 |
 |       **18**       | `IQ3_XS`          |        3        |                                 |
 |       **19**       | `IQ1_S`           |        1        | 1-bit ultra-low precision       |
-|       **20**       | `BF16`            |        16       | bfloat16                        |
+
+In some newer implmentations we see some different values > 19. 
 
 */
 
@@ -52,19 +54,24 @@ namespace {
     };
     
 
-// The major issue is code 20. In older .ggml files it was BF16. In newer that slot
-// is a 4-bit quantization type and BF16 is code 30.
+// The major issue are code 4 and 20. In some older models 20 was BF16. In newer that 
+// code is a 4-bit quantization type and BF16 is code 30. 4 was by Ollama a FP4 now 39
 //
 // So depending upon version. 20 can be 4-bit int or a 16-bit floating point!
-// Luckily GGUF uses string names so we only need to worry about .gmml files.
-#define NEW_CODES 1
-#if NEW_CODES
-    constexpr std::array<QuantMapping, 30> quant_mappings = {{
+// A 4 can be an obsolete 4-bit int or a new 4-bit floating point.
+
+    // See ggml/include/ggml.h
+    constexpr std::array<QuantMapping, 32> quant_mappings = {{
         {0, "F32", StorageType::FLOAT32},
         {1, "F16", StorageType::FP16},
         {2, "Q4_0", StorageType::INT4},
         {3, "Q4_1", StorageType::INT4},
-        // Codes 4 and 5 are not defined in GGML
+
+        // bert.cpp stops here
+        // Rest are from ggml.h
+//      {4, "Q4_2", StorageType::INT4}, // Support has been removed!
+//      {5, "Q4_3", StorageType::INT4}, // Support has been removed!
+
         {6, "Q5_0", StorageType::INT5},
         {7, "Q5_1", StorageType::INT5},
         {8, "Q8_0", StorageType::INT8},
@@ -86,58 +93,43 @@ namespace {
         {24, "I8", StorageType::INT8},
         {25, "I16", StorageType::INT16},
         {26, "I32", StorageType::INT32},
-        {27, "I64", StorageType::INT64},
-        {28, "F64", StorageType::FLOAT64},
+        {27, "I64", StorageType::INT64}, // GGML does not support 64 bits
+        {28, "F64", StorageType::FLOAT64}, // GGML does not support Fp64
         {29, "IQ1_M", StorageType::BIN1},
-        {30, "BF16", StorageType::FP16}  // BFloat16 support added here, waas 20
+        {30, "BF16", StorageType::FP16},  // BFloat16 support added here, waas 20
+        // GGML_TYPE_Q4_0_4_4 = 31, support has been removed from gguf files
+        // GGML_TYPE_Q4_0_4_8 = 32,
+        // GGML_TYPE_Q4_0_8_8 = 33,
+        {34, "TQ1_0", StorageType::BIN1},
+        {35, "TQ2_0", StorageType::INT2},
+        // GGML_TYPE_IQ4_NL_4_4 = 36,
+        // GGML_TYPE_IQ4_NL_4_8 = 37,
+        // GGML_TYPE_IQ4_NL_8_8 = 38,
+
+        // Below is very new
+        {39, "MXFP4", StorageType::INT4} 
+/*
+        Name: "MXFP4" or sometimes "mxfp4-e8m0"
+        Microscaling 4-bit Floating Point with 8-bit exponent, 0-bit mantissa
+
+        A native training format: Unlike other quantization methods that reduce precision
+        after training, gpt-oss models were trained directly in MXFP4 format Code number 39
+        in the GGML type enum
+        4-bit format: Uses 4 bits per weight but maintains higher quality than traditional Q4 quantization
+        Block-based: Stores weights in blocks of 32 elements with shared scaling factors
+
+        NOTE: There was an inconsistency where Ollama initially used code 4 for MXFP4, but
+        llama.cpp officially assigned it code 39. This caused compatibility issues with models
+        converted using different tools.
+
+        This means that sometimes 4 -> MXFP4 and sometimes an obsolete 4-bit quantization.
+        Since we are building around sBERT models it does not matter since we only expect to
+        get from {0, 1, 2, 3}
+*/
+
+
+
     }};
-#else
-    constexpr std::array<QuantMapping, 21> quant_mappings = {{
-        {0,  "F32",     hnswlib::StorageType::FLOAT32},
-        {1,  "F16",     hnswlib::StorageType::FP16},
-        {2,  "Q4_0",    hnswlib::StorageType::INT4},
-        {3,  "Q4_1",    hnswlib::StorageType::INT4},
-        // Codes 4 and 5 are not defined in GGML
-        {6,  "Q5_0",    hnswlib::StorageType::INT5},
-        {7,  "Q5_1",    hnswlib::StorageType::INT5},
-        {8,  "Q8_0",    hnswlib::StorageType::INT8},
-        {9,  "Q8_1",    hnswlib::StorageType::INT8},
-        {10, "Q2_K",    hnswlib::StorageType::INT2},
-        {11, "Q3_K",    hnswlib::StorageType::INT3},
-        {12, "Q4_K",    hnswlib::StorageType::INT4},
-        {13, "Q5_K",    hnswlib::StorageType::INT5},
-        {14, "Q6_K",    hnswlib::StorageType::INT6},
-        {15, "Q8_K",    hnswlib::StorageType::INT8},
-        {16, "IQ2_XXS", hnswlib::StorageType::INT2},
-        {17, "IQ2_XS",  hnswlib::StorageType::INT2},
-        {18, "IQ3_XS",  hnswlib::StorageType::INT3},
-        {19, "IQ1_S",   hnswlib::StorageType::BIN1},
-        {20, "BF16",    hnswlib::StorageType::BF16} // Some newer have  IQ4_NL
-    }};
-#endif
-}
-
-enum GGMLType : uint32_t {
-    GGML_TYPE_F32 = 0,
-    GGML_TYPE_F16 = 1,
-    GGML_TYPE_Q4_0 = 2,
-    GGML_TYPE_Q4_1 = 3,
-    GGML_TYPE_Q5_0 = 6,
-    GGML_TYPE_Q5_1 = 7,
-    GGML_TYPE_Q8_0 = 8,
-};
-
-static const std::unordered_map<uint32_t,std::string> GGML_TYPE_NAMES = {
-    {0, "F32"}, {1, "F16"}, {2, "Q4_0"}, {3, "Q4_1"},
-    {6, "Q5_0"}, {7, "Q5_1"}, {8, "Q8_0"},
-};
-
-// Utility to read little-endian values
-template<typename T>
-inline T read_le(std::ifstream &f) {
-    T v;
-    f.read(reinterpret_cast<char*>(&v), sizeof(T));
-    return v;
 }
 
 const std::string ggml_quant_name(uint32_t code) {
@@ -200,9 +192,10 @@ std::optional<GmmlHparams> read_ggml_info(const std::string& path) {
    if (file_size(path) > sizeof(GmmlHparams)) {
        std::ifstream fin(path, std::ios::binary);
        if (fin) {
-           GmmlHparams info; 
-           fin.read(reinterpret_cast<char*>(&info), sizeof(info));
-           return info;
+           return read_le<GmmlHparams>(fin);
+//         GmmlHparams info;
+//         fin.read(reinterpret_cast<char*>(&info), sizeof(info));
+//         return info;
         }
     }
    return std::nullopt;
@@ -252,6 +245,109 @@ static GGML_TYPE FileType(const std::string& filepath) {
            (hdr.n_embd % hdr.n_head == 0) ? type : GGML_TYPE::UNKNOWN;  // n_embd must be divisible by n_head
 #endif
 }
+
+
+#if 1
+
+std::optional<GGUFInfo> read_gguf_info(const std::string &path) {
+    std::ifstream f(path, std::ios::binary);
+    if (!f) return std::nullopt;
+
+    // --- GGUF header ---
+    uint32_t magic = read_le<uint32_t>(f);
+    if (magic != 0x46554747) {   // "GGUF"
+        return std::nullopt; // Not a GGUF file
+    }
+
+    uint32_t version = read_le<uint32_t>(f);
+    uint64_t n_kv = read_le<uint64_t>(f);
+    uint64_t n_tensors = read_le<uint64_t>(f);
+
+    GGUFInfo info;
+
+    // ---- Read key/value metadata ----
+    for (uint64_t i = 0; i < n_kv; i++) {
+        uint32_t key_len = read_le<uint32_t>(f);
+        std::string key(key_len, 0);
+        f.read(&key[0], key_len);
+
+        uint32_t vtype = read_le<uint32_t>(f);  // GGUF_METADATA_TYPE_*
+
+        // Only reading strings + integers (all we need)
+        if (vtype == 0) {  // string
+            uint32_t vlen = read_le<uint32_t>(f);
+            std::string value(vlen, 0);
+            f.read(&value[0], vlen);
+
+            if (key == "general.architecture")
+                info.architecture = value;
+
+        } else if (vtype == 2) {   // uint32
+            uint32_t v = read_le<uint32_t>(f);
+
+            if (key == "llama.embedding_length" ||
+                key == "bert.embedding_length" ||
+                key == "embedding_length")
+                info.embedding_length = v;
+        }
+        else {
+            // skip unsupported types
+            uint64_t skip = 0;
+            switch (vtype) {
+                case 1: skip = read_le<uint32_t>(f); break;   // array – skip length then each element
+                case 3: skip = sizeof(float); break;
+                case 4: skip = 1; break;
+                case 5: skip = 8; break;
+                default: break;
+            }
+            f.seekg(skip, std::ios::cur);
+        }
+    }
+
+    // --- Now read first tensor to get quantization ---
+    // Each tensor record:
+    //   uint32 name_len
+    //   char[name_len] name
+    //   uint32 n_dims
+    //   uint32 dims[n_dims]
+    //   uint32 type (ggml_type)
+    //   uint64 offset
+
+    if (n_tensors > 0) {
+        uint32_t name_len = read_le<uint32_t>(f);
+        f.seekg(name_len, std::ios::cur);  // skip name
+
+        uint32_t n_dims = read_le<uint32_t>(f);
+        f.seekg(sizeof(uint32_t) * n_dims, std::ios::cur);  // skip dims
+
+        uint32_t type = read_le<uint32_t>(f);
+        // Use the unified mapping function
+        info.quant_type = ggml_quant_name(type);
+
+        // skip offset
+        f.seekg(sizeof(uint64_t), std::ios::cur);
+    }
+
+    return info;
+}
+
+#else
+
+enum GGMLType : uint32_t {
+    GGML_TYPE_F32 = 0,
+    GGML_TYPE_F16 = 1,
+    GGML_TYPE_Q4_0 = 2,
+    GGML_TYPE_Q4_1 = 3,
+    GGML_TYPE_Q5_0 = 6,
+    GGML_TYPE_Q5_1 = 7,
+    GGML_TYPE_Q8_0 = 8,
+    GGML_TYPE_UNKNOWN = 0xFFFFFFFF
+};
+
+static const std::unordered_map<uint32_t,std::string> GGML_TYPE_NAMES = {
+    {0, "F32"}, {1, "F16"}, {2, "Q4_0"}, {3, "Q4_1"},
+    {6, "Q5_0"}, {7, "Q5_1"}, {8, "Q8_0"},        
+};  
 
 std::optional<GGUFInfo> read_gguf_info(const std::string &path) {
     std::ifstream f(path, std::ios::binary);
@@ -335,7 +431,7 @@ std::optional<GGUFInfo> read_gguf_info(const std::string &path) {
 
     return info;
 }
-
+#endif
 
 #include <filesystem>
 #include <optional>
