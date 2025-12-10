@@ -99,8 +99,9 @@ private:
     std::vector<std::unordered_map<labeltype, std::vector<float>>> delta_caches_;
     std::vector<std::unordered_set<labeltype>> delta_label_sets_;
     std::unordered_map<labeltype, std::vector<float>> current_delta_;
-    size_t additions_since_flush_ = 0;
-    size_t saves_since_compact_ = 0;
+
+    std::atomic<size_t> additions_since_flush_ = 0; // Vectors added since last flush
+    std::atomic<size_t> saves_since_compact_ = 0; // delta flushes since last compact()
 
     // Versioned compact files management
     std::vector<std::string> compact_files_;     // list of available compact files (sorted ascending)
@@ -727,6 +728,7 @@ public:
 
         current_delta_.clear();
         additions_since_flush_ = 0;
+        saves_since_compact_++;
         return true;
     }
 
@@ -803,6 +805,7 @@ public:
         // 1. Write a dummy count
         ofs.write(reinterpret_cast<const char*>(&count), sizeof(size_t));
         
+        lk.unlock();
         // 2. Stream vectors without loading into memory
         for_each_vector([&](labeltype lbl, const float* vec) {
             ofs.write(reinterpret_cast<const char*>(&lbl), sizeof(labeltype));
@@ -827,6 +830,13 @@ public:
 
         std::unordered_map<labeltype, std::vector<float>> all_vectors;
 
+        if (!current_delta_.empty()) {
+           flush_delta();
+        }
+
+
+        std::unique_lock unlock(rw_mutex_, std::adopt_lock);
+
         if (main_mmap_ptr_) {
             for (const auto& [label, offset] : main_offsets_) {
                 const float* vec_ptr = reinterpret_cast<const float*>(
@@ -841,6 +851,9 @@ public:
                 all_vectors[label] = vec;
             }
         }
+
+        // also include any current_delta_ (should be empty now)
+        for (const auto &kv : current_delta_) all_vectors[kv.first] = kv.second;
 
         std::vector<std::pair<labeltype, std::vector<float>>> result;
         result.reserve(all_vectors.size());
@@ -940,7 +953,7 @@ public:
         } else {
             return compact_in_memory();
         }
-
+        saves_since_compact_ = 0;
     }
 
 private:
@@ -998,8 +1011,9 @@ private:
     }
 
     // Streaming compaction: writes compact file without holding all vectors
-#if 1
     bool compact_streaming() {
+        std::unique_lock lk(rw_mutex_);
+
         // Open new compact file
         std::string new_file = next_compact_filename();
         std::ofstream ofs(new_file, std::ios::binary);
@@ -1008,12 +1022,14 @@ private:
         size_t count = 0;
         ofs.write((char*)&count, sizeof(size_t)); // placeholder
 
+        lk.unlock();
         // 1. Stream vectors without loading into memory
         for_each_vector([&](labeltype lbl, const float* vec) {
             ofs.write((char*)&lbl, sizeof(labeltype));
             ofs.write((char*)vec, dim_ * sizeof(float));
             count++;
         });
+        lk.lock();
 
         // 2. Seek back and write actual count
         ofs.seekp(0);
@@ -1023,134 +1039,6 @@ private:
         // 3. Remap the new compact file and cleanup
         return finalize_compaction(new_file);
     }
-#else
-    bool compact_streaming() {
-        // 1) Ensure deltas flushed to delta_caches_ (get_all_vectors flushes & cleans deltas)
-        // But we need delta_caches_ intact; so flush only:
-        if (!current_delta_.empty()) flush_delta();
-
-        // If no deltas now, fallback to in-memory (fast path)
-        if (delta_caches_.empty()) {
-            return compact_in_memory();
-        }
-
-        // 2) Build map of latest delta index for each label (label -> delta_index)
-        // Iterate delta_caches_ from newest to oldest
-        std::unordered_map<labeltype, size_t> latest_delta_idx;
-        for (size_t di = delta_caches_.size(); di > 0; --di) {
-            size_t idx = di - 1;
-            for (const auto &kv : delta_caches_[idx]) {
-                labeltype lbl = kv.first;
-                if (latest_delta_idx.find(lbl) == latest_delta_idx.end()) {
-                    latest_delta_idx[lbl] = idx;
-                }
-            }
-        }
-
-        // 3) Prepare versioned file names
-        discover_compact_files();
-        uint64_t version = compact_version_counter_++;
-        std::string tmpfile = make_temp_compact_filename(version);
-        std::string newfile = make_compact_filename(version);
-
-        // 4) Open temp file and write placeholder
-        std::ofstream ofs(tmpfile, std::ios::binary | std::ios::trunc);
-        if (!ofs) return false;
-        size_t placeholder = 0;
-        ofs.write(reinterpret_cast<const char*>(&placeholder), sizeof(size_t));
-
-        size_t written = 0;
-        size_t entry_size = sizeof(labeltype) + dim_ * sizeof(float);
-
-        // 5) Write main vectors that are NOT superseded by deltas
-        // Iterate main_offsets_ map; for each label, if not in latest_delta_idx -> write
-        std::vector<float> tmpbuf;
-        tmpbuf.resize(dim_);
-
-        for (const auto &p : main_offsets_) {
-            labeltype label = p.first;
-            if (latest_delta_idx.find(label) != latest_delta_idx.end()) {
-                continue; // will be written by deltas
-            }
-            // read vector
-            bool ok = read_main_vector_to_buffer(label, tmpbuf);
-            if (!ok) {
-                ofs.close();
-                std::remove(tmpfile.c_str());
-                return false;
-            }
-            ofs.write(reinterpret_cast<const char*>(&label), sizeof(labeltype));
-            ofs.write(reinterpret_cast<const char*>(tmpbuf.data()), dim_ * sizeof(float));
-            if (!ofs.good()) {
-                ofs.close();
-                std::remove(tmpfile.c_str());
-                return false;
-            }
-            ++written;
-        }
-
-        // 6) Write the latest vectors from deltas (each label once)
-        // Iterate latest_delta_idx and write the vector from its delta cache
-        for (const auto &kv : latest_delta_idx) {
-            labeltype label = kv.first;
-            size_t delta_idx = kv.second;
-            auto dit = delta_caches_[delta_idx].find(label);
-            if (dit == delta_caches_[delta_idx].end()) continue; // shouldn't happen
-            const std::vector<float> &vec = dit->second;
-            ofs.write(reinterpret_cast<const char*>(&label), sizeof(labeltype));
-            ofs.write(reinterpret_cast<const char*>(vec.data()), dim_ * sizeof(float));
-            if (!ofs.good()) {
-                ofs.close();
-                std::remove(tmpfile.c_str());
-                return false;
-            }
-            ++written;
-        }
-
-        // 7) Finalize file: write actual count to header (seek to beginning)
-        ofs.seekp(0);
-        ofs.write(reinterpret_cast<const char*>(&written), sizeof(size_t));
-        ofs.close();
-
-        // 8) Unmap previous mapping and replace file
-        cleanup_mmap();
-        main_offsets_.clear();
-
-        std::remove(newfile.c_str());
-        if (std::rename(tmpfile.c_str(), newfile.c_str()) != 0) {
-            std::remove(tmpfile.c_str());
-            return false;
-        }
-
-        // 9) Update compact_files_ and remove previous compact file
-        std::string prev = current_vectors_file_;
-        current_vectors_file_ = newfile;
-        if (std::find(compact_files_.begin(), compact_files_.end(), newfile) == compact_files_.end()) {
-            compact_files_.push_back(newfile);
-            std::sort(compact_files_.begin(), compact_files_.end());
-        }
-
-        if (!prev.empty() && prev != current_vectors_file_) {
-            std::remove(prev.c_str());
-            compact_files_.erase(std::remove(compact_files_.begin(), compact_files_.end(), prev),
-                                 compact_files_.end());
-        }
-
-        // 10) Reload/mmap the new file
-        if (!load_vectors_from_vectors_file(current_vectors_file_)) {
-            return false;
-        }
-
-        // 11) After successful compaction we can cleanup delta files & caches
-        cleanup_deltas();
-
-
-        // 12) Remove older compact files
-        cleanup_old_compact_files();
-
-        return true;
-    }
-#endif
 
     // ------------------------
     // Stats + helpers

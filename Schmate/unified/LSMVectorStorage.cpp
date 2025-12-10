@@ -187,6 +187,8 @@ void test_streaming_compaction() {
 // MAIN
 // ------------------------------------------
 int main() {
+    std::cout << "=====   CLEANUP PREVIOUS RUNS    =====\n";
+
     cleanup();
 
     test_streaming_compaction();
