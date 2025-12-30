@@ -21,6 +21,9 @@
 #endif
 
 #include "LSMVectorStorage.h"
+#include "Util.hpp"
+#include "io.h"
+#include "hf_mapper.hpp"
 
 namespace hnswlib {
 
@@ -103,6 +106,13 @@ struct UnifiedIndexMeta {
     size_t max_elements_ = 0;
     Metric metric_ = Metric::L2;
 
+    // NOTE: We no longer need to keep track here of count_ since
+    // we moved to delayed allocation amd can read the HNSW index
+    // itself to decide how many elments we need (when readOnly).!
+
+    // Can't use string since we need to know the size always for peek
+    char identifier_[HFModelMap::MAX_MODEL_ID_LENGTH] = {} ; // This is generally the model name
+
     // Memory overhead:
     // Each label set stores just sizeof(labeltype) per label:
     // 10000 labels × 4 bytes = 40 KB per delta
@@ -115,6 +125,8 @@ struct UnifiedIndexMeta {
     bool   enable_rescoring_ = false; // Only effects quantized metrics
     bool   normalize_ = false; // Use normalized vectors, Always true for Cosine
 
+    VectorStorageMode storage_mode_ = VectorStorageMode::MEMORY_MAPPED;
+
     /* Don't really need these as they are stored in the HNSW index */
     size_t M_ = 16;
     size_t ef_construction_ = 200;
@@ -123,11 +135,9 @@ struct UnifiedIndexMeta {
     bool quantizer_fitted_ = false;
 
 
-    static size_t size() {
-       return sizeof(UnifiedIndexMeta) - sizeof(magic_) - sizeof(version_);
-    }
+    static size_t size() { return sizeof(UnifiedIndexMeta); }
 
-    UnifiedIndexMeta() {;}
+    UnifiedIndexMeta() { ;}
     UnifiedIndexMeta(size_t dim, size_t max_elements,
 	Metric metric = Metric::L2,
 	QuantMode quantization = QuantMode::NONE,
@@ -141,6 +151,7 @@ struct UnifiedIndexMeta {
         M_(M), ef_construction_(ef_construction) {;}
 
     UnifiedIndexMeta& operator = (const UnifiedIndexMeta& other) {
+        strcpy(identifier_, other.identifier_);
 	dim_    = other.dim_ ;
 	max_elements_ = other.max_elements_;
 	metric_ = other.metric_;
@@ -160,6 +171,8 @@ struct UnifiedIndexMeta {
 	// Write header: magic number, metric type, rescoring flag
 	writeBinaryPOD(out, magic_);
 	writeBinaryPOD(out, version_);
+        out.write(identifier_, sizeof(identifier_));
+
 	writeBinaryPOD(out, metric_);
 	writeBinaryPOD(out, dim_);
 	writeBinaryPOD(out, normalize_);
@@ -196,6 +209,14 @@ struct UnifiedIndexMeta {
 	      throw std::runtime_error("Obsolete format index file: re-index!");
            return false; // We stop here since its the wrong version!
 	}
+        char id[sizeof(identifier_)];
+        input.read(id, sizeof(id));
+ 	if (strcmp(id, identifier_) != 0) {
+            if (identifier_[0] != '\0') 
+	       HNSWWARN << "Index Identifier '" << id << "' != '" << identifier_ << "'\n";
+            strcpy(identifier_, id); // Need to install it..
+	}
+
 	readBinaryPOD(input, metric_);
 	readBinaryPOD(input, dim_);
 	readBinaryPOD(input, normalize_);
@@ -212,10 +233,53 @@ struct UnifiedIndexMeta {
        return input.good() && !input.eof();
     }
 
+
 private:
-    const uint32_t magic_  = sizeof(size_t) == sizeof(uint64_t) ?  0x484E5357 : 0x57534E48;
-    const uint8_t version_ = 1;
+    inline static constexpr uint32_t magic_  = sizeof(size_t) == sizeof(uint64_t) ?  0x484E5357 : 0x57534E48;
+    inline static constexpr uint8_t version_ = 1;
 };
+
+
+// Look-ahread to get the identifier from an index
+// The identifier is typically the name of the embedding model used.
+inline std::optional<std::string> get_index_identifier(const std::string filepath) {
+  std::ifstream ifs(filepath, std::ios::binary);
+  if (ifs && ifs.good()) {
+    // read magic
+    uint32_t saved_magic;
+    if (saved_magic ==  0x484E5357 || saved_magic == 0x57534E48) {
+      readBinaryPOD(ifs, saved_magic);
+      // Read version
+      uint8_t saved_version;
+      readBinaryPOD(ifs, saved_version);
+      if (saved_version <= 10) { // current version is 1 so this may need to change!!
+        // Now read identify
+        std::string s;
+        s.reserve(HFModelMap::MAX_MODEL_ID_LENGTH);
+        ifs.read(s.data(), HFModelMap::MAX_MODEL_ID_LENGTH);
+        return s;
+      }
+      // This is a bad error!
+      HNSWERR << "In index '" << filepath << "' saw version " << (int)saved_version << ">10\n";
+    }
+  }
+  return std::nullopt;
+}   
+
+
+// MOVE THIS LATER TO Util.hpp !!!!!!
+inline std::optional<std::string> get_model(const std::string indexPath, const std::string searchPath)
+{
+    auto name = get_index_identifier(indexPath);
+    if (name) {
+        auto model = find_ggml_model(*name, searchPath);
+	if (model.second != GGML_TYPE::UNKNOWN)
+          return model.first;
+    }
+    return std::nullopt;
+}
+
+
 
 
 // Peek at the index file to get element count and max_elements
@@ -253,10 +317,24 @@ private:
     size_t &ef_construction_ = meta_.ef_construction_;
     size_t &ef_ = meta_.ef_;
 
+    VectorStorageMode &storage_mode_ = meta_.storage_mode_;
     LSMVectorStorage vector_storage_;
     
     std::unique_ptr<HierarchicalNSW<float>> index_;
     std::unique_ptr<SpaceInterface<float>> space_;
+
+    // set the identifier name
+    bool set_identifier(const std::string& identifier) {
+      if (identifier.length() < HFModelMap::MAX_MODEL_ID_LENGTH) {
+        strcpy(meta_.identifier_, identifier.data() );
+        return true;
+      }
+      HNSWERR << "Identifier length overflow > " << HFModelMap::MAX_MODEL_ID_LENGTH << "\n";
+      return false;
+    }
+    const std::string get_identifier() const {
+      return meta_.identifier_;
+    }
 
     // std::unordered_map<labeltype, std::vector<float>> original_vectors_;
     
@@ -320,8 +398,8 @@ public:
     void setEf(size_t ef);
     size_t getCurrentElementCount() const;
 
-    void        set_filepath(const std::string& path) { pathname_ = path; }
-    std::string get_filepath() const                  { return pathname_; }
+    inline void        set_filepath(const std::string& path) { pathname_ = path; }
+    inline std::string get_filepath() const                  { return pathname_; }
 
 
     bool save();
@@ -337,41 +415,46 @@ public:
 
     void clear(); // This removes all elements leaving it empty.
     // How many elements? 
-    size_t size() const { return index_->cur_element_count ; }
+    inline size_t size() const { if (index_) return index_->cur_element_count; return 0; }
 
     size_t bytes_per_vector() const;
+
     inline size_t bytes_per_index() const { return bytes_per_vector() * max_elements_; }
 
     inline bool empty() const { return size() == 0; }
     
-    bool is_quantized() const { return quantization_ != QuantMode::NONE; }
-    Metric get_metric() const { return metric_; }
-    size_t get_dim() const { return dim_; }
-    bool is_rescoring_enabled() const { return enable_rescoring_; }
-    const UnifiedIndexMeta& get_meta() const { return meta_; }
+    inline Metric get_metric() const { return metric_; }
+    inline size_t get_dim() const { return dim_; }
+    inline bool is_rescoring_enabled() const { return enable_rescoring_; }
+    inline const UnifiedIndexMeta& get_meta() const { return meta_; }
+
+    inline bool is_quantized() const { return quantization_ != QuantMode::NONE; }
 
     inline bool is_binary() { return  (quantization_ == QuantMode::BIN1); };
     inline bool is_ternary() { return (quantization_ == QuantMode::INT158); };
+    inline bool is_nibble()  { return  (quantization_ == QuantMode::INT4); };
 
     float score_from_dist(float dist) const;
 
-static inline std::vector<std::pair<float, size_t>>
-sort_best_first(std::vector<std::pair<float, size_t>> &res_vector) {
-    return res_vector; // already sorted
-}
-
-static inline std::vector<std::pair<float, size_t>>
-sort_best_first(const std::priority_queue<std::pair<float,size_t>>& pq) {
-    auto tmp = pq;
-    std::vector<std::pair<float,size_t>> out;
-    out.reserve(tmp.size());
-    while (!tmp.empty()) {
-        out.push_back(tmp.top());
-        tmp.pop();
+    // Knn Closer first returns a pair already sorted
+    static inline std::vector<std::pair<float, size_t>>
+    sort_best_first(std::vector<std::pair<float, size_t>> &res_vector) {
+        return res_vector; // already sorted
     }
-    std::reverse(out.begin(), out.end());
-    return out;
-}
+
+    // The standard Knn returns a priorty queue 
+    static inline std::vector<std::pair<float, size_t>>
+    sort_best_first(const std::priority_queue<std::pair<float,size_t>>& pq) {
+        auto tmp = pq;
+        std::vector<std::pair<float,size_t>> out;
+        out.reserve(tmp.size());
+        while (!tmp.empty()) {
+            out.push_back(tmp.top());
+            tmp.pop();
+        }
+        std::reverse(out.begin(), out.end());
+        return out;
+    }
 
 };
 

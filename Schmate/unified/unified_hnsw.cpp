@@ -42,6 +42,7 @@ SimdKind detect_simd() {
 
 void UnifiedIndex::create_space() {
     if (dim_ == 0) {
+       space_.reset();
        throw std::runtime_error("Zero (0) dimension vector space specified!!!!");
        return; // This is evil
     }
@@ -101,7 +102,8 @@ void UnifiedIndex::create_index() {
 UnifiedIndex::UnifiedIndex(const UnifiedIndexMeta& meta) : meta_(meta) {
   normalize_ =  (metric_ == Metric::Cosine);
   vector_storage_.set_dim(dim_);
-  
+  vector_storage_.set_storage_mode(storage_mode_);
+
 }
 #endif
 
@@ -115,13 +117,15 @@ UnifiedIndex::UnifiedIndex(size_t dim, size_t max_elements,
     metric_ = spec.metric_;
     quantization_ = spec.quantization_;
     bin_mode_ = spec.mode_;
-    enable_rescoring_ = enable_rescoring;
+    enable_rescoring_ = enable_rescoring && (storage_mode_ != VectorStorageMode::DISABLED);
+
     M_ = M;
     ef_construction_ = ef_construction;
     ef_ = 10;
     flush_threshold_ = flush_threshold;
     normalize_ = (metric_ == Metric::Cosine);
     vector_storage_.set_dim(dim_);
+    vector_storage_.set_storage_mode(storage_mode_);
 #if DELAY_ALLOC == 0
     create_index();
 #endif
@@ -137,7 +141,8 @@ UnifiedIndex::UnifiedIndex(size_t dim, size_t max_elements, Metric metric,
     metric_ = metric;
     quantization_ = quantization;
     bin_mode_ = bin_mode;
-    enable_rescoring_ = enable_rescoring;
+    enable_rescoring_ = enable_rescoring && (storage_mode_ != VectorStorageMode::DISABLED);
+
     M_ = M;
     ef_construction_ = ef_construction;
     ef_ = 10;
@@ -147,6 +152,7 @@ UnifiedIndex::UnifiedIndex(size_t dim, size_t max_elements, Metric metric,
     normalize_ = (metric == Metric::Cosine);
 
     vector_storage_.set_dim(dim_);
+    vector_storage_.set_storage_mode(storage_mode_);
 
 #if DELAY_ALLOC == 0
     create_index();
@@ -355,20 +361,16 @@ std::priority_queue<std::pair<float, labeltype>> UnifiedIndex::searchKnn_interna
         }
 #endif
     }
-    
     std::sort(rescored.begin(), rescored.end());
     
     std::priority_queue<std::pair<float, labeltype>> result;
     for (size_t i = 0; i < std::min(k, rescored.size()); i++) {
         result.push(rescored[i]);
     }
-    
     return result;
 }
 
-#if LSMVECTORSTORAGE
 // Rescore candidates
-
 std::vector<std::pair<float, labeltype>> UnifiedIndex::apply_rescoring(
     const float* query_ptr,
     const std::vector<std::pair<float, labeltype>>& all_candidates) const {
@@ -381,7 +383,7 @@ std::vector<std::pair<float, labeltype>> UnifiedIndex::apply_rescoring(
     rescored.reserve(all_candidates.size());
 
     for (const auto& [dist, label] : all_candidates) {
-        const float* vec_ptr = vector_storage_.get_vector(label); // Original vector
+        const float* vec_ptr = getOriginalVector(label); 
 
         if (vec_ptr != nullptr) {
             float true_dist;
@@ -404,50 +406,7 @@ std::vector<std::pair<float, labeltype>> UnifiedIndex::apply_rescoring(
    return rescored;
 }
 
-#else
 
-std::vector<std::pair<float, labeltype>> UnifiedIndex::apply_rescoring(
-    const float* query,
-    const std::vector<std::pair<float, labeltype>>& candidates) const {
-    
-    if (!is_rescoring_enabled() || original_vectors_.empty()) {
-        return candidates;
-    }
-    
-    std::vector<std::pair<float, labeltype>> rescored;
-    rescored.reserve(candidates.size());
-    
-    // Rescore each candidate using original vectors
-    for (const auto& [approx_dist, label] : candidates) {
-        auto it = original_vectors_.find(label);
-        if (it != original_vectors_.end()) {
-            float dist;
-            
-            if (metric_ == Metric::Cosine || metric_ == Metric::IP) {
-                float sim = hnswlib::cosine_similarity(query, it->second.data(), dim_);
-                dist = (metric_ == Metric::Cosine) ? (1.0f - sim) : -sim;
-            } else if (metric_ == Metric::L2) {
-                dist = l2_distance(query, it->second.data(), dim_);
-            } else {
-                // Fallback to approximate distance
-                dist = approx_dist;
-            }
-            
-            rescored.emplace_back(dist, label);
-        } else {
-            // No original vector found, keep approximate distance
-            rescored.emplace_back(approx_dist, label);
-        }
-    }
-    
-    // Sort by distance (closest first)
-    std::sort(rescored.begin(), rescored.end());
-    
-    return rescored;
-}
-
-
-#endif
 
 std::vector<std::pair<float, labeltype>> UnifiedIndex::searchWithStopCondition(
     const float* query, float epsilon, size_t min_cand, size_t max_cand) {
@@ -619,9 +578,10 @@ bool UnifiedIndex::saveIndex(const std::string& path) {
         HNSWERR << "Can't save index: '" << path << "' cannot be opened for writing\n";
         return false; // Can't continue
     }
+    // The meta carries also the magic number for the index
     meta_.save(ofs);
 
-    if (meta_.enable_rescoring_ != enable_rescoring_) std::cerr << "WARNING WILL ROBINSON!!!!!!!";
+    if (meta_.enable_rescoring_ != enable_rescoring_) HNSWERR << "Serious logic error: " << __func__  << "()!!!!!!!\n";
 
     space_->save_quantization_params(ofs);
 
@@ -643,7 +603,6 @@ bool UnifiedIndex::saveIndex(const std::string& path) {
         }
 #endif
     }
-
 
     index_->saveIndex(ofs);
 
@@ -727,7 +686,7 @@ bool UnifiedIndex::loadIndex(const std::string& path, bool searchOnly) {
       // if rescoring: Pass the open stream (reads labels, then mmaps)
       // else skip
       vector_storage_.load_vectors(path, ifs,
-	enable_rescoring_ ? VectorStorageMode::MEMORY_MAPPED : VectorStorageMode::DISABLED);
+	enable_rescoring_ ?  storage_mode_ : VectorStorageMode::DISABLED);
 #else
         size_t num_vectors;
         ifs.read(reinterpret_cast<char*>(&num_vectors), sizeof(size_t));
@@ -849,12 +808,13 @@ size_t UnifiedIndex::bytes_per_vector() const
     if (is_quantized()) {
        // Add quant bytes
        total +=  space_->get_data_size(); // This includes RaBitQ residuals
-        if (enable_rescoring_) 
+        if (enable_rescoring_) {
 #if LSMVECTORSTORAGE
           total += vector_storage_.bytes_per_vector();
 #else
           total += vector_bytes;  // Add original 1536 bytes for 384D
 #endif
+        }
     } else {
         // Float metrics
         total += vector_bytes;
@@ -955,9 +915,12 @@ std::string storage_type_to_string(StorageType type)
     case StorageType::INT6:    return "INT6";   // 6-bit
     case StorageType::INT8:    return "INT8";   // 8-bit
     case StorageType::INT16:   return "INT16";  // 16-bit
+    case StorageType::INT32:   return "INT32";  // 32-bit 
+    case StorageType::INT64:   return "INT64";  // 64-bit
     case StorageType::FP16:    return "FP16";   // 16-bit float
     case StorageType::BF16:    return "BF16";   // 16-bit float
     case StorageType::FLOAT32: return "FP32";   // 32-bit float
+    case StorageType::FLOAT64: return "FP64";   // 64-bit float
    }
    // NOT REACHED
    return "";
@@ -1147,10 +1110,6 @@ void UnifiedIndex::printStats() const {
     std::cout << "  Pending additions: " << stats.pending_additions << "\n";
     std::cout << "  Total vectors: " << stats.total_vectors << "\n";
 }
-
-
-
-
 
 
 }; // namespace hnswlib
