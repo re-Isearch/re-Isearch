@@ -7,6 +7,7 @@
 #include "LlamaEmbedder.hpp"
 #include "Logger.hpp"
 #include "Util.hpp"
+#include "hf_model.hpp"
 
 class EmbedderFactory {
 public:

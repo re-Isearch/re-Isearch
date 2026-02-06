@@ -29,9 +29,12 @@ enum class StorageType : uint32_t {
     INT6,     // 6-bit
     INT8,     // 8-bit
     INT16,    // 16-bit
+    INT32,    // 32-bit (NOT SUPPORTED)
+    INT64,    // 64-bit (NOT SUPPORTED)
     FP16,     // 16-bit float
     BF16,     // 16-bit float (but 8-bit exponent, 7-bit mantissa, 1-bit sign)
-    FLOAT32   // 32-bit float
+    FLOAT32,  // 32-bit float
+    FLOAT64   // 64-bit float (NOT SUPPORTED)
 };
 
 
@@ -54,12 +57,15 @@ public:
     void resize(size_t new_dim) { dim = new_dim; resize_bytes(); }
 
     void resize_bytes() {
-        size_t bits = bits_per_element();
-        data.resize((dim * bits + 7) / 8);
+        data.resize( bytes_per_vector() );
     }
 
     size_t bits_per_element() const noexcept {
-        switch (type) {
+       return bits_per_element(type);
+    }
+
+    static size_t bits_per_element(StorageType typ) {
+        switch (typ) {
             case StorageType::BIN1: return 1;
             case StorageType::INT2: return 2;
             case StorageType::INT3: return 3;
@@ -69,8 +75,11 @@ public:
             case StorageType::INT8: return 8;
             case StorageType::INT16:return 16;
             case StorageType::FP16: return 16;
-	    case StorageType::BF16: return 16;
+            case StorageType::BF16: return 16;
+            case StorageType::INT32: return 32;
             case StorageType::FLOAT32: return 32;
+            case StorageType::INT64: return 64;
+            case StorageType::FLOAT64: return 64;
         }
         return 0;
     }
@@ -153,6 +162,14 @@ static void quantize(StorageType type, const T* emb, uint8_t* out, size_t dim) {
         case StorageType::FLOAT32:
             std::memcpy(out, emb, dim * sizeof(float));
             break;
+
+
+        case StorageType::INT32:
+        case StorageType::INT64:
+        case StorageType::FLOAT64:
+            std::cerr << "Unsupported Storage Type: " << bits_per_element(type) <<  "-bit\n";
+            break;
+
     }
 }
 

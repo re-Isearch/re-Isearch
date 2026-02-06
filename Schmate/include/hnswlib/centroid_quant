@@ -1,0 +1,423 @@
+#pragma once
+
+#include <vector>
+#include <cstring>
+#include <cmath>
+#include <algorithm>
+#include <fstream>
+#include <mutex>
+#include <memory>
+
+namespace binarization {
+
+class CentroidBinaryQuantizer {
+private:
+    std::vector<float> centroid_;
+    std::vector<float> sum_; // Running sum for incremental updates
+    size_t dim_;
+    size_t count_; // Number of vectors used for centroid
+    bool is_trained_;
+    
+    // Buffer for collecting vectors before retraining
+    std::vector<float> buffer_;
+    size_t buffer_capacity_;
+    size_t buffer_count_;
+    size_t retrain_interval_;
+    
+    mutable std::mutex mutex_; // Thread safety for concurrent addPoint
+
+public:
+    CentroidBinaryQuantizer() 
+        : dim_(0), count_(0), is_trained_(false), 
+          buffer_capacity_(1000), buffer_count_(0), retrain_interval_(1000) {}
+    
+    explicit CentroidBinaryQuantizer(size_t dimension, 
+                                     size_t buffer_capacity = 1000,
+                                     size_t retrain_interval = 1000) 
+        : dim_(dimension), count_(0), is_trained_(false),
+          buffer_capacity_(buffer_capacity), buffer_count_(0),
+          retrain_interval_(retrain_interval) {
+        centroid_.resize(dim_, 0.0f);
+        sum_.resize(dim_, 0.0f);
+        buffer_.reserve(buffer_capacity_ * dim_);
+    }
+
+    // Initial training from batch data
+    void train(const float* data, size_t num_vectors) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        
+        std::fill(sum_.begin(), sum_.end(), 0.0f);
+        count_ = 0;
+        
+        for (size_t i = 0; i < num_vectors; ++i) {
+            const float* vec = data + i * dim_;
+            for (size_t d = 0; d < dim_; ++d) {
+                sum_[d] += vec[d];
+            }
+        }
+        
+        count_ = num_vectors;
+        update_centroid();
+        is_trained_ = true;
+    }
+
+    // Add a single vector to the buffer for incremental training
+    void add_vector(const float* vec) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        
+        // Add to buffer
+        for (size_t d = 0; d < dim_; ++d) {
+            buffer_.push_back(vec[d]);
+        }
+        buffer_count_++;
+        
+        // If not trained yet, use first vector as initial centroid
+        if (!is_trained_ && buffer_count_ == 1) {
+            for (size_t d = 0; d < dim_; ++d) {
+                sum_[d] = vec[d];
+            }
+            count_ = 1;
+            update_centroid();
+            is_trained_ = true;
+        }
+        
+        // Check if we should retrain
+        if (buffer_count_ >= buffer_capacity_) {
+            retrain_from_buffer();
+        }
+    }
+
+    // Force a retrain with current buffer
+    void flush_buffer() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (buffer_count_ > 0) {
+            retrain_from_buffer();
+        }
+    }
+
+    // Encode a single vector to binary representation
+    size_t encode(const float* vec, uint8_t* binary_code) const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        
+        if (!is_trained_) {
+            throw std::runtime_error("Quantizer must be trained before encoding");
+        }
+        
+        size_t num_bytes = (dim_ + 7) / 8;
+        std::memset(binary_code, 0, num_bytes);
+        
+        for (size_t d = 0; d < dim_; ++d) {
+            if (vec[d] >= centroid_[d]) {
+                size_t byte_idx = d / 8;
+                size_t bit_idx = d % 8;
+                binary_code[byte_idx] |= (1 << bit_idx);
+            }
+        }
+        
+        return num_bytes;
+    }
+
+    // Batch encode multiple vectors
+    void encode_batch(const float* data, size_t num_vectors, 
+                     std::vector<uint8_t>& binary_codes) const {
+        if (!is_trained_) {
+            throw std::runtime_error("Quantizer must be trained before encoding");
+        }
+        
+        size_t bytes_per_vector = (dim_ + 7) / 8;
+        binary_codes.resize(num_vectors * bytes_per_vector);
+        
+        for (size_t i = 0; i < num_vectors; ++i) {
+            encode(data + i * dim_, binary_codes.data() + i * bytes_per_vector);
+        }
+    }
+
+    // Save quantizer state to disk
+    bool save(const std::string& filepath) const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        
+        std::ofstream out(filepath, std::ios::binary);
+        if (!out.is_open()) return false;
+        
+        // Write header
+        out.write(reinterpret_cast<const char*>(&dim_), sizeof(dim_));
+        out.write(reinterpret_cast<const char*>(&count_), sizeof(count_));
+        out.write(reinterpret_cast<const char*>(&is_trained_), sizeof(is_trained_));
+        out.write(reinterpret_cast<const char*>(&buffer_capacity_), sizeof(buffer_capacity_));
+        out.write(reinterpret_cast<const char*>(&retrain_interval_), sizeof(retrain_interval_));
+        
+        // Write centroid
+        out.write(reinterpret_cast<const char*>(centroid_.data()), 
+                  dim_ * sizeof(float));
+        
+        // Write sum
+        out.write(reinterpret_cast<const char*>(sum_.data()), 
+                  dim_ * sizeof(float));
+        
+        // Write buffer
+        out.write(reinterpret_cast<const char*>(&buffer_count_), sizeof(buffer_count_));
+        if (buffer_count_ > 0) {
+            out.write(reinterpret_cast<const char*>(buffer_.data()), 
+                      buffer_count_ * dim_ * sizeof(float));
+        }
+        
+        return out.good();
+    }
+
+    // Load quantizer state from disk
+    bool load(const std::string& filepath) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        
+        std::ifstream in(filepath, std::ios::binary);
+        if (!in.is_open()) return false;
+        
+        // Read header
+        in.read(reinterpret_cast<char*>(&dim_), sizeof(dim_));
+        in.read(reinterpret_cast<char*>(&count_), sizeof(count_));
+        in.read(reinterpret_cast<char*>(&is_trained_), sizeof(is_trained_));
+        in.read(reinterpret_cast<char*>(&buffer_capacity_), sizeof(buffer_capacity_));
+        in.read(reinterpret_cast<char*>(&retrain_interval_), sizeof(retrain_interval_));
+        
+        // Resize vectors
+        centroid_.resize(dim_);
+        sum_.resize(dim_);
+        
+        // Read centroid
+        in.read(reinterpret_cast<char*>(centroid_.data()), 
+                dim_ * sizeof(float));
+        
+        // Read sum
+        in.read(reinterpret_cast<char*>(sum_.data()), 
+                dim_ * sizeof(float));
+        
+        // Read buffer
+        in.read(reinterpret_cast<char*>(&buffer_count_), sizeof(buffer_count_));
+        if (buffer_count_ > 0) {
+            buffer_.resize(buffer_count_ * dim_);
+            in.read(reinterpret_cast<char*>(buffer_.data()), 
+                    buffer_count_ * dim_ * sizeof(float));
+        }
+        
+        return in.good();
+    }
+
+    // Compute Hamming distance between two binary codes
+    static uint32_t hamming_distance(const uint8_t* code1, const uint8_t* code2, 
+                                     size_t num_bytes) {
+        uint32_t dist = 0;
+        for (size_t i = 0; i < num_bytes; ++i) {
+            uint8_t xor_val = code1[i] ^ code2[i];
+            dist += __builtin_popcount(xor_val);
+        }
+        return dist;
+    }
+
+    // Getters
+    const std::vector<float>& get_centroid() const { return centroid_; }
+    size_t get_dimension() const { return dim_; }
+    bool is_trained() const { return is_trained_; }
+    size_t get_code_size() const { return (dim_ + 7) / 8; }
+    size_t get_count() const { return count_; }
+    size_t get_buffer_count() const { return buffer_count_; }
+    
+    // Setters for tuning
+    void set_buffer_capacity(size_t capacity) { buffer_capacity_ = capacity; }
+    void set_retrain_interval(size_t interval) { retrain_interval_ = interval; }
+
+private:
+    void update_centroid() {
+        if (count_ == 0) return;
+        for (size_t d = 0; d < dim_; ++d) {
+            centroid_[d] = sum_[d] / count_;
+        }
+    }
+
+    void retrain_from_buffer() {
+        if (buffer_count_ == 0) return;
+        
+        // Merge buffer into running sum
+        for (size_t i = 0; i < buffer_count_; ++i) {
+            const float* vec = buffer_.data() + i * dim_;
+            for (size_t d = 0; d < dim_; ++d) {
+                sum_[d] += vec[d];
+            }
+        }
+        
+        count_ += buffer_count_;
+        update_centroid();
+        
+        // Clear buffer
+        buffer_.clear();
+        buffer_count_ = 0;
+    }
+};
+
+// Wrapper for HNSWlib integration with incremental training
+template<typename dist_t>
+class BinaryQuantizedSpace {
+private:
+    std::shared_ptr<CentroidBinaryQuantizer> quantizer_;
+    size_t dim_;
+    size_t code_size_;
+
+public:
+    BinaryQuantizedSpace(size_t dimension,
+                        size_t buffer_capacity = 1000,
+                        size_t retrain_interval = 1000) 
+        : dim_(dimension) {
+        quantizer_ = std::make_shared<CentroidBinaryQuantizer>(
+            dimension, buffer_capacity, retrain_interval);
+        code_size_ = (dimension + 7) / 8;
+    }
+
+    // Initialize with training data
+    void train(const float* data, size_t num_vectors) {
+        quantizer_->train(data, num_vectors);
+    }
+
+    // Load from disk
+    bool load(const std::string& filepath) {
+        return quantizer_->load(filepath);
+    }
+
+    // Save to disk
+    bool save(const std::string& filepath) const {
+        return quantizer_->save(filepath);
+    }
+
+    // Hook into addPoint for incremental learning
+    void on_add_point(const float* vec) {
+        quantizer_->add_vector(vec);
+    }
+
+    // Force a retrain with buffered data
+    void flush() {
+        quantizer_->flush_buffer();
+    }
+
+    // Distance function for binary codes
+    dist_t distance(const void* code1, const void* code2) const {
+        return static_cast<dist_t>(
+            CentroidBinaryQuantizer::hamming_distance(
+                static_cast<const uint8_t*>(code1),
+                static_cast<const uint8_t*>(code2),
+                code_size_
+            )
+        );
+    }
+
+    // Encode vector for insertion
+    void encode_vector(const float* vec, void* code) const {
+        quantizer_->encode(vec, static_cast<uint8_t*>(code));
+    }
+
+    size_t get_data_size() const { return code_size_; }
+    size_t get_dimension() const { return dim_; }
+    
+    const CentroidBinaryQuantizer& get_quantizer() const {
+        return *quantizer_;
+    }
+};
+
+} // namespace binarization
+
+// Example usage with incremental training:
+/*
+#include "hnswlib.h"
+
+class IncrementalBinaryIndex {
+private:
+    binarization::BinaryQuantizedSpace<float> bq_space_;
+    std::unique_ptr<hnswlib::L2Space> space_;
+    std::unique_ptr<hnswlib::HierarchicalNSW<float>> index_;
+    size_t dim_;
+    size_t code_size_;
+    
+public:
+    IncrementalBinaryIndex(size_t dimension, size_t max_elements,
+                          size_t buffer_capacity = 1000,
+                          size_t retrain_interval = 1000)
+        : bq_space_(dimension, buffer_capacity, retrain_interval),
+          dim_(dimension) {
+        code_size_ = (dimension + 7) / 8;
+        
+        // Space must persist as member variable
+        space_ = std::make_unique<hnswlib::L2Space>(code_size_);
+        index_ = std::make_unique<hnswlib::HierarchicalNSW<float>>(
+            space_.get(), max_elements);
+    }
+    
+    // Add point with automatic incremental training
+    void addPoint(const float* vec, size_t label) {
+        // Add to quantizer for incremental training
+        bq_space_.on_add_point(vec);
+        
+        // Encode and add to index
+        std::vector<uint8_t> code(code_size_);
+        bq_space_.encode_vector(vec, code.data());
+        index_->addPoint(code.data(), label);
+    }
+    
+    // Periodic save
+    void save(const std::string& index_path, const std::string& quantizer_path) {
+        index_->saveIndex(index_path);
+        bq_space_.save(quantizer_path);
+    }
+    
+    // Load from disk
+    void load(const std::string& index_path, const std::string& quantizer_path,
+              size_t max_elements) {
+        bq_space_.load(quantizer_path);
+        
+        hnswlib::L2Space space(code_size_);
+        index_ = std::make_unique<hnswlib::HierarchicalNSW<float>>(
+            &space, index_path, false, max_elements);
+    }
+    
+    // Query
+    std::priority_queue<std::pair<float, size_t>> 
+    searchKnn(const float* query, size_t k) {
+        std::vector<uint8_t> code(code_size_);
+        bq_space_.encode_vector(query, code.data());
+        return index_->searchKnn(code.data(), k);
+    }
+    
+    void flush_training_buffer() {
+        bq_space_.flush();
+    }
+};
+
+int main() {
+    size_t dim = 128;
+    size_t max_elements = 1000000;
+    
+    IncrementalBinaryIndex index(dim, max_elements, 
+                                  1000,  // buffer capacity
+                                  5000); // retrain every 5000 vectors
+    
+    // Try to load existing index
+    if (!index.load("index.bin", "quantizer.bin", max_elements)) {
+        // Initialize with some training data if new
+        std::vector<float> initial_data(10000 * dim);
+        // ... fill with data ...
+    }
+    
+    // Add points - quantizer trains incrementally
+    for (size_t i = 0; i < 100000; ++i) {
+        std::vector<float> vec(dim);
+        // ... fill vector ...
+        index.addPoint(vec.data(), i);
+        
+        // Periodic save every 10000 points
+        if (i % 10000 == 0) {
+            index.save("index.bin", "quantizer.bin");
+        }
+    }
+    
+    // Final flush and save
+    index.flush_training_buffer();
+    index.save("index.bin", "quantizer.bin");
+    
+    return 0;
+}
+*/

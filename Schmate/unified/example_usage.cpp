@@ -7,7 +7,7 @@
 
 int main() {
     const size_t dim = 384;
-    const size_t max_elements = 5000;
+    const size_t max_elements = 1000;
     const size_t k = 10;
     
     // Detect SIMD
@@ -80,7 +80,7 @@ int main() {
         false  // no rescoring
     );
     
-    binary_standard.fit_quantizer(sample_data);
+    binary_standard.fit(sample_data);
     
     for (size_t i = 0; i < max_elements; i++) {
         binary_standard.addPoint(sample_data[i].data(), i);
@@ -95,8 +95,36 @@ int main() {
         std::cout << "  Label: " << label << ", Hamming Distance: " << dist << "\n";
         results_binary_std.pop();
     }
+
+    // Example 4: Binary quantized index (RABITQ mode)
+    std::cout << "\n=== Binary Quantized Index (RABITQ Mode) ===\n";
+    hnswlib::UnifiedIndex binary_rabitq(
+        dim, max_elements,
+        hnswlib::Metric::L2,
+        hnswlib::QuantMode::BIN1,
+        hnswlib::OptBinMode::RABITQ,
+        false  // no rescoring
+    );
+
+    binary_rabitq.fit(sample_data);
+
+    for (size_t i = 0; i < max_elements; i++) {
+        binary_rabitq.addPoint(sample_data[i].data(), i);
+    }
+   
+    binary_rabitq.setEf(50);
+    auto results_binary_rabitq = binary_rabitq.searchKnn(query.data(), k);
+
+    std::cout << "Top " << k << " results:\n";
+    while (!results_binary_rabitq.empty()) {
+        auto [dist, label] = results_binary_rabitq.top();
+        std::cout << "  Label: " << label << ", Hamming Distance: " << dist << "\n";
+        results_binary_rabitq.pop();
+    }
+   
+
     
-    // Example 4: Binary quantized index (BETTER mode with rescoring)
+    // Example 5: Binary quantized index (BETTER mode with rescoring)
     std::cout << "\n=== Binary Quantized Index (BETTER Mode with Rescoring) ===\n";
     hnswlib::UnifiedIndex binary_better(
         dim, max_elements, 
@@ -106,7 +134,7 @@ int main() {
         true  // enable rescoring
     );
     
-    binary_better.fit_quantizer(sample_data);
+    binary_better.fit(sample_data);
     
     for (size_t i = 0; i < max_elements; i++) {
         binary_better.addPoint(sample_data[i].data(), i);
@@ -130,7 +158,7 @@ int main() {
         results_binary_rescore.pop();
     }
     
-    // Example 5: Ternary quantized index
+    // Example 6: Ternary quantized index
     std::cout << "\n=== Ternary Quantized Index ===\n";
     hnswlib::UnifiedIndex ternary_index(
         dim, max_elements,
@@ -140,7 +168,7 @@ int main() {
         false
     );
     
-    ternary_index.fit_quantizer(sample_data);
+    ternary_index.fit(sample_data);
     
     for (size_t i = 0; i < max_elements; i++) {
         ternary_index.addPoint(sample_data[i].data(), i);
@@ -156,7 +184,7 @@ int main() {
         results_ternary.pop();
     }
     
-    // Example 6: Search with epsilon stop condition
+    // Example 7: Search with epsilon stop condition
     std::cout << "\n=== Search with Epsilon Stop Condition ===\n";
     float epsilon = 0.1f;
     size_t min_cand = 5;
@@ -177,11 +205,12 @@ int main() {
     float_index.saveIndex("unified_float_index.bin");
     cosine_index.saveIndex("unified_cosine_index.bin");
     binary_standard.saveIndex("unified_binary_standard.bin");
+    binary_rabitq.saveIndex("unified_binary.rabitq.bin");
     binary_better.saveIndex("unified_binary_better.bin");
     ternary_index.saveIndex("unified_ternary_index.bin");
     std::cout << "All indices saved successfully!\n";
     
-    // Example 7: Load and verify
+    // Example 8: Load and verify
     std::cout << "\n=== Loading Binary Better Index ===\n";
 
     hnswlib::UnifiedIndex loaded_index(

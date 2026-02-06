@@ -1,5 +1,5 @@
 # Hnswlib - fast approximate nearest neighbor search
-Header-only C++ HNSW implementation with python bindings, insertions and updates.
+Header-only C++ HNSW implementation with insertions and updates.
 
 **NEWS:**
 

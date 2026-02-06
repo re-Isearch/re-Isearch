@@ -34,21 +34,30 @@ add_executable(config_editor
     src/HnswConfig.cpp
     src/Logger.cpp
     src/Util.cpp
+    src/hf_mapper.cpp
 )
 target_include_directories(config_editor PRIVATE include)
+
+
+# add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/llama.cpp)
+# target_link_libraries(your_app PRIVATE llama)
 
 
 # Test executable
 add_executable(test_reconstruct 
     tests/test_reconstruct.cpp
     src/BertIndex.cpp
+    src/HnswConfig.cpp
     src/ShardedIndex.cpp
     src/BertIndexManager.cpp
     src/Util.cpp
     src/OffsetFile.cpp
     src/Logger.cpp
     src/FileLock.cpp
-    src/SBertGGML.cpp)
+    src/SBertGGML.cpp
+    src/hf_mapper.cpp
+    src/StringEmbedding.cpp
+    src/unified_hnsw.cpp)
 target_include_directories(test_reconstruct PRIVATE include)
 target_link_libraries(test_reconstruct PRIVATE ${BERT} ${GGML} "-framework Accelerate")
 

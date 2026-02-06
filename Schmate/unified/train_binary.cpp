@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
     );
     
     start = std::chrono::high_resolution_clock::now();
-    index.fit_quantizer(training_embeddings);
+    index.fit(training_embeddings);
     auto fit_time = std::chrono::duration_cast<std::chrono::seconds>(
         std::chrono::high_resolution_clock::now() - start).count();
     

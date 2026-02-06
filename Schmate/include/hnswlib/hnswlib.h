@@ -6,6 +6,11 @@
 #else
   #define HNSWERR HNSWLIB_ERR_OVERRIDE
 #endif
+#ifndef HNSWLIB_WARN_OVERRIDE
+  #define HNSWWARN std::cout
+#else
+  #define HNSWWARN HNSWLIB_WARN_OVERRIDE
+#endif
 #ifndef HNSWLIB_INFO_OVERRIDE
   #define HNSWINFO std::cout
 #else

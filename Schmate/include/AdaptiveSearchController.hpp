@@ -24,17 +24,17 @@ public:
     // === Persistence ===
     void save(const std::string &base_path) const {
         if (adaptive_ef)
-            ef_tuner.save(base_path + IndexFileExtensions::tuner);
+            ef_tuner.save(base_path + hnswlib::IndexFileExtensions::tuner);
         if (adaptive_epsilon)
-            eps_tuner.save(base_path + IndexFileExtensions::eps);
+            eps_tuner.save(base_path + hnswlib::IndexFileExtensions::eps);
     }
 
     bool load(const std::string &base_path) {
         bool ok = false;
         if (adaptive_ef)
-            ok |= ef_tuner.load(base_path + IndexFileExtensions::tuner);
+            ok |= ef_tuner.load(base_path + hnswlib::IndexFileExtensions::tuner);
         if (adaptive_epsilon)
-            ok |= eps_tuner.load(base_path + IndexFileExtensions::eps);
+            ok |= eps_tuner.load(base_path + hnswlib::IndexFileExtensions::eps);
         return ok;
     }
 

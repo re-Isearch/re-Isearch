@@ -54,8 +54,7 @@ typedef OptBinMode OptBinModeIP;
 #else
 
 enum class QuantModeIP {
-    BIN1=0, INT158=1, INT4=2, INT8=3
-};
+    BIN1=0, INT158=1, INT4=2, INT8=3, INT16=4};
 
 enum class OptBinModeIP  { PASS=0, STANDARD, BETTER, CENTROID, ROTATIONAL, RABITQ, RABITQ_EXTENDED };
 
@@ -78,15 +77,137 @@ inline std::optional<QuantModeIP> toQuantModeIP(StorageType st) noexcept {
     }
 }
 
-inline std::optional<StorageType> toStorageTypeIP(QuantModeIP mode) noexcept {
+inline StorageType toStorageTypeIP(QuantModeIP mode) noexcept {
     switch (mode) {
         case QuantModeIP::BIN1:  return StorageType::BIN1;
         case QuantModeIP::INT158:return StorageType::INT2;
         case QuantModeIP::INT4:  return StorageType::INT4;
         case QuantModeIP::INT8:  return StorageType::INT8;
+        case QuantModeIP::INT16: return StorageType::INT16;
     }
 }
 #endif
+
+
+#if defined(__AVX2__)
+#include <immintrin.h>
+
+inline float ip_int8_avx2(const uint8_t* a, const uint8_t* b, size_t dim)
+{
+    __m256i acc = _mm256_setzero_si256();
+    size_t i = 0;
+
+    for (; i + 31 < dim; i += 32) {
+        __m256i va = _mm256_loadu_si256((const __m256i*)(a + i));
+        __m256i vb = _mm256_loadu_si256((const __m256i*)(b + i));
+
+        __m256i a0 = _mm256_cvtepi8_epi16(_mm256_extracti128_si256(va, 0));
+        __m256i b0 = _mm256_cvtepi8_epi16(_mm256_extracti128_si256(vb, 0));
+        acc = _mm256_add_epi32(acc, _mm256_madd_epi16(a0, b0));
+
+        __m256i a1 = _mm256_cvtepi8_epi16(_mm256_extracti128_si256(va, 1));
+        __m256i b1 = _mm256_cvtepi8_epi16(_mm256_extracti128_si256(vb, 1));
+        acc = _mm256_add_epi32(acc, _mm256_madd_epi16(a1, b1));
+    }
+
+    alignas(32) int tmp[8];
+    _mm256_store_si256((__m256i*)tmp, acc);
+    int sum = tmp[0]+tmp[1]+tmp[2]+tmp[3]+tmp[4]+tmp[5]+tmp[6]+tmp[7];
+
+    for (; i < dim; ++i)
+        sum += int(int8_t(a[i])) * int(int8_t(b[i]));
+
+    return float(-sum);
+}
+
+inline float ip_int4_avx2(const uint8_t* a, const uint8_t* b, size_t dim)
+{
+    size_t bytes = (dim + 1) >> 1;
+    __m256i acc = _mm256_setzero_si256();
+    const __m256i mask = _mm256_set1_epi8(0x0F);
+
+    size_t i = 0;
+    for (; i + 31 < bytes; i += 32) {
+        __m256i va = _mm256_loadu_si256((const __m256i*)(a + i));
+        __m256i vb = _mm256_loadu_si256((const __m256i*)(b + i));
+
+        __m256i a0 = _mm256_and_si256(va, mask);
+        __m256i b0 = _mm256_and_si256(vb, mask);
+        a0 = _mm256_sub_epi8(a0, _mm256_cmpgt_epi8(a0, _mm256_set1_epi8(7)));
+        b0 = _mm256_sub_epi8(b0, _mm256_cmpgt_epi8(b0, _mm256_set1_epi8(7)));
+
+        acc = _mm256_add_epi32(acc,
+            _mm256_madd_epi16(
+                _mm256_cvtepi8_epi16(_mm256_extracti128_si256(a0,0)),
+                _mm256_cvtepi8_epi16(_mm256_extracti128_si256(b0,0))
+            ));
+
+        __m256i a1 = _mm256_and_si256(_mm256_srli_epi16(va,4), mask);
+        __m256i b1 = _mm256_and_si256(_mm256_srli_epi16(vb,4), mask);
+        a1 = _mm256_sub_epi8(a1, _mm256_cmpgt_epi8(a1, _mm256_set1_epi8(7)));
+        b1 = _mm256_sub_epi8(b1, _mm256_cmpgt_epi8(b1, _mm256_set1_epi8(7)));
+
+        acc = _mm256_add_epi32(acc,
+            _mm256_madd_epi16(
+                _mm256_cvtepi8_epi16(_mm256_extracti128_si256(a1,0)),
+                _mm256_cvtepi8_epi16(_mm256_extracti128_si256(b1,0))
+            ));
+    }
+
+    alignas(32) int tmp[8];
+    _mm256_store_si256((__m256i*)tmp, acc);
+    int sum = tmp[0]+tmp[1]+tmp[2]+tmp[3]+tmp[4]+tmp[5]+tmp[6]+tmp[7];
+
+    for (; i < bytes; ++i) {
+        uint8_t ba = a[i], bb = b[i];
+        int a0 = ba & 0x0F; if (a0 >= 8) a0 -= 16;
+        int b0 = bb & 0x0F; if (b0 >= 8) b0 -= 16;
+        sum += a0 * b0;
+        if (2*i + 1 < dim) {
+            int a1 = ba >> 4; if (a1 >= 8) a1 -= 16;
+            int b1 = bb >> 4; if (b1 >= 8) b1 -= 16;
+            sum += a1 * b1;
+        }
+    }
+
+    return float(-sum);
+}
+
+#endif
+
+#if defined(__ARM_NEON)
+#include <arm_neon.h>
+
+inline float ip_int8_neon(const uint8_t* a,
+                          const uint8_t* b,
+                          size_t dim)
+{
+    int32x4_t acc = vdupq_n_s32(0);
+    size_t i = 0;
+
+    for (; i + 15 < dim; i += 16) {
+        int8x16_t va = vld1q_s8((const int8_t*)(a + i));
+        int8x16_t vb = vld1q_s8((const int8_t*)(b + i));
+        int16x8_t a0 = vmovl_s8(vget_low_s8(va));
+        int16x8_t b0 = vmovl_s8(vget_low_s8(vb));
+        int16x8_t a1 = vmovl_s8(vget_high_s8(va));
+        int16x8_t b1 = vmovl_s8(vget_high_s8(vb));
+
+        acc = vaddq_s32(acc, vmull_s16(vget_low_s16(a0), vget_low_s16(b0)));
+        acc = vaddq_s32(acc, vmull_s16(vget_high_s16(a0), vget_high_s16(b0)));
+        acc = vaddq_s32(acc, vmull_s16(vget_low_s16(a1), vget_low_s16(b1)));
+        acc = vaddq_s32(acc, vmull_s16(vget_high_s16(a1), vget_high_s16(b1)));
+    }
+
+    int sum = vaddvq_s32(acc);
+    for (; i < dim; ++i)
+        sum += int(int8_t(a[i])) * int(int8_t(b[i]));
+
+    return float(-sum);
+}
+#endif
+
+
 
 // =============================================================================
 template<typename T=float>
@@ -95,9 +216,10 @@ public:
     using DISTFUNC_TYPE = DISTFUNC<float>;
 
     size_t dim_;
+    StorageType storage_type_;
     QuantModeIP qmode_;
     OptBinModeIP bin_mode_;
-    size_t bytes_per_vector;
+    size_t bytes_per_vector =0;
 
     // Mean vector for centering (crucial for IP)
     std::vector<T> mean_;
@@ -133,6 +255,18 @@ public:
     std::vector<T> norms_;
     bool use_normalization_;
 
+#if 0 /* FIXUP */
+
+    explicit SpaceQuantizedIP(size_t dim, StorageType storage_type,
+                              OptBinModeIP bin_mode = OptBinModeIP::STANDARD,
+                              const std::vector<std::vector<T>>* sample_embeddings = nullptr,
+                              size_t buffer_capacity = 1000,
+                              bool normalize = false)
+        : dim_(dim), storage_type_(storage_type), bin_mode_(bin_mode), buffer_capacity_(buffer_capacity),
+          use_normalization_(normalize) {
+
+        qmode_ = toQuantMode(storage_type_);
+#else
     explicit SpaceQuantizedIP(size_t dim, QuantModeIP qmode,
                               OptBinModeIP bin_mode = OptBinModeIP::STANDARD,
                               const std::vector<std::vector<T>>* sample_embeddings = nullptr,
@@ -140,6 +274,9 @@ public:
                               bool normalize = false)
         : dim_(dim), qmode_(qmode), bin_mode_(bin_mode), buffer_capacity_(buffer_capacity),
           use_normalization_(normalize) {
+
+       storage_type_ = toStorageType(qmode_); 
+#endif
 
         assert(dim>0);
 
@@ -193,6 +330,15 @@ public:
 
         if (bin_mode == OptBinModeIP::PASS) {
             // Passthrough mode
+#if 1 /* FIXUP  */    
+            size_t bits_per_component = hnswlib::IntStorage::bits_per_element(storage_type_);
+            size_t vector_bits = dim * bits_per_component;
+            bytes_per_vector= (vector_bits + 7) / 8;
+#endif
+#if 1                       
+        } else if (qmode == QuantModeIP::INT16) {
+            bytes_per_vector=  sizeof(float) + dim * sizeof(int16_t);
+#endif
         } else if (qmode==QuantModeIP::BIN1) {
             bytes_per_vector=(dim_+7)/8;
             
@@ -255,8 +401,12 @@ public:
     void quantize(const T* emb, uint8_t* out) const override {
         if (bin_mode_ == OptBinMode::PASS || qmode_ == QuantMode::NONE || 
                 qmode_ == QuantMode::FP16 || qmode_ == QuantMode::BF16) {
+#if 1 /* FIXUP */
+           IntStorage::quantize(storage_type_, emb, out, dim_);
+#else
            auto st = toStorageType(qmode_);
-           if (st) IntStorage::quantize(*st, emb, out, dim_);
+           IntStorage::quantize(st, emb, out, dim_);
+#endif
            return;
         }
 
@@ -276,6 +426,10 @@ public:
             case QuantModeIP::INT158: quantize_ternary_simd(input,out); break;
             case QuantModeIP::INT8: quantize_int8_simd(input,out); break;
             case QuantModeIP::INT4: quantize_int4_simd(input,out); break;
+
+	    case QuantModeIP::INT16:
+		HNSWFATAL << "Don't yet support INT16 Quant on IP\n";
+		break;
             case QuantModeIP::FP16: IntStorage::quantize(StorageType::FP16, input, out, dim_); break;
             case QuantModeIP::BF16: IntStorage::quantize(StorageType::BF16, input, out, dim_); break;
 	    case QuantModeIP::NONE: IntStorage::quantize(StorageType::FLOAT32, input, out, dim_); break;
@@ -652,18 +806,112 @@ private:
         return dist;
     }
 
+
+    inline float finalize_dist(float dot) const {
+      if (use_normalization_)
+        return 1.0f - dot / dim_; // Normalize and convert to distance
+      else
+        return -dot;
+    }
+
+    // IP distance for pre-quantised vectors
+    float compute_dist_pass(int bits, const uint8_t* a, const uint8_t* b, size_t dim) const
+    {
+        double acc = 0.0;
+
+        // Fast path INT8
+        if (bits == 8) {
+            for (size_t i = 0; i < dim; ++i) {
+                acc += int(int8_t(a[i])) * int(int8_t(b[i]));
+            }
+            return finalize_dist(acc);
+        }
+
+        // Fast path INT4
+        if (bits == 4) {
+            size_t bytes = (dim + 1) >> 1;
+            for (size_t i = 0; i < bytes; ++i) {
+                uint8_t ba = a[i];
+                uint8_t bb = b[i];
+
+                int a0 = ba & 0x0F; if (a0 >= 8) a0 -= 16;
+                int b0 = bb & 0x0F; if (b0 >= 8) b0 -= 16;
+                acc += a0 * b0;
+
+                if (2*i + 1 < dim) {
+                    int a1 = ba >> 4; if (a1 >= 8) a1 -= 16;
+                    int b1 = bb >> 4; if (b1 >= 8) b1 -= 16;
+                    acc += a1 * b1;
+                }
+            }
+            return finalize_dist(acc);
+        }
+
+        // Generic bit-stream (INT1/2/3/5/6)
+        const uint32_t mask = (1u << bits) - 1;
+        const uint32_t sign = 1u << (bits - 1);
+
+        size_t bitpos = 0, bytepos = 0;
+
+        for (size_t d = 0; d < dim; ++d) {
+            uint32_t va = a[bytepos] >> bitpos;
+            uint32_t vb = b[bytepos] >> bitpos;
+
+            if (bitpos + bits > 8) {
+                va |= uint32_t(a[bytepos + 1]) << (8 - bitpos);
+                vb |= uint32_t(b[bytepos + 1]) << (8 - bitpos);
+            }
+
+            va &= mask;
+            vb &= mask;
+
+            if (va & sign) va -= (1u << bits);
+            if (vb & sign) vb -= (1u << bits);
+
+            acc += int(va) * int(vb);
+
+            bitpos += bits;
+            bytepos += bitpos >> 3;
+            bitpos &= 7;
+        }
+
+        return finalize_dist(acc);
+    }
+
+
     float compute_dist(const uint8_t* a, const uint8_t* b) const {
         float dot_product = 0;
+
+        if (bin_mode_ == OptBinMode::PASS) {
+	  int bits = hnswlib::IntStorage::bits_per_element(storage_type_);
+	  return compute_dist_pass(bits, a, b, dim_); 
+        }
         
         if (qmode_==QuantModeIP::BIN1) {
             // Binary inner product: count matching bits
             // XOR gives differences, so we want bits that are the same
             uint32_t matches = 0;
+#if 0 
             for(size_t i=0;i<bytes_per_vector;++i) {
                 // Count bits that match (both 0 or both 1)
                 uint8_t xor_val = a[i] ^ b[i];
                 matches += 8 - __builtin_popcount(xor_val); // Count matching bits in byte
             }
+#else
+            for (size_t i = 0; i < bytes_per_vector; ++i) {
+              uint8_t xor_val = a[i] ^ b[i];
+
+              // Mask unused bits in last byte
+              if (i == bytes_per_vector - 1 && (dim_ & 7)) {
+                  uint8_t valid_mask = (1u << (dim_ & 7)) - 1;
+                  xor_val &= valid_mask;
+                  matches += (dim_ & 7) - __builtin_popcount(xor_val);
+              } else {
+                  matches += 8 - __builtin_popcount(xor_val);
+              }
+          }
+
+#endif
             // Normalize to [-1, 1] range then convert to distance
             dot_product = (2.0f * matches / float(dim_)) - 1.0f;
             
@@ -750,8 +998,7 @@ private:
                 bit_idx += 2;
             }
             dot_product = float(acc);
-            return 1.0f - (dot_product / dim_); // Normalize and convert to distance
-            
+	    return finalize_dist(dot_product);
         } else if (qmode_==QuantModeIP::INT8) {
             // INT8 inner product
             double acc = 0;
@@ -781,7 +1028,7 @@ private:
                 }
             }
             dot_product = float(acc);
-            return 1.0f - (dot_product / dim_); // Normalize and convert to distance
+	    return finalize_dist(dot_product);
         }
     }
 

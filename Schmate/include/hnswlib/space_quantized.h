@@ -67,9 +67,10 @@ public:
     using DISTFUNC_TYPE = DISTFUNC<float>;
 
     size_t dim;
+    StorageType storage_type;
     QuantMode qmode;
     OptBinMode bin_mode;
-    size_t bytes_per_vector;
+    size_t bytes_per_vector = 0;
 
     std::vector<T> thresholds;
     std::vector<T> scale, minval, scale_sq;
@@ -98,6 +99,18 @@ public:
     size_t buffer_count_;
     mutable std::mutex centroid_mutex_;
 
+    // Need to use StorageType instead of Quantization Mode. 
+#if 0 /* FIXUP */
+    explicit SpaceQuantized(size_t dim_,
+                            StorageType storage_type_,
+                            OptBinMode bin_mode_ = OptBinMode::STANDARD,
+                            const std::vector<std::vector<T>>* sample_embeddings = nullptr,
+                            size_t buffer_capacity = 1000)
+        : dim(dim_), storage_type(storage_type_), bin_mode(bin_mode_),
+          count_(0), buffer_capacity_(buffer_capacity), buffer_count_(0) {
+
+        qmode = toQuantMode(storage_type);
+#else
     explicit SpaceQuantized(size_t dim_,
                             QuantMode qmode_,
                             OptBinMode bin_mode_ = OptBinMode::STANDARD,
@@ -106,6 +119,8 @@ public:
         : dim(dim_), qmode(qmode_), bin_mode(bin_mode_),
           count_(0), buffer_capacity_(buffer_capacity), buffer_count_(0) {
 
+        storage_type = toStorageType(qmode);                                         
+#endif
         assert(dim>0);
 
         use_rotation_  = (bin_mode_ == OptBinMode::ROTATIONAL);
@@ -117,6 +132,9 @@ public:
                         : 0) ;
         
         // Initialize RaBitQ residuals if needed
+
+//std::cerr << "XXXXX QMODE = " << quantization_to_string(qmode) << std::endl;
+//std::cerr << "      BINMODE = " << bin_mode_to_string(bin_mode) << std::endl;
 #if 0
         if (use_rabitq_) {
             if (bin_mode_ == OptBinMode::RABITQ_EXTENDED) {
@@ -152,6 +170,18 @@ public:
 
         if (bin_mode == OptBinMode::PASS || qmode == QuantMode::NONE) {
 	   // We do nothing
+#if 1 /* FIXUP  */
+           // storage_type = StorageType::INT4;
+std::cerr << "XX Quantized StorageType " << storage_type_to_string( storage_type );
+            size_t bits_per_component = hnswlib::IntStorage::bits_per_element(storage_type);
+            size_t vector_bits = dim * bits_per_component;
+std::cerr << "BITS = " << bits_per_component << std::endl;
+            bytes_per_vector= (vector_bits + 7) / 8;
+#endif
+#if 1
+        } else if (qmode == QuantMode::INT16) {
+            bytes_per_vector=  sizeof(float) + dim * sizeof(int16_t);
+#endif
         } else if (qmode==QuantMode::BIN1) {
             bytes_per_vector=(dim+7)/8;
             thresholds.assign(dim,T(0));
@@ -223,8 +253,12 @@ public:
         //
         if (bin_mode == OptBinMode::PASS || qmode == QuantMode::NONE || 
 		qmode == QuantMode::FP16 || qmode == QuantMode::BF16) {
+#if 1 /* FIXUP */
+           IntStorage::quantize(storage_type, emb, out, dim); // pack passthrough
+#else
            auto st = toStorageType(qmode);
-           if (st) IntStorage::quantize(*st, emb, out, dim); // pack passthrough
+           IntStorage::quantize(st, emb, out, dim); // pack passthrough
+#endif
            return;
         }
 
@@ -244,6 +278,8 @@ public:
             case QuantMode::INT158: quantize_ternary_simd(input,out); break;
             case QuantMode::INT8:   quantize_int8_simd(input,out); break;
             case QuantMode::INT4:   quantize_int4_simd(input,out); break;
+
+	    case QuantMode::INT16:  quantize_int16(input, out); break;
 
             // These should never be reached
             case QuantMode::FP16: IntStorage::quantize(StorageType::FP16, input, out, dim); break;
@@ -669,7 +705,13 @@ private:
 
     float compute_dist(const uint8_t* a, const uint8_t* b) const {
         float base_dist = 0;
-        
+
+        // We are pass-through so use other dist function!
+        if (bin_mode == OptBinMode::PASS) {
+          size_t bits = 4; // hnswlib::IntStorage::bits_per_element(storage_type);
+std::cerr << "BITS = " << bits << std::endl;
+	  return compute_dist_L2_pass(bits, a, b, dim);
+         }
         if (qmode==QuantMode::BIN1) {
             // Hamming distance
             uint32_t acc=0;
@@ -742,6 +784,7 @@ private:
             }
             
             return base_dist;
+
         } else if (qmode==QuantMode::INT158) {
             // Ternary distance computation
             double acc = 0;
@@ -785,14 +828,55 @@ private:
                 acc += diff * diff * double(scale_sq[i]);
             }
             return float(acc);
+#if 1
+        } else if (qmode == QuantMode::INT16) {
+           float sa = *reinterpret_cast<const float*>(a);
+           float sb = *reinterpret_cast<const float*>(b);
+
+           const int16_t* da = reinterpret_cast<const int16_t*>(a + sizeof(float));
+           const int16_t* db = reinterpret_cast<const int16_t*>(b + sizeof(float));
+           int64_t acc = 0;
+           for (size_t i = 0; i < dim; ++i)
+              acc += int32_t(da[i]) * int32_t(db[i]);
+           return float(acc) * (sa * sb);
+#endif
         } else { // INT4
-            double acc=0;
+
+	  double acc = 0;
+	  if (bin_mode != OptBinMode::PASS) {
             for(size_t d=0;d<dim;d+=2){
                 uint8_t ba=a[d>>1], bb=b[d>>1];
                 uint8_t a0=ba&0x0F,a1=ba>>4,b0=bb&0x0F,b1=bb>>4;
                 int diff0=int(a0)-int(b0);
                 acc+=diff0*diff0*double(scale_sq[d]);
                 if(d+1<dim){int diff1=int(a1)-int(b1); acc+=diff1*diff1*double(scale_sq[d+1]);}
+              }
+	    }
+           else {
+size_t bytes = (dim + 1) >> 1;   // ceil(dim / 2)
+for (size_t i = 0; i < bytes; ++i) {
+    uint8_t ba = a[i];
+    uint8_t bb = b[i];
+
+    int a0 = int(ba & 0x0F);
+    int b0 = int(bb & 0x0F);
+    if (a0 >= 8) a0 -= 16;
+    if (b0 >= 8) b0 -= 16;
+
+    int diff0 = a0 - b0;
+    acc += diff0 * diff0;
+
+    if (2*i + 1 < dim) {
+        int a1 = int(ba >> 4);
+        int b1 = int(bb >> 4);
+        if (a1 >= 8) a1 -= 16;
+        if (b1 >= 8) b1 -= 16;
+
+        int diff1 = a1 - b1;
+        acc += diff1 * diff1;
+    }
+}
+
             }
             return float(acc);
         }
@@ -1022,6 +1106,27 @@ private:
         }
 #endif
     }
+
+#if 1
+     // INT16
+    void quantize_int16(const float* src, uint8_t* out) const {
+      float* scale_ptr = reinterpret_cast<float*>(out);
+      int16_t* dst = reinterpret_cast<int16_t*>(out + sizeof(float));
+
+      // compute scale
+      float max_abs = 0.f;
+      for (size_t i = 0; i < dim; ++i)
+          max_abs = std::max(max_abs, std::abs(src[i]));
+
+      float scale = (max_abs > 0) ? max_abs / 32767.f : 1.f;
+      *scale_ptr = scale;
+
+      for (size_t i = 0; i < dim; ++i) {
+          int v = int(std::round(src[i] / scale));
+          dst[i] = int16_t(std::clamp(v, -32767, 32767));
+      }
+  }
+#endif
 
     void quantize_int8_simd(const T* emb,uint8_t* out) const {
 #if defined(HNSW_SIMD_AVX2)

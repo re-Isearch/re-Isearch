@@ -12,6 +12,14 @@
 
 #define LSMVECTORSTORAGE 1
 
+/*
+
+Our HNSW design assumes that each index contains fewer than 10 million vectors. Recall that each index represents only the contents of a specific field or path, and that a single document may contain many such fields.
+In the worst-case scenario—such as a large textual document where each sentence (including headings) is embedded separately—the total number of sentences effectively corresponds to the entire document. Even in this case, 10 million sentences correspond to approximately 170–210 million words. For our target use cases, this capacity is more than sufficient. Assuming an average of 600 words per document, this supports 280K+ documents per index.
+Additionally, we support sharding, allowing this capacity to scale easily to millions of documents per index while maintaining strong performance.
+More generally, documents rarely provide complete coverage for a given field. As a result, the practical capacity of an index is typically significantly larger than this worst-case estimate.
+
+*/
 
 namespace hnswlib {
 
@@ -47,10 +55,11 @@ void UnifiedIndex::create_space() {
        return; // This is evil
     }
 
-    if (is_quantized())
+    if (is_quantized()) {
         create_quantized_space();
-    else
+    } else {
         create_float_space();
+    }
 
 }
 
@@ -104,6 +113,11 @@ UnifiedIndex::UnifiedIndex(const UnifiedIndexMeta& meta) : meta_(meta) {
   vector_storage_.set_dim(dim_);
   vector_storage_.set_storage_mode(storage_mode_);
 
+#if 1
+  // XXXX DEBUG
+  meta_.print(); 
+#endif
+
 }
 #endif
 
@@ -116,6 +130,7 @@ UnifiedIndex::UnifiedIndex(size_t dim, size_t max_elements,
     max_elements_ = max_elements;
     metric_ = spec.metric_;
     quantization_ = spec.quantization_;
+    storage_type_ = spec.storage_type_;
     bin_mode_ = spec.mode_;
     enable_rescoring_ = enable_rescoring && (storage_mode_ != VectorStorageMode::DISABLED);
 
@@ -140,6 +155,7 @@ UnifiedIndex::UnifiedIndex(size_t dim, size_t max_elements, Metric metric,
     max_elements_ = max_elements;
     metric_ = metric;
     quantization_ = quantization;
+    storage_type_ =  toStorageType( quantization_ );
     bin_mode_ = bin_mode;
     enable_rescoring_ = enable_rescoring && (storage_mode_ != VectorStorageMode::DISABLED);
 
@@ -623,6 +639,10 @@ bool UnifiedIndex::loadIndex(const std::string& path, bool searchOnly) {
     if (pathname_.empty()) pathname_ = path; 
 
     bool changed = false;
+
+    if (file_size(pathname_) < sizeof(UnifiedIndexMeta))
+       return false;
+
     std::ifstream ifs(path, std::ios::binary);
     if (!ifs.is_open()) {
         HNSWERR << "Cannot load index: '" << path << "' cannot be opened for reading: " << strerror(errno) << "\n";
@@ -823,6 +843,7 @@ size_t UnifiedIndex::bytes_per_vector() const
 }
 
 
+#if 0
 std::string metric_to_string(Metric m) {
   switch(m) {
       case Metric::L1:     return "L1";
@@ -833,7 +854,7 @@ std::string metric_to_string(Metric m) {
    }
 }
 
-Metric string_to_metric(const std::string& s) {
+std::optional<Metric> string_to_metric(const std::string& s) {
    if (s.empty()) throw std::runtime_error("Empty distance metric name.");
 
    const char ch = s.at(0);
@@ -845,11 +866,12 @@ Metric string_to_metric(const std::string& s) {
         return Metric::IP; // InnerProduct
    if (ch == 'C' || ch == 'c')
         return Metric::Cosine;
-    throw std::runtime_error("Unknown distance metric: " + s);
+   LOG_ERROR_S() << "Unknown distance metric: " << s << "\n"; 
+   return std::nullopt ;
 }
 
 
-QuantMode  string_to_quantzation(const std::string &s) {
+std::optional<QuantMode>  string_to_quantzation(const std::string &s) {
    if (s.empty()) throw std::runtime_error("Empty quantization name.");
    if (s == "Binary" || s == "BINARY" || s == "BIN1" || s == "INT1" || s.at(0) == 'b')
 	return QuantMode::BIN1;
@@ -861,7 +883,8 @@ QuantMode  string_to_quantzation(const std::string &s) {
 	return QuantMode::INT8;
    if (s == "Fp32" || s == "FLOAT32" || s == "NONE")
 	return QuantMode::NONE;
-    throw std::runtime_error("Unknown/unsupported quantization: " + s);
+   LOG_ERROR_S() << "Unknown/unsupported quantization: " << s << "\n";
+   return std::nullopt;
 }
 
 std::string quantization_to_string(QuantMode mode)
@@ -878,7 +901,7 @@ std::string quantization_to_string(QuantMode mode)
 }
 
 // PASS means the Float32 vectors were already quantized!
-OptBinMode  string_to_bin_mode(const std::string& s) {
+std::optional<OptBinMode>  string_to_bin_mode(const std::string& s) {
    if (s == "pass")       return OptBinMode::PASS;
    if (s == "standard")   return OptBinMode::STANDARD;
    if (s == "better")     return OptBinMode::BETTER;
@@ -886,7 +909,8 @@ OptBinMode  string_to_bin_mode(const std::string& s) {
    if (s == "rotational") return OptBinMode::ROTATIONAL;
    if (s == "RaBitQ")     return OptBinMode::RABITQ;
    if (s == "RaBitQ-Ex")  return OptBinMode::RABITQ_EXTENDED; 
-   throw std::runtime_error("Unknown/unsupported bin_mode: " + s);
+   LOG_ERROR_S() << "Unknown/unsupported bin_mode: " << s << "\n";
+   return std::nullopt;
 }
 
 std::string bin_mode_to_string(OptBinMode mode)
@@ -989,6 +1013,9 @@ StorageType string_to_storage_type(const std::string& s)
    }
 }
 
+#endif
+
+#if 0 /* MOVED ELSEWHERE */
 /*
 Case 1: "L2-BIN1-RABITQ"
 
@@ -1021,7 +1048,10 @@ bool SpecificationString::parse(const std::string& s) {
     }
 
     // Parse metric 
-    metric_ = string_to_metric(tokens[0]);
+    {
+      auto metric = string_to_metric(tokens[0]);
+      if (metric) metric_ = metric;
+    }
 
     // If quant == PASS, interpret the last token as StorageType
     if (tokens[1] == "PASS" || tokens[1] == "pass") {
@@ -1032,8 +1062,13 @@ bool SpecificationString::parse(const std::string& s) {
         use_storage_ = true;
     } else {
         // Normal case: last tokens are bin/quant mode
-        quantization_  = string_to_quantzation(tokens[1]);
-        mode_ = string_to_bin_mode(tokens[2]);
+        { auto result = string_to_quantzation(tokens[1]);
+          if (result) quantization_  = *result;
+        }
+        {
+          auto result = string_to_bin_mode(tokens[2]);
+          if (result) mode_ = *result;
+        }
         use_storage_ = false;
     }
 
@@ -1061,6 +1096,8 @@ SpecificationString::  operator std::string() const {
     return result;
 
 }
+
+#endif
 
 
 float UnifiedIndex::score_from_dist(float dist) const {

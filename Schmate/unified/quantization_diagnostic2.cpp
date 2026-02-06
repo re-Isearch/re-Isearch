@@ -3,7 +3,7 @@
 #include <random>
 #include <algorithm>
 #include <cmath>
-#include "space_quantized.h"
+#include "hnswlib.h"
 
 using namespace std;
 

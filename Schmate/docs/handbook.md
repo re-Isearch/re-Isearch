@@ -270,7 +270,7 @@ See struct HnswConfig
 ```cpp
 struct IndexMeta {
     uint32_t version;
-    char metric[16];        // "L2", "cosine", "ip"
+    Metric metric;        // L2, cosine, ip
     bool normalized;        // were embeddings normalized on insert?
     uint32_t dim;
     uint64_t element_count;

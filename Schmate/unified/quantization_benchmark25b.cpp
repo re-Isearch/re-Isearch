@@ -253,6 +253,10 @@ BenchmarkResult run_benchmark(
     
     // Query and measure time
     index->setEf(ef_search);
+
+    index->saveIndex("test.bin");
+    cout << "Saved.. " << endl;
+    index->loadIndex("test.bin", space);
     
     cout << "  Querying..." << flush;
     auto query_start = chrono::high_resolution_clock::now();
@@ -297,7 +301,7 @@ BenchmarkResult run_benchmark(
 int main() {
     // Configuration
     const size_t dim = 384;
-    const size_t n_data = 50000 * 3;
+    const size_t n_data = 10000;
     const size_t n_queries = 1000;
     const size_t k = 10;
     

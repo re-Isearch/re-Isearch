@@ -20,27 +20,25 @@ load_with_project() - Adds project-specific overrides
 // Builder pattern for easy construction
 class HnswConfigBuilder {
 private:
-    HnswConfig cfg;
+    hnswlib::HnswConfig cfg;
 
 public:
     HnswConfigBuilder& with_max_elements(size_t n) { cfg.max_elements = n; return *this; }
     HnswConfigBuilder& with_M(size_t m) { cfg.M = m; return *this; }
     HnswConfigBuilder& with_ef_construction(size_t ef) { cfg.ef_construction = ef; return *this; }
     HnswConfigBuilder& with_ef_search(size_t ef) { cfg.ef_search = ef; return *this; }
-    HnswConfigBuilder& with_metric(MetricSpace m) { cfg.metric = m; return *this; }
-    HnswConfigBuilder& with_search_mode(SearchModes m) { cfg.default_search_mode = m; return *this; }
+    HnswConfigBuilder& with_metric(hnswlib::Metric m) { cfg.set_metric (m); return *this; }
+    HnswConfigBuilder& with_search_mode(hnswlib::SearchModes m) { cfg.default_search_mode = m; return *this; }
     HnswConfigBuilder& with_debug(bool d) { cfg.debug = d; return *this; }
     HnswConfigBuilder& with_normalize_embeddings(bool n) { cfg.normalize_embeddings = n; return *this; }
     HnswConfigBuilder& with_default_k(size_t k) { cfg.default_k = k; return *this; }
     HnswConfigBuilder& with_epsilon(float e) { cfg.default_epsilon = e; return *this; }
     HnswConfigBuilder& with_epsilonL2(float e) { cfg.default_epsilonL2 = e; return *this; }
     HnswConfigBuilder& with_epsilonIP(float e) { cfg.default_epsilonIP = e; return *this; }
-    HnswConfigBuilder& with_epsilonB(float e) { cfg.default_epsilonB = e; return *this; }
-    HnswConfigBuilder& with_epsilonT(float e) { cfg.default_epsilonT = e; return *this; }
 
     HnswConfigBuilder& with_flush_threshold(int t) { cfg.flush_threshold = t; return *this; }
     
-    HnswConfig build() {
+    hnswlib::HnswConfig build() {
         if (!cfg.validate()) {
             throw std::runtime_error("Invalid configuration");
         }
@@ -62,10 +60,10 @@ public:
     {}
     
     // Load configuration with priority: local > global > hardcoded defaults
-    HnswConfig load(bool enable_debug = false) const {
-        HnswConfig cfg;  // Start with hardcoded defaults
+    hnswlib::HnswConfig load(bool enable_debug = false) const {
+        hnswlib::HnswConfig cfg;  // Start with hardcoded defaults
         if (enable_debug) cfg.debug = true;
-        HnswConfig defaults = cfg;  // Save for comparison
+        hnswlib::HnswConfig defaults = cfg;  // Save for comparison
         
         // Load global config (if exists)
         if (cfg.load_from_file(global_config_path)) {
@@ -76,7 +74,7 @@ public:
         }
         
         // Load local config and override (if exists)
-        HnswConfig local_cfg = cfg;  // Start with current config
+        hnswlib::HnswConfig local_cfg = cfg;  // Start with current config
         if (local_cfg.load_from_file(local_config_path)) {
             if (local_cfg.debug) LOG_DEBUG_S() << "Loaded local config from " << local_config_path;
             cfg.merge_overrides(local_cfg, defaults);
@@ -89,15 +87,15 @@ public:
     }
     
     // Load from specific project directory
-    HnswConfig load_with_project(const std::string& project_dir) const {
-        HnswConfig cfg = load();  // Start with global+local
+    hnswlib::HnswConfig load_with_project(const std::string& project_dir) const {
+        hnswlib::HnswConfig cfg = load();  // Start with global+local
         
         // Try to load project-specific config
         std::string project_config = project_dir + "/config.bin";
-        HnswConfig project_cfg = cfg;
+        hnswlib::HnswConfig project_cfg = cfg;
         if (project_cfg.load_from_file(project_config)) {
             if (cfg.debug) LOG_DEBUG_S() << "Loaded project config from " << project_config;
-            HnswConfig base = cfg;
+            hnswlib::HnswConfig base = cfg;
             cfg.merge_overrides(project_cfg, base);
             if (cfg.debug) LOG_DEBUG_S() << "Applied project overrides";
         }
@@ -106,12 +104,12 @@ public:
     }
     
     // Save as global default
-    bool save_global(const HnswConfig& cfg) const {
+    bool save_global(const hnswlib::HnswConfig& cfg) const {
         return cfg.save_to_file(global_config_path);
     }
     
     // Save as local override
-    bool save_local(const HnswConfig& cfg) const {
+    bool save_local(const hnswlib::HnswConfig& cfg) const {
         return cfg.save_to_file(local_config_path);
     }
     

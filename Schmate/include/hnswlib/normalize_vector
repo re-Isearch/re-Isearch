@@ -1,0 +1,430 @@
+// Unified L2 Normalization with automatic SIMD selection
+// Add to your codebase (e.g., unified_hnsw.hpp or simd_utils.hpp)
+
+#pragma once
+
+#include <cmath>
+#include <vector>
+
+#ifdef __ARM_FEATURE_SVE
+#include <arm_sve.h>
+#endif
+
+#ifdef __ARM_NEON
+#include <arm_neon.h>
+#endif
+
+#ifdef __AVX2__
+#include <immintrin.h>
+#endif
+
+namespace hnswlib {
+
+// ============================================================================
+// Scalar implementation (fallback)
+// ============================================================================
+
+static void normalize_vector_scalar(float* data, size_t dim) {
+    float sum = 0.0f;
+    for (size_t i = 0; i < dim; i++) {
+        sum += data[i] * data[i];
+    }
+    float norm = std::sqrt(sum + 1e-30f);
+    float inv_norm = 1.0f / norm;
+    for (size_t i = 0; i < dim; i++) {
+        data[i] *= inv_norm;
+    }
+}
+
+// ============================================================================
+// ARM NEON implementation
+// ============================================================================
+
+#ifdef __ARM_NEON
+
+static void normalize_vector_neon(float* data, size_t dim) {
+    float32x4_t sum_vec = vdupq_n_f32(0.0f);
+    
+    size_t i = 0;
+    // Compute squared sum
+    for (; i + 4 <= dim; i += 4) {
+        float32x4_t v = vld1q_f32(data + i);
+        sum_vec = vmlaq_f32(sum_vec, v, v);
+    }
+    
+    // Horizontal sum
+    float32x2_t sum_2 = vadd_f32(vget_low_f32(sum_vec), vget_high_f32(sum_vec));
+    float sum = vget_lane_f32(vpadd_f32(sum_2, sum_2), 0);
+    
+    // Handle remaining elements
+    for (; i < dim; i++) {
+        sum += data[i] * data[i];
+    }
+    
+    // Compute norm and inverse
+    float norm = std::sqrt(sum + 1e-30f);
+    float inv_norm = 1.0f / norm;
+    float32x4_t norm_vec = vdupq_n_f32(inv_norm);
+    
+    // Normalize
+    i = 0;
+    for (; i + 4 <= dim; i += 4) {
+        float32x4_t v = vld1q_f32(data + i);
+        v = vmulq_f32(v, norm_vec);
+        vst1q_f32(data + i, v);
+    }
+    
+    // Handle remaining elements
+    for (; i < dim; i++) {
+        data[i] *= inv_norm;
+    }
+}
+
+#endif // __ARM_NEON
+
+// ============================================================================
+// ARM SVE implementation
+// ============================================================================
+
+#ifdef __ARM_FEATURE_SVE
+
+static void normalize_vector_sve(float* data, size_t dim) {
+    uint64_t vl = svcntw();
+    
+    // Compute squared sum
+    svfloat32_t sum_vec = svdup_n_f32(0.0f);
+    svbool_t pg_full = svptrue_b32();
+    
+    uint64_t i = 0;
+    while (i + vl <= dim) {
+        svfloat32_t v = svld1_f32(pg_full, data + i);
+        sum_vec = svmla_f32_z(pg_full, sum_vec, v, v);
+        i += vl;
+    }
+    
+    if (i < dim) {
+        svbool_t pg_remain = svwhilelt_b32(i, dim);
+        svfloat32_t v = svld1_f32(pg_remain, data + i);
+        sum_vec = svmla_f32_z(pg_remain, sum_vec, v, v);
+    }
+    
+    float sum = svaddv_f32(svptrue_b32(), sum_vec);
+    
+    // Compute norm and inverse
+    float norm = std::sqrt(sum + 1e-30f);
+    float inv_norm = 1.0f / norm;
+    svfloat32_t inv_norm_vec = svdup_n_f32(inv_norm);
+    
+    // Normalize
+    i = 0;
+    while (i + vl <= dim) {
+        svfloat32_t v = svld1_f32(pg_full, data + i);
+        v = svmul_f32_z(pg_full, v, inv_norm_vec);
+        svst1_f32(pg_full, data + i, v);
+        i += vl;
+    }
+    
+    if (i < dim) {
+        svbool_t pg_remain = svwhilelt_b32(i, dim);
+        svfloat32_t v = svld1_f32(pg_remain, data + i);
+        v = svmul_f32_z(pg_remain, v, inv_norm_vec);
+        svst1_f32(pg_remain, data + i, v);
+    }
+}
+
+#endif // __ARM_FEATURE_SVE
+
+// ============================================================================
+// AVX2 implementation
+// ============================================================================
+
+#ifdef __AVX2__
+
+static void normalize_vector_avx2(float* data, size_t dim) {
+    __m256 sum_vec = _mm256_setzero_ps();
+    
+    size_t i = 0;
+    // Compute squared sum
+    for (; i + 8 <= dim; i += 8) {
+        __m256 v = _mm256_loadu_ps(data + i);
+        sum_vec = _mm256_fmadd_ps(v, v, sum_vec);
+    }
+    
+    // Horizontal sum
+    __m128 sum_high = _mm256_extractf128_ps(sum_vec, 1);
+    __m128 sum_low = _mm256_castps256_ps128(sum_vec);
+    __m128 sum128 = _mm_add_ps(sum_low, sum_high);
+    sum128 = _mm_hadd_ps(sum128, sum128);
+    sum128 = _mm_hadd_ps(sum128, sum128);
+    float sum = _mm_cvtss_f32(sum128);
+    
+    // Handle remaining elements
+    for (; i < dim; i++) {
+        sum += data[i] * data[i];
+    }
+    
+    // Compute norm and inverse
+    float norm = std::sqrt(sum + 1e-30f);
+    float inv_norm = 1.0f / norm;
+    __m256 norm_vec = _mm256_set1_ps(inv_norm);
+    
+    // Normalize
+    i = 0;
+    for (; i + 8 <= dim; i += 8) {
+        __m256 v = _mm256_loadu_ps(data + i);
+        v = _mm256_mul_ps(v, norm_vec);
+        _mm256_storeu_ps(data + i, v);
+    }
+    
+    // Handle remaining elements
+    for (; i < dim; i++) {
+        data[i] *= inv_norm;
+    }
+}
+
+#endif // __AVX2__
+
+// ============================================================================
+// Unified normalize_l2 function (auto-selects best implementation)
+// ============================================================================
+
+inline void normalize_l2(float* data, size_t dim) {
+#if defined(__ARM_FEATURE_SVE)
+    normalize_vector_sve(data, dim);
+#elif defined(__AVX2__)
+    normalize_vector_avx2(data, dim);
+#elif defined(__ARM_NEON)
+    normalize_vector_neon(data, dim);
+#else
+    normalize_vector_scalar(data, dim);
+#endif
+}
+
+// Batch normalization
+inline void normalize_l2_batch(std::vector<std::vector<float>>& embeddings) {
+    for (auto& emb : embeddings) {
+        normalize_l2(emb.data(), emb.size());
+    }
+}
+
+// Batch normalization for flat array
+inline void normalize_l2_batch(float* data, size_t dim, size_t num_vectors) {
+    for (size_t i = 0; i < num_vectors; i++) {
+        normalize_l2(data + i * dim, dim);
+    }
+}
+
+// ============================================================================
+// Runtime detection (optional, for mixed environments)
+// ============================================================================
+
+enum class SimdType {
+    SCALAR,
+    NEON,
+    SVE,
+    AVX2,
+    AVX512
+};
+
+// Detect available SIMD at compile time
+inline SimdType detect_simd_compile_time() {
+#if defined(__ARM_FEATURE_SVE)
+    return SimdType::SVE;
+#elif defined(__AVX512F__)
+    return SimdType::AVX512;
+#elif defined(__AVX2__)
+    return SimdType::AVX2;
+#elif defined(__ARM_NEON)
+    return SimdType::NEON;
+#else
+    return SimdType::SCALAR;
+#endif
+}
+
+// Get SIMD type as string
+inline const char* get_simd_type_string() {
+    switch (detect_simd_compile_time()) {
+        case SimdType::SVE:     return "ARM SVE";
+        case SimdType::AVX512:  return "AVX-512";
+        case SimdType::AVX2:    return "AVX2";
+        case SimdType::NEON:    return "ARM NEON";
+        case SimdType::SCALAR:  return "Scalar";
+        default:                return "Unknown";
+    }
+}
+
+// Runtime detection (Linux only, requires system headers)
+#ifdef __linux__
+#include <sys/auxv.h>
+
+inline bool has_sve_runtime() {
+#ifdef __aarch64__
+    #ifndef HWCAP_SVE
+    #define HWCAP_SVE (1 << 22)
+    #endif
+    return (getauxval(AT_HWCAP) & HWCAP_SVE) != 0;
+#else
+    return false;
+#endif
+}
+
+inline bool has_neon_runtime() {
+#ifdef __aarch64__
+    return true; // NEON is mandatory on ARM64
+#elif defined(__arm__)
+    #ifndef HWCAP_NEON
+    #define HWCAP_NEON (1 << 12)
+    #endif
+    return (getauxval(AT_HWCAP) & HWCAP_NEON) != 0;
+#else
+    return false;
+#endif
+}
+
+#endif // __linux__
+
+// ============================================================================
+// Function pointer based dynamic dispatch (advanced usage)
+// ============================================================================
+
+typedef void (*normalize_func_t)(float*, size_t);
+
+inline normalize_func_t get_normalize_function() {
+#if defined(__ARM_FEATURE_SVE)
+    return normalize_vector_sve;
+#elif defined(__AVX2__)
+    return normalize_vector_avx2;
+#elif defined(__ARM_NEON)
+    return normalize_vector_neon;
+#else
+    return normalize_vector_scalar;
+#endif
+}
+
+// For scenarios where you want to cache the function pointer
+class NormalizerCache {
+private:
+    normalize_func_t func_;
+    
+public:
+    NormalizerCache() : func_(get_normalize_function()) {}
+    
+    void normalize(float* data, size_t dim) const {
+        func_(data, dim);
+    }
+    
+    const char* get_implementation_name() const {
+        return get_simd_type_string();
+    }
+};
+
+} // namespace hnswlib
+
+// ============================================================================
+// Usage Examples
+// ============================================================================
+
+#ifdef INCLUDE_EXAMPLES
+
+#include <iostream>
+#include <vector>
+
+void example_basic_usage() {
+    std::cout << "=== Basic Usage ===\n";
+    std::cout << "Using: " << hnswlib::get_simd_type_string() << "\n\n";
+    
+    // Single vector normalization
+    std::vector<float> vec = {1.0f, 2.0f, 3.0f, 4.0f};
+    std::cout << "Before: [" << vec[0] << ", " << vec[1] << ", " 
+              << vec[2] << ", " << vec[3] << "]\n";
+    
+    hnswlib::normalize_l2(vec.data(), vec.size());
+    
+    std::cout << "After:  [" << vec[0] << ", " << vec[1] << ", " 
+              << vec[2] << ", " << vec[3] << "]\n";
+    
+    // Verify norm
+    float norm = 0.0f;
+    for (auto v : vec) norm += v * v;
+    std::cout << "Norm:   " << std::sqrt(norm) << " (should be 1.0)\n\n";
+}
+
+void example_batch_normalization() {
+    std::cout << "=== Batch Normalization ===\n";
+    
+    std::vector<std::vector<float>> embeddings = {
+        {1.0f, 2.0f, 3.0f},
+        {4.0f, 5.0f, 6.0f},
+        {7.0f, 8.0f, 9.0f}
+    };
+    
+    hnswlib::normalize_l2_batch(embeddings);
+    
+    for (size_t i = 0; i < embeddings.size(); i++) {
+        std::cout << "Vector " << i << ": [";
+        for (size_t j = 0; j < embeddings[i].size(); j++) {
+            std::cout << embeddings[i][j];
+            if (j < embeddings[i].size() - 1) std::cout << ", ";
+        }
+        std::cout << "]\n";
+    }
+    std::cout << "\n";
+}
+
+void example_with_bert() {
+    std::cout << "=== BERT Embedding Example ===\n";
+    
+    const size_t dim = 768;
+    std::vector<float> bert_embedding(dim);
+    
+    // Simulate BERT output (unnormalized)
+    for (size_t i = 0; i < dim; i++) {
+        bert_embedding[i] = (float)i / dim;
+    }
+    
+    std::cout << "Before normalization:\n";
+    std::cout << "  First values: [" << bert_embedding[0] << ", " 
+              << bert_embedding[1] << ", " << bert_embedding[2] << "]\n";
+    
+    float norm_before = 0.0f;
+    for (auto v : bert_embedding) norm_before += v * v;
+    std::cout << "  L2 norm: " << std::sqrt(norm_before) << "\n\n";
+    
+    // Normalize using auto-selected SIMD
+    hnswlib::normalize_l2(bert_embedding.data(), dim);
+    
+    std::cout << "After normalization:\n";
+    std::cout << "  First values: [" << bert_embedding[0] << ", " 
+              << bert_embedding[1] << ", " << bert_embedding[2] << "]\n";
+    
+    float norm_after = 0.0f;
+    for (auto v : bert_embedding) norm_after += v * v;
+    std::cout << "  L2 norm: " << std::sqrt(norm_after) << " (should be 1.0)\n";
+}
+
+void example_cached_function_pointer() {
+    std::cout << "=== Cached Function Pointer ===\n";
+    
+    hnswlib::NormalizerCache normalizer;
+    std::cout << "Using implementation: " << normalizer.get_implementation_name() << "\n";
+    
+    std::vector<float> vec = {3.0f, 4.0f};
+    normalizer.normalize(vec.data(), vec.size());
+    
+    std::cout << "Normalized: [" << vec[0] << ", " << vec[1] << "]\n";
+    std::cout << "Expected: [0.6, 0.8]\n";
+}
+
+int main() {
+    std::cout << "Unified L2 Normalization Test\n";
+    std::cout << "==============================\n\n";
+    
+    example_basic_usage();
+    example_batch_normalization();
+    example_with_bert();
+    example_cached_function_pointer();
+    
+    return 0;
+}
+
+#endif // INCLUDE_EXAMPLES

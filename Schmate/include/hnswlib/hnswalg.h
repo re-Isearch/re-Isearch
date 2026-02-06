@@ -184,6 +184,10 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         max_elements_ = max_elements;
         num_deleted_ = 0;
         data_size_ = s->get_data_size();
+
+	if (data_size_ == 0) {
+            HNSWFATAL << "Panic: data_size out of bounds: " << data_size_ << "!\n";
+        }
         fstdistfunc_ = s->get_dist_func();
         dist_func_param_ = s->get_dist_func_param();
         if ( M <= 10000 ) {
@@ -202,6 +206,7 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         update_probability_generator_.seed(random_seed + 1);
 
         size_links_level0_ = maxM0_ * sizeof(tableint) + sizeof(linklistsizeint);
+
         size_data_per_element_ = size_links_level0_ + data_size_ + sizeof(labeltype);
         offsetData_ = size_links_level0_;
         label_offset_ = size_links_level0_ + data_size_;

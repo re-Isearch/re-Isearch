@@ -3,7 +3,12 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+//#include "unified_hnsw.hpp"
+#include "IO.hpp"
+#include "hnswlib/quantized.h"
+#include "Logger.hpp"
 
+namespace hnswlib {
 
 struct IndexFileExtensions {
   static constexpr const char* sentences= ".txt"; // Text of strings for debugging
@@ -17,28 +22,10 @@ struct IndexFileExtensions {
 
 } ;
 
+enum class Metric { L1 = 0, L2 = 1, IP = 2, Cosine = 3 };
 
-// MetricSpace enum - now with Binary and Ternary
-// so also need for these to set re_scoring enabled or not
-enum class MetricSpace {
-    L1,           // L1: Manhattan distance (sum of absolute differences)
-    L2,           // L2 squared: Euclidean distance squared
-    InnerProduct, // Negative inner product: For similarity search
-    Cosine,       // Cosine similarity
-    Binary,       // 1-bit quantization with Hamming
-    Ternary,      // 1.58 bits quantized : Preserves sign information (-1, 0, +1)
-    Undefined
-};
+std::string metric_to_string(Metric m);
 
-
-// L1: Manhattan distance (sum of absolute differences)
-// L2 squared: Euclidean distance squared
-// Negative inner product: For similarity search
-enum class DistanceMetric {
-    L1,
-    L2,
-    IP
-} ;
 
 enum class SearchModes {
     Knn,
@@ -48,8 +35,80 @@ enum class SearchModes {
     Epsilon
 };
 
+
+// ============================================
+// Parse a Specification String: Metric, Storage,..
+// ============================================
+// Example: "L2-BIN1-RABITQ"
+class SpecificationString {
+public:
+   // We set defaults here since parse below can fail!
+   Metric      metric_ = Metric::L2;
+   QuantMode   quantization_ = QuantMode::NONE;
+   OptBinMode  mode_ = OptBinMode::PASS ;
+   StorageType storage_type_ = StorageType::FLOAT32;
+
+   // Change this to VectorStorageMode 
+   //  DISABLED means NO RESCORE
+   // Then there is a choice between IN_MEMORY and MEMORY_MAPPED
+
+   bool        rescore_ = false;
+   // NOTE: dim is not in the specification since it is defined
+   // by the chosen embedding model -- this is not 100% true since
+   // we have a strong interdepency between the model's quantization
+   // and the specification. We don't want (its, of course, possible but
+   // counter-productive) to binarize an already quantized model. 
+   // ==> a X-bit quantized model should use the defaults above but set
+   // the storage_type_ to X-bit!
+
+   SpecificationString() {}
+   SpecificationString(const std::string& str) {
+     parse(str);
+   }
+
+   // Check if the spec's match
+   bool operator==(const SpecificationString& other) const {
+      if (metric_       != other.metric_ ||
+          quantization_ != other.quantization_ ||
+          mode_         != other.mode_ ||
+          storage_type_ != other.storage_type_ ||
+          rescore_      != other.rescore_)
+        return false;
+      return true;
+   }
+   void save(std::ofstream& os) const {
+      write_string(os, *this);
+   }
+   void load(std::ifstream& is) {
+      parse (read_string(is));
+   }
+
+
+  
+  // Set spec
+   SpecificationString operator=(const SpecificationString& other) {
+      metric_       = other.metric_;
+      quantization_ = other.quantization_;
+      mode_         = other.mode_;
+      storage_type_ = other.storage_type_;
+      use_storage_  = other.use_storage_;
+      return *this;
+   }
+
+   bool parse(const std::string& s);
+   operator std::string() const; 
+
+    friend std::ostream& operator<<(std::ostream& os, const SpecificationString& spec) {
+        return os << std::string(spec);
+    }
+//private:
+    bool use_storage_ = false; // true if PASS case
+} ;
+
+
 struct HnswConfig {
     SearchModes default_search_mode = SearchModes::Knn;
+    std::string  model_name;
 
     size_t max_elements = 100000;
     size_t M = 16;
@@ -63,7 +122,45 @@ struct HnswConfig {
     | 100 K–1 M  | 200–400   |
     | > 1 M      | 300–800+  | */
     size_t ef_search = 64;
-    MetricSpace metric = MetricSpace::Cosine;
+
+    // This contains the index specification
+    // --> This allows us to better extend in the future
+    SpecificationString specification;
+
+    Metric      metric () const          { return specification.metric_;}
+    bool        enable_rescoring() const { return specification.rescore_;}
+    QuantMode   quantization() const     { return specification.quantization_; }
+    OptBinMode  mode() const             { return specification.mode_;}
+    StorageType storage_type() const     { return specification.storage_type_;}
+
+    void set_metric (Metric val)          { specification.metric_ = val;}
+    void set_enable_rescoring(bool val)   { specification.rescore_ = val;}
+    void set_quantization(QuantMode val)  {
+       specification.quantization_ = val;
+       if (val != QuantMode::NONE) {
+	if (specification.mode_ ==  OptBinMode::PASS)
+	  specification.mode_ = OptBinMode::STANDARD;
+        } else if (specification.storage_type_ != StorageType::FLOAT32)
+	  specification.mode_ = OptBinMode::PASS;
+    }
+    void set_mode(OptBinMode val)         {
+	specification.mode_ = val;
+	if (val == OptBinMode::PASS) {
+	  if (specification.storage_type_ != StorageType::FLOAT32)
+	    specification.use_storage_ = true;
+            specification.quantization_ =  QuantMode::NONE;
+        } else if (specification.quantization_ == QuantMode::NONE) {
+	  auto val = toQuantMode(specification.storage_type_);
+	  if (val) specification.quantization_ = *val;
+        }
+    }
+    void set_storage_type(StorageType val){
+	specification.storage_type_ = val;
+        if (specification.mode_ == OptBinMode::PASS && val != StorageType::FLOAT32) {
+           specification.use_storage_ = true;
+           specification.quantization_ =  QuantMode::NONE; 
+        }
+    }
 
     size_t bert_n_threads = 4;
 
@@ -102,13 +199,9 @@ struct HnswConfig {
     float default_epsilon   = 0.15f; // epsilon, if < 0 then use radius
     float default_epsilonL2 = 1.41;  // Distance threshold, this is then ^2
     float default_epsilonIP = 0.5f;  // 
-    float default_epsilonB  = 0.0f;  // Binary Quantized
-    float default_epsilonT  = 0.0f;  // 1.58
 
     size_t min_candidates = 10;    // Min candidates for epsilon
     size_t max_candidates_cap = 0; // 0 = auto
-
-    bool enable_rescoring = true;   // To re-score or not (Only applies to 1-bit and 1.58bit)
 
     // performance tuning
     size_t knn_lookahead_scale = 5;
@@ -134,8 +227,7 @@ struct HnswConfig {
     // Validation
     bool validate() const;
 
-    float get_epsilon (MetricSpace val) const;
-    // Get epsilon for current metric
+    // Get epsilon for current spec
     float get_epsilon() const;
 
     // Get effective max_candidates (with cap applied)
@@ -148,9 +240,9 @@ struct HnswConfig {
     void print(std::ostream& os = std::cout) const;
 
     // Binary serialization
-    void save(std::ostream& os) const;
+    void save(std::ofstream& os) const;
 
-    void load(std::istream& is);
+    void load(std::ifstream& is);
 
     // Save to file
     bool save_to_file(const std::string& path) const;
@@ -159,7 +251,7 @@ struct HnswConfig {
     bool load_from_file(const std::string& path);
 
     // Merge/override with another config
-    void merge_from(const HnswConfig& other);
+    // void merge_from(const HnswConfig& other);
 
     // Selective merge (only override non-default values)
     void merge_overrides(const HnswConfig& override, const HnswConfig& defaults);
@@ -185,8 +277,8 @@ struct HnswConfig {
         return set(key, value ? "true" : "false");
     }
     
-    bool set(const std::string& key, MetricSpace value) {
-        return set(key, metric_space_to_string(value));
+    bool set(const std::string& key, Metric value) {
+        return set(key, hnswlib::metric_to_string(value));
     }
     
     bool set(const std::string& key, SearchModes value) {
@@ -204,7 +296,7 @@ struct HnswConfig {
             "debug", "default_k", "default_radius", "default_alpha",
             "default_minN", "default_lookahead", "default_gapDelta",
             "default_epsilon", "default_epsilonL2", "default_epsilonIP",
-            "default_epsilonB",  "default_epsilonT", "enable_rescoring",
+            "enable_rescoring", "specification",
             "min_candidates", "max_candidates_cap", "knn_lookahead_scale",
             "flush_threshold", "flush_offsets_each", "parallel_merge",
             "merge_threads", "normalize_embeddings", "default_search_mode",
@@ -212,6 +304,7 @@ struct HnswConfig {
         };
     }
 
+#if 0
     // String conversions
     static std::string metric_space_to_string(MetricSpace m) {
         switch (m) {
@@ -224,16 +317,50 @@ struct HnswConfig {
         }
     }
 
+
+   static std::string metric_to_string(Metric m) {
+    switch(m) {   
+      case Metric::L1:     return "L1";
+      case Metric::L2:     return "L2";
+      case Metric::IP:     return "InnerProduct";
+      case Metric::Cosine: return "Cosine";
+      default: return "Unknown";
+     }
+   }   
+#endif
+    
+   std::optional<Metric> string_to_metric(const std::string& s) {
+   if (s.empty()) {
+     LOG_ERROR_S() << "Empty distance metric name.\n";
+   } else { 
+     const char ch = s.at(0);
+     if (s == "L1" || s == "l1" || ch == 'M' || ch == 'm')
+        return Metric::L1; // Manhatttan
+     if (s == "L2" || s == "l2" || ch == 'E' || ch == 'e')
+        return Metric::L2; // Eucledian
+     if (ch == 'I' || ch  == 'i')
+        return Metric::IP; // InnerProduct
+     if (ch == 'C' || ch == 'c')
+        return Metric::Cosine;
+     LOG_ERROR_S() << "Unknown distance metric: " << s << "\n";
+   }
+   return std::nullopt ;
+}
+
+
+
 private:
 
-    static bool parse_bool(const std::string& s) {
+    static std::optional<bool> parse_bool(const std::string& s) {
         std::string lower = s;
         std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
         if (lower == "true" || lower == "1" || lower == "yes" || lower == "on") return true;
         if (lower == "false" || lower == "0" || lower == "no" || lower == "off") return false;
-        throw std::runtime_error("Invalid boolean value: " + s);
+        LOG_ERROR_S() << "Invalid boolean value: '" << s << "'\n";
+        return std::nullopt;
     }
 
+#if 0
     static std::string distance_metric_to_string(DistanceMetric m) {
        switch(m) {
            case DistanceMetric::L1: return "L1";
@@ -242,6 +369,7 @@ private:
            default: return "Unknown";
        }
     }
+#endif
 
     static std::string search_mode_to_string(SearchModes m) {
         switch (m) {
@@ -254,6 +382,7 @@ private:
         }
     }
 
+#if 0
     static MetricSpace string_to_metric_space(const std::string& s) {
         if (s == "L2" || s == "l2") return MetricSpace::L2;
         if (s == "InnerProduct" || s == "IP" || s == "ip") return MetricSpace::InnerProduct;
@@ -263,39 +392,28 @@ private:
         if (s == "Undefined") return MetricSpace::Undefined;
         throw std::runtime_error("Unknown metric: " + s);
     }
-
     static DistanceMetric string_to_distance_metric(const std::string& s) {
         if (s == "L1" || s == "l1") return DistanceMetric::L1;
         if (s == "L2" || s == "l2") return DistanceMetric::L2;
         if (s == "IP" || s == "ip") return DistanceMetric::IP;
         throw std::runtime_error("Unknown distance metric: " + s);
     }
+#endif
 
-    static SearchModes string_to_search_mode(const std::string& s) {
+    static std::optional<SearchModes> string_to_search_mode(const std::string& s) {
         if (s == "knn" || s == "Knn") return SearchModes::Knn;
         if (s == "radius" || s == "Radius") return SearchModes::Radius;
         if (s == "relative" || s == "Relative") return SearchModes::Relative;
         if (s == "adaptive" || s == "Adaptive") return SearchModes::Adaptive;
         if (s == "epsilon" || s == "Epsilon") return SearchModes::Epsilon;
-        throw std::runtime_error("Unknown search mode: " + s);
+        LOG_ERROR_S() << "Unknown search mode: '" << s << "'\n";
+        return std::nullopt;
     }
 
 };
 
 
-struct IndexMeta {
-    uint32_t       version = 1;
-    MetricSpace    metric  = MetricSpace::L2; // "L2", "cosine", "ip"
-    bool           normalized = false;
-    uint32_t       dim = 0;
-    uint64_t       count = 0;
+}; // namespace
 
-    void save(std::ofstream &ofs) const {
-        ofs.write(reinterpret_cast<const char*>(this), sizeof(IndexMeta));
-    }
 
-    void load(std::ifstream &ifs) {
-        ifs.read(reinterpret_cast<char*>(this), sizeof(IndexMeta));
-    }
-};
 

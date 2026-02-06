@@ -265,8 +265,32 @@ Ternary + rescoring --> 1,584 bytes (96 + 160 + 1,536) = 1792 bytes (+6% memory)
 
 */
 
-inline size_t bytes_per_vector(const HnswConfig &cfg, size_t dim)
+inline size_t est_bytes_per_vector(const hnswlib::HnswConfig &cfg, size_t dim)
 {
+#if 1
+   // Some constants. We may adjust later.
+   static constexpr float  extra_overhead_factor = 0.05; // 5% extra
+   static constexpr size_t link_bytes = 4;          // int32 neighbor id
+   static constexpr double layer_factor = 1.2;      // multi-layer expansion
+   static constexpr size_t per_node_overhead = 12;  // level + offsets
+
+   size_t graph_bytes  = static_cast<size_t>( cfg.M * link_bytes * layer_factor);
+
+   // NOTE: We ignore the extra overhead of RaBitQ etc.  But added 5%
+   size_t bits_per_component = hnswlib::IntStorage::bits_per_element(cfg.storage_type());
+   size_t vector_bits = dim * bits_per_component;
+   size_t vector_bytes = (vector_bits + 7) / 8;
+
+   size_t base_total = vector_bytes + graph_bytes + per_node_overhead;
+
+   size_t total = static_cast<size_t>( total * (1.0 + extra_overhead_factor));
+
+   // If rescoring is enabled then we need to add dim * sizeof(float);
+
+   if (cfg.mode() != hnswlib::OptBinMode::PASS && cfg.enable_rescoring() && bits_per_component < 32)
+      total += dim * sizeof(float);
+   return total;
+#else
     size_t vector_bytes = dim * sizeof(float);
     
     if (cfg.metric == MetricSpace::Binary || cfg.metric == MetricSpace::Ternary) {
@@ -290,15 +314,16 @@ inline size_t bytes_per_vector(const HnswConfig &cfg, size_t dim)
         size_t graph_overhead = cfg.M * 10;  // ~160 bytes for M=16
         return vector_bytes + graph_overhead;
     }
+#endif
 }
 
-inline size_t determine_optimal_hnsw_cache_size(const HnswConfig &cfg, size_t dim = 384)
+inline size_t determine_optimal_hnsw_cache_size(const hnswlib::HnswConfig &cfg, size_t dim = 384)
 {
-  const size_t size = bytes_per_vector(cfg, dim);
+  const size_t size = est_bytes_per_vector(cfg, dim);
   const size_t size_for_index = size*cfg.max_elements;
 
   if (cfg.debug) LOG_DEBUG_S() << "Avg. consumption per "
-        << dim << "D " << HnswConfig::metric_space_to_string(cfg.metric)
+        << dim << "D " << hnswlib::metric_to_string(cfg.metric())
         << " vector: ~" << size << " bytes";
     
     return HNSWCacheConfig::calculate_cache_size(size_for_index).max_cache_size;

@@ -14,7 +14,8 @@ enum class LogLevel {
     INFO = 1,
     WARN = 2,
     ERROR = 3,
-    FATAL = 4
+    FATAL = 4,
+    PANIC = 5
 };
 
 class Logger {
@@ -33,11 +34,12 @@ public:
     void close_file();
 
     // Logging methods
-    void debug(const std::string& msg) { log(LogLevel::DEBUG, msg); }
-    void info(const std::string& msg) { log(LogLevel::INFO, msg); }
-    void warn(const std::string& msg) { log(LogLevel::WARN, msg); }
-    void error(const std::string& msg) { log(LogLevel::ERROR, msg); }
-    void fatal(const std::string& msg) { log(LogLevel::FATAL, msg); }
+    void debug(const std::string& msg) { log(LogLevel::DEBUG, msg);}
+    void info(const std::string& msg)  { log(LogLevel::INFO, msg); }
+    void warn(const std::string& msg)  { log(LogLevel::WARN, msg); }
+    void error(const std::string& msg) { log(LogLevel::ERROR, msg);}
+    void fatal(const std::string& msg) { log(LogLevel::FATAL, msg);}
+    void panic(const std::string& msg) { log(LogLevel::PANIC, msg);}
 
     // Stream-style logging
     class LogStream {
@@ -101,5 +103,23 @@ private:
 #define LOG_WARN_S() Logger::instance().warn()
 #define LOG_ERROR_S() Logger::instance().error()
 #define LOG_FATAL_S() Logger::instance().fatal()
+
+// Map messages from HNSWLIB
+#ifndef HNSWLIB_ERR_OVERRIDE
+  #define HNSWLIB_ERR_OVERRIDE LOG_ERROR_S()
+#endif
+#ifndef HNSWLIB_WARN_OVERRIDE
+  #define HNSWLIB_WARN_OVERRIDE LOG_WARN_S()
+#endif
+#ifndef HNSWLIB_INFO_OVERRIDE
+  #define HNSWLIB_INFO_OVERRIDE LOG_INFO_S()
+#endif
+#ifndef HNSWLIB_DEBUG_OVERRIDE
+  #define HNSWLIB_DEBUG_OVERRIDE LOG_DEBUG_S()
+#endif
+#ifndef HNSWLIB_FATAL_OVERRIDE
+  #define HNSWLIB_FATAL_OVERRIDE LOG_FATAL_S()
+#endif
+
 
 

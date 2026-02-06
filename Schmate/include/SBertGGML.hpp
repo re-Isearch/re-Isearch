@@ -14,6 +14,7 @@ extern "C" {
 struct SBertGGML {
     bert_ctx * ctx = nullptr;
     int n_embd = 0;
+    std::string model_name;
 
     SBertGGML(const std::string & model_path) {
 #ifdef __APPLE__
@@ -21,6 +22,7 @@ struct SBertGGML {
 #endif
         ctx = bert_load_from_file(model_path.c_str());
         if (!ctx) throw std::runtime_error("Failed to load model " + model_path);
+        model_name = basename(model_path); // Get the name
         n_embd = bert_n_embd(ctx);
         LOG_INFO_S() << "Loaded SBERT GGML model. dim=" << n_embd;
 #if 0
@@ -38,6 +40,8 @@ if (ctx && ctx->model.word_embeddings) {
 }
 #endif
     }
+
+    int dim() const { return n_embd; }
 
     ~SBertGGML() {
         if (ctx) bert_free(ctx);

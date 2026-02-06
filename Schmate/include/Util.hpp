@@ -1,91 +1,13 @@
-
 #pragma once
 #include <cstdint>
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
+#include <filesystem>
 
 #include "hnswlib/int_storage.h"
 
-inline void write_int64(std::ostream &os, int64_t v) {
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    int64_t out = v;
-#else
-    int64_t out = __builtin_bswap64(v);
-#endif
-    os.write(reinterpret_cast<const char *>(&out), sizeof(out));
-}
-
-inline int64_t read_int64(std::istream &is) {
-    int64_t in;
-    is.read(reinterpret_cast<char *>(&in), sizeof(in));
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    return in;
-#else
-    return __builtin_bswap64(in);
-#endif
-}
-
-
-template<typename T>
-inline T read_le(std::ifstream &f) {
-    static_assert(std::is_trivially_copyable_v<T>, "Type must be trivially copyable");
-    
-    T value;
-    f.read(reinterpret_cast<char*>(&value), sizeof(T));
-    
-    #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    if constexpr (sizeof(T) == 2) {
-        value = __builtin_bswap16(value);
-    } else if constexpr (sizeof(T) == 4) {
-        value = __builtin_bswap32(value);
-    } else if constexpr (sizeof(T) == 8) {
-        value = __builtin_bswap64(value);
-    }
-    #endif
-    
-    return value;
-}
-
-template<typename T>
-inline std::optional<T> read_le_safe(std::ifstream &f) {
-    static_assert(std::is_trivially_copyable_v<T>, "Type must be trivially copyable");
-    
-    T value;
-    if (!f.read(reinterpret_cast<char*>(&value), sizeof(T))) {
-        return std::nullopt;  // Read failed
-    }
-    
-    #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    if constexpr (sizeof(T) == 2) {
-        value = __builtin_bswap16(value);
-    } else if constexpr (sizeof(T) == 4) {
-        value = __builtin_bswap32(value);
-    } else if constexpr (sizeof(T) == 8) {
-        value = __builtin_bswap64(value);
-    }
-    #endif
-    
-    return value;
-}
-
-template<typename T>
-inline void write_le(std::ofstream &f, T value) {
-    static_assert(std::is_trivially_copyable_v<T>, "Type must be trivially copyable");
-    
-    #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-    if constexpr (sizeof(T) == 2) {
-        value = __builtin_bswap16(value);
-    } else if constexpr (sizeof(T) == 4) {
-        value = __builtin_bswap32(value);
-    } else if constexpr (sizeof(T) == 8) {
-        value = __builtin_bswap64(value);
-    }
-    #endif
-    
-    f.write(reinterpret_cast<const char*>(&value), sizeof(T));
-}
-
+// ========= Read GMML and GUUF Files  ============================== //
 
 
 // See struct bert_hparams in bert.cpp
@@ -124,12 +46,22 @@ std::optional<GmmlHparams> read_ggml_info(const std::string &path);
 enum GGML_TYPE { UNKNOWN = 0, GGML, GGUF};
 std::pair <std::string, enum GGML_TYPE> find_ggml_model(const std::string &filename, const std::string  &search_paths);
 
+
+std::pair <std::string, enum GGML_TYPE> find_model(const std::string &identity, const std::string  &search_paths);
+
+
+
 // Get the storage type/quantization of a GGML model
 std::pair<hnswlib::StorageType, std::string> get_ggml_model_quant(const std::string &filename) ;
 
 
 #include <filesystem>
 
+// ==================== Misc ===================================== //
+
+inline std::string basename(const std::string &p) {
+   return std::filesystem::path(p).filename().string();
+}
 
 // File exist and length utils
 inline bool file_exists(const std::string &p) {
@@ -141,7 +73,72 @@ inline off_t file_size(const std::string &p) {
     return std::filesystem::file_size(p);
 }
 
-#pragma once
+#if 1 // C++ 17
+std::vector<std::string> splitPath(
+    const std::string& pathStr,
+    char delimiter = std::filesystem::path::preferred_separator == '\\' ? ';' : ':'
+);
+
+
+#else
+
+std::vector<std::string> splitPath(const std::string& pathStr, char delimiter =       
+  #if defined(_MSDOS) || defined(_WIN32)
+        ';'
+  #else   
+        ':' 
+  #endif
+);
+#endif
+
+
+// Generic path search function that returns path and extracted data
+// Return type includes the path and custom data
+// NOTE: Must be inline or fully defined in header when used with lambdas
+template<typename T, typename Predicate>
+inline std::optional<std::pair<std::filesystem::path, T>> findInPathsWithData(
+    const std::string& filename,
+    const std::string& searchPaths,
+    Predicate&& matchPredicate)
+{
+    if (std::filesystem::path(filename).is_absolute()) {
+        std::filesystem::path absPath(filename);
+        if (std::filesystem::exists(absPath) && std::filesystem::is_regular_file(absPath)) {
+            if (auto data = matchPredicate(absPath)) {
+                return std::make_pair(absPath, *data);
+            }
+        }
+        return std::nullopt;
+    }
+    
+    auto paths = splitPath(searchPaths);
+    
+    for (const auto& directory : paths) {
+        try {
+            if (!std::filesystem::exists(directory) || !std::filesystem::is_directory(directory)) {
+                continue;
+            }
+            
+            for (const auto& entry : std::filesystem::directory_iterator(directory)) {
+                if (entry.is_regular_file() && 
+                    entry.path().filename() == filename) {
+                    if (auto data = matchPredicate(entry.path())) {
+                        return std::make_pair(std::filesystem::absolute(entry.path()), *data);
+                    }
+                }
+            }
+        } catch (const std::filesystem::filesystem_error&) {
+            continue;
+        }
+    }
+    
+    return std::nullopt;
+}
+
+
+
+
+
 #ifdef __APPLE__
 void relax_macos_malloc_zones();
 #else

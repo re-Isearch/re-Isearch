@@ -8,7 +8,7 @@
 
 class ShardedIndex {
     SBertGGML & embedder;
-    HnswConfig & cfg;
+    hnswlib::HnswConfig & cfg;
     std::string base_name;
 
     std::vector<std::unique_ptr<BertIndex>> shards;
@@ -17,7 +17,7 @@ class ShardedIndex {
     mutable std::mutex mtx;
 
 public:
-    ShardedIndex(SBertGGML & emb, HnswConfig & c, const std::string & name, bool searchOnly = false);
+    ShardedIndex(SBertGGML & emb, hnswlib::HnswConfig & c, const std::string & name, bool searchOnly = false);
 
     BertIndex & current_shard();
     BertIndex & get_shard(size_t i);

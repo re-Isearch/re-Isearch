@@ -5,7 +5,7 @@
 #include "SBertGGML.hpp"
 #include "HnswConfig.hpp"
 #include "Util.hpp"
-#include "unified-hnsw2.hpp"
+#include "unified_hnsw.hpp"
 #include "FileLock.hpp"
 #include "OffsetFile.hpp"
 #include "AdaptiveSearchController.hpp"
@@ -46,11 +46,11 @@ LlamaEmbedder embedder("llama-2-7b.Q4_K_M.gguf");
 class BertIndex {
 friend class ShardedIndex;
     SBertGGML & embedder;
-    HnswConfig & cfg;
+    hnswlib::HnswConfig & cfg;
 
-    MetricSpace metric = MetricSpace::Undefined;
-    std::unique_ptr<hnswlib::HierarchicalNSW<float>> index;
-    std::unique_ptr<hnswlib::SpaceInterface<float>> space;
+    hnswlib::Metric metric = hnswlib::Metric::L2;
+
+    std::unique_ptr<hnswlib::UnifiedIndex> index;
 
     std::string name;
     std::string sentences_path;
@@ -69,10 +69,12 @@ friend class ShardedIndex;
     size_t dirty_count = 0;
 
 public:
-    BertIndex(SBertGGML & emb, HnswConfig & c, const std::string & n, bool searchOnly = false);
+    BertIndex(SBertGGML & emb, hnswlib::HnswConfig & c, const std::string & n, bool searchOnly = false);
     ~BertIndex();
 
-    size_t get_data_size() { return space ? space->get_data_size() : 0;}
+    const std::string model_name() { return embedder.model_name; }
+
+    size_t get_data_size() { return index ? index->get_data_size() : 0;}
 
 #if 1
 
@@ -118,7 +120,7 @@ public:
     void save();
 //  void load();
 
-    size_t size() const { return index ? (size_t) index->cur_element_count : 0; }
+    size_t size() const { return index ? (size_t) index->size() : 0; }
 
     std::string get_text_by_label(size_t label) const;
     std::string reconstruct_label(size_t label) const { return get_text_by_label(label);}

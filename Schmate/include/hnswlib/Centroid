@@ -1,0 +1,35 @@
+Incremental Training:
+
+add_vector() - Hooks into each addPoint call, buffering vectors
+Automatically retrains when buffer reaches capacity (default: 1000 vectors)
+Maintains running sum and count for efficient centroid updates
+Thread-safe with mutex for concurrent operations
+
+Persistent Storage:
+
+save() / load() - Store complete state (centroid, running sum, buffer) to disk
+Preserves training progress across restarts
+Binary format for efficiency
+
+Configurable Retraining:
+
+buffer_capacity - How many vectors to collect before retraining
+retrain_interval - Same as buffer_capacity (kept for clarity)
+flush_buffer() - Manually trigger retrain at any time
+
+Usage Pattern:
+
+Create index with buffer size (e.g., 1000 vectors)
+Each addPoint() feeds into the quantizer
+Auto-retrains every N vectors
+Periodically save to disk (e.g., every 10k vectors)
+Load from disk on restart - continues training where it left off
+
+Benefits:
+
+No separate training phase needed
+Centroid adapts to data distribution over time
+Minimal overhead - just accumulates sums
+Can start with empty index or pre-trained state
+
+The example shows a complete IncrementalBinaryIndex wrapper that handles everything automatically. You just call addPoint() and it manages training, encoding, and indexing behind the scenes!

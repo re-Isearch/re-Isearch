@@ -38,7 +38,7 @@ LlamaEmbedder embedder("llama-2-7b.Q4_K_M.gguf");
 
 class BertIndexManager {
     SBertGGML & embedder;
-    HnswConfig & cfg;
+    hnswlib::HnswConfig & cfg;
     bool  searchOnly;
 #if USE_LRUCACHE
     LRUCache<std::string, ShardedIndex> index_cache;
@@ -48,9 +48,9 @@ class BertIndexManager {
 
 public:
 #if USE_LRUCACHE
-    BertIndexManager(SBertGGML & e, HnswConfig &c, size_t max_cached=3, bool searchOnly = false);
+    BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c, size_t max_cached=3, bool searchOnly = false);
 #else
-    BertIndexManager(SBertGGML & e, HnswConfig &c);
+    BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c);
 #endif
 
     void clear(const std::string &name);
