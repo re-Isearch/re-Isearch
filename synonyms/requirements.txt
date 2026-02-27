@@ -1,0 +1,28 @@
+# === Core Dependencies (Required) ===
+sentence-transformers==3.0.1
+keybert==0.8.5
+nltk==3.9.1
+numpy==2.1.3
+tqdm==4.66.5
+scikit-learn>=1.5.0
+
+# === CPU Backend (default) ===
+# For environments without GPU/CUDA support
+torch==2.3.0
+torchvision==0.18.0
+torchaudio==2.3.0
+
+# === GPU (CUDA) Option ===
+# Uncomment these three lines if you have an NVIDIA GPU and CUDA installed.
+# These provide faster embedding and similarity computation.
+# torch==2.3.0+cu121
+# torchvision==0.18.0+cu121
+# torchaudio==2.3.0+cu121
+# --find-links https://download.pytorch.org/whl/cu121
+
+# 
+# Optional speedup libraries
+#numba>=0.59.0
+#faiss-cpu>=1.8.0
+## or faiss-gpu>=1.8.0 if you’re using GPU-based similarity search
+

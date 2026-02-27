@@ -1,0 +1,11 @@
+synonym-generator/
+│
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── generate_synonyms.py
+└── texts/
+    ├── file1.txt
+    ├── file2.txt
+    └── ... (your corpus)
+

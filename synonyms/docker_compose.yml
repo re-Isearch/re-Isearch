@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  synonym-generator:
+    build: .
+    container_name: synonym-generator
+    # Uncomment the next line if you want GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    volumes:
+      - ./texts:/app/texts  # Mount your local texts folder
+      - ./synonyms.txt:/app/synonyms.txt  # Mount output file
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    command: python generate_synonyms.py
+    restart: "no"
+

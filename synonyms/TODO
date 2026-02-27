@@ -1,0 +1,4 @@
+Rewrite the code in re-Isearch to use the weights to represent certainty on the scale of
+1-100. 
+To have a term be twice as important: 200
+

@@ -1,0 +1,80 @@
+import os
+from tqdm import tqdm
+from sentence_transformers import SentenceTransformer, util
+from keybert import KeyBERT
+import nltk
+import numpy as np
+
+# Download NLTK data
+nltk.download('punkt')
+nltk.download('stopwords')
+
+# === CONFIGURATION ===
+TEXT_FOLDER = "texts"
+THRESHOLD = 0.65
+OUTPUT_FILE = "synonyms.txt"
+
+# === INITIALIZE MODELS ===
+sbert_model = SentenceTransformer('all-MiniLM-L6-v2')
+kw_model = KeyBERT(model=sbert_model)
+
+# === LOAD TEXTS ===
+texts = []
+for filename in os.listdir(TEXT_FOLDER):
+    if filename.endswith(".txt"):
+        path = os.path.join(TEXT_FOLDER, filename)
+        with open(path, "r", encoding="utf-8") as f:
+            texts.append(f.read())
+
+# === EXTRACT CANDIDATE PHRASES ===
+all_phrases = set()
+for text in tqdm(texts, desc="Extracting phrases"):
+    keywords = kw_model.extract_keywords(
+        text,
+        keyphrase_ngram_range=(1, 3),
+        stop_words='english',
+        top_n=10
+    )
+    for phrase, _ in keywords:
+        all_phrases.add(phrase.lower())
+
+phrases = list(all_phrases)
+
+# === EMBEDDINGS & SIMILARITY ===
+embeddings = sbert_model.encode(phrases, convert_to_tensor=True)
+cosine_scores = util.pytorch_cos_sim(embeddings, embeddings).cpu().numpy()
+
+# === BUILD SYNONYM GROUPS ===
+synonym_groups = {}
+for i, term in enumerate(tqdm(phrases, desc="Finding synonyms")):
+    similar_indices = np.where(cosine_scores[i] > THRESHOLD)[0]
+    similar_terms = [
+        (phrases[j], float(cosine_scores[i][j]))
+        for j in similar_indices if j != i
+    ]
+    if similar_terms:
+        synonym_groups[term] = sorted(similar_terms, key=lambda x: -x[1])
+
+# === DEDUPLICATE GROUPS ===
+final_groups = {}
+seen = set()
+for main, group in tqdm(synonym_groups.items(), desc="Deduplicating"):
+    if main not in seen:
+        children = [t for t, _ in group if t not in seen]
+        seen.update(children + [main])
+        final_groups[main] = group
+
+# === FORMAT OUTPUT ===
+output_lines = []
+for main, group in tqdm(final_groups.items(), desc="Formatting lines"):
+    if group:
+        # children_fmt = [f"{term}:{score:.2f}" for term, score in group]
+        # children_fmt = [f"{term}:{score:.2f}"[1:] if score < 1 else f"{term}:{score:.2f}" for term, score in group]
+        # children_fmt = [f"{term}:{str(score)[1:] if score < 1 else str(score)}" for term, score in group]
+        children_fmt = [f"{term}:{int(score*100)}" for term, score in group]
+        line = f"# {main} = " + "+".join(children_fmt)
+        output_lines.append(line)
+
+with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+    f.write("\n".join(output_lines))
+

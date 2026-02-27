@@ -1,0 +1,20 @@
+
+
+Build and run CPU version:
+	docker compose up --build
+
+
+Build and run GPU version (NVIDIA GPU required):
+	docker compose up --build --detach --gpus all
+
+
+Check GPU usage inside the container:
+	docker exec -it synonym-generator nvidia-smi
+
+
+After completion, synonyms.txt will appear in your project folder with the formatted synonym mappings.
+
+
+This setup is ready-to-run — you just need to drop your .txt files into texts/.
+
+

@@ -1,0 +1,6 @@
+Land use and land cover are essential concepts in environmental geography. 
+Spatial and geospatial data help describe geographic features of the Earth.
+Hypsography refers to the study of terrain relief, elevation, and contour lines.
+
+
+

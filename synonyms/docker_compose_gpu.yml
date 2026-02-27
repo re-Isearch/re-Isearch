@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  synonym-generator:
+    build: .
+    container_name: synonym-generator
+    runtime: nvidia                # Enable NVIDIA GPU
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      - NVIDIA_VISIBLE_DEVICES=all  # Make all GPUs visible
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    volumes:
+      - ./texts:/app/texts          # Input text folder
+      - ./synonyms.txt:/app/synonyms.txt  # Output file
+    command: python generate_synonyms.py
+    restart: "no"
+

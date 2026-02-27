@@ -1,0 +1,19 @@
+project/
+│
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── generate_synonyms.py
+└── texts/
+    ├── file1.txt
+    └── file2.txt
+
+
+docker compose up --build
+
+or if GPU
+
+docker compose up --build --gpus all
+
+
+

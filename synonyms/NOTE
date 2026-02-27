@@ -1,0 +1,34 @@
+pip install sentence-transformers nltk
+
+Tunable Options
+threshold: raises/lower to get stricter or broader synonym matches.
+
+
+⚙️ Optional Tweaks
+Increase top_n in kw_model.extract_keywords() to include more phrases per document.
+Raise THRESHOLD (e.g. 0.75) for tighter semantic groups.
+Use a stronger model like "all-mpnet-base-v2" for more accuracy on complex topics.
+
+project/
+│
+├── generate_synonyms.py
+├── texts/
+│   ├── geography.txt
+│   ├── environment.txt
+│   └── hydrology.txt
+└── synonyms.txt
+
+torch is required by Sentence Transformers — version ≥ 2.3.0 recommended.
+scikit-learn is used internally by KeyBERT.
+These versions are tested and compatible as of late 2025.
+
+# spatial = geospatial:87+geographic:83+terrestrial:79
+# land use = land cover:81+land characterization:78+land surface:75+ownership property:73
+# wetlands = wet land:72+nwi:70+hydric soil:69+inundated:67
+# hydrography = stream:85+river:83+spring:81+lake:78+pond:75+aqueduct:72+siphon:70+well:68
+# hypsography = elevation:82+relief:79+topography:77+contour:73
+
+weight = int(similarity * 100) gives an intuitive 0–100 scale.
+You can raise THRESHOLD (e.g. 0.7–0.8) for more confident synonyms.
+Multiword phrases are handled automatically.
+The file synonyms.txt is safe to parse later for indexing or search enrichment.

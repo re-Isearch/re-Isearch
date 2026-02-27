@@ -1,0 +1,7 @@
+docker compose up --build --gpus all --remove-orphans
+
+# Notes:
+# --gpus all allows the container to access all available NVIDIA GPUs.
+# Make sure your docker-compose.yml has:
+# runtime: nvidia
+

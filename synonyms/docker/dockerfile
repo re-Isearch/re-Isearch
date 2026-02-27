@@ -1,0 +1,20 @@
+# Use PyTorch CUDA runtime image for GPU acceleration
+FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+
+WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Copy project files
+COPY . /app
+
+# Install Python dependencies
+RUN pip install --upgrade pip \
+ && pip install -r requirements.txt
+
+# Pre-download NLTK data
+RUN python -m nltk.downloader punkt stopwords
+
+# Default command
+CMD ["python", "generate_synonyms.py"]
+

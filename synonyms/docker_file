@@ -1,0 +1,28 @@
+# ============================
+#   Synonym Generator Dockerfile
+#   Works with CPU or NVIDIA GPU
+# ============================
+
+# ---- Base Image ----
+# Use a lightweight PyTorch image with Python 3.10
+FROM pytorch/pytorch:2.3.0-cuda12.1-cudnn8-runtime
+
+# ---- Set up environment ----
+WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# ---- Copy project files ----
+COPY . /app
+
+# ---- Install Python dependencies ----
+RUN pip install --upgrade pip \
+ && pip install -r requirements.txt
+
+# ---- NLTK data (optional pre-download for offline runs) ----
+RUN python -m nltk.downloader punkt stopwords
+
+# ---- Default runtime command ----
+# Modify this to your main script name if different
+CMD ["python", "generate_synonyms.py"]
+
