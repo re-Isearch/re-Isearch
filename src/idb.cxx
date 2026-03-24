@@ -1805,7 +1805,8 @@ FC IDB::GetNextFC (const GPTYPE& HitGp, const STRING& fieldname, size_t offset)
 	  Fc = Fc2;
        }
       // Now we have found it
-      if (Fc.GetLength() && offset != 0) {
+      // Below was Fc.GetLength()   // edz 3.2026
+      if (Fc.Span() && offset != 0) {
         if (-1 != fseek(Fp, Pos + offset) * sizeof(FC), SEEK_SET))
 	  Fc.Read(Fp);
       }

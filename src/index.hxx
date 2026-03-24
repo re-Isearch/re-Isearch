@@ -24,6 +24,7 @@ Description:	Class INDEX
 #include "intlist.hxx"
 #include "gpolylist.hxx"
 #include "bboxlist.hxx"
+#include "fuzzy.hxx"
 
 class FPT;
 class Dictionary;
@@ -35,7 +36,7 @@ friend class IDB;
 public:
   enum MATCH {Unspecified, LeftMatch, Exact, ExactTerm, ExactTermCase,
 	Phonetic, PhoneticCase, AlwaysMatches, LeftAlwaysMatches,
-	Numerical, FreeForm, Phrase};
+	Numerical, FreeForm, Phrase, Fuzzy};
   const char *MatchType(enum MATCH Typ) const;
 
   INDEX(const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSize = 0);

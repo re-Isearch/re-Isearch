@@ -20,10 +20,12 @@
 // these are the GPs in re-Isearch
 struct OffsetEntry {
     int64_t sid;         // persistent sentence ID
-    size_t  start_tok;   // token start in original sentence
-    size_t  end_tok;     // token end in original sentence
     int64_t file_start;  // byte offset in sentences file
     int64_t file_end;    // byte offset in sentences file
+
+    uint32_t  start_tok;   // token start in original sentence
+    uint32_t  end_tok;     // token end in original sentence
+    uint32_t  span;    // sid = ID start . sid + span = ID end
 };
 
 

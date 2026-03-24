@@ -6,6 +6,7 @@
 
 #include "Logger.hpp"
 using namespace std;
+using namespace hnswlib;
 
 
 // FORMAT   name_NN  where NN is the number of the shard
@@ -99,11 +100,11 @@ size_t ShardedIndex::shard_count() const {
     return shards.size();
 }
 
-void ShardedIndex::append(const string & sentence) {
+void ShardedIndex::append(const string_view sentence) {
     current_shard().append(sentence);
 }
-void ShardedIndex::append(const string & sentence, int64_t sid) {
-    current_shard().append(sentence, sid);
+void ShardedIndex::append(const string_view sentence, int64_t sid, uint32_t span) {
+    current_shard().append(sentence, sid, span);
 }
 
 void ShardedIndex::remove(size_t label, size_t shard) {
@@ -341,6 +342,7 @@ bool  ShardedIndex::merge_two_parallel(size_t n) {
     auto &A = *shards[first];
     auto &B = *shards[second];
 
+#if 0 /* Don't probably need this check. We are now re-generating the embedding */
     if (A.get_data_size() != B.get_data_size()) {
       LOG_WARN_S() << "[merge] Can't merge " << first << " and " << second << " shards as they have different sizes ("
 	<< A.get_data_size() << "!=" << B.get_data_size() << "!";
@@ -349,11 +351,12 @@ bool  ShardedIndex::merge_two_parallel(size_t n) {
 
     if (A.metric != B.metric) {
       LOG_WARN_S() << "[merge] Can't merge shards made with different metrics ("
-	<< HnswConfig::metric_space_to_string(A.metric)
+	<< metric_to_string(A.metric)
 	<< "!="
-	<< HnswConfig::metric_space_to_string(B.metric) << ")";
+	<< metric_to_string(B.metric) << ")";
       return false;
     }
+#endif
 
     if (cfg.debug) LOG_INFO_S()  << "Parallel merging shards " << first << " + " << second << "...";
 

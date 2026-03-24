@@ -1,5 +1,7 @@
 #include "Util.hpp"
+#include "IO.hpp"
 #include "Logger.hpp"
+#include "hf_mapper.hpp"
 
 
 #include <sys/mman.h>
@@ -439,13 +441,8 @@ std::optional<GGUFInfo> read_gguf_info(const std::string &path) {
 
 namespace fs = std::filesystem;
 
-static std::vector<std::string> splitPath(const std::string& pathStr, char delimiter = 
-#if defined(_MSDOS) || defined(_WIN32)
-	';'
-#else
-	':'
-#endif
-	) {
+std::vector<std::string> splitPath(const std::string& pathStr, char delimiter)
+{
     std::vector<std::string> paths;
     std::stringstream ss(pathStr);
     std::string path;
@@ -459,27 +456,38 @@ static std::vector<std::string> splitPath(const std::string& pathStr, char delim
     return paths;
 }
 
-std::pair <std::string, enum GGML_TYPE>
-	find_ggml_model(const std::string& filename, const std::string& searchPaths ){
-    auto paths = splitPath(searchPaths);
+std::pair<std::string, GGML_TYPE> find_model(const std::string& identity, const std::string& searchPaths) {
+  static auto map = ModelMap();
+  std::string filename = identity;
+  if (map) {
+     auto result = map-> getModel ( identity );
+     if (result)
+	filename = result->second;
+   }
+   return find_ggml_model(filename, searchPaths);
+}
+
+
+// GGML model finder
+std::pair<std::string, GGML_TYPE>
+find_ggml_model(const std::string& filename, const std::string& searchPaths) {
     
-    for (const auto& directory : paths) {
-        enum GGML_TYPE type;
-        try {
-            for (const auto& entry : fs::directory_iterator(directory)) {
-                if (entry.is_regular_file() && 
-                    entry.path().filename() == filename &&
-                    (type = FileType(entry.path().string())) != GGML_TYPE::UNKNOWN) {
-                    return {entry.path().string(), type};
-                }
+    auto result = findInPathsWithData<GGML_TYPE>(
+        filename, 
+        searchPaths,
+        [](const fs::path& path) -> std::optional<GGML_TYPE> {
+            auto type = FileType(path.string());
+            if (type != GGML_TYPE::UNKNOWN) {
+                return type;
             }
-        } catch (const fs::filesystem_error&) {
-            // Continue to next directory if this one fails
-            continue;
-        }
+            return std::nullopt;
+        });
+    
+    if (result) {
+        return {result->first.string(), result->second};
     }
     
-    return {filename,  GGML_TYPE::UNKNOWN};
+    return {filename, GGML_TYPE::UNKNOWN};
 }
 
 #ifdef __APPLE__

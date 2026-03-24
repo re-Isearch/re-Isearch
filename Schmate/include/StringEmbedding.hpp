@@ -90,7 +90,7 @@ inline std::vector<float> hexToVectorFloat(const std::string& hexStr, size_t tar
 }
 
 // Fast validation: check if string is hex-encoded float32 vector of given dimension
-inline bool isHexFloat32Vector(const std::string& str, size_t targetDimension) {
+inline bool isHexFloat32Vector(const std::string_view str, size_t targetDimension) {
     // Fast length check first
     size_t expectedLength = targetDimension * 8; // 8 hex chars per float32
 
@@ -108,7 +108,7 @@ inline bool isHexFloat32Vector(const std::string& str, size_t targetDimension) {
             }
         } else if (c == ' ' || c == '\t' || c == '\n' || c == '\r') {
             // Whitespace is only allowed at even positions (after complete byte pairs)
-            if (consecutiveHex % 2 != 0) {
+            if (consecutiveHex & 1 /*consecutiveHex % 2 != 0 */) {
                 return false;
             }
             consecutiveHex = 0;
@@ -119,7 +119,7 @@ inline bool isHexFloat32Vector(const std::string& str, size_t targetDimension) {
     }
 
     // Exact match required and final position must be even
-    return hexCount == expectedLength && consecutiveHex % 2 == 0;
+    return hexCount == expectedLength && consecutiveHex & 1 /* consecutiveHex % 2 == 0 */;
 }
 
 // Fast validation: check if string is hex-encoded float32 vector of given dimension

@@ -1,5 +1,6 @@
 #include "BertIndex.hpp"
 #include "Util.hpp"
+#include "IO.hpp"
 #include "OffsetFile.hpp"
 #include "Logger.hpp"
 #include "StringUtils.hpp"
@@ -10,6 +11,7 @@
 
 
 using namespace std;
+using namespace hnswlib;
 
 // If you are using a standard distribution of HNSWlib you must set this to 0
 // as it ONLY WORKS with our modified code. We added the possibility to save
@@ -53,20 +55,20 @@ float BertIndex::score_from_dist(float dist) const {
     if (dist < -1e6f) return 1.0f;
 
     switch (metric) {
-        case MetricSpace::L2:
+        case Metric::L1:
+        case Metric::L2:
             // For L2 distance: smaller = closer. Map inversely.
             // This keeps results in (0,1] for any reasonable range.
             return 1.0f / (1.0f + dist);
 
-	case MetricSpace::Binary: /* Need to confirm is correct! Oct 2025 */
-        case MetricSpace::Cosine:
+        case Metric::Cosine:
             // For cosine: distance = 1 - cosine_similarity
             // → similarity = 1 - distance
             // Clamp to [0,1] to avoid minor numeric drift.
 	    // return (std::clamp(1.0f - dist, 0.0f, 1.0f) + 1.0f)/2.0f;
 	    return (2.0f - dist)/2.0f;
 
-        case MetricSpace::InnerProduct:
+        case Metric::IP:
             // Inner product: higher = closer. HNSWlib may return negatives
             // if embeddings aren't normalized. Clamp to [-1,1].
             return std::clamp(dist, -1.0f, 1.0f);
@@ -75,21 +77,6 @@ float BertIndex::score_from_dist(float dist) const {
             // Unknown metric
             return 0.0f;
     }
-}
-
-inline std::unique_ptr<hnswlib::SpaceInterface<float>> AllocateSpace(MetricSpace metric, size_t dim)
-{
-    switch (metric) {
-       case MetricSpace::L2:           return make_unique<hnswlib::L2Space>(dim);
-       case MetricSpace::InnerProduct: return make_unique<hnswlib::InnerProductSpace>(dim);
-       case MetricSpace::Cosine:       return make_unique<hnswlib::InnerProductSpace>(dim);
-/*
-       case MetricSpace::Binary:       return make_unique<hnswlib::BinarySpace>(dim);
-*/
-       case MetricSpace::Binary:       LOG_ERROR_S() << "AllocateSpace(Binary, " << dim << ") should not be called";
-       default: break;
-    }
-    throw std::runtime_error("Allocate space unknown metric!");
 }
 
 BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool searchOnly) : embedder(emb), cfg(c), name(n)
@@ -104,100 +91,15 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool sea
     search_ctrl.adaptive_epsilon = cfg.auto_tune_eps;
     if (cfg.ef_search) search_ctrl.set_ef(cfg.ef_search);
 
-    // In BertIndex constructor
-   if ( file_size(index_path) > (signed int)sizeof(IndexMeta)  ) {
+    UnifiedIndexMeta meta(emb.dim(), cfg);
 
-     // If auto tune enabled, load persist file if exists
-     search_ctrl.load(name);
+    LOG_DEBUG_S() << "BertIndex: Storage is " <<  storage_type_to_string(meta.storage_type_) << "\n";
+    LOG_DEBUG_S() << "BertIndex: Quantization is " << quantization_to_string(meta.quantization_) << "\n";
+    LOG_DEBUG_S() << "BertIndex: Bin_mode is " << bin_mode_to_string(meta.bin_mode_) << "\n";
 
-// std::cerr << "FILE SIZE=" << file_size(index_path) << "  META=" << sizeof(IndexMeta) << std::endl;
-
-#if HNSW_META
-    std::ifstream ifs(index_path, std::ios::binary);
-    if (!ifs) throw std::runtime_error("Cannot open " + index_path);
-
-    IndexMeta meta;
-    meta.load(ifs);
-
-    auto [expected_count, max_from_file] = hnswlib::peek_index_elements(ifs);
-
-    // Use the max from file (it already includes the saved max_elements)
-    max_elements = searchOnly ? max_from_file : std::max(max_from_file, cfg.max_elements);
-
-#if 0
-    if (cfg.debug)
-        LOG_DEBUG_S() << "Loaded index meta v." << meta.version << ": metric=" << (int)meta.metric
-                      << " normalized=" << meta.normalized
-                      << " dim=" << meta.dim
-                      << " count=" << meta.count << " index_count=" << expected_count
-		      << " max from file=" << max_from_file;
-#endif
-
-
-    // Validate metric, dim, normalization
-    if (meta.dim != embedder.n_embd) {
-        LOG_WARN_S() << "[WARN] Index dim mismatch: expected " << embedder.n_embd
-                     << ", found " << meta.dim;
-    }
-
-    metric = meta.metric; // Set the metric for this BertIndex
-
-    if (metric != cfg.metric) {
-        LOG_WARN_S() << "Metric mismatch: index uses '"
-		<< cfg.metric_space_to_string(metric)
-		<< "', runtime specified '"
-		<< cfg.metric_space_to_string(cfg.metric) << "'. Changed";
-        cfg.metric = metric; 
-    }
-
-    bool want_norm = (metric == MetricSpace::Cosine) ;
-    if (meta.normalized != want_norm) {
-        LOG_WARN_S() << "[WARN] Normalization mismatch: index normalized="
-                     << meta.normalized << ", runtime expects=" << want_norm;
-       meta.normalized = want_norm;
-    }
-
-    space = AllocateSpace(metric, embedder.n_embd);
-
-#if 1
-    // This saves a malloc!
-    index = std::make_unique<hnswlib::HierarchicalNSW<float>>(space.get(), ifs, max_elements);
-#else
-    index = std::make_unique<hnswlib::HierarchicalNSW<float>>(space.get(), max_elements);
-    index->loadIndex(ifs, space.get()); // proper stream-based load
-#endif
-    ifs.close();
-
-    if (cfg.debug) {
-        // Number of elements currently in the index:  index->cur_element_count
-        // Maximum capacity: index->max_elements_
-        LOG_DEBUG_S() << "Index contains " << index->cur_element_count << " / " <<  index->max_elements_ << " elements";
-        LOG_DEBUG_S() << "Fill ratio: " << (100.0 * index->cur_element_count /  index->max_elements_)
-		<< (searchOnly ? "%" : "% searchOnly Mode");
-    }
-#else
-    space = AllocateSpace(cfg.metric, embedder.n_embd);
-    index = std::make_unique<hnswlib::HierarchicalNSW<float>>(
-            space.get(), index_path, 0    // <-- note: pass space.get()
-                );   
-#endif
-      if (cfg.debug) LOG_DEBUG_S() << "Loaded existing index: " << index_path;
-      next_label = index->cur_element_count; // Number of elements in the existing HNSW index
-      max_elements = next_label + 1;
-   } else {
-      // Did not have an existing index
-      // if searchOnly we could return here.. But for now we'll assume otherwise
-      if (searchOnly)
-	LOG_ERROR_S() <<
-	"BertIndex SearchOnly specified for a non-existant index: \"" << name << "\"?!";
-
-      metric = cfg.metric; // Use the configured metric
-
-      space = AllocateSpace(metric, embedder.n_embd);
-      // create new index if not found
-       index = std::make_unique<hnswlib::HierarchicalNSW<float>>(
-        space.get(), max_elements, cfg.M, cfg.ef_construction);
-       if (cfg.debug)  LOG_DEBUG_S() << "Created new index with capacity=" << max_elements;
+    index = std::make_unique<hnswlib::UnifiedIndex>(meta);
+    if (UnifiedIndex::index_available( index_path ) ) {
+       index->loadIndex(index_path);
     }
 
     if (index && search_ctrl.adaptive_ef) index->setEf(search_ctrl.get_ef());
@@ -272,8 +174,7 @@ void BertIndex::clear() {
     sentences_file.close(); // leave empty
 
     // Recreate an empty HNSW index
-    index = std::make_unique<hnswlib::HierarchicalNSW<float>>(
-        space.get(), cfg.max_elements, cfg.M, cfg.ef_construction);
+    if (index) index->clear();
 
     // --- Step 4: Reset runtime counters ---
     next_label = 0;
@@ -303,6 +204,70 @@ BertIndex::~BertIndex() {
 
 
 // --- chunking ---
+
+#if 1
+
+
+// --- chunking (zero-copy tokenization) ---
+std::vector<Chunk> BertIndex::chunk_tokens(std::string_view sentence) {
+    std::vector<Chunk> chunks;
+
+    // --- Tokenize into string_views (no allocations) ---
+    std::vector<std::string_view> tokens;
+    tokens.reserve(64); // small optimization
+
+    size_t i = 0;
+    const size_t n = sentence.size();
+
+    while (i < n) {
+        // skip whitespace
+        while (i < n && std::isspace((unsigned char)sentence[i])) i++;
+        size_t start = i;
+
+        // read token
+        while (i < n && !std::isspace((unsigned char)sentence[i])) i++;
+
+        if (start < i) {
+            tokens.emplace_back(sentence.data() + start, i - start);
+        }
+    }
+
+    // --- Chunking ---
+    size_t n_tokens = tokens.size();
+    size_t max_tokens = cfg.max_tokens_per_chunk;
+    size_t overlap = (size_t)(cfg.overlap_percent * max_tokens / 100.0);
+
+    size_t start_tok = 0;
+    while (start_tok < n_tokens) {
+        size_t end_tok = std::min(start_tok + max_tokens, n_tokens);
+
+        // --- Build chunk text (single allocation) ---
+        std::string text;
+
+        // Optional: reserve approximate size
+        size_t approx_len = 0;
+        for (size_t i = start_tok; i < end_tok; i++) {
+            approx_len += tokens[i].size() + 1;
+        }
+        text.reserve(approx_len);
+
+        for (size_t i = start_tok; i < end_tok; i++) {
+            if (!text.empty()) text.push_back(' ');
+            text.append(tokens[i].data(), tokens[i].size());
+        }
+
+        chunks.push_back({text, start_tok, end_tok});
+
+        if (end_tok == n_tokens) break;
+        start_tok = end_tok - overlap;
+    }
+
+    return chunks;
+}
+
+
+
+#else
 std::vector<Chunk> BertIndex::chunk_tokens(const std::string &sentence) {
     std::vector<Chunk> chunks;
 
@@ -338,6 +303,7 @@ std::vector<Chunk> BertIndex::chunk_tokens(const std::string &sentence) {
 
     return chunks;
 }
+#endif
 
 
 /// 
@@ -346,7 +312,7 @@ std::vector<Chunk> BertIndex::chunk_tokens(const std::string &sentence) {
 
 // Append (auto generate sentence_id) -> returns label
 
-size_t BertIndex::append(const string & sentence) {
+size_t BertIndex::append(const string_view sentence) {
    if (auto_sentence_id == 0) {
      // compute max SID
      offsets->for_each([&](size_t, const OffsetEntry &e) {
@@ -451,7 +417,7 @@ std::vector<float> BertIndex::encode_text(const std::string& text)
    // ---------------------------------------------------------------------
    // Normalize for cosine similarity if required.
    // ---------------------------------------------------------------------
-   if (metric == MetricSpace::Cosine) {
+   if (metric == Metric::Cosine) {
         float norm = 0.f;
         for (float v : emb) norm += v * v;
         norm = std::sqrt(norm);
@@ -488,19 +454,23 @@ std::vector<float> BertIndex::encode_text(const std::string& text)
 // vector MUST be the same as the dimension specified for the index. 
 // Should something else be desired we'd have to handle that in the ShardedIndex
 // class by creating a new shard with the appropriate dimension.  
-size_t BertIndex::append(const std::string &sentence, int64_t sentence_id) {
+size_t BertIndex::append(const std::string_view sentence, int64_t sentence_id, uint32_t span) {
 
     if (cfg.lock_on_append && wait_lock()) {
         LOG_FATAL_S() << "Can't append, other process competing (race).";
         return 0;
     }
+    if (span == 0) span = sentence.length();
+
     bool insert_raw = false;
     std::vector<Chunk> chunks;
     // NEW: If the sentence passed is a string containing a hex encoded
     // Float32 vector of the right dim then treat as such (pass-through)
     if (schmate_util::isHexFloat32Vector(sentence, embedder.n_embd)) {
       // Looks like a Float32 encoded vector: just hex and right length
-      chunks.push_back({sentence, 0, sentence.length()}); 
+      // chunks.push_back({sentence, 0, sentence.length()}); 
+      // Below is because can construct Chunk directly inside vector
+      chunks.emplace_back( std::string(sentence.data(), sentence.size()), 0, sentence.size());
       insert_raw = true;
     } else chunks = chunk_tokens(sentence);
 
@@ -530,10 +500,12 @@ size_t BertIndex::append(const std::string &sentence, int64_t sentence_id) {
 
         // --- Write OffsetEntry into mmap ---
         OffsetEntry e{ sentence_id,
-                       chunk.start_token,
-                       chunk.end_token,
-                       file_start,
-                       file_end };
+		       file_start,
+		       file_end, 
+                       static_cast<uint32_t>(chunk.start_token),
+                       static_cast<uint32_t>(chunk.end_token),
+		       span
+                       };
 	// std::cout << "Set label " << label << "\n";
         offsets->set(label, e); // In-memory only: Writes into mmap region directly
 
@@ -703,30 +675,14 @@ void BertIndex::save() {
 
 // Rewrites entire index: normally done in batches after X inserts
   if (size() > 0) {
-#if HNSW_META
-       std::ofstream ofs(index_path, std::ios::binary | std::ios::trunc);
-       if (!ofs) throw std::runtime_error("Cannot open " + index_path + " for writing");
-
-       IndexMeta meta;
-       meta.version = 1;
-       meta.metric = metric;
-       meta.normalized = (metric == MetricSpace::Cosine);  // or cfg.normalized_embeddings flag
-       meta.dim = embedder.n_embd;
-       meta.count = this->size();
-
-       meta.save(ofs);
-       index->saveIndex(ofs);
-       ofs.close();
-#else
-        index->saveIndex(index_path);
-#endif
-    } else if (file_size(index_path) >= 0) {
+     if (index) index->saveIndex(index_path);
+  } else if (file_size(index_path) >= 0) {
       // since != -1 we know it exists
       unlink(index_path.c_str());
-    }
-    dirty_count = 0; // Memory = disk
-    if (cfg.debug)  LOG_DEBUG_S() << "saved index " << index_path;
-    release_lock();
+  }
+  dirty_count = 0; // Memory = disk
+  if (cfg.debug)  LOG_DEBUG_S() << "saved index " << index_path;
+  release_lock();
 }
 
 /*
@@ -769,7 +725,7 @@ std::vector<SearchResult> BertIndex::filter_knn_results(const std::string &query
 
     for (auto &[dist, label] : candidates) {
         float score = score_from_dist(dist);
-std::cerr << "DIST=" << dist << "  score=" << score << std::endl;
+//std::cerr << "DIST=" << dist << "  score=" << score << std::endl;
         if (!filter(score)) continue;
 
         OffsetEntry e = offsets->get(label);
@@ -799,15 +755,15 @@ std::cerr << "DIST=" << dist << "  score=" << score << std::endl;
 | Inner product     | larger dot product | → larger = better  | descending (`>`) |
 */
 //    const bool higher_is_better =
-//    	(metric == MetricSpace::Cosine || metric ==  MetricSpace::InnerProduct);
+//    	(metric == Metric::Cosine || metric ==  Metric::IP);
 
     std::sort(results.begin(), results.end(),
           [this](const SearchResult &a, const SearchResult &b) {
               switch(metric) {
-		case MetricSpace::Cosine:
-		case MetricSpace::InnerProduct:
+		case Metric::Cosine:
+		case Metric::IP:
                   return a.score > b.score;
-		case MetricSpace::L2:
+		case Metric::L2:
                   return a.score < b.score;
 		default: break;
 	      }
@@ -925,9 +881,9 @@ std::vector<SearchResult> BertIndex::epsilon_search(const std::string &query, fl
                         : cur_count;
 
     if (cfg.auto_tune_eps) epsilon = search_ctrl.get_epsilon();
-    if (epsilon <= 0.0f)   epsilon = cfg.get_epsilon(metric);
+    if (epsilon <= 0.0f)   epsilon = cfg.get_epsilon();
  
-    if (!cfg.auto_tune_eps && metric == MetricSpace::L2) epsilon = epsilon * epsilon; 
+    if (!cfg.auto_tune_eps && metric == Metric::L2) epsilon = epsilon * epsilon; 
 
     if (max_candidates == min_candidates && max_candidates > 3) min_candidates = max_candidates - 2;
 
@@ -961,9 +917,14 @@ TYPICAL USE CASES:
 2. Flexible search: min=k, max=high, epsilon as soft threshold
 3. Bounded search: min=k, max=k*10, epsilon for quality control
 */
+
+#if 1 /* Use new unified code */
+    auto candidates = index->searchWithStopCondition(emb.data(), epsilon, min_candidates, max_candidates);
+#else
     // Create a stop condition
     hnswlib::EpsilonSearchStopCondition<float> stop_condition( epsilon, min_candidates, max_candidates);
     auto candidates = index->searchStopConditionClosest(emb.data(), stop_condition);
+#endif
 
     // Update tuner based on result density
 /*
@@ -993,7 +954,7 @@ TYPICAL USE CASES:
 		  << " metric=" << static_cast<int>(metric)
                   << " score(before clamp)=" << (1.0f - dist);
 
-        if (metric == MetricSpace::L2) dist = sqrt(dist);
+        if (metric == Metric::L2) dist = sqrt(dist);
         float score = score_from_dist(dist);
         
         OffsetEntry e = offsets->get(label);

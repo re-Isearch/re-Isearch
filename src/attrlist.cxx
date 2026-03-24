@@ -586,6 +586,7 @@ enum RelationValues {
   Stem = 101,
   Relevance = 102,
   AlwaysMatches = 103,
+  Fuzzy = 104,
   Exact = 200
 };
 
@@ -902,6 +903,19 @@ bool ATTRLIST::AttrGetPhonetic () const
 	true :
 	false;
 }
+
+void ATTRLIST::AttrSetFuzzy (const bool Set)
+{ 
+  if (Set)
+    SetValue (Bib1AttributeSet, RelationAttribute, Fuzzy);
+  else
+    ClearAttr (Bib1AttributeSet,  RelationAttribute, Fuzzy);
+}
+
+bool ATTRLIST::AttrGetFuzzy () const
+{ 
+  return Lookup (Bib1AttributeSet,  RelationAttribute, Fuzzy) ?  true : false;
+} 
 
 void ATTRLIST::AttrSetExactTerm (const bool Set)
 {

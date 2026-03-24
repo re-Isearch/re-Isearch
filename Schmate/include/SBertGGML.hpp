@@ -66,6 +66,12 @@ if (ctx && ctx->model.word_embeddings) {
 
    void encode( const char * texts, float * embeddings, int batch_size = 1);
    void eval (bert_vocab_id * tokens, int32_t n_tokens, float * embeddings);
+
+   void reset_context() {
+     bert_free(ctx);
+   }
+
+private:
 };
 
 

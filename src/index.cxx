@@ -1301,12 +1301,13 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 
             case FIELDTYPE::db_nsg: //
             case FIELDTYPE::db_IVFFlat:
+              message_log (LOG_ERROR, "NSG and IVFFlat algorithms Not Yet Implemented. Using HSNW.");
 	    case FIELDTYPE::db_hnsw: /* HNSW */
 	    {
 #if 0 /* NOT YET */
               //   BertIndexManager man
 	      if (EmbeddingIndexer &&
-		EmbeddingIndexer->append ( DocTypePtr->ParseBuffer(Buffer) FieldName, fc.Start(), fc.End(),type))
+		EmbeddingIndexer->Append ( DocTypePtr->ParseBuffer(Buffer), FieldName, fc))
 		items++;
 #else
 	      message_log (LOG_ERROR, "Dense Vectors Not Yet Implemented");
@@ -2171,7 +2172,7 @@ memory_allocation: // This is where we try to get memory
                   for (const FCLIST *r = Regions, *itor = r->Next(); itor != r; itor = itor->Next())
                     {
                       Fc = itor->Value();
-                      if (Fc.GetLength())
+                      if (Fc.GetLength()) // This is WRONG should be !fc.IsEmpty();
                         {
                           const GPTYPE DataFileSize = Fc.GetFieldEnd();
                           if (DataFileSize == 0)
@@ -3832,6 +3833,11 @@ PIRSET INDEX::Search (const QUERY& Query)
                   if (gotRelation==false) Relation=ZRelEQ;
                   // NewIrset=SmilesHashSearch( Term, FieldName, Relation);
                 }
+	      // Add Fuzzy matching 
+	      else if (Attrlist.AttrGetFuzzy ()) 
+		{
+		  NewIrset = TermSearch (Term, FieldName, Fuzzy);
+		}
               else if (Attrlist.AttrGetPhonetic ())
                 {
                   NewIrset = TermSearch (Term, FieldName,
@@ -5380,6 +5386,15 @@ static inline INT TermCompare(const UCHR *term, const UCHR *ptr, const size_t n,
 }
 
 
+// Fuzzy Term Compare
+static inline INT TermCompareFuzzy(const UCHR *term, const UCHR *ptr, const size_t n, size_t *length = NULL)
+{
+  INT diff = FuzzyCompare(term, ptr, n);
+  if (diff == 0 && length) *length = n;
+  return diff;
+}
+
+
 #if 0
 
 // Threaded safe..
@@ -5867,6 +5882,10 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
             }
           else if ( FullTerm[x] == '~' )
             {
+              Typ = Fuzzy;           // Fuzzy Search
+            }
+          else if ( FullTerm[x] == '#' )
+            {
               Typ = Phonetic;		// Soundex Search
             }
           else if ( FullTerm[x] == '=' )
@@ -5924,6 +5943,10 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
     case LeftMatch:
       Compare = (Special ? LeftTermCompareSpecial : LeftTermCompare);
       break;
+    case Fuzzy:
+       // Compare = TermCompareFuzzy;
+       // break;
+       log_message(LOG_DEBUG, "Fuzzy not enabled *yet). Using Phonetic instead.");
     case PhoneticCase:
     case Phonetic:
       if (useSoundex)
@@ -6032,6 +6055,7 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
   HITLIST         HitList(NumberOfIndexes);
   int             Offset = Term - FullTerm;
 
+
   /* The Search core */
   {
     PFILE           fpi = NULL;
@@ -6054,6 +6078,8 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
 
     for ( INT jj = NumberOfIndexes ? 1 : 0; jj <= NumberOfIndexes; jj++ )
       {
+
+
 
         Term        = savedTerm;
         Term_length = savedTerm_length;
@@ -6084,8 +6110,10 @@ PIRSET          INDEX::TermSearch ( const STRING& QueryTerm, const STRING& field
         off_t           first, last;
         bool     overflow;
 
+
 #if 1
-        if (DebugMode) message_log (LOG_DEBUG, "Find '%s' in %s", Word.c_str(), SisFn.c_str());
+        if (DebugMode)
+	  message_log (LOG_DEBUG, "Find '%s' in %s", Word.c_str(), SisFn.c_str());
         // New SIS code
         ip = find( SisFn, jj, Word, (Typ == LeftAlwaysMatches || Typ == LeftMatch)
                    && (FullTerm_length == Term_length) /* Added  Fri Jul 23 00:31:08 MET DST 1999 */
@@ -7425,6 +7453,7 @@ const char *INDEX::MatchType(enum MATCH Typ) const
       case ExactTerm:     return "ExactTerm";
       case ExactTermCase: return "ExactTermCase";
       case Phonetic:      return "Phonetic";
+      case Fuzzy:         return "Fuzzy";
       case PhoneticCase:  return "PhoneticCase";
       case AlwaysMatches: return "AlwaysMatches";
       case LeftAlwaysMatches: return "LeftAlwaysMatches";

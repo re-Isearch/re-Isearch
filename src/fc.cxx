@@ -14,7 +14,6 @@ Description:	Class FC - Field Coordinates
 
 #pragma ident  "@(#)fc.cxx  1.11 09/03/99 05:59:11 BSN"
 
-
 FC::FC ()
 {
   FieldStart = FieldEnd = 0;

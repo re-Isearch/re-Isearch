@@ -24,6 +24,7 @@ struct SearchResult {
     int token_start;
     int token_end;
     int64_t sentence_id;
+    int32_t span;
     std::string text; // optional
 };
 
@@ -64,7 +65,7 @@ friend class ShardedIndex;
     std::unordered_map<size_t,int64_t> chunk_sentence_map;
     std::atomic<int64_t> auto_sentence_id{0};
 
-    std::vector<Chunk> chunk_tokens(const std::string &sentence);
+    std::vector<Chunk> chunk_tokens(const std::string_view sentence);
 
     size_t dirty_count = 0;
 
@@ -79,8 +80,8 @@ public:
 #if 1
 
     // append returns the label assigned to the new chunk
-    size_t append(const std::string & sentence);
-    size_t append(const std::string & sentence, int64_t sentence_id);
+    size_t append(const std::string_view sentence);
+    size_t append(const std::string_view sentence, int64_t sentence_id, uint32_t span = 0);
 
     // removal
     void remove(size_t label);

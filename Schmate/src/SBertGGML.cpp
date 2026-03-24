@@ -7,6 +7,16 @@
 
 /*
 
+NOTE: In our current design we only want to support a single embedding model for an index.
+Allowing for multiple embedding models would vastly increase the memory demands. Our design
+goals are to keep the footprint as small as we can to run on the most general hardware that
+is suitable. We don't want to raise that bar. 
+To allow for caching of SBertGGMLs and a field specific embedding would be relatively easy.
+The main hinderness is the need to maintain a mapping of field<->model. A simple key/value
+would be sufficient. We are already now anyway storing an identity in the index as search
+depends upon having the same model as was used during indexing. 
+ 
+
 NOTE: bert.cpp:
 
 CPU-focused: The library is built on top of ggml (the same backend used by llama.cpp) and is

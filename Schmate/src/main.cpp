@@ -16,6 +16,7 @@
 #include <unistd.h>
 
 using namespace std;
+using namespace hnswlib;
 
 static void print_help() {
     cout <<
@@ -23,6 +24,7 @@ static void print_help() {
     "  use <name>\n"
     "  append <sentence>\n"
     "  appendid <sid> <sentence>\n"
+    "  ingest <file_path>\n"
     "  search <query>\n"
     "  knn [k] <query>\n"
 //    "  pknn [k] <query>\n"
@@ -37,6 +39,7 @@ static void print_help() {
     "  undelete_addr <address> [shard]\n"
     "  merge\n"
     "  flush\n"
+    "  clear\n"
     "  shard_count [name]\n"
     "  reconstruct_label <label>\n"
     "  reconstruct_sid <sid>\n"
@@ -123,27 +126,40 @@ int main(int argc, char **argv) {
     string model = find_ggml_model(argv[1], "../lib:../bin:lib/:.").first;
 
     bool debug = false;
-    MetricSpace metric = MetricSpace::Undefined;
+    std::optional<Metric> metric = std::nullopt;
 
     for (int i = 2; i < argc; ++i) {
         string a = argv[i];
         if (a == "--debug") debug = true;
         if (a == "--metric" && i+1 < argc) {
-            string m = argv[++i];
-            if (m == "l2") metric = MetricSpace::L2;
-            else if (m == "ip") metric = MetricSpace::InnerProduct;
-            else if (m == "cos") metric = MetricSpace::Cosine;
+            metric  = string_to_metric( argv[++i] );
         }
     }
 
     ConfigLoader loader;
     HnswConfig cfg = loader.load(debug);
-    if (metric != MetricSpace::Undefined) cfg.metric = metric;
+    if (metric) cfg.set_metric ( *metric );
   
 
    if (cfg.debug) Logger::instance().set_level(LogLevel::DEBUG);  // Show everything
 
    //StderrCapture::instance().start(); // redirect stderr 
+
+
+
+#if 0
+   auto q = get_ggml_model_quant(model);
+   StorageType storage = q.first;
+   if (storage != StorageType::FLOAT32) {
+     cerr << "MODEL is " << q.second << "(" << storage_type_to_string(storage) << ")" << endl;
+     cfg.set_storage_type(storage);
+     cfg.set_quantization( QuantMode::NONE);
+   }
+#endif
+
+#if 1
+   cfg.print(); 
+#endif
 
     try {
         // create embedder first
@@ -157,7 +173,7 @@ int main(int argc, char **argv) {
         BertIndexManager manager(embedder, cfg);
 #endif
 
-        string current = "default";
+        string current = "default32";
         manager.getOrCreate(current);
 
         cout << "Interactive mode. Type 'help' for commands.\n";
@@ -188,6 +204,26 @@ int main(int argc, char **argv) {
                 cout << "Appended with sid=" << sid << "\n";
                 continue;
             }
+	    if (line.rfind("ingest ", 0) == 0) {
+		std::string path = line.substr(7);
+		std::ifstream ifs(path);
+		if (ifs.is_open()) {
+		  cout << "Reading " << path<< std::flush;
+		  int lines = 0;
+		  Logger::instance().set_level(LogLevel::WARN);
+		  for (std::string line; std::getline(ifs, line);) {
+		    if (!line.empty()) {
+		      manager.append(current, line);
+		      lines++;
+		      if ((lines % 5) == 0) cout << "." << std::flush ;
+		    }
+		  }
+		  cout << ". Processed " << lines << " sentences.\n";
+		  if (cfg.debug) Logger::instance().set_level(LogLevel::DEBUG);  // Show everything
+		} else 
+		  cerr << "Cannot load '" << path << "' for reading: " << strerror(errno) << "\n";
+		continue;
+	    }
 
             if (line.rfind("append ", 0) == 0) {
                 string txt = line.substr(7);
@@ -343,6 +379,11 @@ if (line.rfind("epsilon", 0) == 0) {
             if (line == "flush") {
                 manager.flush(current);
                 cout << "Flushed.\n";
+                continue;
+            }
+           if (line == "clear") {
+                manager.clear(current);
+                cout << "Cleared!\n";
                 continue;
             }
             if (line.rfind ("shard_count", 0) == 0) {

@@ -365,7 +365,8 @@ static void HelpUsage(const char *progname)
 	"                   // Append * for right truncation." << endl <<
 	"                   // Prepend * for left truncation." << endl <<
         "                   // Use combination of * and ? for glob matching." << endl <<
-	"                   // Append ~ for phonetic (soundex) search." << endl <<
+        "                   // Append ~ for fuzzy (Ratcliff) search." << endl <<
+        "                   // Append # for phonetic (soundex) search." << endl <<
 	"                   // Append = for exact (case dependent) search." << endl <<
 	"                   // Append > for exact right truncated search (=*)." << endl <<
 	"                   // Append . for \"exact-term\" (e.g. \"auto\" won't match \"auto-mobile\")" << endl << 

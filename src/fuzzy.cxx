@@ -193,7 +193,8 @@ static int GCsubstr(const char *st1,const char *end1,const char *st2,const char 
       if (*a1 == *a2)
 			{
 
-				for (i=1; a1[i] && (a1[i] == a2[i]); i++);
+				for (i=1; a1[i] && (a1[i] == a2[i]); i++)
+					/* */;
 
         if (i > max)
 				{
@@ -214,6 +215,7 @@ static int GCsubstr(const char *st1,const char *end1,const char *st2,const char 
 }
 
 
+/****
 int RatcliffCompare(const STRING &s1, const STRING& s2, int scale)
 {
   size_t  l1 = s1.length();
@@ -228,8 +230,38 @@ int RatcliffCompare(const STRING &s1, const STRING& s2, int scale)
 
   return(2 * scale * metric/ (l1+l2));
 }
+***/
+
+#include <cmath>
+
+int RatcliffCompare(const STRING &s1, const STRING& s2, int scale) {
+
+std::cerr << "Compare Called: S1 = " << s1 << "  and S2 = " << s2 << std::endl;
+
+  size_t l1 = s1.length();
+  size_t l2 = s2.length();
+  if (l1 == 0 || l2 == 0) return 0;
+
+  int distance = LevenshteinDistance(s1, s2);
+  if (distance == 0) return scale;
+
+  const int metric = GCsubstr(s1, s1.c_str() + l1, s2, s2.c_str() + l2);
+
+  // 1. Calculate raw ratio (0.0 to 1.0)
+  const double rawRatio = (2.0 * metric) / (double)(l1 + l2);
+
+  // 2. Apply Square Root Boost
+  const double boostedRatio = std::sqrt(rawRatio);
+
+  // 3. Return scaled integer (e.g., 81 for 81.6%)
+  return (int)(boostedRatio * scale);
+}
+
 
 #ifdef TEST
+
+const char * _IB_INI_MAGIC = "";
+
 int main(int argc, char **argv)
 {
   STRING s1, s2;
@@ -261,9 +293,9 @@ int main(int argc, char **argv)
 #if 0
       LevenshteinDistance (s1, s2) ;
 #else
-      printf("<%s,%s> --> %d (%d%%)\n", s1.c_str(), s2.c_str(),
-	LevenshteinDistance (s1, s2),
-	RatcliffCompare(s1,s2, 100));
+      int rat =  RatcliffCompare(s1,s2, 100); 
+      printf("<%s,%s> --> %d (%d%%) %s\n", s1.c_str(), s2.c_str(),
+	LevenshteinDistance (s1, s2), rat, rat > 75 ? "-->FuzzyMatch" : "" );
 #endif
     }
   clock_t end = clock();

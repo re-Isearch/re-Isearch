@@ -25,8 +25,8 @@ public:
 
     void clear();
 
-    void append(const std::string & sentence);
-    void append(const std::string & sentence, int64_t sentence_id);
+    void append(const std::string_view sentence);
+    void append(const std::string_view sentence, int64_t sentence_id, uint32_t span = 0);
 
     void remove(size_t label, size_t shard=0);
     void undelete(size_t label, const OffsetEntry &entry, size_t shard=0);

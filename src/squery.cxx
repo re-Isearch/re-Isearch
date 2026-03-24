@@ -1662,7 +1662,8 @@ size_t SQUERY::SetTerm (const STRING& NewTerm, bool Ored)
 	   bool zap = true;
 	   switch ( StrTemp.GetChr (pos) ) {
 	     case '.': AttrlistPtr->AttrSetExactTerm (true); break;
-	     case '~': AttrlistPtr->AttrSetPhonetic (true); break;
+	     case '~': AttrlistPtr->AttrSetFuzzy (true); break;
+             case '#': AttrlistPtr->AttrSetPhonetic (true); break;
 	     case '$': AttrlistPtr->AttrSetFreeForm (true); break;
 	     case '@': AttrlistPtr->AttrSetDenseFeedback (true); break;
 	     default:  zap = false; // Not a proper post op
@@ -2011,6 +2012,11 @@ size_t SQUERY::fetchTerm (PSTRING StringBuffer, bool WantRpn) const
                   }
                 else if (Attrlist.AttrGetPhonetic ())
                   {
+                    if (op) S+= op;
+                    op = '#';
+                  }
+               else if (Attrlist.AttrGetFuzzy ())
+                  { 
                     if (op) S+= op;
                     op = '~';
                   }

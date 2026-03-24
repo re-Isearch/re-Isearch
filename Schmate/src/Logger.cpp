@@ -101,7 +101,9 @@ void Logger::log(LogLevel level, const std::string& message) {
             case LogLevel::INFO:  os_level = OS_LOG_TYPE_INFO; break;
             case LogLevel::WARN:  os_level = OS_LOG_TYPE_DEFAULT; break;
             case LogLevel::ERROR: os_level = OS_LOG_TYPE_ERROR; break;
-            case LogLevel::FATAL: os_level = OS_LOG_TYPE_FAULT; break;
+            case LogLevel::FATAL:
+	    case LogLevel::PANIC:
+		os_level = OS_LOG_TYPE_FAULT; break;
         }
         os_log_with_type(OS_LOG_DEFAULT, os_level, "%{public}s", msg.c_str());
 #else
@@ -133,6 +135,7 @@ std::string Logger::level_to_string(LogLevel level) {
         case LogLevel::WARN:  return "WARN";
         case LogLevel::ERROR: return "ERROR";
         case LogLevel::FATAL: return "FATAL";
+	case LogLevel::PANIC: return "PANIC";
         default: return "UNKNOWN";
     }
 }
@@ -144,7 +147,8 @@ int Logger::level_to_syslog(LogLevel level) {
         case LogLevel::INFO:  return LOG_INFO;
         case LogLevel::WARN:  return LOG_WARNING;
         case LogLevel::ERROR: return LOG_ERR;
-        case LogLevel::FATAL: return LOG_CRIT;
+        case LogLevel::FATAL:
+	case LogLEvel::PANIC: return LOG_CRIT;
         default: return LOG_INFO;
     }
 #else

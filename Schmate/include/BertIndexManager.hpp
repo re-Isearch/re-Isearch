@@ -59,8 +59,8 @@ public:
     ShardedIndex & getOrCreate(const std::string & name);
 
     // shorthands
-    void append(const std::string & name, const std::string & sentence);
-    void append(const std::string & name, const std::string & sentence, int64_t sentence_id);
+    void append(const std::string &name, const std::string_view sentence);
+    void append(const std::string &name, const std::string_view sentence, int64_t sentence_id, uint32_t span = 0);
 
     void remove(const std::string & name, size_t label, size_t shard = 0);
 

@@ -1,4 +1,6 @@
 #include "HnswConfig.hpp"
+#include "Util.hpp"
+#include "IO.hpp"
 #include "Logger.hpp"
 #include <thread>
 
@@ -8,6 +10,194 @@ extern "C" {
 #include <sys/utsname.h>
 }
 #endif
+
+static const uint16_t config_version = 1;
+
+
+namespace hnswlib {
+
+    std::optional<Metric> string_to_metric(const std::string& s);
+    std::optional<QuantMode>  string_to_quantzation(const std::string &s);
+    std::optional<OptBinMode>  string_to_bin_mode(const std::string& s);
+    StorageType string_to_storage_type(const std::string& s);
+
+    std::string metric_to_string(Metric m);
+    std::string quantization_to_string(QuantMode mode);
+    std::string bin_mode_to_string(OptBinMode mode);
+    std::string storage_type_to_string(StorageType type) ;
+
+
+    std::string metric_to_string(Metric m) {
+      switch(m) { 
+          case Metric::L1:     return "L1";
+          case Metric::L2:     return "L2";
+          case Metric::IP:     return "IP";
+          case Metric::Cosine: return "Cosine";
+          default: return "Unknown"; 
+       }
+    }
+
+
+    std::optional<Metric> string_to_metric(const std::string& s) {
+       if (!s.empty()) {
+         const char ch = s.at(0);
+         if (s == "L1" || s == "l1" || ch == 'M' || ch == 'm')
+            return Metric::L1; // Manhatttan
+         if (s == "L2" || s == "l2" || ch == 'E' || ch == 'e')
+            return Metric::L2; // Eucledian
+         if (ch == 'I' || ch  == 'i')
+            return Metric::IP; // InnerProduct
+         if (ch == 'C' || ch == 'c')
+            return Metric::Cosine;
+         LOG_ERROR_S() << "Unknown distance metric: '" << s << "'\n";
+       } else LOG_ERROR_S() << "Empty distance metric!\n";
+       return std::nullopt ;
+    }
+
+
+std::optional<QuantMode>  string_to_quantzation(const std::string &s) {
+   if (s.empty()) throw std::runtime_error("Empty quantization name.");
+   if (s == "Binary" || s == "BINARY" || s == "BIN1" || s == "INT1" || s.at(0) == 'b')
+	return QuantMode::BIN1;
+   if (s == "Ternary" || s == "1.58" || s == "INT158")
+	return QuantMode::INT158;
+   if (s == "Nibble" || s == "INT4" || s == "Tetrade" || s == "Semioctet")
+	return QuantMode::INT4;
+   if (s == "Octet" || s == "INT8" || s == "Quarter" || s.at(0) == 'o')
+	return QuantMode::INT8;
+   if (s == "Fp32" || s == "FLOAT32" || s == "NONE" || s == "None")
+	return QuantMode::NONE;
+   LOG_ERROR_S() << "Unknown/unsupported quantization: " << s << "\n";
+   return std::nullopt;
+}
+
+std::string quantization_to_string(QuantMode mode)
+{
+   switch (mode) {
+     case QuantMode::NONE:   return "None";
+     case QuantMode::BIN1:   return "Binary";
+     case QuantMode::INT158: return "Ternary";
+     case QuantMode::INT4:   return "Nibble";
+     case QuantMode::INT8:   return "Octet";
+     case QuantMode::INT16:  return "Int16";
+     case QuantMode::FP16:   return "Fp16";
+     case QuantMode::BF16:   return "Bf16";
+   }
+}
+
+// PASS means the Float32 vectors were already quantized!
+std::optional<OptBinMode>  string_to_bin_mode(const std::string& s) {
+   if (s == "Pass")       return OptBinMode::PASS;
+   if (s == "Standard")   return OptBinMode::STANDARD;
+   if (s == "Better")     return OptBinMode::BETTER;
+   if (s == "Centroid")   return OptBinMode::CENTROID;
+   if (s == "Rotational") return OptBinMode::ROTATIONAL;
+   if (s == "RaBitQ")     return OptBinMode::RABITQ;
+   if (s == "RaBitQ-Ex")  return OptBinMode::RABITQ_EXTENDED; 
+   LOG_ERROR_S() << "Unknown/unsupported bin_mode: " << s << "\n";
+   return std::nullopt;
+}
+
+std::string bin_mode_to_string(OptBinMode mode)
+{   
+   switch (mode) {
+      case OptBinMode::PASS:            return "Pass";
+      case OptBinMode::STANDARD:        return "Standard" ;
+      case OptBinMode::BETTER:          return "Better";
+      case OptBinMode::CENTROID:        return "Centroid";
+      case OptBinMode::ROTATIONAL:      return "Rotational";
+      case OptBinMode::RABITQ:          return "RaBitQ";
+      case OptBinMode::RABITQ_EXTENDED: return "RaBitQ-Ex";
+   }
+  // NOT REACHED
+  return "";
+}
+
+std::string storage_type_to_string(StorageType type)
+{
+   switch (type) {
+    case StorageType::BIN1:    return "BIN1";   // Binary
+    case StorageType::INT2:    return "INT2";   // 2-bit
+    case StorageType::INT3:    return "INT3";   // 3-bit
+    case StorageType::INT4:    return "INT4";   // 4-bit
+    case StorageType::INT5:    return "INT5";   // 5-bit
+    case StorageType::INT6:    return "INT6";   // 6-bit
+    case StorageType::INT8:    return "INT8";   // 8-bit
+    case StorageType::INT16:   return "INT16";  // 16-bit
+    case StorageType::INT32:   return "INT32";  // 32-bit 
+    case StorageType::INT64:   return "INT64";  // 64-bit
+    case StorageType::FP16:    return "FP16";   // 16-bit float
+    case StorageType::BF16:    return "BF16";   // 16-bit float
+    case StorageType::FLOAT32: return "FP32";   // 32-bit float
+    case StorageType::FLOAT64: return "FP64";   // 64-bit float
+   }
+   // NOT REACHED
+   return "";
+};
+
+
+inline int parse_storage_bits(const std::string& str) {
+    if (str.empty()) {
+        throw std::invalid_argument("Empty storage string");
+        return 0;
+    }
+    // Check for valid prefixes
+    bool floating_point = (str.compare(0,2, "FP") == 0 || str.compare(0,2, "Fp") ||
+	str.compare(0,2, "BF") == 0 || str.compare(0,2, "Bf") == 0) ;
+    if (!floating_point && str.compare(0, 3, "INT") != 0 && str.compare(0, 3, "Int") !=0 &&
+	str.compare(0, 3, "BIN") != 0 && str.compare(0, 3, "Bin") !=0) {
+        throw std::invalid_argument("Storage string must start with FP, INT or BIN: " + str);
+        return 0;
+    }
+    
+    // Extract number after prefix
+    size_t prefix_len = floating_point ? 2 : 3; // "INT" or "BIN" (both are equivalent) or "FP"/"BF"
+    if (str.length() <= prefix_len) {
+        throw std::invalid_argument("No number after prefix in: " + str);
+        return 0;
+    }
+    std::string num_str = str.substr(prefix_len);
+    
+    try {
+        int bits = std::stoi(num_str);
+        if (bits <= 0) {
+            throw std::invalid_argument("Bit width must be positive: " + str);
+            return 0;
+        }
+        return bits;
+    } catch (const std::invalid_argument&) {
+        throw std::invalid_argument("Invalid number in storage string: " + str);
+    } catch (const std::out_of_range&) {
+        throw std::invalid_argument("Number too large in storage string: " + str);
+    }
+}
+
+StorageType string_to_storage_type(const std::string& s)
+{
+   int bits = parse_storage_bits(s);
+   // FP16 or FP32?
+   if (s.at(0) == 'F' && bits >= 16) {
+     if (bits == 16) return StorageType::FP16;
+     return StorageType::FLOAT32;
+   }
+   // BF16 ?
+   if (bits == 16 && (s.at(1) == 'F' || s.at(1) == 'f')) 
+     return StorageType::BF16;
+   switch (bits) {
+        case 1: return StorageType::BIN1;
+        case 2: return StorageType::INT2;
+        case 3: return StorageType::INT3;
+        case 4: return StorageType::INT4;
+        case 5: return StorageType::INT5;
+        case 6: return StorageType::INT6;
+        case 8: return StorageType::INT8;
+        case 16:return StorageType::INT16;
+	default:
+	   HNSWERR << "Support for INT"<< bits << " not implemented!\n";
+	   return StorageType::FLOAT32;
+   }
+}
+
 
 
     // Validation
@@ -54,30 +244,21 @@ extern "C" {
         return true;
     }
 
-    // Get epsilon for current metric
     float HnswConfig::get_epsilon() const {
-      return get_epsilon(metric);
-    }
-    float HnswConfig::get_epsilon(MetricSpace val) const {
         const float lowI = 0.000001f;
         const float lowC = 0.00001f;
         const float lowX = 0.001f;
         // Use metric-specific epsilon
-        switch (val) {
-            case MetricSpace::L2:
+
+        switch (specification.metric_) {
+            case Metric::L2:
                 if (default_epsilonL2 < lowX) break;  // Under threshold
 		return default_epsilonL2 * default_epsilonL2; // Square it
-            case MetricSpace::Cosine:
+            case Metric::Cosine:
 		if (default_epsilonIP < lowI) break; // Under threshold
-            case MetricSpace::InnerProduct:
+            case Metric::IP:
 		if (default_epsilonIP < lowC) break; // Under threshold
 		return default_epsilonIP;
-            case MetricSpace::Binary:
-		if (default_epsilonB < lowX) break;
-                return default_epsilonB;
-            case MetricSpace::Ternary:
-		if (default_epsilonT < lowX) break;
-                return default_epsilonT;
             default:
                 break;
         }
@@ -106,23 +287,30 @@ extern "C" {
     }
 
     // Binary serialization
-    void HnswConfig::save(std::ostream& os) const {
-        // Version marker
-        uint32_t version = 1;
-        os.write((char*)&version, sizeof(version));
-        // Write all fields
-#if 1 
-        // Write each field individually (portable)
+    void HnswConfig::save(std::ofstream& os) const {
+       // Write each field individually (portable)
         auto write_value = [&os](const auto& val) {
             os.write((char*)&val, sizeof(val));
         };
-        
+        // Version marker
+        write_value (config_version);
+
+        // Specification string
+        // NOTE: We use the string form to allow us to
+        // easily extend quantization and not having to
+        // worry about enums
+        write_string(os, specification);
+
+        // model 
+        write_string(os, model_name);
+        // Write all fields
         write_value(default_search_mode);
         write_value(max_elements);
         write_value(M);
         write_value(ef_construction);
         write_value(ef_search);
-        write_value(metric);
+        // write_value(specification.metric_);
+        // write_value(specification.rescore_);
         write_value(bert_n_threads);
         write_value(max_tokens_per_chunk);
         write_value(overlap_percent);
@@ -136,11 +324,8 @@ extern "C" {
         write_value(default_epsilon);
         write_value(default_epsilonL2);
         write_value(default_epsilonIP);
-        write_value(default_epsilonB);
-        write_value(default_epsilonT);
         write_value(min_candidates);
         write_value(max_candidates_cap);
-	write_value(enable_rescoring);
         write_value(knn_lookahead_scale);
         write_value(flush_threshold);
         write_value(flush_offsets_each);
@@ -150,34 +335,29 @@ extern "C" {
 
         write_value(auto_tune_ef);
         write_value(auto_tune_eps);
-
-#else // Less portable
-        // This is UNSAFE - writes raw struct including padding and pointers
-        // Different compilers/architectures have different layouts
-        os.write((char*)this, sizeof(HnswConfig));
-#endif
     }
 
-    void HnswConfig::load(std::istream& is) {
-        // Read version
-        uint32_t version;
-        is.read((char*)&version, sizeof(version));
-        
-        if (version != 1) {
-            throw std::runtime_error("Unsupported config version");
-        }
-#if 1 
-// Read each field individually
+    void HnswConfig::load(std::ifstream& is) {
         auto read_value = [&is](auto& val) {
             is.read((char*)&val, sizeof(val));
         };
-        
+
+        // Read version
+        uint16_t version;
+        read_value(version);
+        if (version != config_version) {
+            throw std::runtime_error("Unsupported config version");
+        }
+        specification = read_string(is); // Get the specification
+        model_name = read_string(is); // Get the model name
+        // Read each field individually
         read_value(default_search_mode);
         read_value(max_elements);
         read_value(M);
         read_value(ef_construction);
         read_value(ef_search);
-        read_value(metric);
+        // read_value(specification.metric_);
+        // read_value(specification.rescore_);
         read_value(bert_n_threads);
         read_value(max_tokens_per_chunk);
         read_value(overlap_percent);
@@ -191,11 +371,8 @@ extern "C" {
         read_value(default_epsilon);
         read_value(default_epsilonL2);
         read_value(default_epsilonIP);
-	read_value(default_epsilonB);
-        read_value(default_epsilonT);
         read_value(min_candidates);
         read_value(max_candidates_cap);
-        read_value(enable_rescoring); 
         read_value(knn_lookahead_scale);
         read_value(flush_threshold);
         read_value(flush_offsets_each);
@@ -206,10 +383,6 @@ extern "C" {
         read_value(auto_tune_ef);
         read_value(auto_tune_eps);
 
-#else
-        // Read all fields
-        is.read((char*)this, sizeof(HnswConfig));
-#endif
         
         if (!validate()) {
             throw std::runtime_error("Loaded invalid configuration");
@@ -242,6 +415,7 @@ extern "C" {
         }
     }
 
+#if 0 /* NOT NEEDED */
     // Merge/override with another config
     // Only copies fields that differ from defaults
     void HnswConfig::merge_from(const HnswConfig& other) {
@@ -249,6 +423,7 @@ extern "C" {
         // This is a simple approach - copies everything
         *this = other;
     }
+#endif
 
     // Selective merge (only override non-default values)
     void HnswConfig::merge_overrides(const HnswConfig& override, const HnswConfig& defaults) {
@@ -263,7 +438,7 @@ extern "C" {
         OVERRIDE_IF_DIFFERENT(M);
         OVERRIDE_IF_DIFFERENT(ef_construction);
         OVERRIDE_IF_DIFFERENT(ef_search);
-        OVERRIDE_IF_DIFFERENT(metric);
+        OVERRIDE_IF_DIFFERENT(specification.metric_);
         OVERRIDE_IF_DIFFERENT(bert_n_threads);
         OVERRIDE_IF_DIFFERENT(max_tokens_per_chunk);
         OVERRIDE_IF_DIFFERENT(overlap_percent);
@@ -277,17 +452,17 @@ extern "C" {
         OVERRIDE_IF_DIFFERENT(default_epsilon);
         OVERRIDE_IF_DIFFERENT(default_epsilonL2);
         OVERRIDE_IF_DIFFERENT(default_epsilonIP);
-        OVERRIDE_IF_DIFFERENT(default_epsilonB);
-        OVERRIDE_IF_DIFFERENT(default_epsilonT);
         OVERRIDE_IF_DIFFERENT(min_candidates);
         OVERRIDE_IF_DIFFERENT(max_candidates_cap);
-        OVERRIDE_IF_DIFFERENT(enable_rescoring);
+        OVERRIDE_IF_DIFFERENT(specification.rescore_);
         OVERRIDE_IF_DIFFERENT(knn_lookahead_scale);
         OVERRIDE_IF_DIFFERENT(flush_threshold);
         OVERRIDE_IF_DIFFERENT(flush_offsets_each);
         OVERRIDE_IF_DIFFERENT(parallel_merge);
         OVERRIDE_IF_DIFFERENT(merge_threads);
         OVERRIDE_IF_DIFFERENT(normalize_embeddings);
+
+        OVERRIDE_IF_DIFFERENT(specification);
 
         OVERRIDE_IF_DIFFERENT(auto_tune_ef);
         OVERRIDE_IF_DIFFERENT(auto_tune_eps);
@@ -304,7 +479,8 @@ extern "C" {
         os << "  M: " << M << "\n";
         os << "  ef_construction: " << ef_construction << "\n";
         os << "  ef_search: " << ef_search << "\n";
-        os << "  metric: " << metric_space_to_string(metric) << "\n";
+        os << "  specification: " << specification << "\n";
+//        os << "  metric: " << hnswlib::metric_to_string(specification.metric_) << "\n";
         os << "  normalize_embeddings: " << (normalize_embeddings ? "yes" : "no") << "\n";
         
         os << "\nEmbedding:\n";
@@ -321,15 +497,14 @@ extern "C" {
         os << "  minN (adaptive): " << default_minN << "\n";
         os << "  lookahead (adaptive): " << default_lookahead << "\n";
         os << "  gapDelta (adaptive): " << default_gapDelta << "\n";
-        os << "  enable_rescoring (Binary & Ternary): "
-		<< (enable_rescoring ? "yes" : "no" ) << "\n";
+        os << "  enable_rescoring (quantized): " << (enable_rescoring() ? "yes" : "no" ) << "\n";
         
         os << "\nEpsilon search:\n";
         os << "  epsilon: " << default_epsilon << "\n";
         os << "  epsilonL2: " << default_epsilonL2 << "\n";
         os << "  epsilonIP: " << default_epsilonIP << "\n";
-        os << "  epsilonB: " << default_epsilonB << "\n";
-        os << "  epsilonT: " << default_epsilonB << "\n";
+        // os << "  epsilonB: " << default_epsilonB << "\n";
+        // os << "  epsilonT: " << default_epsilonB << "\n";
         os << "  min_candidates: " << min_candidates << "\n";
         os << "  max_candidates_cap: " << max_candidates_cap << "\n";
         
@@ -401,22 +576,47 @@ extern "C" {
             if (key == "default_epsilon") { default_epsilon = std::stof(value); return true; }
             if (key == "default_epsilonL2") { default_epsilonL2 = std::stof(value); return true; }
             if (key == "default_epsilonIP") { default_epsilonIP = std::stof(value); return true; }
-            if (key == "default_epsilonB") { default_epsilonB = std::stof(value); return true; }
-            if (key == "default_epsilonT") { default_epsilonT = std::stof(value); return true; }
-            
-            // bool fields
-            if (key == "debug") { debug = parse_bool(value); return true; }
-            if (key == "flush_offsets_each") { flush_offsets_each = parse_bool(value); return true; }
-            if (key == "parallel_merge") { parallel_merge = parse_bool(value); return true; }
-            if (key == "normalize_embeddings") { normalize_embeddings = parse_bool(value); return true; }
-            if (key == "enable_rescoring") { enable_rescoring = parse_bool(value); return true; }
+            // if (key == "default_epsilonB") { default_epsilonB = std::stof(value); return true; }
+            // if (key == "default_epsilonT") { default_epsilonT = std::stof(value); return true; }
 
-            if (key == "auto_tune_ef") { auto_tune_ef = parse_bool(value); return true; }
-            if (key == "auto_tune_eps") { auto_tune_eps = parse_bool(value); return true; }
+            // bool fields
+
+#define PROCESS_BOOL_FIELD(field_name, field_var) \
+            if (key == field_name) { \
+                auto val = parse_bool(value); \
+                if (val) { \
+                    field_var = *val; \
+                    return true; \
+                } \
+                return false; \
+            }
+
+            PROCESS_BOOL_FIELD("debug", debug);
+            PROCESS_BOOL_FIELD("flush_offsets_each", flush_offsets_each);
+            PROCESS_BOOL_FIELD("parallel_merge", parallel_merge);
+            PROCESS_BOOL_FIELD("normalize_embeddings", normalize_embeddings);
+            PROCESS_BOOL_FIELD("enable_rescoring", specification.rescore_);
+            PROCESS_BOOL_FIELD("auto_tune_ef", auto_tune_ef);
+            PROCESS_BOOL_FIELD("auto_tune_eps", auto_tune_eps);
             
             // enum fields
-            if (key == "metric") { metric = string_to_metric_space(value); return true; }
-            if (key == "default_search_mode") { default_search_mode = string_to_search_mode(value); return true; }
+            if (key == "metric") {
+                auto val = hnswlib::string_to_metric(value);
+                if (val) {
+                   specification.metric_ = *val;
+                   return true;
+                }
+                return false;
+            }
+            if (key == "default_search_mode") {
+		auto mode = string_to_search_mode(value);
+		if (mode) {
+		   default_search_mode = *mode; return true;
+                }
+		return false;
+             }
+
+            if (key == "specification") { return specification.parse(value); }
             
             std::cerr << "Unknown config key: " << key << "\n";
             return false;
@@ -459,8 +659,8 @@ extern "C" {
         if (key == "default_epsilon") return std::to_string(default_epsilon);
         if (key == "default_epsilonL2") return std::to_string(default_epsilonL2);
         if (key == "default_epsilonIP") return std::to_string(default_epsilonIP);
-        if (key == "default_epsilonB") return std::to_string(default_epsilonB);
-        if (key == "default_epsilonT") return std::to_string(default_epsilonT);
+        // if (key == "default_epsilonB") return std::to_string(default_epsilonB);
+        // if (key == "default_epsilonT") return std::to_string(default_epsilonT);
 
         
         // bool fields
@@ -468,16 +668,32 @@ extern "C" {
         if (key == "flush_offsets_each") return flush_offsets_each ? "true" : "false";
         if (key == "parallel_merge") return parallel_merge ? "true" : "false";
         if (key == "normalize_embeddings") return normalize_embeddings ? "true" : "false";
-        if (key == "enable_rescoring") return enable_rescoring ? "true" : "false";
+        if (key == "enable_rescoring") return enable_rescoring() ? "true" : "false";
 	if (key == "auto_tune_ef") return auto_tune_ef ? "enabled" : "off";
 	if (key == "auto_tune_eps") return auto_tune_eps ? "enabled" : "off";
         
         // enum fields
-        if (key == "metric") return metric_space_to_string(metric);
+        if (key == "metric") return hnswlib::metric_to_string(specification.metric_);
         if (key == "default_search_mode") return search_mode_to_string(default_search_mode);
         
         throw std::runtime_error("Unknown config key: " + key);
     }
+
+
+#if 0
+std::optional<HnswConfig> findHnswConfig() {
+   auto configResult = findInPathsWithData<HnswConfig>(
+    "schmate.conf", 
+    "/etc:/usr/local/etc:~/.config",
+    [](const fs::path& path) -> std::optional<HnswConfig> {
+        HnswConfig cfg;
+        if (!cfg.load_from_file(path)) return std::nullopt;
+        return cfg;
+    });
+   return configResult;
+}
+
+#endif
 
 /*
 Rule of Thumb:
@@ -489,3 +705,106 @@ Rule of Thumb:
 | > 1 M      | 300–800+  |
 
 */
+
+
+
+/*
+Case 1: "L2-BIN1-RABITQ"
+
+tokens = ["L2", "BIN1", "RABITQ"]
+
+quant = BIN1 → not PASS → parse mode
+
+storage unused
+
+Case 2: "L2-PASS-INT4"
+
+tokens = ["L2", "PASS", "INT4"]
+
+quant = PASS → use storage_type instead of mode
+*/
+
+bool SpecificationString::parse(const std::string& s) {
+    // Split on "-"
+    std::vector<std::string> tokens;
+    std::stringstream ss(s);
+    std::string item;
+
+    while (std::getline(ss, item, '-')) {
+        tokens.push_back(item);
+    }
+
+    // Want to support: L2-BIN1-RABITQ-RESCORE. We'll assume if
+    // a 4th element is defined than its to rescore!
+
+    if (tokens.size() == 4) {
+      rescore_ = true;
+    } else if(tokens.size() != 3) {
+        // throw std::runtime_error("Invalid format: expected Metric-Quant-Mode|Storage");
+	return false;
+    }
+
+    // Parse metric 
+    {
+      auto metric = hnswlib::string_to_metric(tokens[0]);
+      if (metric) metric_ = *metric;
+    }
+
+    // If quant == PASS, interpret the last token as StorageType
+    if (tokens[1] == "PASS" || tokens[1] == "pass") {
+        rescore_ = false;
+        storage_type_ = string_to_storage_type(tokens[2]);
+        auto q = hnswlib::toQuantMode(storage_type_);
+	quantization_ =  q ? *q : QuantMode::NONE;
+
+        use_storage_ = true;
+    } else {
+        // Normal case: last tokens are bin/quant mode
+        auto q = string_to_quantzation(tokens[1]);
+        if (q) {
+            quantization_  = *q; 
+            if (quantization_ == QuantMode::NONE) 
+	    rescore_ = false;
+        }
+        auto mode = string_to_bin_mode(tokens[2]);
+        if (mode) mode_ = *mode;
+        use_storage_ = false;
+    }
+
+    // Debug for now
+    LOG_DEBUG_S() << "\"" << s << "\"-->\"" << *this << "\"\n"; 
+    return true;
+}
+
+SpecificationString::  operator std::string() const {
+    std::string result;
+    // Metric
+    result += hnswlib::metric_to_string(metric_);
+    result += "-";
+
+    if (use_storage_ && quantization_ != QuantMode::NONE) {
+        result += hnswlib::bin_mode_to_string(mode_);
+    } else { // Quant
+        if (use_storage_) result += "Pass";
+        else result += hnswlib::quantization_to_string(quantization_);
+    }
+    result += "-";
+
+    // Depending on PASS or not, pick mode vs storage
+    if (use_storage_)
+        result += storage_type_to_string(storage_type_);
+    else
+        result += bin_mode_to_string(mode_);
+
+    // In parsing we only worry about 4th element so -ANYTHING
+    // NOTE: We check plausibility here to not propigate @!#
+    // RE-Scoring can only make sense when we have quantization
+    if (rescore_ && !use_storage_ && quantization_ != QuantMode::NONE)
+       result += "-RESCORE";
+
+    return result;
+
+}
+
+
+}; // Namespace

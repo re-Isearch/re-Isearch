@@ -17,6 +17,8 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 #include <stdarg.h>
 #include <limits.h>
 
+#include <string_view>
+
 #include "gdt.h"
 #include <iostream>
 #include "ctype.hxx"
@@ -287,6 +289,15 @@ public:
     const unsigned char *   c_ustr() const { return (const unsigned char * const)m_pchData; }
     ///
     const char*             data() const { return (const char *)m_pchData;}
+
+    // begin/end pattern
+    const char*             begin() const { return data(); }
+    const char*             end()   const { return data() + Len(); }
+
+    // Interface to std::string
+    operator std::string_view() const noexcept { return std::string_view(data(), size()); }
+    std::string toStdString() const { return std::string(data(), size()); }
+
     ///
     const char* GetData() const { return m_pchData; }
     const char* GetData(size_t n) const { return &m_pchData[n]; }
@@ -580,6 +591,12 @@ public:
   bool Glob(const CHR *CString) const;
   bool FieldMatch(const STRING& OtherString) const;
   bool FieldMatch(const CHR *CString) const;
+
+ // Fuzzy
+  inline bool MatchFuzzy(const STRING& OtherString) const {
+    extern int FuzzyCompare(const STRING&, const STRING&);
+    return FuzzyCompare(*this, OtherString) == 0;; // This is hardwired in fuzzy.hxx to 75%
+  }
 
     //@}
   //@}

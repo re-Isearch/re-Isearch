@@ -1,9 +1,9 @@
-
 #include "BertIndexManager.hpp"
 #include <stdexcept>
 
+using namespace hnswlib;
 
-
+#if 0
 /* re-Isearch will enter here
 
   EmbeddingIndexer->append ( DocTypePtr->ParseBuffer(Buffer), FieldName, fc.Start(), fc.End(),type))
@@ -27,14 +27,12 @@ will be fc.End() - fc.Start() to represent the length;
 
 Above as pointer: this way we can have the Manager persist.
 
-void HNSWIndex::append( const string& buffer, const string& fieldname,  GPTYPE id, GPTYPE end) {
-     Manager->append(fieldname, buffer, id);
+void HNSWIndex::append( const string& buffer, const string& fieldname,  GPTYPE start, GPTYPE end) {
+     Manager->append(fieldname, buffer, start, end - start);
 
 }
-
-
-
 */
+#endif
 
 #if USE_LRUCACHE
 
@@ -50,7 +48,7 @@ void HNSWIndex::append( const string& buffer, const string& fieldname,  GPTYPE i
 
 */
 
-BertIndexManager::BertIndexManager(SBertGGML & e, HnswConfig & c, size_t max_cached, bool s) : embedder(e), cfg(c),
+BertIndexManager::BertIndexManager(SBertGGML & e, hnswlib::HnswConfig & c, size_t max_cached, bool s) : embedder(e), cfg(c),
       searchOnly (s), index_cache(max_cached, [](const std::string &key, std::shared_ptr<ShardedIndex> idx) {
           if (idx) {
               LOG_INFO_S() << "Evicting index: " << key;
@@ -64,6 +62,8 @@ ShardedIndex & BertIndexManager::getOrCreate(const std::string &name)
 {
     auto idx = index_cache.get(name);
     if (!idx) {
+
+//std::cerr << "CFG Storage XXXX = " << storage_type_to_string(cfg.storage_type()) << std::endl;
         auto new_index = std::make_shared<ShardedIndex>(embedder, cfg, name, searchOnly);
         index_cache.put(name, new_index);
         return *new_index;
@@ -73,7 +73,7 @@ ShardedIndex & BertIndexManager::getOrCreate(const std::string &name)
 
 
 #else /* NOT LRU_CACHE */
-BertIndexManager::BertIndexManager(SBertGGML & e, HnswConfig &c) : embedder(e), cfg(c)
+BertIndexManager::BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c) : embedder(e), cfg(c)
 {}
 
 ShardedIndex& BertIndexManager::getOrCreate(const std::string & name) {
@@ -85,14 +85,15 @@ ShardedIndex& BertIndexManager::getOrCreate(const std::string & name) {
 }
 #endif // LRU_CACHE
 
-void BertIndexManager::append(const std::string & name, const std::string & sentence) {
+void BertIndexManager::append(const std::string & name, const std::string_view sentence) {
     if (searchOnly) LOG_ERROR_S() << "BertIndexManager::append(" << name << ") called with searchOnly true (1)";
     getOrCreate(name).append(sentence);
 }
 
-void BertIndexManager::append(const std::string & name, const std::string & sentence, int64_t sentence_id) {
+void BertIndexManager::append(const std::string & name, const std::string_view sentence, int64_t sentence_id,
+	uint32_t span) {
     if (searchOnly) LOG_ERROR_S() << "BertIndexManager::append(" << name << ") called with searchOnly true (2)";
-    getOrCreate(name).append(sentence, sentence_id);
+    getOrCreate(name).append(sentence, sentence_id, span);
 }
 
 void BertIndexManager::remove(const std::string & name, size_t label, size_t shard) {

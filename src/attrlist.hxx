@@ -208,6 +208,10 @@ public:
   void        AttrSetPhonetic(const bool Phonetic);
   bool AttrGetPhonetic() const;
 
+  // Add support for fuzzy (104)
+  void        AttrSetFuzzy(const bool Set);
+  bool        AttrGetFuzzy() const;
+
   void        AttrSetExactTerm(const bool Exact);
   bool AttrGetExactTerm() const;
 

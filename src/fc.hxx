@@ -23,8 +23,10 @@ public:
   GPTYPE GetFieldStart() const { return FieldStart;};
   GPTYPE GetFieldEnd() const { return FieldEnd;};
 
-  GPTYPE      GetLength() const { return FieldEnd-FieldStart+1; }
-  bool IsEmpty() const   { return FieldStart == FieldEnd && FieldStart == 0; }
+  // A FC should never end before it starts!
+  size_t Span() const      { return FieldEnd >= FieldStart ? FieldEnd-FieldStart : 0; }
+  size_t GetLength() const { return Span()+1; }
+  bool   IsEmpty() const   { return FieldStart == FieldEnd && FieldStart == 0; }
 
   operator STRING() const;
 

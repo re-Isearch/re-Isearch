@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include "Logger.hpp"
 
-static const char magic[8] = "SBIDXv1";
+static const char magic[8] = "SBIDXv2";
 
 OffsetFile::OffsetFile(const std::string &path, size_t max_entries)
     : max_entries(max_entries)
@@ -205,7 +205,6 @@ bool OffsetFile::validate_offsets(bool fix, bool verbose) {
 
     return bad_count == 0;
 }
-
 
 
 // detect used entries without locking (caller must hold lock or accept race)
