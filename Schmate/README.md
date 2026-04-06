@@ -21,6 +21,19 @@ While this code uses bert.cpp, support for llama.cpp is also provided.
 === Interface to re-Isearch ===
 
 Interface code to re-Isearch is provided by the EmbeddingIndexer class.
+
+It provides the following 3 main methods to re-Isearch:
+1) <pre>inline bool Append(const STRING& buffer, const STRING &fieldname, const FC& fc)</pre>
+2) <pre>PIRSET  search(const STRING &fieldname, const STRING &query)</pre>
+3) <pre>size_t deleteDeleted(const STRING &fieldname)</pre>
+
+If during a HNSW search a deleted record is encountered it get automatically deleted from the HNSW index.  
+Should the number of deleted vectors surpass a cutoff, the search is re-run (now with the just encountered deleted elements also marked in the HNSW index as deleted).
+
+Since the HNSW index can return many deleted elements from the perspective of the re-Isearch index, we need to sometimes make sure that the HNSW index also marks the deleted as deleted. That's the function of the 3rd method: literally to delete in the HNSW index the deleted from the re-Isaerch index.
+
+
+
 It reads the Section "Embedding" in the database configuration (db.ini)
 for the project directory ("project").
 
@@ -43,7 +56,7 @@ NOTE: The tool "config_editor" can be used to view/edit/modify the configuration
 
 Example of a configuration (show command):
 <pre>
-> === HNSW Configuration ===
+=== HNSW Configuration ===
 Default search mode: Knn
 
 Index parameters:
