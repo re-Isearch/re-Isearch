@@ -18,6 +18,8 @@ All code is implemented in modern C++17, optimized for macOS and Linux.
 
 While this code uses bert.cpp, support for llama.cpp is also provided.
 
+=== Interface to re-Isearch ===
+
 Interface code to re-Isearch is provided by the EmbeddingIndexer class.
 It reads the Section "Embedding" in the database configuration (db.ini)
 for the project directory ("project").
@@ -36,3 +38,5 @@ It then loads the HNSW Configuration in the order:
 This design allows us to build searchable indexes using different embedding models by exploiting virtual targets: recall a single searchable virtual index can contain up to 255 physical indexes.
 
 To handle multiple embedding models we'll let each element in the ensemble have its own model.. Eg. a virtual DB with two DBs: A and B. DbA for modelA and DbB for modelB.  A search of the ensembed A+B would search both each with their own model..
+
+MOTE: The tool "config_editor" can be used to view/edit/modify the configuration files.
