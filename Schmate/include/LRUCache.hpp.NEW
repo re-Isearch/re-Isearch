@@ -1,0 +1,118 @@
+#pragma once
+#include <list>
+#include <unordered_map>
+#include <mutex>
+#include <memory>
+#include <vector>
+#include <string>
+#include <functional>
+#include <optional>
+
+#define LRU_CACHE 1
+
+
+/**
+ * @brief Thread-safe Least Recently Used cache for storing large objects (e.g. ShardedIndex).
+ *
+ * @tparam Key   key type (e.g. std::string)
+ * @tparam Value value type (e.g. std::shared_ptr<ShardedIndex>)
+ */
+template<typename Key, typename Value>
+class LRUCache {
+public:
+    using EvictCallback = std::function<void(const Key&, Value&)>;
+
+    explicit LRUCache(size_t capacity = 8)
+        : max_size(capacity) {}
+
+    void set_evict_callback(EvictCallback cb) {
+        evict_callback = std::move(cb);
+    }
+
+    void set_capacity(size_t capacity) {
+        std::scoped_lock lock(mutex);
+        max_size = capacity;
+        trim_to_capacity();
+    }
+
+    bool contains(const Key& key) {
+        std::scoped_lock lock(mutex);
+        return cache_map.find(key) != cache_map.end();
+    }
+
+    std::optional<Value> get(const Key& key) {
+        std::scoped_lock lock(mutex);
+        auto it = cache_map.find(key);
+        if (it == cache_map.end()) return std::nullopt;
+
+        // Move accessed element to front
+        cache_list.splice(cache_list.begin(), cache_list, it->second);
+        return it->second->second;
+    }
+
+    void put(const Key& key, Value value) {
+        std::scoped_lock lock(mutex);
+        auto it = cache_map.find(key);
+        if (it != cache_map.end()) {
+            // Update existing and move to front
+            it->second->second = std::move(value);
+            cache_list.splice(cache_list.begin(), cache_list, it->second);
+            return;
+        }
+
+        // New insert
+        cache_list.emplace_front(key, std::move(value));
+        cache_map[key] = cache_list.begin();
+
+        trim_to_capacity();
+    }
+
+    size_t size() const {
+        std::scoped_lock lock(mutex);
+        return cache_map.size();
+    }
+
+    // Apply a lambda to each element (used by flush_all)
+    template<typename Func>
+    void for_each(Func fn) {
+        std::scoped_lock lock(mutex);
+        for (auto &pair : cache_list)
+            fn(pair.first, pair.second);
+    }
+
+    // Return a snapshot copy for safe iteration outside the mutex
+    std::vector<std::pair<Key, Value>> snapshot() {
+        std::scoped_lock lock(mutex);
+        std::vector<std::pair<Key, Value>> copy;
+        copy.reserve(cache_list.size());
+        for (auto &pair : cache_list)
+            copy.emplace_back(pair.first, pair.second);
+        return copy;
+    }
+
+    void clear() {
+        std::scoped_lock lock(mutex);
+        cache_map.clear();
+        cache_list.clear();
+    }
+
+private:
+    void trim_to_capacity() {
+        while (cache_map.size() > max_size) {
+            auto last = std::prev(cache_list.end());
+            if (evict_callback)
+                evict_callback(last->first, last->second);
+            cache_map.erase(last->first);
+            cache_list.pop_back();
+        }
+    }
+
+    size_t max_size;
+    mutable std::mutex mutex;
+
+    std::list<std::pair<Key, Value>> cache_list;
+    std::unordered_map<Key, typename std::list<std::pair<Key, Value>>::iterator> cache_map;
+
+    EvictCallback evict_callback;
+};
+

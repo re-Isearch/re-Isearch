@@ -1532,5 +1532,27 @@ class HierarchicalNSW : public AlgorithmInterface<dist_t> {
         HNSWINFO << "integrity ok, checked " << connections_checked << " connections\n";
         return true;
     }
+
+    // This is a callback to delete
+    size_t updateDeletedElements(std::function<bool(labeltype)> isDeleted) {
+        std::vector<labeltype> toDelete;
+
+        for (auto& [label, internal_id] : label_lookup_) {
+            if (isDeleted(label)) {
+                toDelete.push_back(label);
+            }
+        }
+
+        for (auto label : toDelete) {
+            markDelete(label);
+        }
+       return toDelete.size();
+    }
+
 };
+
+
+
+
+
 }  // namespace hnswlib

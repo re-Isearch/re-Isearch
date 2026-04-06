@@ -26,6 +26,11 @@ Description:	Class INDEX
 #include "bboxlist.hxx"
 #include "fuzzy.hxx"
 
+#ifdef VECTOR_INDEX
+#include "EmbeddingIndexer.hpp"
+class EmbeddingIndexer;
+#endif
+
 class FPT;
 class Dictionary;
 
@@ -385,6 +390,9 @@ private:
   bool wrongEndian;
   bool useSoundex;
   INT         IndexNum; // count of indexes to merge
+#ifdef VECTOR_INDEX
+  EmbeddingIndexer *embeddingIndexer;
+#endif
 
   // Volatile and active stuff
 

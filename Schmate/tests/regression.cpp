@@ -16,7 +16,7 @@ struct TestConfig {
     size_t k = 5;
     size_t ef_construction = 200;
     size_t ef_search = 300; // 50;
-    size_t M = 48; // 16;
+    size_t M = 16; // 16;
     
     // Ground truth parameters
     bool compute_ground_truth = true;
@@ -64,10 +64,11 @@ struct TestResult {
     
     static std::string quant_mode_to_string(hnswlib::QuantMode m) {
         switch(m) {
-            case hnswlib::QuantMode::BIN1: return "BIN1";
-            case hnswlib::QuantMode::INT158: return "INT158";
-            case hnswlib::QuantMode::INT4: return "INT4";
-            case hnswlib::QuantMode::INT8: return "INT8";
+            case hnswlib::QuantMode::BIN1:  return "BIN1";
+            case hnswlib::QuantMode::INT158:return "INT158";
+            case hnswlib::QuantMode::INT4:  return "INT4";
+            case hnswlib::QuantMode::INT8:  return "INT8";
+	    case hnswlib::QuantMode::NONE:  return "Float32";
             default: return "Unknown";
         }
     }
@@ -259,7 +260,7 @@ TestResult run_test(
     result.quant_mode = use_quantization ? quant_mode :  hnswlib::QuantMode::NONE;
     result.bin_mode = use_quantization ?  bin_mode : hnswlib::OptBinMode::PASS;
 
-    bool enable_rescoring = false; // use_quantization;
+    bool enable_rescoring = rescore; // use_quantization;
     
     try {
         // Create index
@@ -301,6 +302,7 @@ TestResult run_test(
         
         auto query_start = std::chrono::high_resolution_clock::now();
         
+std::cerr << "Run the queries\n";
         for (size_t q = 0; q < queries.size(); ++q) {
             auto p= index.searchKnn(queries[q].data(), config.k);
 	    auto res = index.sort_best_first(p);
@@ -321,7 +323,7 @@ TestResult run_test(
         auto query_end = std::chrono::high_resolution_clock::now();
         result.query_time_ms = std::chrono::duration<double, std::milli>(query_end - query_start).count();
         
-
+std::cerr << "Calc recall\n";
         // Calculate recall
         if (!ground_truth.empty()) {
             result.recall_at_k = calculate_recall(results, ground_truth, config.k);
@@ -335,6 +337,8 @@ TestResult run_test(
         // Test save/load
         std::string temp_file = "/tmp/temp_index.bin";
         result.save_load_success = false;
+
+        // index.printStats();
         
         if (index.saveIndex(temp_file)) {
             hnswlib::UnifiedIndex loaded_index(
@@ -347,6 +351,7 @@ TestResult run_test(
                 config.M,
                 config.ef_construction
             );
+std::cerr << "NOW LOAD" << std::endl;
 
             if (loaded_index.loadIndex(temp_file)) {
                 // Verify loaded index works
@@ -356,6 +361,7 @@ TestResult run_test(
             }
         }
 
+std::cerr << "Cleanup" << std::endl;
         // Cleanup
         std::remove(temp_file.c_str());
         
@@ -453,8 +459,9 @@ int main() {
         
         // Test non-quantized
         std::cout << "\nTesting non-quantized...\n";
-        auto result = run_test(config, data, queries, ground_truth,
-                              "Float32", metric, false);
+        auto result = run_test(config, data, queries, ground_truth, "Float32",
+		metric, false, hnswlib::QuantMode::NONE, hnswlib::OptBinMode::PASS);
+
         result.print();
         all_results.push_back(result);
         
@@ -476,8 +483,7 @@ int main() {
                 std::string test_name = TestResult::quant_mode_to_string(qmode) + "-" +
                                        TestResult::bin_mode_to_string(bmode);
                 
-                auto result = run_test(config, data, queries, ground_truth,
-                                      test_name, metric, true, qmode, bmode);
+                auto result = run_test(config, data, queries, ground_truth, test_name, metric, true, qmode, bmode);
                 result.print();
                 all_results.push_back(result);
             }

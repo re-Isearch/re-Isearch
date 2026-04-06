@@ -1,9 +1,5 @@
-#include <vector>
-#include <string>
-#include <cstdint>
-#include <stdexcept>
-#include <cstring>
-#include <variant>
+#include <sstream>
+#include <iomanip>
 #include "StringEmbedding.hpp"
 
 namespace schmate_util { 
@@ -133,6 +129,50 @@ DataType inferDataType(const std::string& hexStr, size_t targetDimension) {
     return DataType::TEXT;
 }
 
+
+// Convert now vectors to Hex encoded..
+
+std::string binaryToHex(const std::vector<int>& values) {
+    std::ostringstream oss;
+    for (size_t i = 0; i < values.size(); i += 4) {
+        uint8_t nibble = 0;
+        for (size_t b = 0; b < 4 && (i + b) < values.size(); b++)
+            nibble |= (values[i + b] & 1) << (3 - b);
+        oss << std::hex << nibble;  // one hex char per nibble
+    }
+    return oss.str();
+}
+
+std::string int4ToHex(const std::vector<int>& values) {
+    // Pack two int4 values per byte (high nibble, low nibble)
+    std::ostringstream oss;
+    for (size_t i = 0; i < values.size(); i += 2) {
+        uint8_t hi = values[i]  & 0x0F;
+        uint8_t lo = (i + 1 < values.size()) ? (values[i + 1] & 0x0F) : 0;
+        uint8_t byte = (hi << 4) | lo;
+        oss << std::hex << std::setw(2) << std::setfill('0') << (int)byte;
+    }
+    return oss.str();
+}
+
+std::string int8ToHex(const std::vector<int>& values) {
+    std::ostringstream oss;
+    for (auto v : values) {
+        uint8_t byte = static_cast<uint8_t>(static_cast<int8_t>(v));
+        oss << std::hex << std::setw(2) << std::setfill('0') << (int)byte;
+    }
+    return oss.str();
+}
+
+std::string float32ToHex(const std::vector<float>& values) {
+    std::ostringstream oss;
+    for (auto v : values) {
+        uint32_t bits;
+        std::memcpy(&bits, &v, sizeof(bits));  // type-safe bit reinterpretation
+        oss << std::hex << std::setw(8) << std::setfill('0') << bits;
+    }
+    return oss.str();
+}
 
 
 

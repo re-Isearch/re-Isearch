@@ -90,7 +90,7 @@ BertIndex & ShardedIndex::current_shard() {
     return *shards.back();
 }
 
-BertIndex & ShardedIndex::get_shard(size_t i) {
+BertIndex & ShardedIndex::get_shard(size_t i) const {
     lock_guard<mutex> lock(mtx);
     if (i>=shards.size()) throw runtime_error("Invalid shard");
     return *shards[i];
@@ -107,11 +107,28 @@ void ShardedIndex::append(const string_view sentence, int64_t sid, uint32_t span
     current_shard().append(sentence, sid, span);
 }
 
+void ShardedIndex::remove(size_t label) {
+   for (auto &sh : shards) {
+     sh->remove(label);
+   }
+}
+
+
+std::vector<size_t> ShardedIndex::find_labels_by_sid(int64_t sid, size_t shard) const {
+  return get_shard(shard).find_labels_by_sid(sid);
+}
+
+
 void ShardedIndex::remove(size_t label, size_t shard) {
     get_shard(shard).remove(label);
 }
 void ShardedIndex::undelete(size_t label, const OffsetEntry &entry, size_t shard) {
     get_shard(shard).undelete(label, entry);
+}
+
+size_t ShardedIndex::removeDeletedElements(std::function<bool(size_t)>isDeleted, size_t shard)
+{
+    return get_shard(shard).removeDeletedElements(isDeleted);
 }
 
 /*
@@ -130,8 +147,6 @@ void ShardedIndex::undelete_byAddress(int64_t addr, size_t shard) {
 */
 
 // --- parallel search helper ---
-#if 1
-
 #include "ShardedIndex.hpp"
 #ifdef USE_THREADPOOL
 #include "ThreadPool.hpp"
@@ -162,6 +177,9 @@ std::vector<SearchResult> ShardedIndex::parallel_search(std::vector<std::unique_
           auto results = fn(*shard_ptr);
           auto end = std::chrono::high_resolution_clock::now();
 
+          // Tag each result with its shard number
+          for (auto& r : results) r.shard = i;
+
           double elapsed = std::chrono::duration<double, std::milli>(end - start).count();
           tuner_ptr->update_after_query(elapsed, shard_ptr->size(), shard_ptr->cfg.debug);
           return results;
@@ -179,59 +197,6 @@ std::vector<SearchResult> ShardedIndex::parallel_search(std::vector<std::unique_
 }
 
 
-#elif 1
-
-// --- smarter parallel_search ---
-template <typename Fn>
-std::vector<SearchResult> parallel_search(std::vector<std::unique_ptr<BertIndex>> &shards, Fn fn) {
-    if (shards.empty()) {
-        return {};
-    }
-
-    if (shards.size() == 1) {
-        // Fast path: no threading, no merge
-        return fn(*shards[0]);
-    }
-
-    std::vector<std::future<std::vector<SearchResult>>> futs;
-    futs.reserve(shards.size());
-
-    for (auto &sh : shards) {
-        futs.push_back(std::async(std::launch::async, [&]() {
-            return fn(*sh);
-        }));
-    }
-
-    std::vector<SearchResult> all;
-    for (auto &f : futs) {
-        auto part = f.get();
-        all.insert(all.end(), part.begin(), part.end());
-    }
-
-    // Sort descending by score
-    std::sort(all.begin(), all.end(),
-              [](auto &a, auto &b) { return a.score > b.score; });
-
-    return all;
-}
-
-
-#else
-template <typename Fn>
-vector<SearchResult> parallel_search(vector<unique_ptr<BertIndex>> &shards, Fn fn) {
-    vector<future<vector<SearchResult>>> futs;
-    for (auto &sh : shards) {
-        futs.push_back(async(launch::async, [&](){ return fn(*sh); }));
-    }
-    vector<SearchResult> all;
-    for (auto &f : futs) {
-        auto part = f.get();
-        all.insert(all.end(), part.begin(), part.end());
-    }
-    sort(all.begin(), all.end(), [](auto &a,auto &b){return a.score>b.score;});
-    return all;
-}
-#endif
 
 // search variants
 
@@ -667,3 +632,10 @@ void ShardedIndex::flush() {
         LOG_DEBUG_S() << "Flushed all shards for index '" << base_name << "'";
 }
 
+
+int64_t ShardedIndex::get_sentence_id(size_t label, size_t shard) {
+   if (shard >= shards.size()) {
+        throw std::runtime_error("get_sentence_id: invalid shard index");
+    }
+   return shards[shard]->get_sentence_id(label);
+}

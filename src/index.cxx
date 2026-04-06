@@ -467,6 +467,11 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
   IndexNum = 0;
   MemorySISCache = NULL;
   MemoryIndexCache = NULL;
+
+#ifdef VECTOR_INDEX
+  embeddingIndexer = NULL;
+#endif
+
   SisLimit = DefaultSisLength;
   ClippingThreshold = 0;
 
@@ -1304,14 +1309,14 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
               message_log (LOG_ERROR, "NSG and IVFFlat algorithms Not Yet Implemented. Using HSNW.");
 	    case FIELDTYPE::db_hnsw: /* HNSW */
 	    {
-#if 0 /* NOT YET */
-              //   BertIndexManager man
-	      if (EmbeddingIndexer &&
-		EmbeddingIndexer->Append ( DocTypePtr->ParseBuffer(Buffer), FieldName, fc))
+#ifdef VECTOR_INDEX
+	      // Create if not yet already created...
+	      if (embeddingIndexer == NULL) embeddingIndexer = new EmbeddingIndexer (Parent);
+	      if (embeddingIndexer.Ok() && embeddingIndexer->Append ( DocTypePtr->ParseBuffer(Buffer), FieldName, fc))
 		items++;
-#else
-	      message_log (LOG_ERROR, "Dense Vectors Not Yet Implemented");
-#endif
+#else /* NOT YET ENABLED */
+	      message_log (LOG_ERROR, "Dense Vectors Not Yet Enabled.");
+#endif /* VECTOR_INDEX */
 	      break;
 	    }
 
@@ -3787,6 +3792,22 @@ PIRSET INDEX::Search (const QUERY& Query)
                   // This is where we apply the ranking algorithm from Ken Lanfear
                   SetSpatialScores(NewIrset, FieldName, N,So,W,E);
                 }
+              else if (aFieldType.IsHNSW()) {
+#ifdef VECTOR_INDEX
+		if (embeddingIndexer == NULL) embeddingIndexer = new EmbeddingIndexer (Parent);
+		if (embeddingIndexer.Ok()) // HNSW index
+                {
+                   NewIrset = embeddingIndexer->search(Fieldname, Term);
+                } else {
+		   // Since this should not normally happen...
+		   Parent->SetErrorCode( 3 ); // Temporarily not available
+		   NewIrset = new IRSET (Parent);
+		}
+#else
+		Parent->SetErrorCode(3); //  "Unsupported search"
+                NewIrset = new IRSET (Parent);
+#endif /* VECTOR INDEX */
+	      }
               else if (FieldType.IsDate() || (aFieldType.IsDate() && SRCH_DATE(Term).Ok()))
                 {
                   if (gotRelation==false) Relation=ZRelEQ;
@@ -6906,6 +6927,12 @@ INDEX::~INDEX ()
       if (DebugMode) message_log (LOG_DEBUG, "Disposed of Memory Index Cache");
       MemoryIndexCache = NULL;
     }
+#ifdef VECTOR_INDEX
+  if (emembeddingIndexer) {
+    delete emembeddingIndexer;
+    emembeddingIndexer = NULL;
+  }
+#endif
   message_log (LOG_DEBUG, "Disposed of INDEX instance of '%s'", IndexFileName.c_str());
 }
 

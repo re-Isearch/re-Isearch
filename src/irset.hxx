@@ -271,13 +271,15 @@ public:
    Fill (1, TotalEntries, NULL)->Dump(Skip, os);
   };
 
+  void     Clear();
+
   ~atomicIRSET();
 private:
   typedef  bool (*peer_t) (const FC&, const FC&);
   OPOBJ   *Peer (const OPOBJ& OtherIrset, peer_t Func);
   OPOBJ   *Within(const OPOBJ& OtherIrset, const STRING& Fieldname,  peer_t Func);
   bool FieldExists(const STRING& FieldName);
-  void     Clear();
+//  void     Clear();
   PIRESULT StealTable();
   size_t   FindByMdtIndex(size_t Index) const;
   void     SortByScore ();

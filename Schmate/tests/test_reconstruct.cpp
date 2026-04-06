@@ -6,12 +6,16 @@
 #include <iostream>
 #include <cassert>
 
-int main() {
+using namespace hnswlib;
+
+int main(int argc, char **argv) {
     HnswConfig cfg;
     cfg.max_elements = 100;
     cfg.max_tokens_per_chunk = 5;  // force small chunks
     cfg.overlap_percent = 0.2f;    // 20% overlap
     cfg.debug = true;
+
+    Logger::instance().setPrefix(program_name(argv[0]));
 
     SBertGGML embedder("../lib/sbert.ggml");  // replace with your model path
     ShardedIndex sindex(embedder, cfg, "test_index");

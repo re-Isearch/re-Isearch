@@ -200,6 +200,8 @@ struct HnswConfig {
     float default_epsilonL2 = 1.41;  // Distance threshold, this is then ^2
     float default_epsilonIP = 0.5f;  // 
 
+    float deletion_threshold_pc = 0.2f;
+
     size_t min_candidates = 10;    // Min candidates for epsilon
     size_t max_candidates_cap = 0; // 0 = auto
 
@@ -291,6 +293,7 @@ struct HnswConfig {
     // Get all keys
     static std::vector<std::string> get_all_keys() {
         return {
+            "model",
             "max_elements", "M", "ef_construction", "ef_search", "metric",
             "bert_n_threads", "max_tokens_per_chunk", "overlap_percent",
             "debug", "default_k", "default_radius", "default_alpha",
@@ -300,7 +303,8 @@ struct HnswConfig {
             "min_candidates", "max_candidates_cap", "knn_lookahead_scale",
             "flush_threshold", "flush_offsets_each", "parallel_merge",
             "merge_threads", "normalize_embeddings", "default_search_mode",
-            "auto_tune_ef", "auto_tune_eps"
+            "auto_tune_ef", "auto_tune_eps",
+            "deletion_threshold_pc"
         };
     }
 

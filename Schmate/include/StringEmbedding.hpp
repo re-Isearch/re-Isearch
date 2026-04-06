@@ -10,6 +10,62 @@
 #include <cstring>
 #include <variant>
 
+
+/*
+
+The ability to store hex-encoded string represenations of vectors in documents provide a number of key benefits:
+
+Model agnostic (but with a hard consistency contraint)
+   Enables the use of other vectorization pipelines. All that matters is that they are consistent.
+   Any model that can produce vectors of the right dimension and encode them as hex strings can feed into it:
+   - A different SBERT model
+   - OpenAI embeddings
+   - Cohere, Mistral, or any other embedding API
+   - A custom fine-tuned model
+   - A completely different architecture like a CNN or autoencoder
+   The DB just stores and retrieves hex strings. The search engine just computes distances and does not care
+   where the numbers came from.
+
+   The consistency constraint is the one hard rule — you can't mix embeddings from different models in the
+   same index because:
+   - The vector spaces are incompatible — cosine similarity between a SBERT vector and an OpenAI vector is meaningless
+   - The dimensions may differ
+   - The magnitude distributions differ, breaking nearest-neighbour assumptions
+
+Storage agnosticism
+   The vector data is just a string as far as the database is concerned. No special binary column types,
+   no BLOB handling, no endianness issues. It can be stored, retrieved, replicated, and indexed by any
+   system that understands strings — including our own ingest.
+
+   NOTE: While the hex encoding is model-agnostic at the storage layer, the index layer must be model-homogeneous. 
+ 
+Human readable / debuggable:
+   You can look at a raw document and see the hex string. You can diff two revisions. You can spot corruption.
+   Binary BLOBs are opaque; hex strings are not.
+
+Self describing via inferDataType:
+   The hex string encodes enough information that inferDataType can reconstruct what it is — BINARY, INT4,
+   INT8, or FLOAT32 — just from the string and the target dimension.
+   The encoding is the type descriptor. No separate metadata column needed.
+
+Portability across languages:
+   Any language can encode and decode hex strings. A Python indexer, a C++ search engine, a JavaScript UI — they
+   all interoperate trivially without agreeing on binary serialisation formats, struct packing, or endianness.
+
+Compact but lossless:
+   Hex is more compact than base10 text representations of floats, and unlike base64 it is trivially human-readable.
+   For quantised vectors (BINARY, INT4, INT8) the savings over storing raw float32 are substantial — a BINARY
+   vector is 32x smaller than its float32 equivalent.
+
+The round-trip guarantee:
+   The functions vectorToHex / hexToVector pair ensures what goes in comes out identically — the hex string is a
+   stable, canonical representation that survives storage, retrieval, replication, and re-indexing without drift.
+
+   auto [values, type] = hexToVectorWithType(hexStr, targetDimension);
+   std::string hexBack = vectorToHex(values, type);
+
+*/
+
 namespace schmate_util { 
 
 enum class DataType {
@@ -62,6 +118,7 @@ inline VectorVariant hexToVector(const std::string& hexStr, size_t targetDimensi
             throw std::invalid_argument("Unknown data type");
     }
 }
+
 
 // Overloaded versions that return specific types
 inline std::vector<int> hexToVectorInt(const std::string& hexStr, size_t targetDimension) {
@@ -127,5 +184,79 @@ inline bool isHexFloat32Vector(const std::string_view str, size_t targetDimensio
 //   return HexFloat32VectorLength(str) == targetDimension * 8;
 //}
 
+// Functions to encode vectors into Hex strings
+std::string binaryToHex(const std::vector<int>& values);
+std::string int4ToHex(const std::vector<int>& values);
+std::string int8ToHex(const std::vector<int>& values);
+std::string float32ToHex(const std::vector<float>& values);
+
+
+inline std::string vectorToHex(const std::vector<int>& values, DataType type) {
+    switch (type) {
+        case DataType::BINARY:  return binaryToHex(values);
+        case DataType::INT4:    return int4ToHex(values);
+        case DataType::INT8:    return int8ToHex(values);
+        default: throw std::runtime_error("Invalid DataType for int vector");
+    }
+}
+
+inline std::string vectorToHex(const std::vector<float>& values, DataType type = DataType::FLOAT32) {
+    if (type != DataType::FLOAT32)
+        throw std::runtime_error("Invalid DataType for float vector");
+    return float32ToHex(values);
+}
+
+inline std::string vectorToHex(const VectorVariant& values, DataType type) {
+    return std::visit([type](const auto& vec) -> std::string {
+        using T = std::decay_t<decltype(vec)>;
+        if constexpr (std::is_same_v<T, std::vector<float>>) {
+            return float32ToHex(vec);
+        } else {
+            switch (type) {
+                case DataType::BINARY: return binaryToHex(vec);
+                case DataType::INT4:   return int4ToHex(vec);
+                case DataType::INT8:   return int8ToHex(vec);
+                default: throw std::invalid_argument("Data type is not integer-based");
+            }
+        }
+    }, values);
+}
+
+
+template<typename T>
+inline std::vector<T> hexToVector(const std::string& hex, DataType type) = delete;
+
+template<>
+inline std::vector<int> hexToVector<int>(const std::string& hex, DataType type) {
+    switch (type) {
+        case DataType::BINARY: return hexToBinary(hex);
+        case DataType::INT4:   return hexToInt4(hex);
+        case DataType::INT8:   return hexToInt8(hex);
+        default: throw std::invalid_argument("DataType is not integer-based");
+    }
+}
+
+template<>
+inline std::vector<float> hexToVector<float>(const std::string& hex, DataType type) {
+    if (type != DataType::FLOAT32)
+        throw std::invalid_argument("DataType is not float-based");
+    return hexToFloat32(hex);
+}
+
+
+template<typename T>
+inline std::pair<std::vector<T>, DataType> hexToVecWithType(const std::string& hex, size_t targetDimension) = delete;
+
+template<>
+inline std::pair<std::vector<int>, DataType> hexToVecWithType<int>(const std::string& hex, size_t targetDimension) {
+    DataType type = inferDataType(hex, targetDimension);
+    return { hexToVector<int>(hex, type), type };
+}
+
+template<>
+inline std::pair<std::vector<float>, DataType> hexToVecWithType<float>(const std::string& hex, size_t targetDimension) {
+    DataType type = inferDataType(hex, targetDimension);
+    return { hexToVector<float>(hex, type), type };
+}
 
 } // namespace schmate_util

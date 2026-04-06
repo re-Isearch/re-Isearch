@@ -647,6 +647,7 @@ public:
   void MdtSetUniqueKey(RECORD *NewRecord, const STRING& Key);
 
   bool GetDocumentDeleted(const INT Index) const;
+  bool GetDocumentDeletedByGP(const GPTYPE gp) const;
   bool DeleteByIndex (const INT Index);
   bool DeleteByKey(const STRING& Key);
   bool UndeleteByIndex (const INT Index);

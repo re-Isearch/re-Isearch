@@ -97,6 +97,12 @@ void OffsetFile::resize(size_t new_capacity) {
 }
 
 
+size_t OffsetFile::get_sid(size_t label) const {
+   auto e = get_mut(label);
+   if (e) return e->sid;
+   return 0;
+}
+
 OffsetEntry OffsetFile::get(size_t label) const {
     std::shared_lock<std::shared_mutex> rl(rwmutex);
     if (!map) throw std::runtime_error("OffsetFile not opened");
@@ -146,6 +152,8 @@ void OffsetFile::for_each(const std::function<void(size_t, const OffsetEntry &)>
     }
 }
 
+// While sid is unique because of chunking into different vectors it can have multiple labels
+// associated with it
 std::vector<std::pair<size_t, OffsetEntry>> OffsetFile::find_by_sid(int64_t sid) const {
     std::vector<std::pair<size_t, OffsetEntry>> results;
     const char *base = (const char*)map + header_size;
@@ -158,6 +166,18 @@ std::vector<std::pair<size_t, OffsetEntry>> OffsetFile::find_by_sid(int64_t sid)
     return results;
 }
 
+std::vector<size_t> OffsetFile::find_labels_by_sid(int64_t sid) const {
+    std::vector<size_t> results;
+    const char *base = (const char*)map + header_size;
+    // Walk through all the labels
+    for (size_t i = 0; i < max_entries; i++) {
+        const OffsetEntry *e = reinterpret_cast<const OffsetEntry*>(base + i * entry_size);
+        if (e->sid == sid) {
+            results.emplace_back(i);
+        }       
+    }       
+    return results;
+}   
 
 #include <iostream>
 

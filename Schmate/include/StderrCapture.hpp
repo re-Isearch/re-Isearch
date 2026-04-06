@@ -17,7 +17,7 @@ public:
 
         // Create a pipe
         if (pipe(pipe_fds) == -1) {
-            LOG_ERROR("Failed to create pipe for stderr capture");
+            Logger::instance().error("Failed to create pipe for stderr capture");
             return false;
         }
 
@@ -26,7 +26,7 @@ public:
         if (original_stderr == -1) {
             close(pipe_fds[0]);
             close(pipe_fds[1]);
-            LOG_ERROR("Failed to duplicate stderr");
+            Logger::instance().error("Failed to duplicate stderr");
             return false;
         }
 
@@ -35,7 +35,7 @@ public:
             close(pipe_fds[0]);
             close(pipe_fds[1]);
             close(original_stderr);
-            LOG_ERROR("Failed to redirect stderr");
+            Logger::instance().error("Failed to redirect stderr");
             return false;
         }
 
@@ -48,7 +48,7 @@ public:
         // Start reader thread
         reader_thread = std::thread(&StderrCapture::read_loop, this);
 
-        LOG_INFO("Started stderr capture");
+        Logger::instance().info("Started stderr capture");
         return true;
     }
 
@@ -70,7 +70,7 @@ public:
 
         close(pipe_fds[0]);
 
-        LOG_INFO("Stopped stderr capture");
+        Logger::instance().info("Stopped stderr capture");
     }
 
     ~StderrCapture() {

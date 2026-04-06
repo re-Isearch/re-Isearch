@@ -25,12 +25,17 @@ public:
         static Logger logger;
         return logger;
     }
+    std::string_view getPrefix() const { return prefix_; }
+    void setPrefix(std::string_view prefix) {
+       std::lock_guard<std::mutex> lock(mutex_);
+       prefix_ = prefix;
+    }
 
     // Configuration
     void set_level(LogLevel level) { min_level = level; }
     void enable_console(bool enabled) { log_to_console = enabled; }
     void enable_syslog(bool enabled);
-    void enable_file(const std::string& filename);
+    void enable_file(const std::string_view filename);
     void close_file();
 
     // Logging methods
@@ -72,30 +77,50 @@ public:
     LogStream fatal() { return LogStream(*this, LogLevel::FATAL); }
 
 private:
-    Logger();
+    Logger(std::string_view prefix = "sbert_search");
     ~Logger();
+
+    // Prevent copying and assignment
     Logger(const Logger&) = delete;
     Logger& operator=(const Logger&) = delete;
 
-    void log(LogLevel level, const std::string& msg);
+    void log(LogLevel level, const std::string_view msg);
     std::string format_timestamp();
-    std::string level_to_string(LogLevel level);
+    std::string_view level_to_string(LogLevel level);
     int level_to_syslog(LogLevel level);
 
-    LogLevel min_level = LogLevel::INFO;
+    std::atomic<LogLevel> min_level = LogLevel::INFO;
+
     bool log_to_console = true;
     bool log_to_syslog = false;
     bool log_to_file = false;
     std::ofstream file_stream;
     std::mutex mutex_;
+
+    // Repeat suppression
+    std::string  last_message_;
+    LogLevel     last_level_   = LogLevel::DEBUG;
+    size_t       repeat_count_ = 0;
+
+    void flush_repeated();                          // must be called with mutex_ held
+    void emit_raw(LogLevel level, const std::string_view formatted);
+
+    std::chrono::steady_clock::time_point last_message_time_;
+    std::chrono::seconds repeat_timeout_ = std::chrono::seconds(30); // 30 seconds
+
+    //
+    std::string prefix_;
 };
 
 // Convenience macros
+#if 0
 #define LOG_DEBUG(msg) Logger::instance().debug(msg)
 #define LOG_INFO(msg) Logger::instance().info(msg)
 #define LOG_WARN(msg) Logger::instance().warn(msg)
 #define LOG_ERROR(msg) Logger::instance().error(msg)
 #define LOG_FATAL(msg) Logger::instance().fatal(msg)
+#define LOG_PANIC(msg) Logger::instance().panic(msg)
+#endif
 
 // Stream-style macros
 #define LOG_DEBUG_S() Logger::instance().debug()
@@ -103,6 +128,7 @@ private:
 #define LOG_WARN_S() Logger::instance().warn()
 #define LOG_ERROR_S() Logger::instance().error()
 #define LOG_FATAL_S() Logger::instance().fatal()
+#define LOG_PANIC_()) Logger::instance().panic()
 
 // Map messages from HNSWLIB
 #ifndef HNSWLIB_ERR_OVERRIDE

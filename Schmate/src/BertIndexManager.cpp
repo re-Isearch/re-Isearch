@@ -1,6 +1,7 @@
 #include "BertIndexManager.hpp"
 #include <stdexcept>
 
+
 using namespace hnswlib;
 
 #if 0
@@ -58,6 +59,12 @@ BertIndexManager::BertIndexManager(SBertGGML & e, hnswlib::HnswConfig & c, size_
 {}
 
 
+ShardedIndex * BertIndexManager::get(const std::string &name) {
+   auto idx = index_cache.get(name);
+   if (idx) return &(*idx);
+   return  nullptr;
+}
+
 ShardedIndex & BertIndexManager::getOrCreate(const std::string &name)
 {
     auto idx = index_cache.get(name);
@@ -75,6 +82,14 @@ ShardedIndex & BertIndexManager::getOrCreate(const std::string &name)
 #else /* NOT LRU_CACHE */
 BertIndexManager::BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c) : embedder(e), cfg(c)
 {}
+
+
+
+ShardedIndex * BertIndexManager::get(const std::string &name) {
+   auto it = indexes.find(name);
+   if (it != indexes.end()) return &(*it->second);
+   return  nullptr;
+}
 
 ShardedIndex& BertIndexManager::getOrCreate(const std::string & name) {
     auto it = indexes.find(name);
@@ -96,10 +111,23 @@ void BertIndexManager::append(const std::string & name, const std::string_view s
     getOrCreate(name).append(sentence, sentence_id, span);
 }
 
+
+std::vector<size_t> BertIndexManager::find_labels_by_sid(const std::string &name, int64_t sid, size_t shard) {
+    return getOrCreate(name).find_labels_by_sid(sid, shard);
+}
+
+void BertIndexManager::remove(const std::string & name, size_t label) { 
+    getOrCreate(name).remove(label);
+}
+
 void BertIndexManager::remove(const std::string & name, size_t label, size_t shard) {
     getOrCreate(name).remove(label, shard);
 }
 
+
+size_t BertIndexManager::removeDeletedElements(const std::string& name, std::function<bool(size_t)>isDeleted, size_t shard){
+   return getOrCreate(name).removeDeletedElements(isDeleted, shard);
+}
 
 void BertIndexManager::undelete(const std::string & name, size_t label, const OffsetEntry &entry, size_t shard =0) {
     getOrCreate(name).undelete(label, entry, shard);
@@ -235,6 +263,11 @@ void BertIndexManager::undelete_byAddress(const std::string &name, int64_t addre
 
     sharded.undelete_byAddress(address, shard);
 }
+
+int64_t BertIndexManager::get_sentence_id(const std::string &name, size_t label, size_t shard) {
+   return getOrCreate(name).get_sentence_id(label, shard);
+}
+
 
 
 void BertIndexManager::clear(const std::string &name) {

@@ -230,6 +230,10 @@ StorageType string_to_storage_type(const std::string& s)
             LOG_ERROR_S() << "overlap_percent must be in [0, 1)";
             return false;
         }
+        if (deletion_threshold_pc < 0.0f || deletion_threshold_pc > 1.0f) {
+            LOG_ERROR_S() << "deletion_threshold_pc must be in [0,1]";
+            return false;
+        }
         if (max_tokens_per_chunk <= 0) {
             LOG_ERROR_S() << "max_tokens_per_chunk must be > 0";
             return false;
@@ -335,6 +339,7 @@ StorageType string_to_storage_type(const std::string& s)
 
         write_value(auto_tune_ef);
         write_value(auto_tune_eps);
+        write_value(deletion_threshold_pc);
     }
 
     void HnswConfig::load(std::ifstream& is) {
@@ -383,6 +388,8 @@ StorageType string_to_storage_type(const std::string& s)
         read_value(auto_tune_ef);
         read_value(auto_tune_eps);
 
+        read_value(deletion_threshold_pc);
+
         
         if (!validate()) {
             throw std::runtime_error("Loaded invalid configuration");
@@ -402,6 +409,8 @@ StorageType string_to_storage_type(const std::string& s)
 
     // Load from file
     bool HnswConfig::load_from_file(const std::string& path) {
+        if (path.empty() )
+           return false; // nothing to load
         std::ifstream ifs(path, std::ios::binary);
         if (!ifs) {
             return false;  // File doesn't exist, not an error
@@ -432,7 +441,7 @@ StorageType string_to_storage_type(const std::string& s)
             if (override.field != defaults.field) { \
                 this->field = override.field; \
             }
-        
+        OVERRIDE_IF_DIFFERENT(model_name); 
         OVERRIDE_IF_DIFFERENT(default_search_mode);
         OVERRIDE_IF_DIFFERENT(max_elements);
         OVERRIDE_IF_DIFFERENT(M);
@@ -466,6 +475,8 @@ StorageType string_to_storage_type(const std::string& s)
 
         OVERRIDE_IF_DIFFERENT(auto_tune_ef);
         OVERRIDE_IF_DIFFERENT(auto_tune_eps);
+
+        OVERRIDE_IF_DIFFERENT(deletion_threshold_pc);
         
         #undef OVERRIDE_IF_DIFFERENT
     }
@@ -498,6 +509,7 @@ StorageType string_to_storage_type(const std::string& s)
         os << "  lookahead (adaptive): " << default_lookahead << "\n";
         os << "  gapDelta (adaptive): " << default_gapDelta << "\n";
         os << "  enable_rescoring (quantized): " << (enable_rescoring() ? "yes" : "no" ) << "\n";
+        os << "  deletion_threshold_pc: " <<  deletion_threshold_pc << "\n";
         
         os << "\nEpsilon search:\n";
         os << "  epsilon: " << default_epsilon << "\n";
@@ -520,6 +532,7 @@ StorageType string_to_storage_type(const std::string& s)
         os << "  auto_tune_eps: " << (auto_tune_eps ? "yes" : "no") << "\n"; 
         
         os << "\nDebug: " << (debug ? "enabled" : "disabled") << "\n";
+        os << "Model: " << (model_name.empty() ? "<Undefined>" : model_name ) << "\n";
 
         os << "\n===   This Platform    ===\nOS: ";
 #ifdef _WIN32
@@ -578,6 +591,8 @@ StorageType string_to_storage_type(const std::string& s)
             if (key == "default_epsilonIP") { default_epsilonIP = std::stof(value); return true; }
             // if (key == "default_epsilonB") { default_epsilonB = std::stof(value); return true; }
             // if (key == "default_epsilonT") { default_epsilonT = std::stof(value); return true; }
+            if (key == "deletion_threshold_pc") { deletion_threshold_pc = std::stof(value); return true; }
+	    if (key == "deletion_threshold_percent") { deletion_threshold_pc = std::stof(value)/100.0f; return true;}
 
             // bool fields
 
@@ -615,6 +630,11 @@ StorageType string_to_storage_type(const std::string& s)
                 }
 		return false;
              }
+
+            if (key == "model") {
+	        model_name = value;
+		return true;
+            }
 
             if (key == "specification") { return specification.parse(value); }
             
@@ -662,6 +682,7 @@ StorageType string_to_storage_type(const std::string& s)
         // if (key == "default_epsilonB") return std::to_string(default_epsilonB);
         // if (key == "default_epsilonT") return std::to_string(default_epsilonT);
 
+        if (key == "deletion_threshold_pc") return std::to_string(deletion_threshold_pc) ;
         
         // bool fields
         if (key == "debug") return debug ? "true" : "false";

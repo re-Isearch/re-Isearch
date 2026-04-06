@@ -50,8 +50,12 @@ public:
     // iterate through all valid entries
     void for_each(const std::function<void(size_t label, const OffsetEntry &)> &fn) const;
 
+
+    // The sentence id associated with a given label
+    size_t get_sid(size_t label) const;
     // collect all entries for a given SID
     std::vector<std::pair<size_t, OffsetEntry>> find_by_sid(int64_t sid) const;
+    std::vector<size_t> find_labels_by_sid(int64_t sid) const; // Just the labels
 
     OffsetEntry get(size_t label) const;
     OffsetEntry* get_mut(size_t label) const;

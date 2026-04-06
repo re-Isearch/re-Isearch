@@ -6,6 +6,8 @@
 #include <iomanip>
 #include <cstring>
 
+using namespace hnswlib;
+
 class ConfigEditor {
 private:
     HnswConfig cfg;

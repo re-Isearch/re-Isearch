@@ -20,7 +20,7 @@ public:
     ShardedIndex(SBertGGML & emb, hnswlib::HnswConfig & c, const std::string & name, bool searchOnly = false);
 
     BertIndex & current_shard();
-    BertIndex & get_shard(size_t i);
+    BertIndex & get_shard(size_t i) const;
     size_t shard_count() const;
 
     void clear();
@@ -28,8 +28,15 @@ public:
     void append(const std::string_view sentence);
     void append(const std::string_view sentence, int64_t sentence_id, uint32_t span = 0);
 
-    void remove(size_t label, size_t shard=0);
+    std::vector<size_t> find_labels_by_sid(int64_t sid, size_t shard = 0) const;
+
+   int64_t get_sentence_id(size_t label, size_t shard = 0);
+
+    void remove(size_t label);
+    void remove(size_t label, size_t shard);
     void undelete(size_t label, const OffsetEntry &entry, size_t shard=0);
+
+    size_t removeDeletedElements(std::function<bool(size_t)>isDeleted, size_t shard =0);
 
     void delete_byAddress(int64_t address, size_t shard=0);
     void undelete_byAddress(int64_t address, size_t shard=0);

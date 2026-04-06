@@ -25,6 +25,7 @@ struct SearchResult {
     int token_end;
     int64_t sentence_id;
     int32_t span;
+    uint32_t shard;
     std::string text; // optional
 };
 
@@ -83,9 +84,14 @@ public:
     size_t append(const std::string_view sentence);
     size_t append(const std::string_view sentence, int64_t sentence_id, uint32_t span = 0);
 
+
+    //
+    std::vector<size_t> find_labels_by_sid(int64_t sid) const;
     // removal
     void remove(size_t label);
     void undelete(size_t label, const OffsetEntry &entry);
+
+    size_t removeDeletedElements(std::function<bool(size_t)>isDeleted);
 
     void delete_byAddress(const std::string &name, int64_t address, size_t shard = 0);
     void undelete_byAddress(const std::string &name, int64_t address, size_t shard = 0);

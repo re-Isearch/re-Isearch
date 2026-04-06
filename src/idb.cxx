@@ -4713,6 +4713,12 @@ bool IDB::GetDocumentInfo (const INT Index, RECORD *RecordBuffer) const
   return false;
 }
 
+bool IDB::GetDocumentDeletedByGP(const GPTYPE gp) const 
+{
+ size_t w = GetMainMdt ()->LookupByGp (gp);
+ return GetMainMdt ()->IsDeleted(w);
+}
+
 bool IDB::GetDocumentDeleted (const INT Index) const
 {
   return MainMdt->IsDeleted(Index);

@@ -6,6 +6,7 @@
 #include <filesystem>
 
 #include "hnswlib/int_storage.h"
+#include "Logger.hpp"
 
 // ========= Read GMML and GUUF Files  ============================== //
 
@@ -73,6 +74,11 @@ inline off_t file_size(const std::string &p) {
     return std::filesystem::file_size(p);
 }
 
+
+inline std::string program_name(const char *argv0) {
+    return std::filesystem::path(argv0).stem().string();
+}
+
 #if 1 // C++ 17
 std::vector<std::string> splitPath(
     const std::string& pathStr,
@@ -136,7 +142,10 @@ inline std::optional<std::pair<std::filesystem::path, T>> findInPathsWithData(
 }
 
 
-
+[[noreturn]] inline void throw_runtime_error(const std::string &msg) {
+    Logger::instance().panic(msg);
+    throw std::runtime_error(msg);
+}
 
 
 #ifdef __APPLE__

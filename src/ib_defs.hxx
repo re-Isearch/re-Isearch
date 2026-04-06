@@ -5,6 +5,8 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 #ifndef _IB_DEFS_HXX
 # define _IB_DEFS_HXX 1
 
+//#define VECTOR_INDEX
+
 #ifdef PURE_STANDALONE
 # ifndef STANDALONE
 #   define STANDALONE 1

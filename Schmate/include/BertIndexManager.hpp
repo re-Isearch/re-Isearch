@@ -55,6 +55,7 @@ public:
 
     void clear(const std::string &name);
 
+    ShardedIndex *get(const std::string &name);
     // get or create a named index
     ShardedIndex & getOrCreate(const std::string & name);
 
@@ -62,10 +63,17 @@ public:
     void append(const std::string &name, const std::string_view sentence);
     void append(const std::string &name, const std::string_view sentence, int64_t sentence_id, uint32_t span = 0);
 
-    void remove(const std::string & name, size_t label, size_t shard = 0);
+    std::vector<size_t> find_labels_by_sid(const std::string& name, int64_t sid, size_t shard = 0);
+
+    void remove(const std::string & name, size_t label);
+    void remove(const std::string & name, size_t label, size_t shard);
+
+    size_t removeDeletedElements(const std::string& name, std::function<bool(size_t)> isDeleted, size_t shard = 0);
 
     void undelete(const std::string &name, size_t label, size_t shard = 0);
     void undelete(const std::string & name, size_t label, const OffsetEntry &entry, size_t shard);
+
+    int64_t get_sentence_id(const std::string &name, size_t label, size_t shard = 0);
 
     void delete_byAddress(const std::string & name, int64_t addr, size_t shard = 0);
     void undelete_byAddress(const std::string & name, int64_t addr, size_t shard = 0);

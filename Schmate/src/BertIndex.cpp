@@ -492,10 +492,10 @@ size_t BertIndex::append(const std::string_view sentence, int64_t sentence_id, u
         // encode & add
         if (insert_raw) {
           auto emb = schmate_util::hexToFloat32 (chunk.text);
-          index->addPoint(emb.data(), (hnswlib::labeltype)label);
+          index->addPoint(emb.data(), (hnswlib::labeltype)(label));
         } else {
           auto emb = encode_text(chunk.text);
-          index->addPoint(emb.data(), (hnswlib::labeltype)label);
+          index->addPoint(emb.data(), (hnswlib::labeltype)(label));
         }
 
         // --- Write OffsetEntry into mmap ---
@@ -540,6 +540,12 @@ size_t BertIndex::append(const std::string_view sentence, int64_t sentence_id, u
 // remove / undelete (unchanged except usage)
 #if 1
 
+
+std::vector<size_t> BertIndex::find_labels_by_sid(int64_t sid) const {
+  return offsets->find_labels_by_sid(sid);
+}
+
+
 void BertIndex::remove(size_t label) {
     index->markDelete(label);
 
@@ -552,6 +558,19 @@ void BertIndex::remove(size_t label) {
 
     if (++dirty_count > cfg.flush_threshold) flush();
 }
+
+
+size_t BertIndex::removeDeletedElements(std::function<bool(size_t)>isDeleted) {
+  const size_t deleted = index->updateDeletedElements(isDeleted);
+  if (deleted) {
+    LOG_INFO_S() << "Deleted " << deleted << " elements from vector db";
+    dirty_count += deleted;
+    if (dirty_count > cfg.flush_threshold) flush();
+  }
+  return deleted;
+
+}
+
 
 void BertIndex::undelete(size_t label, const OffsetEntry &entry) {
     // restore offset entry
@@ -742,6 +761,8 @@ std::vector<SearchResult> BertIndex::filter_knn_results(const std::string &query
         r.file_start = e.file_start;
         r.file_end   = e.file_end;
         r.text       = get_text_by_label(label);
+        r.span       = e.span; 
+        r.shard      = 0;
 
         if (!r.text.empty()) results.push_back(std::move(r));
     }
@@ -970,7 +991,10 @@ TYPICAL USE CASES:
         r.token_end  = e.end_tok;
         r.file_start = e.file_start;
         r.file_end   = e.file_end;
+        r.span       = e.span;
+        r.shard      = 0; 
         r.text       = get_text_by_label(label);
+        
 
         if (!r.text.empty()) results.push_back(std::move(r));
     }

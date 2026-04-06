@@ -18,6 +18,8 @@
 using namespace std;
 using namespace hnswlib;
 
+
+
 static void print_help() {
     cout <<
     "Commands:\n"
@@ -139,13 +141,13 @@ int main(int argc, char **argv) {
     ConfigLoader loader;
     HnswConfig cfg = loader.load(debug);
     if (metric) cfg.set_metric ( *metric );
-  
 
-   if (cfg.debug) Logger::instance().set_level(LogLevel::DEBUG);  // Show everything
+    cfg.model_name = model;
 
-   //StderrCapture::instance().start(); // redirect stderr 
+    Logger::instance().setPrefix(program_name(argv[0]));
+    if (cfg.debug) Logger::instance().set_level(LogLevel::DEBUG);  // Show everything
 
-
+    //StderrCapture::instance().start(); // redirect stderr 
 
 #if 0
    auto q = get_ggml_model_quant(model);
