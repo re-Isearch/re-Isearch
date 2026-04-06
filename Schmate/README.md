@@ -1,4 +1,4 @@
-#sbert_search
+=== Vector search using HNSW and Sentence Transformers ===
 
 Semantic search with SBERT + GGML Tensor Library + HNSWlib.
 
@@ -39,4 +39,4 @@ This design allows us to build searchable indexes using different embedding mode
 
 To handle multiple embedding models we'll let each element in the ensemble have its own model.. Eg. a virtual DB with two DBs: A and B. DbA for modelA and DbB for modelB.  A search of the ensembed A+B would search both each with their own model..
 
-MOTE: The tool "config_editor" can be used to view/edit/modify the configuration files.
+NOTE: The tool "config_editor" can be used to view/edit/modify the configuration files.
