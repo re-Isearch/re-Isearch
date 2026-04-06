@@ -40,7 +40,9 @@ public:
 		"Unsupported/Unknown model file format: " :
 		"Model file not found: " ) + filename);
     }
+    model_name = basename(model_path);
  }
+ std::string model_name;
 
 };
 

@@ -44,11 +44,9 @@ EmbeddingIndexer::EmbeddingIndexer(IDB *Parent_) : Parent(Parent_) {
     std::string  model = cfg.model_name;
     if (model.empty()) {
         STRING model_   = Parent->ProfileGetString(section, "model");
-        if (model_.IsEmpty()) {
-           // Default Model
-           model = find_ggml_model(default_model, search_path).first;
-        } else model = model_.toStdString();
-        cfg.model_name = model;
+        if (model_.IsEmpty())
+           model = default_model; // Default Model
+        else model = model_.toStdString();
     }
 
    // create embedder first
@@ -58,6 +56,7 @@ EmbeddingIndexer::EmbeddingIndexer(IDB *Parent_) : Parent(Parent_) {
 #else
    embedder = std::make_unique<SBertGGML>(model);
 #endif
+   cfg.model_name = embedder->model_name;
 
    // manager uses references to embedder? our manager takes embedder ref in constructor earlier.
    size_t cache_size = embedder ? determine_optimal_hnsw_cache_size(cfg, embedder->n_embd) : 0;
@@ -74,7 +73,8 @@ EmbeddingIndexer::EmbeddingIndexer(IDB *Parent_) : Parent(Parent_) {
 
 bool EmbeddingIndexer::Ok() const
 {
- return (Parent && embedder && manager);
+  // if Parent we should have an embedder.. if it was OK.. then manager
+  return (Parent && embedder && manager);
 }
 
 
