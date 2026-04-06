@@ -23,7 +23,10 @@ It reads the Section "Embedding" in the database configuration (db.ini)
 for the project directory ("project").
 
  [Embedding]
- project=<directory where the project files are located>
+
+ project=&lt;directory where the project files are located&gt;
+
+Example: project = myproject
 
 It then loads the HNSW Configuration in the order:
 1) Global config - /etc/schmate/config.bin (system defaults)
