@@ -1,4 +1,4 @@
-=== Vector search using HNSW and Sentence Transformers ===
+##=== Vector search using HNSW and Sentence Transformers ===
 
 Semantic search with SBERT + GGML Tensor Library + HNSWlib.
 
@@ -18,7 +18,7 @@ All code is implemented in modern C++17, optimized for macOS and Linux.
 
 While this code uses bert.cpp, support for llama.cpp is also provided.
 
-=== Interface to re-Isearch ===
+##=== Interface to re-Isearch ===
 
 Interface code to re-Isearch is provided by the EmbeddingIndexer class.
 
@@ -32,7 +32,7 @@ Should the number of deleted vectors surpass a cutoff, the search is re-run (now
 
 Since the HNSW index can return many deleted elements from the perspective of the re-Isearch index, we need to sometimes make sure that the HNSW index also marks the deleted as deleted. That's the function of the 3rd method: literally to delete in the HNSW index the deleted from the re-Isaerch index.
 
-
+### Startup.
 
 It reads the Section "Embedding" in the database configuration (db.ini)
 for the project directory ("project").
