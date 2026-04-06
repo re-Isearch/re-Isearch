@@ -1,4 +1,4 @@
-##=== Vector search using HNSW and Sentence Transformers ===
+=== Vector search using HNSW and Sentence Transformers ===
 
 Semantic search with SBERT + GGML Tensor Library + HNSWlib.
 
@@ -18,7 +18,7 @@ All code is implemented in modern C++17, optimized for macOS and Linux.
 
 While this code uses bert.cpp, support for llama.cpp is also provided.
 
-##=== Interface to re-Isearch ===
+=== Interface to re-Isearch ===
 
 Interface code to re-Isearch is provided by the EmbeddingIndexer class.
 
