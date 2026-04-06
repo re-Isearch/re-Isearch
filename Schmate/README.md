@@ -42,59 +42,58 @@ To handle multiple embedding models we'll let each element in the ensemble have 
 NOTE: The tool "config_editor" can be used to view/edit/modify the configuration files.
 
 Example of a configuration (show command):
-
-
+<pre>
 > === HNSW Configuration ===
->Default search mode: Knn
->
->Index parameters:
->  max_elements: 100000
->  M: 16
->  ef_construction: 200
->  ef_search: 64
->  specification: L2-None-Pass
->  normalize_embeddings: no
->
->Embedding:
->  bert_n_threads: 4
->
->Chunking:
->  max_tokens_per_chunk: 128
->  overlap_percent: 0.1
->
->Search defaults:
->  k (knn): 5
->  radius: 0.7
->  alpha (relative): 0.8
->  minN (adaptive): 3
->  lookahead (adaptive): 10
->  gapDelta (adaptive): 0.1
->  enable_rescoring (quantized): no
->  deletion_threshold_pc: 0.2
->
->Epsilon search:
->  epsilon: 0.15
->  epsilonL2: 1.41
->  epsilonIP: 0.5
->  min_candidates: 10
->  max_candidates_cap: 0
->
->Performance:
->  knn_lookahead_scale: 5
->  flush_threshold: 100
->  flush_offsets_each: no
->  parallel_merge: yes
->  merge_threads: 10
->
->Tuning:
->  auto_tune_ef: no
->  auto_tune_eps: no
->
->Debug: enabled
->Model: <Undefined>
->
->===   This Platform    ===
->OS: Darwin 24.6.0
->Hardware: arm64 / 10 cores
->SIMD: ARM NEON enabled
->
+Default search mode: Knn
+
+Index parameters:
+  max_elements: 100000
+  M: 16
+  ef_construction: 200
+  ef_search: 64
+  specification: L2-None-Pass
+  normalize_embeddings: no
+
+Embedding:
+  bert_n_threads: 4
+
+Chunking:
+  max_tokens_per_chunk: 128
+  overlap_percent: 0.1
+
+Search defaults:
+  k (knn): 5
+  radius: 0.7
+  alpha (relative): 0.8
+  minN (adaptive): 3
+  lookahead (adaptive): 10
+  gapDelta (adaptive): 0.1
+  enable_rescoring (quantized): no
+  deletion_threshold_pc: 0.2
+
+Epsilon search:
+  epsilon: 0.15
+  epsilonL2: 1.41
+  epsilonIP: 0.5
+  min_candidates: 10
+  max_candidates_cap: 0
+
+Performance:
+  knn_lookahead_scale: 5
+  flush_threshold: 100
+  flush_offsets_each: no
+  parallel_merge: yes
+  merge_threads: 10
+
+Tuning:
+  auto_tune_ef: no
+  auto_tune_eps: no
+
+Debug: enabled
+Model: <Undefined>
+
+===   This Platform    ===
+OS: Darwin 24.6.0
+Hardware: arm64 / 10 cores
+SIMD: ARM NEON enabled
+</pre>
