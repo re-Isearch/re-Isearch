@@ -398,6 +398,12 @@ public:
     }
 
 
+    size_t updateDeletedElements(std::function<bool(labeltype)> isDeleted) {
+       if (index_) return index_->updateDeletedElements(isDeleted);
+       return 0; // No index so nothing to delete....
+    }
+
+
 #if defined(DELAY_ALLOC) && DELAY_ALLOC == 1
    UnifiedIndex(const UnifiedIndexMeta& meta);
 #endif
@@ -448,7 +454,8 @@ public:
     bool loadIndex(const std::string& path, bool SearchOnly = false);
 
     static bool index_available(const std::string& path) {
-      if (file_size(path) > UnifiedIndexMeta::size()) {
+      auto length = file_size(path);
+      if (length > 0 && length > UnifiedIndexMeta::size()) {
 #if 1 /* Just test that its at least "large enough" */
          return true;
 #else /* Deeper test */

@@ -113,7 +113,7 @@ UnifiedIndex::UnifiedIndex(const UnifiedIndexMeta& meta) : meta_(meta) {
   vector_storage_.set_dim(dim_);
   vector_storage_.set_storage_mode(storage_mode_);
 
-#if 1
+#if 0
   // XXXX DEBUG
   meta_.print(); 
 #endif
@@ -640,7 +640,7 @@ bool UnifiedIndex::loadIndex(const std::string& path, bool searchOnly) {
 
     bool changed = false;
 
-    if (file_size(pathname_) < sizeof(UnifiedIndexMeta))
+    if (file_size(pathname_) < (off_t)sizeof(UnifiedIndexMeta))
        return false;
 
     std::ifstream ifs(path, std::ios::binary);
