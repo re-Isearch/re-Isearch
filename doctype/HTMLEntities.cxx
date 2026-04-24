@@ -351,6 +351,7 @@ void HTMLEntities::normalize2(char *input, size_t len) const
   REGISTER char  *buffer= input;
   REGISTER char  *ptr   = buffer;
 
+ if (len > 0) // Need something to normalize
   do {
     if (*ptr == '\0')
       {

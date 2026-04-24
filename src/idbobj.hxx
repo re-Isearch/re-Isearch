@@ -109,6 +109,9 @@ public:
         const FIELDTYPE& FieldType, STRING *StringBuffer, const DOCTYPE *DoctypePtr = NULL)
     { return false; }
 
+  virtual bool GetDocumentDeleted(const INT Index) const { return false; }
+  virtual bool GetDocumentDeletedByGP(const GPTYPE gp) const { return false; }
+
 /*
   virtual bool GetFieldData(const RESULT& ResultRecord, const STRING& FieldName,
         DOUBLE* Buffer) { return false; }
@@ -365,6 +368,7 @@ public:
 
 
   virtual   FPT *GetMainFpt() { return NULL; }
+  virtual   void RevalidateFileCache() { ; }
 
   virtual   bool SetSortIndexes(int, atomicIRSET *) { return false; }
 

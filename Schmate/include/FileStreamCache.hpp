@@ -8,6 +8,56 @@
 #include <stdexcept>
 #include <mutex>
 
+#include <ostream>
+#include <streambuf>
+#include <cstdio>
+
+
+namespace schmate_util {
+  FILE * fopen_high(const char *path, const char *mode) ;
+}
+
+
+#ifdef __GLIBCXX__
+#include <ext/stdio_filebuf.h>
+#endif
+
+// ---- Portable fallback streambuf ----------------------------------------
+
+struct FILEoutbuf : std::streambuf {
+    explicit FILEoutbuf(FILE* f) : f(f) {}
+protected:
+    int overflow(int c) override {
+        return (c != EOF && fputc(c, f) != EOF) ? c : EOF;
+    }
+    std::streamsize xsputn(const char* s, std::streamsize n) override {
+        return static_cast<std::streamsize>(fwrite(s, 1, n, f));
+    }
+private:
+    FILE* f;
+};
+
+// ---- Unified ostream -----------------------------------------------------
+
+struct FILEostream : std::ostream {
+    explicit FILEostream(FILE* f)
+        : std::ostream(nullptr)
+#ifdef __GLIBCXX__
+        , sb(fileno(f), std::ios::out | std::ios::binary)
+#else
+        , sb(f)
+#endif
+    {
+        rdbuf(&sb);
+    }
+private:
+#ifdef __GLIBCXX__
+    __gnu_cxx::stdio_filebuf<char> sb;
+#else
+    FILEoutbuf sb;
+#endif
+};
+
 class FileStreamCache {
 public:
     // Constructor with configurable cache size

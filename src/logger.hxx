@@ -81,6 +81,8 @@ public:
 */
   bool to_syslog() const  { return l_file == syslog_stream; }
   bool to_console() const { return l_console;               }
+
+  const char *get_prefix() const        { return l_prefix; }
 protected:
   int         log_mask_str (const char *str);
 #ifdef USE_pThreadLocker

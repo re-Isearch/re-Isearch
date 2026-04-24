@@ -80,7 +80,8 @@ void INDEX::SortNumericFieldData()
   for (size_t x=1; x<=total; x++) {
     Parent->DfdtGetEntry(x,&DfdRecord);
     FieldType = DfdRecord.GetFieldType();
-    if (FieldType.IsText())
+    // Don't want to process data that has no methods for numerical
+    if (FieldType.IsText() || FieldType.IsExtern())
       continue;
     if (Parent->DfdtGetFileName(DfdRecord,&Fn) == false)
       {

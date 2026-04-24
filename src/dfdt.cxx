@@ -15,6 +15,8 @@ Description:	Class DFDT - Data Field Definitions Table
 #include "dfdt.hxx"
 #include "magic.hxx"
 
+//#defined MAX_FIELD_PATHS 3000 /* Large TEI aggregations */
+
 #define CHUNK 50
 #define GROWTH(_X) (((3*(_X)/CHUNK) + 1)*CHUNK)
 
@@ -207,7 +209,7 @@ INT DFDT::GetNewFileNumber () const
 #else
   // We start at 001 so look untill we wrap around..
   size_t x;
-  for (x = TotalEntries+1; x > 0; x = ((x+1)%1000))
+  for (x = TotalEntries+1; x > 0; x = ((x+1)%(MAX_FIELD_PATHS)))
     {
       // Make sure its not already being used..
       bool Found = false;
@@ -585,6 +587,11 @@ bool DFDT::KillAll(IDBOBJ* DbParent)
 	      const FIELDTYPE ft ((BYTE)j);
 	      if (!ft.Ok())
 	        break;
+#ifdef VECTOR_INDEX
+	      // Handle Vector indexes
+	      extern bool RemoveEmbeddingIndexFile(const STRING&);
+	      RemoveEmbeddingIndexFile(s);
+#endif
 	      const char *dt = ft.datatype();
 	      if (dt && *dt)
 		{
@@ -775,8 +782,8 @@ size_t DFDT::TypeFieldExists(const FIELDTYPE& Ft, const STRING& FieldName, STRIN
       return 1;
     }
 
-// Not a match
-cerr << "Fieldtype = " << Table[i-1].GetFieldType() << endl;
+   // Not a match
+   // cerr << "Fieldtype = " << Table[i-1].GetFieldType() << endl;
 
   return 0;
 }

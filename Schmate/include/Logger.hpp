@@ -43,6 +43,10 @@ public:
     void info(const std::string& msg)  { log(LogLevel::INFO, msg); }
     void warn(const std::string& msg)  { log(LogLevel::WARN, msg); }
     void error(const std::string& msg) { log(LogLevel::ERROR, msg);}
+    void log_errno(const std::string& msg) {
+        const std::string s =  msg + " [" + ::strerror((int)errno) + "]";
+	log(LogLevel::ERROR, s);
+    }
     void fatal(const std::string& msg) { log(LogLevel::FATAL, msg);}
     void panic(const std::string& msg) { log(LogLevel::PANIC, msg);}
 

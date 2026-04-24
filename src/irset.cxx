@@ -113,6 +113,8 @@ atomicIRSET::operator const RSET *() const
 }
 */
 
+
+/*
 OPOBJ& atomicIRSET::operator =(const OPOBJ& OtherIrset)
 {
 #if 1
@@ -124,12 +126,31 @@ OPOBJ& atomicIRSET::operator =(const OPOBJ& OtherIrset)
 #endif
   return *this;
 }
+*/
+
+// Attempted bug-fix 2026 April 24
+OPOBJ& atomicIRSET::operator=(const OPOBJ& OtherIrset)
+{
+    // Safe downcast — handle both _IRSET and atomicIRSET
+    const atomicIRSET *OtherPtr = dynamic_cast<const atomicIRSET*>(&OtherIrset);
+    if (OtherPtr)
+    {
+        Set(OtherPtr);
+    }
+    else
+    {
+        message_log(LOG_PANIC, "atomicIRSET::operator= passed non-atomicIRSET OPOBJ");
+    }
+    return *this;
+}
+
 
 atomicIRSET& atomicIRSET::operator = (const atomicIRSET& Other)
 {
   Set (&Other);
   return *this;
 }
+
 
 void atomicIRSET::Set(const atomicIRSET *OtherPtr)
 {
@@ -508,6 +529,7 @@ void atomicIRSET::FastAddEntry(const IRESULT& ResultRecord)
   if (TotalEntries > 1)
     {
       const INDEX_ID index = ResultRecord.GetIndex ();
+
       if (Table[TotalEntries-1].GetIndex () == index)
         {
           Table[TotalEntries-1].IncHitCount (ResultRecord.GetHitCount ());
@@ -594,10 +616,12 @@ void atomicIRSET::AddEntry (const IRESULT& ResultRecord, const bool AddHitCounts
   size_t pos;
 
   HitTotal = 0;
-  if (Table[TotalEntries-1].GetIndex () == Index)
+  if (TotalEntries > 1 &&  Table[TotalEntries-1].GetIndex () == Index) {
     pos = TotalEntries;
-  else
+  } else {
     pos = FindByMdtIndex( Index );
+  }
+
   if (pos)
     {
       pos--; // Into array
@@ -642,9 +666,12 @@ void atomicIRSET::AddEntry (const IRESULT& ResultRecord, const bool AddHitCounts
     Sort = Unsorted;
   if (TotalEntries == MaxEntries)
     Expand ();
+
   // SANITY CHECK: Enough memory?
-  if (TotalEntries < MaxEntries)
+  if (TotalEntries < MaxEntries) {
     Table[TotalEntries++] = ResultRecord;
+cerr << "@@@@@ HERE I AM: AddRecord()  SCORE = " << Table[TotalEntries-1].GetScore() << endl;
+  }
 }
 
 bool atomicIRSET::GetEntry (const size_t Index, PIRESULT ResultRecord) const
@@ -682,6 +709,8 @@ PRSET atomicIRSET::GetRset(size_t Start, size_t End) const
   return Fill(Start+1, End, NULL);
 }
 
+
+// This is the routine that converts IRSETs into RSETs 
 // First element is 1.
 PRSET atomicIRSET::Fill(size_t Start, size_t End, PRSET set) const
 {
@@ -730,9 +759,9 @@ PRSET atomicIRSET::Fill(size_t Start, size_t End, PRSET set) const
 
   message_log (LOG_DEBUG, "Filling RSET %d-%d", Start, End);
 
-  const DOUBLE pFactor = (MaxScore && (MaxScore != MinScore)) ?
+  const DOUBLE pFactor = ((MaxScore && (MaxScore != MinScore)) ?
 	(Parent->GetPriorityFactor()*(MaxScore - MinScore))/MaxScore :
-	Parent->GetPriorityFactor();
+	Parent->GetPriorityFactor());
   DOUBLE newMinScore = MinScore;
   DOUBLE newMaxScore = MaxScore;
   enum SortBy newSort = Sort;
@@ -747,6 +776,7 @@ PRSET atomicIRSET::Fill(size_t Start, size_t End, PRSET set) const
       {
 	RESULT result (mdtrec);
 	DOUBLE myScore = Table[x].GetScore();
+
 	// Handle Priority
 	if (pFactor)
 	  {
@@ -3677,6 +3707,9 @@ OPOBJ *atomicIRSET::ComputeScores (const int TermWeight, enum NormalizationMetho
 	  case BytesNormalization:
 	    return ComputeScoresBytesNormalization (TermWeight);
 
+          case HybridNormalization:
+	    return ComputeScoresHybridNormalization(TermWeight);
+
 	  // Aux stubs
 	  case AuxNormalization1:
 	    return ComputeScoresAux1Normalization (TermWeight);
@@ -4411,3 +4444,49 @@ void atomicIRSET::Clear()
 }
 
 
+OPOBJ *atomicIRSET::ComputeScoresHybridNormalization(const int TermWeight)
+{
+    if (TotalEntries && ComputedS != MaxNormalization)
+    {
+        // Scores are already cosine similarities — just find min/max
+        MinScore = MAXFLOAT;
+        MaxScore = 0.0;
+        for (size_t i = 0; i < TotalEntries; i++)
+        {
+            DOUBLE s = Table[i].GetScore();
+            if (s > MaxScore) MaxScore = s;
+            if (s < MinScore) MinScore = s;
+        }
+        // Rescale to [0.4, 1.0]*TermWeight to match MaxNormalization's output range
+        if (MaxScore > 0.0)
+        {
+            for (size_t i = 0; i < TotalEntries; i++)
+                Table[i].SetScore((0.4 + 0.6*Table[i].GetScore()/MaxScore)*TermWeight);
+            MinScore = (0.4 + 0.6*MinScore/MaxScore)*TermWeight;
+        }
+        MaxScore  = TermWeight;
+        ComputedS = MaxNormalization;  // ← compatible with lexical hybrid combination
+    }
+    return this;
+}
+
+
+void atomicIRSET::SetPrecomputed(enum NormalizationMethods Method)
+{
+    if (!IsEmpty())
+    {
+        // Find min/max from existing scores
+        MinScore = MaxScore = Table[0].GetScore();
+        for (size_t i = 1; i < TotalEntries; i++)
+        {
+            DOUBLE s = Table[i].GetScore();
+            if (s > MaxScore) MaxScore = s;
+            if (s < MinScore) MinScore = s;
+        }
+    }
+    else
+    {
+        MinScore = MaxScore = 0.0;
+    }
+    ComputedS = Method;
+}

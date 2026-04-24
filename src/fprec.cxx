@@ -31,7 +31,8 @@ FPREC& FPREC::operator=(const FPREC& OtherFprec) {
   FileName    = OtherFprec.FileName;
   FilePointer = OtherFprec.FilePointer;
   OpenMode    = OtherFprec.OpenMode;
-  RefCount    = OtherFprec.RefCount;
+  RefCount    = OtherFprec.RefCount; // 2026
+
   Priority    = OtherFprec.Priority;
   return *this;
 }
@@ -65,7 +66,7 @@ void FPREC::Dispose()
   if (FilePointer)
     {
 if (FilePointer == stdout || FilePointer == stderr) cerr << "DISOSE Stdio?" << endl;
-      if (RefCount > 1)
+      if (RefCount > 0) // Was 1 (2026)
 	message_log (LOG_WARN, "FPREC::Dispose(): Streams were still open to '%s' (RefCount=%d)?",
 		FileName.c_str(), RefCount-1);
       fclose (FilePointer);

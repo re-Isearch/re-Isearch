@@ -468,6 +468,7 @@ INDEX::INDEX (const PIDBOBJ DbParent, const STRING& NewFileName, size_t CacheSiz
   MemorySISCache = NULL;
   MemoryIndexCache = NULL;
 
+
 #ifdef VECTOR_INDEX
   embeddingIndexer = NULL;
 #endif
@@ -1019,22 +1020,32 @@ NUMERICOBJ INDEX::encodeLexiHash(const STRING& String) const
 
 extern "C" long double (*_IB_private_hash)(const char *, const char *, size_t );
 
+
+// Given a Fieldname and FieldType return the filename (or its base)
+STRING INDEX::getFileName(const STRING& FieldName, FIELDTYPE FieldType)
+{
+  STRING      FileName;
+  if (Parent && !FieldName.IsEmpty()) {
+    STRING      FileName;
+
+    if (Parent->DfdtGetFileName(FieldName, FieldType, &FileName) == false)
+       {
+         message_log (LOG_ERROR, "Could not get a filename for '%s' of type %s. DFD Defect?",
+           FieldName.c_str(), FieldType.c_str());
+       }
+     else return FileName;
+   }
+
+  return NulString; 
+}
+
 FILE *INDEX::OpenForAppend(const STRING& FieldName, FIELDTYPE FieldType)
 {
-  FILE       *fp = NULL;
-  INT         type = (INT)FieldType;
-  STRING      FileName;
+  FILE         *fp = NULL;
+  STRING       FileName = getFileName(FieldName, FieldType);
 
-  if (Parent == NULL || FieldName.IsEmpty())
-    return NULL;
-
-  if (Parent->DfdtGetFileName(FieldName, FieldType, &FileName) == false)
-    {
-      message_log (LOG_ERROR, "Could not get a filename for '%s' of type %s. DFD Defect?",
-	FieldName.c_str(), FieldType.c_str());
-    }
-  else // We want the right method to open for append
-    switch (type)
+  if (!FileName.IsEmpty()) // We want the right method to open for append
+    switch ( (INT)FieldType )
       {
         case FIELDTYPE::ttl:
         case FIELDTYPE::numerical:
@@ -1051,7 +1062,10 @@ FILE *INDEX::OpenForAppend(const STRING& FieldName, FIELDTYPE FieldType)
 	  fp = NUMERICLIST().OpenForAppend(FileName);
 	  break;
 	case FIELDTYPE::db_hnsw:
-	  /* NOT YET IMPLEMENTED */
+#ifdef VECTOR_INDEX
+	  // Init the Embedding Indexer if not already
+          if (embeddingIndexer == NULL) embeddingIndexer = new EmbeddingIndexer (Parent);
+#endif
 	  break;
 	case FIELDTYPE::db_nsg:
 	  /* NOT YET IMPLEMENTED */
@@ -1195,6 +1209,11 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 	    db_callbackPtr->OpenFieldForAppend(FieldName);
 	    break;
 #endif
+#ifdef VECTOR_INDEX
+	  case FIELDTYPE::db_hnsw:
+	    // Don't open any file.. Our append does that
+	    break;
+#endif
 	  default:
 	    if ((fp = OpenForAppend(FieldName, FieldType)) == NULL)
 	      {
@@ -1221,7 +1240,11 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 	    {
               break;
 	    }
-          GetIndirectBuffer(gp, (UCHR *)Buffer.Want(flen+1, sizeof(UCHR)), 0, flen);
+          if (0 == GetIndirectBuffer(gp, (UCHR *)Buffer.Want(flen+1, sizeof(UCHR)), 0, flen)) {
+	     message_log(LOG_INFO, "IndirectBuffer returned 0 of %d bytes for %s (%s)", flen,
+		FieldName.c_str(), FieldType.c_str() );
+	     continue; 
+	  }
 
           // File format: <gp><data_object>
           switch (type)
@@ -1310,9 +1333,10 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 	    case FIELDTYPE::db_hnsw: /* HNSW */
 	    {
 #ifdef VECTOR_INDEX
+	      message_log(LOG_DEBUG, "Appending to a HNSW index '%s'", FileName.c_str());
 	      // Create if not yet already created...
 	      if (embeddingIndexer == NULL) embeddingIndexer = new EmbeddingIndexer (Parent);
-	      if (embeddingIndexer.Ok() && embeddingIndexer->Append ( DocTypePtr->ParseBuffer(Buffer), FieldName, fc))
+	      if (embeddingIndexer->Ok() && embeddingIndexer->Append (Buffer, FileName, FC(gp, gp+flen-1)))
 		items++;
 #else /* NOT YET ENABLED */
 	      message_log (LOG_ERROR, "Dense Vectors Not Yet Enabled.");
@@ -3691,6 +3715,7 @@ PIRSET INDEX::Search (const QUERY& Query)
                   // Check that fieldname is valid..
                   if (! Parent->FieldExists(FieldName))
                     {
+cerr << "Field " << FieldName << " did not exist!" << endl;
                       Parent->SetErrorCode(114); // "Unsupported Use attribute"
                       // Field does not exist so don't bother searching
                       NewIrset = new IRSET (Parent);
@@ -3700,6 +3725,9 @@ PIRSET INDEX::Search (const QUERY& Query)
 
               FieldType = Attrlist.AttrGetFieldType();
               aFieldType = Parent->GetFieldType(FieldName); // What it also is
+#if 1
+	      message_log (LOG_DEBUG, "%s -> %s", FieldName.c_str(), aFieldType.c_str());
+#endif
 
 	      // Did we specify a relation?
               gotRelation = Attrlist.AttrGetRelation(&Relation);
@@ -3794,10 +3822,14 @@ PIRSET INDEX::Search (const QUERY& Query)
                 }
               else if (aFieldType.IsHNSW()) {
 #ifdef VECTOR_INDEX
+		message_log(LOG_DEBUG, "Vector Search within '%s'", FieldName.c_str());
 		if (embeddingIndexer == NULL) embeddingIndexer = new EmbeddingIndexer (Parent);
-		if (embeddingIndexer.Ok()) // HNSW index
+                STRING FileName = getFileName(FieldName, FieldType);
+		message_log(LOG_DEBUG, "The vector index = %s", FileName.c_str());
+		if (embeddingIndexer->Ok() && !FileName.IsEmpty()) // HNSW index
                 {
-                   NewIrset = embeddingIndexer->search(Fieldname, Term);
+		   Method = HybridNormalization ; // Need to mix/match with Vectors!!  April 2026
+                   NewIrset = embeddingIndexer->search(FileName, Term);
                 } else {
 		   // Since this should not normally happen...
 		   Parent->SetErrorCode( 3 ); // Temporarily not available
@@ -4026,26 +4058,40 @@ PIRSET INDEX::Search (const QUERY& Query)
                   else
                     NewIrset = TermSearch (Term, FieldName, Exact);
                 }
-              if (NewIrset)
+              if (NewIrset) 
                 {
-                  if (FieldType.IsText())
-                    {
-                      // With Text fields treat <> as !
-                      if (Relation == ZRelNE) NewIrset->Not();
-                    }
-                  TermWeight = Attrlist.AttrGetTermWeight ();
-                  NewIrset->ComputeScores (TermWeight, Method);
+                    if (aFieldType.IsText())
+                      {
+                        // With Text fields treat <> as !
+                        if (Relation == ZRelNE) NewIrset->Not();
+                      }
+		    message_log(LOG_DEBUG, "Computing scores");
+                    TermWeight = Attrlist.AttrGetTermWeight ();
+                    NewIrset->ComputeScores (TermWeight, Method);
                 }
               else
                 NewIrset = new IRSET (Parent);
 error:
 	      TempStack << NewIrset;
+
 	      NewIrset = NULL; // Not needed but.. (April 2008)
 	      delete OpPtr; // Added: 2008 March
             } /* TypeTerm*/
         } /* TypeOperand */
     }
+
   TempStack >> NewIrset;
+
+#if 0 /* XXXXXX DEBUG CODE */
+// Add these:
+cerr << "NewIrset ptr = " << (void*)NewIrset << endl;
+for (size_t i = 1; i <= NewIrset->GetTotalEntries(); i++)
+{
+    const IRESULT& r = NewIrset->GetEntry(i);  // by const ref, no copy
+    cerr << "  direct Table[" << i << "] score=" << r.GetScore() 
+         << " index=" << r.GetIndex() << endl;
+}
+#endif
 
 #if 1
   if (!Stack.IsEmpty())
@@ -4123,6 +4169,7 @@ INT INDEX::GetIndirectBuffer (const GPTYPE gp, PUCHR Dest, INT Off, INT Length) 
       message_log (LOG_DEBUG, "Get Indirect buffer for %llx (off=%d)", (long long)gp, (int)Off);
 #endif
 
+
     if (Parent && Parent->GetMainMdt ()->GetMdtRecord (gp, &Mdtrec))
       {
         int x = 0;
@@ -4152,14 +4199,16 @@ INT INDEX::GetIndirectBuffer (const GPTYPE gp, PUCHR Dest, INT Off, INT Length) 
                 // Don't cross End-of-Record boundary
                 Length =  Mdtrec.GetLocalRecordEnd() - Offset;
               }
+
             DOCTYPE     *DoctypePtr = Parent->GetDocTypePtr ( Mdtrec.GetDocumentType() );
             const STRING filename (  Parent->ResolvePathname(Mdtrec.GetFullFileName()) );
             if (DoctypePtr)
               {
                 if (DebugMode)
-                  message_log (LOG_DEBUG, "Getting indirect term via %s::GetTerm(%s,%lu,%d)",
+                  message_log (LOG_INFO, "Getting indirect term via %s::GetTerm(%s,%lu,%d)",
                         DoctypePtr->Name().c_str(), filename.c_str(), (unsigned long)Offset, (int)Length );
                 x = DoctypePtr->GetTerm(filename, (char *)Buffer, Offset, Length);
+                if (DebugMode && x < Length) message_log (LOG_INFO, "Got %d Bytes", x);
               }
             else
               {
@@ -4171,7 +4220,7 @@ INT INDEX::GetIndirectBuffer (const GPTYPE gp, PUCHR Dest, INT Off, INT Length) 
                   }
               }
           }
-        if (DebugMode)
+//        if (DebugMode)
           message_log(LOG_DEBUG, "*::GetTerm() returned %d of max. %d characters", x, Length);
         Buffer[x] = '\000';
         return (INT)x;
@@ -6928,9 +6977,9 @@ INDEX::~INDEX ()
       MemoryIndexCache = NULL;
     }
 #ifdef VECTOR_INDEX
-  if (emembeddingIndexer) {
-    delete emembeddingIndexer;
-    emembeddingIndexer = NULL;
+  if (embeddingIndexer) {
+    delete embeddingIndexer;
+    embeddingIndexer = NULL;
   }
 #endif
   message_log (LOG_DEBUG, "Disposed of INDEX instance of '%s'", IndexFileName.c_str());

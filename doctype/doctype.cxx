@@ -477,13 +477,15 @@ INT DOCTYPE::ReadFile(const STRING& Filename, STRING *StringPtr, off_t Offset, s
       result = ReadFile(fp, StringPtr, Offset, Length);
       ffclose(fp);
     }
+// else message_log(LOG_INFO, "DEBUG DOCTYPE::Readfile could not open %s", Filename.c_str());
   return (INT)result;
 }
 
 
 INT DOCTYPE::ReadFile(FILE *fp, STRING *StringPtr, off_t Offset, size_t Length) const
 {
-  return StringPtr->Fread(fp, Length, Offset);
+  int result = StringPtr->Fread(fp, Length, Offset);
+  return result;
 }
 
 INT DOCTYPE::ReadFile(const STRING& Filename, CHR *Buffer, off_t Offset, size_t Length) const
@@ -504,6 +506,8 @@ INT DOCTYPE::ReadFile(const STRING& Filename, CHR *Buffer, off_t Offset, size_t 
 INT DOCTYPE::ReadFile(FILE *fp, CHR *Buffer, off_t Offset, size_t Length) const
 {
   size_t   result = 0;
+
+//cerr << "DOCTYPE:: ReadFile " << (long)fp << " called" << endl;
 
   if (fp != NULL)
     result = pfread(fp, Buffer, Length, Offset);
@@ -833,7 +837,7 @@ void DOCTYPE::BeforeSearching (QUERY *)
 
 IRSET *DOCTYPE::AfterSearching(IRSET* ResultSetPtr)
 {
-  message_log (LOG_DEBUG, "%s::AfterSearching called", Doctype.c_str());
+  message_log (LOG_DEBUG, "%s::AfterSearching default DOCTYPE::AfterSearching called.", Doctype.c_str());
   return ResultSetPtr;
 }
 

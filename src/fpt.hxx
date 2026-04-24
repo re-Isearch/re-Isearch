@@ -45,6 +45,8 @@ public:
     return (z) ? (STRING)Table[z-1] : NulString;
   }
 
+  void Revalidate() ; // Work around should a 3rd part lib init close things !
+
   ~FPT();
 private:
   void   Init(size_t TableSize);

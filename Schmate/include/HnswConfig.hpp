@@ -110,7 +110,7 @@ struct HnswConfig {
     SearchModes default_search_mode = SearchModes::Knn;
     std::string  model_name;
 
-    size_t max_elements = 100000;
+    size_t max_elements = 500000;
     size_t M = 16;
     size_t ef_construction = 200;
 

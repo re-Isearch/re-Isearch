@@ -127,6 +127,7 @@ POPOBJ OPSTACK::Pop ()
     {
       POPOBJ OldHead = Head;
       Head = Head->GetNext ();
+//     OldHead->SetNext(nullptr);  // ← clear the stale Next pointer!
       return OldHead;
     }
   return NULL;

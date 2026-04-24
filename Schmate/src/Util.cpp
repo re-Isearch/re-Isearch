@@ -190,8 +190,8 @@ hnswlib::StorageType ggml_name_to_quant_type(const std::string& name) {
 
 std::optional<GmmlHparams> read_ggml_info(const std::string& path) {
    GmmlHparams info;
-
-   if (file_size(path) > sizeof(GmmlHparams)) {
+   // File exists and is large enough
+   if ( file_size(path) > (off_t)sizeof(GmmlHparams)) {
        std::ifstream fin(path, std::ios::binary);
        if (fin) {
            return read_le<GmmlHparams>(fin);

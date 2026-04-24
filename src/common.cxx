@@ -2163,7 +2163,24 @@ ssize_t pread(int fildes, void *buf, size_t nbyte, off_t offset)
 size_t pfread(FILE *fp, void *buf, size_t nbyte, off_t offset)
 {
   size_t length = 0;
+
+#if 0
+
+// Diagnose the fd
+    int fd = fileno(fp);
+    struct stat st;
+    fstat(fd, &st);
+    cerr << "pfread: fd=" << fd 
+         << " S_ISREG=" << S_ISREG(st.st_mode)
+         << " S_ISFIFO=" << S_ISFIFO(st.st_mode)
+         << " current_pos=" << ftello(fp)
+         << " errno_before=" << strerror(errno) << endl;
+#endif
+#if 0
   if (fseek (fp, offset, SEEK_SET) != -1)
+#else
+  if (fseeko(fp, offset, SEEK_SET) == 0)  // fseeko accepts off_t; 0 = success
+#endif
     {
       size_t x = 0;
       do {
@@ -2171,7 +2188,8 @@ size_t pfread(FILE *fp, void *buf, size_t nbyte, off_t offset)
 	length += x;
 	nbyte  -= x;
      } while (x>0 && nbyte>0);
-   } 
+   } // else cerr << "pfread seek to " << offset << " to read " << nbyte << " failed" <<  endl; 
+// cerr << "COMMON pfread " << (long)fp << " returning " << length << endl;
   ((char *)buf)[length] = '\0';
   return length;
 }

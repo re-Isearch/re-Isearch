@@ -1352,11 +1352,13 @@ size_t SQUERY::SetTerm (const STRING& NewTerm, bool Ored)
 		      ATTRLIST list;
 		      POPOBJ   optr;
 		      Stack >> optr;
-		      optr->GetAttributes (&list);
-		      list.AttrSetFieldName ( arg );
-		      Sterm = *optr;
-		      Sterm.SetAttributes (list);
-		      Stack << Sterm;
+		      if (optr) { // Added 04.2026
+		       optr->GetAttributes (&list);
+		       list.AttrSetFieldName ( arg );
+		       Sterm = *optr;
+		       Sterm.SetAttributes (list);
+		       Stack << Sterm;
+                      } else message_log(LOG_ERROR, "WITHIN:%s operator missing attributes (term)", arg.c_str());
 		      continue;
 		    }
 		  else if (IsBinaryOperator(Op2) )

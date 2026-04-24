@@ -920,11 +920,15 @@ size_t REGISTRY::GetData (const STRLIST& Position, PSTRLIST StrlistBuffer) const
 void REGISTRY::ProfileGetString (const STRING& Section, const STRING& Entry, PSTRLIST StrlistBuffer)
 {
   STRLIST o (Section, Entry);
+
+//cerr << "REGISTRY: Lookup: " << Section << " " << Entry << endl;
   const REGISTRY *Node = FindNode (o);
   if (Node)
     Node->GetData (StrlistBuffer);
   else
    StrlistBuffer->Clear();
+
+//cerr << "RETURN " << *StrlistBuffer << endl;
 }
 
 // Get String

@@ -13,16 +13,15 @@ using namespace hnswlib;
 
 #define SHARD0 0
 
+#define SHARD(x) "_s" + to_string(x)
+
 std::string ShardedIndex::shard_basename(int shard) const
 {
-  if (shard <= 0) {
-#if SHARD0
-    return base_name + "_s0";
-#else
+#if !SHARD0
+  if (shard <= 0)
     return base_name;
 #endif
-  }
-  return base_name + "_s" + to_string(shard);
+  return base_name + SHARD(shard);
 }
 
 size_t ShardedIndex::discover_shards(const std::string &base_name) const {
@@ -40,6 +39,7 @@ size_t ShardedIndex::discover_shards(const std::string &base_name) const {
 
 void ShardedIndex::add_shard(size_t id, bool searchOnly) {
     auto shard = make_unique<BertIndex>(embedder, cfg, shard_basename(id), searchOnly) ;
+    shard->set_storage_path_dir (base_dir);
     shards.emplace_back(std::move(shard));
     // For the shard based auto-tuner
     shard_tuners.emplace_back(std::make_unique<EfSearchTuner>(cfg.ef_search));
@@ -264,6 +264,12 @@ static void remove_safe_indexes(const std::string &shard_prefix) {
   remove_safe(shard_prefix + IndexFileExtensions::offsets);
   remove_safe(shard_prefix + IndexFileExtensions::hnsw);
 }
+
+bool ShardedIndex::Exists(const string &name)
+{
+  return file_exists (name + IndexFileExtensions::hnsw);
+}
+
 
 #include <future>
 #include <thread>
@@ -639,3 +645,17 @@ int64_t ShardedIndex::get_sentence_id(size_t label, size_t shard) {
     }
    return shards[shard]->get_sentence_id(label);
 }
+
+
+// Brute-force remove garbage
+bool ShardedIndex::unlink(const std::string &path) {
+  int  result = BertIndex::unlink(path);
+  for (size_t i = 0; i < 50; i++) {
+     std::string s = path + SHARD(i);
+     // -1 means did not see anything
+     if (BertIndex::unlink(s) == -1 && i > 3) break;
+   }
+  return result == 0;
+}
+
+

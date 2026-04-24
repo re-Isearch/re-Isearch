@@ -50,6 +50,7 @@ public:
   bool    IsBoolean() const  { return (Type == numerical) || (Type == boolean); }
 
   bool    IsText() const     { return Type <= text || Type == isbn;      }
+  bool    IsExtern() const   { return Type >= db_string; } // This include HNSW!
   bool    IsString() const   { return IsText() || IsPhonetic() || IsHash() ||
 			IsCaseHash() || IsPrivHash() || IsLexiHash(); }
   bool    IsNumeric() const { return Type == numerical || Type == computed || Type == currency || Type == dotnumber; }
@@ -91,7 +92,7 @@ public:
   friend bool operator !=(const BYTE s1, const FIELDTYPE& s2);
 
 private:
-  bool IsExternal(const BYTE& type) const { return type >= db_string && type <= callback7;}
+  bool IsExternal(const BYTE& type) const { return type >= db_string && type <= special;}
   bool IsCallback(const BYTE& type) const { return type >= callback && type <= callback7; }
   enum datatypes   Type;
 };

@@ -414,8 +414,8 @@ static int Str2Hash(const STRING& Str, int modulo)
 
   if (len > 0)
     {
-      register size_t t = 0;
-      register int    st = *idxstr;
+      size_t t = 0;
+      int    st = *idxstr;
 
       Value += st;
       do {

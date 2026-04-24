@@ -95,6 +95,9 @@ IRESULT::IRESULT(const IRESULT& OtherIresult)
 #ifdef DEBUG_MEMORY
   __IB_IRESULT_allocated_count++;
 #endif
+  TermHitsVector    = nullptr;  // ← add this
+  maxTermHitsVector = 0;        // ← and this
+
   *this = OtherIresult;
 }
 
@@ -112,6 +115,7 @@ IRESULT& IRESULT::operator=(const IRESULT& OtherIresult)
 #endif
   HitTable =  OtherIresult.HitTable;
   Mdt       = OtherIresult.Mdt;
+
 
   // Re-allocate ?
   if (AuxCount <= 0)

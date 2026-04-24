@@ -3340,6 +3340,8 @@ STRINGINDEX STRING::Fread(FILE *fp, size_t Len)
    {
       Clear();
    }
+
+  // if (length == 0) cerr << "Fread returned 0 but wanted " << Len << endl;
   return length;
 }
 
@@ -4019,6 +4021,5 @@ main()
 
 }
 #endif
-
 
 

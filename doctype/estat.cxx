@@ -16,12 +16,12 @@ Author:		Edward Zimmermann
 
 
 
-class IBDOC_EUROSTAT: public TSVDOC {
+class IBDOC_EUROSTAT: public TSLDOC {
 public:
    IBDOC_EUROSTAT(PIDBOBJ DbParent, const STRING& Name);
    const char *Description(PSTRLIST List) const {
       List->AddEntry (Doctype);
-      TSVDOC::Description(List);
+      TSLDOC::Description(List);
       return desc.c_str();
    }
 
@@ -40,7 +40,7 @@ private:
 
 static const char myDescription[] = "EUROSTAT CSL Plugin";
 
-IBDOC_EUROSTAT::IBDOC_EUROSTAT(PIDBOBJ DbParent, const STRING& Name) : TSVDOC(DbParent, Name)
+IBDOC_EUROSTAT::IBDOC_EUROSTAT(PIDBOBJ DbParent, const STRING& Name) : TSLDOC(DbParent, Name)
 {
   desc.form("%s. EUROSTAT CSL Dump records (Default: UseFirstRecord=True)\n\n", myDescription);
   TSLDOC::SetIFS(",\t\n\r");

@@ -710,6 +710,10 @@ public:
   STRING PersistantCacheName() const { return PersistantIrsetCache; }
 
   FPT       *GetMainFpt() { return &MainFpt ; }
+  void      RevalidateFileCache() {
+      MainFpt.Revalidate();
+  }
+
 
   bool setUseRelativePaths(bool val);
   bool setAutoDeleteExpired(bool val);

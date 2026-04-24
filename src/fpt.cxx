@@ -33,6 +33,53 @@ static int _global_opens_count  = 0;
 #endif
 
 
+#define FD_WATERMARK 100  /* Minimum FD number we want */
+
+/**
+ * fopen_high - Open a file, ensuring the underlying fd is >= FD_WATERMARK.
+ *
+ * GGML (and other libraries) sometimes close low-numbered fds internally.
+ * By duplicating the fd to a high slot we stay out of their reach.
+ *
+ * Returns a FILE* on success, NULL on failure (errno is set).
+ */
+static FILE *fopen_high(const char *path, const char *mode)
+{
+    /* 1. Open normally */
+    FILE *f = fopen(path, mode);
+    if (!f)
+        return NULL;
+
+    int old_fd = fileno(f);
+
+    /* 2. Already high enough – nothing to do */
+    if (old_fd >= FD_WATERMARK)
+        return f;
+
+    /* 3. dup the fd to the first free slot at or above the watermark */
+    int new_fd = fcntl(old_fd, F_DUPFD, FD_WATERMARK);
+    if (new_fd < 0) {
+        /* Could not raise – return as-is, or treat as fatal: your call */
+        message_log(LOG_ERRNO, "fopen_high: fcntl F_DUPFD");
+        return f;           /* fall back to the low fd */
+    }
+
+    /* 4. Reopen the FILE* around the new (high) fd.
+     *    fdopen takes ownership of new_fd. */
+    FILE *f_high = fdopen(new_fd, mode);
+    if (!f_high) {
+        message_log(LOG_ERRNO, "fopen_high: fdopen");
+        close(new_fd);
+        return f;           /* fall back */
+    }
+
+    /* 5. Close the original low-numbered FILE* (also closes old_fd) */
+    fclose(f);
+    return f_high;
+}
+
+#define fopen fopen_high
+
 FPT::FPT ()
 {
   Init ( _DEFAULT_SLOTS ); 
@@ -298,13 +345,30 @@ PFILE FPT::ffopen (const STRING& FileName, const CHR* Type)
   if ((z = Lookup (FileName)) != 0)
     {
       // If found, check OpenMode
-      FPREC Fprec = Table[z - 1];
+      FPREC& Fprec = Table[z - 1]; // Changed to & in 2026 // use reference!
       const STRING Fn ( Fprec.GetFileName () );
-      const STRING Om ( Fprec.GetOpenMode () );
       bool  Opened = Fprec.GetOpened ();
 
-      if ((Fp = Fprec.GetFilePointer ()) == NULL) {
-	message_log (LOG_ERROR, "Stream cache of '%s' is bonked! Contact bugs@nonmonotonic.com", FileName.c_str());
+      Fp = Fprec.GetFilePointer ();
+      if (Fp != NULL && fileno(Fp) == -1) {
+	message_log(LOG_WARN, "FPT: Some process outside our control closed a handle of '%s', reopening", Fn.c_str());
+	_global_opens_count--;
+        Fp = fopen(Fn.c_str(), Type);
+        Table[z - 1].SetFilePointer (Fp);
+	if (Fp) {
+	   _global_opens_count++;
+	   Fprec.SetOpenMode(Type);
+        }
+      } else {
+        Fp = Fprec.GetFilePointer();
+      }
+
+      const STRING Om ( Fprec.GetOpenMode () );
+
+//      cerr << "ffopen: cache hit FILE*=" << (long)Fp << " fd=" << (Fp ? fileno(Fp) : -99) << " RefCount/Opened=" << Fprec.GetOpened() << endl;
+
+      if (Fp  == NULL) {
+	message_log (LOG_ERROR, "Stream cache of '%s' is bonked! Contact edz@nonmonotonic.net", FileName.c_str());
 	if ((Fp = ::fopen(FileName, Type)) != NULL)
 	  {
 	    Table[z - 1].SetFilePointer (Fp);
@@ -343,6 +407,7 @@ PFILE FPT::ffopen (const STRING& FileName, const CHR* Type)
 	  Table[z - 1].SetOpenMode (Type);
 	  Table[z - 1].SetFilePointer (Fp);
 	  if (Fp)  _global_opens_count++;
+
 	}
       // Is the stream open?
       if (Fp == NULL)
@@ -368,7 +433,11 @@ PFILE FPT::ffopen (const STRING& FileName, const CHR* Type)
       errno = 0; // Reset..
       if ((Fp = fopen(FileName, Type)) != NULL)
 	{ 
+
 opened:
+// int fd = fileno(Fp);
+// cerr << "ffopen: fresh fopen of " << FileName << " got FILE*=" << (long)Fp << " fd=" << fd << endl;
+
 	   _global_opens_count++;
 	  // We now have an open stream..
 	  INT NewEntry = FreeSlot();
@@ -393,6 +462,8 @@ opened:
 		(unsigned)TotalEntries, _global_streams_count, _global_opens_count);
         }
     }
+
+   
   return Fp;
 }
 
@@ -487,7 +558,7 @@ INT FPT::ffclose (PFILE FilePointer)
   if ((z = Lookup (FilePointer)) != 0)
     {
       if (FilePointer) fflush(FilePointer);
-      Table[z - 1].SetClosed ();
+      Table[z - 1].SetClosed (); // logically available
       LowPriority (z);
     }
   else if (FilePointer)
@@ -579,4 +650,40 @@ FPT::~FPT ()
   if ( _global_streams_count == 0 &&  _global_opens_count)
   message_log (LOG_WARN, "FPT: Closed last FPT but %d file streams still open.", _global_opens_count);
   else message_log (LOG_DEBUG, "Deleted FPT (%d global streams left, %d open)", _global_streams_count, _global_opens_count);
+}
+
+
+
+
+// In FPT: add a method to re-validate all cached entries after
+// potentially destructive library calls
+
+void FPT::Revalidate()
+{
+    pThreadLocker Lock(&mutex, "FPT::Revalidate");
+    for (size_t x = 0; x < TotalEntries; x++)
+    {
+        FILE *fp = Table[x].GetFilePointer();
+        if (fp == NULL) continue;
+
+        int fd = fileno(fp);
+        if (fd == -1)
+        {
+            // fd was closed under us — reopen
+            message_log(LOG_WARN, "FPT::Revalidate: fd lost for '%s', reopening",
+                Table[x].GetFileName().c_str());
+            STRING filename = Table[x].GetFileName();
+            STRING mode     = Table[x].GetOpenMode();
+            FILE *newfp = ::fopen(filename.c_str(), mode.c_str());
+            if (newfp)
+            {
+                Table[x].SetFilePointer(newfp);
+                _global_opens_count++;
+            }
+            else
+            {
+                Table[x].Dispose();
+            }
+        }
+    }
 }

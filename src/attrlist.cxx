@@ -24,7 +24,7 @@ static const char *c = "c"; // 64-bit/Numeric hash
 static const char *t = "t"; // Telephone number 
 static const char *v = "iin"; // Credit Card Number (Visa etc.) = issuer identification number (IIN) 
 static const char *i = "iban"; // IBAN (includes Checksum)
-static const char *w = "w"; // Hierarchical Navigable Small Worlds (HNSW)
+static const char *_V = ""; // Hierarchical Navigable Small Worlds (HNSW)
 static const char *g = "g"; // Graph vector ANN algorithms (except HNSW)
 static const char *f = "f"; // Vector Flat algorithms
 static const char *x = "X"; // Embedded object/store (External)
@@ -78,7 +78,11 @@ static struct DataType {
   {"local5",    _s, FIELDTYPE::callback5, "Local callback 5 (External)"},
   {"local6",    _s, FIELDTYPE::callback6, "Local callback 6 (External)"},
   {"local7",    _s, FIELDTYPE::callback7, "Local callback 7 (External)"},
-  {"hnsw",       w, FIELDTYPE::db_hnsw,   "Hierarchical Navigable Small Worlds (HNSW) // NOT YET"},
+#ifdef VECTOR_INDEX 
+  {"hnsw",       _V, FIELDTYPE::db_hnsw,   "Hierarchical Navigable Small Worlds (HNSW)"},
+#else
+  {"hnsw",      _s, FIELDTYPE::db_hnsw,   "Hierarchical Navigable Small Worlds (HNSW) // NOT YET"},
+#endif
   {"nsg",        g, FIELDTYPE::db_nsg,    "Spread Out Graph ANNS algorithms (NSG) // NOT YET"}, 
   {"ivfflat",    f, FIELDTYPE::db_IVFFlat,"IVFFlat Vectors // NOT YET"},
   {"special",   _s, FIELDTYPE::special,   "Special text (reserved)"},
@@ -124,7 +128,7 @@ static struct DataType {
   {"ipv6",           n,   FIELDTYPE::dotnumber,     NULL},
   {"flat",           f,   FIELDTYPE::db_IVFFlat,    NULL},
   {"sog",            g,   FIELDTYPE::db_nsg,        NULL},
-  {"vector",         w,   FIELDTYPE::db_hnsw,        NULL},
+  {"vector",        _V,   FIELDTYPE::db_hnsw,        NULL},
 // common xs: data type names
   {"xs:string",            _s,  FIELDTYPE::text,      NULL},
   // derived

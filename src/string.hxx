@@ -17,7 +17,9 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE
 #include <stdarg.h>
 #include <limits.h>
 
+#ifdef VECTOR_INDEX
 #include <string_view>
+#endif
 
 #include "gdt.h"
 #include <iostream>
@@ -290,6 +292,7 @@ public:
     ///
     const char*             data() const { return (const char *)m_pchData;}
 
+#ifdef VECTOR_INDEX
     // begin/end pattern
     const char*             begin() const { return data(); }
     const char*             end()   const { return data() + Len(); }
@@ -297,6 +300,7 @@ public:
     // Interface to std::string
     operator std::string_view() const noexcept { return std::string_view(data(), size()); }
     std::string toStdString() const { return std::string(data(), size()); }
+#endif
 
     ///
     const char* GetData() const { return m_pchData; }

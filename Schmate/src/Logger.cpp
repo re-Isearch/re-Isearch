@@ -81,13 +81,16 @@ void Logger::emit_raw(LogLevel level, const std::string_view formatted) {
 
     std::string out;
     out.reserve(32 + timestamp.size() + level_str.size() + formatted.size());
-    out = "["; out += timestamp; out += "] ["; out += level_str; out += "] "; out += formatted;
+    if (! log_to_console) {
+       out = " ["; out += timestamp; out += "]";
+    }
+    out += " ["; out += level_str; out += "]: "; out += formatted;
 
     if (log_to_console) {
         if (level >= LogLevel::ERROR)
-            std::cerr << prefix_ << ": " << out << std::endl;
+            std::cerr << prefix_ << out << std::endl;
         else
-            std::cout << prefix_ << ": " << out << std::endl;
+            std::cout << prefix_ << out << std::endl;
     }
 
     if (log_to_file && file_stream.is_open()) {
@@ -166,11 +169,11 @@ std::string Logger::format_timestamp() {
 
 std::string_view Logger::level_to_string(LogLevel level) {
     switch (level) {
-        case LogLevel::DEBUG: return "DEBUG";
-        case LogLevel::INFO:  return "INFO";
-        case LogLevel::WARN:  return "WARN";
-        case LogLevel::ERROR: return "ERROR";
-        case LogLevel::FATAL: return "FATAL";
+        case LogLevel::DEBUG: return "Debug";
+        case LogLevel::INFO:  return "Info";
+        case LogLevel::WARN:  return "Warn";
+        case LogLevel::ERROR: return "Error";
+        case LogLevel::FATAL: return "Fatal";
         case LogLevel::PANIC: return "PANIC";
         default:              return "UNKNOWN";
     }

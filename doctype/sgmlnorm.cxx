@@ -201,7 +201,7 @@ INT SGMLNORM::GetTerm(const STRING& Filename, CHR *Buffer, off_t Offset, size_t 
   size_t        want = Length*5 + 12 + segment; // Should be enough
   char         *tmp = (char *)tmpBuffer2.Want(want+1);
 
-//cerr << "SGMLNORM::GetTerm called offset=" << Offset << "   len=" << Length << endl;
+// message_log (LOG_INFO, "DEBUG SGMLNORM::GetTerm called %s offset=%d len=%d", Filename.c_str(), Offset, Length);
 
   if (tmp == NULL)
     {
@@ -213,9 +213,15 @@ INT SGMLNORM::GetTerm(const STRING& Filename, CHR *Buffer, off_t Offset, size_t 
   FILE         *fp = ffopen(Filename, "rb");
   if (fp)
     {
+// message_log (LOG_INFO, "DEBUG SGMLNORM::call DOCTYPE::ReadFile with %s FILE * =%ld", Filename.c_str(), (long)fp);
+
       count = DOCTYPE::ReadFile(fp, tmp, Offset, want);
+
+// message_log (LOG_INFO, "DEBUG SGMLNORM::GetTerm ReadFile returned %d", count); 
+
       ffclose(fp);
     }
+  else message_log (LOG_ERROR, "Failed to open \"%s\"", Filename.c_str());
   if (count)
     {
       if (segment)
@@ -234,6 +240,7 @@ INT SGMLNORM::GetTerm(const STRING& Filename, CHR *Buffer, off_t Offset, size_t 
 	  count -= segment;
 	  tmp += segment;
 	}
+
       Entities.normalize2(tmp, count);
 
       size_t i = 0;

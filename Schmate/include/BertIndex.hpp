@@ -9,6 +9,7 @@
 #include "FileLock.hpp"
 #include "OffsetFile.hpp"
 #include "AdaptiveSearchController.hpp"
+#include "FileStreamCache.hpp"
 
 #include <unordered_map>
 #include <string>
@@ -54,6 +55,7 @@ friend class ShardedIndex;
 
     std::unique_ptr<hnswlib::UnifiedIndex> index;
 
+    std::string path_dir; // Directory
     std::string name;
     std::string sentences_path;
     std::string offsets_path;
@@ -75,6 +77,14 @@ public:
     ~BertIndex();
 
     const std::string model_name() { return embedder.model_name; }
+
+    // Remove the index bits from the disk..
+    // return -1 for none found, 0 for OK, >=1 for experienced error
+    static int unlink(const std::string& path);
+
+    std::string full_storage_path(const std::string& filename) const;
+    std::string get_storage_path_dir() const { return path_dir; }
+    bool set_storage_path_dir(const std::string new_path);
 
     size_t get_data_size() { return index ? index->get_data_size() : 0;}
 
@@ -145,6 +155,8 @@ public:
     AdaptiveSearchController search_ctrl;
 
 
+
+
 private:
    template<typename FilterFn>
    std::vector<SearchResult> filter_knn_results(const std::string &query,
@@ -164,11 +176,20 @@ private:
    // convert raw hnsw distance to a score 
    float score_from_dist(float dist) const;
 
+   // I/O
+   bool open_sentences();
+   void close_sentences();
+
 //    bool write_offsets(size_t, int64_t, size_t, size_t, int64_t, int64_t) ;
 //    bool load_offsets();
     std::unique_ptr<OffsetFile> offsets;
 
-    std::fstream sentences_file;
+#if 1
+   FILE *sentences_fd = nullptr;
+#else
+//    std::fstream sentences_file;
+#endif
 };
+
 
 

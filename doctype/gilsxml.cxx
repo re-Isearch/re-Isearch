@@ -16,11 +16,13 @@ STRING XMLBASE::Getoption(const STRING& Option, const STRING& defaultVal)
   STRING string;
   STRING value;
 
-  if (tagRegistry)
+  // Get the XML default
+  if (tagRegistry) {
     tagRegistry->ProfileGetString("XML", Option, defaultVal, &string);
-  else
+  } else
     string = defaultVal;
 
+  // Use it for the database but use the doctype section!
   if (Db)
     Db->ProfileGetString(Doctype, Option, string, &value);
   else
@@ -195,6 +197,8 @@ XMLBASE::XMLBASE (PIDBOBJ DbParent, const STRING& Name) :
     DbParent->ProfileGetString(Doctype, option, string, &value);
   else
     value = string;
+
+  message_log(LOG_DEBUG, "%s set to %s", option, value.c_str());
 
   string.Clear();
   if (DbParent)

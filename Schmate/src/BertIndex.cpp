@@ -79,12 +79,13 @@ float BertIndex::score_from_dist(float dist) const {
     }
 }
 
+// n + ext = path of the index 
 BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool searchOnly) : embedder(emb), cfg(c), name(n)
 {
     size_t max_elements = cfg.max_elements;
-    sentences_path = name + IndexFileExtensions::sentences;
-    offsets_path   = name + IndexFileExtensions::offsets;
-    index_path     = name + IndexFileExtensions::hnsw;
+    sentences_path = full_storage_path(name + IndexFileExtensions::sentences);
+    offsets_path   = full_storage_path(name + IndexFileExtensions::offsets);
+    index_path     = full_storage_path(name + IndexFileExtensions::hnsw);
 
 
     search_ctrl.adaptive_ef = cfg.auto_tune_ef;
@@ -104,8 +105,13 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool sea
 
     if (index && search_ctrl.adaptive_ef) index->setEf(search_ctrl.get_ef());
 
+
+#if 1
+   open_sentences();
+#else
     sentences_file.open(sentences_path, ios::in|ios::out|ios::binary | ios::app);
     if (!sentences_file) throw runtime_error("Failed to open sentences file: " + sentences_path);
+#endif
 
 
   // Try to load offsets if they exist
@@ -141,10 +147,15 @@ void BertIndex::clear() {
         offsets.reset();
     }
 
+
+#if 1
+    close_sentences();
+#else
     if (sentences_file.is_open()) {
         sentences_file.flush();
         sentences_file.close();
     }
+#endif
 
     // --- Step 2: Remove existing files ---
     auto try_remove = [&](const std::string &path) {
@@ -161,8 +172,8 @@ void BertIndex::clear() {
     try_remove(sentences_path);   // e.g., default.sfs
 
     // Need to remove our adaptive tuning files too
-    try_remove(name + IndexFileExtensions::tuner);
-    try_remove(name + IndexFileExtensions::eps);
+    try_remove( full_storage_path(name + IndexFileExtensions::tuner));
+    try_remove( full_storage_path(name + IndexFileExtensions::eps));
 
     // Reset to HNSWConfig values
     search_ctrl.set_ef(cfg.ef_search);
@@ -170,8 +181,10 @@ void BertIndex::clear() {
 
     // --- Step 3: Reinitialize new, empty files ---
     offsets = std::make_unique<OffsetFile>(offsets_path, cfg.max_elements);
+#if 0
     sentences_file.open(sentences_path, std::ios::out | std::ios::trunc | std::ios::binary);
     sentences_file.close(); // leave empty
+#endif
 
     // Recreate an empty HNSW index
     if (index) index->clear();
@@ -320,14 +333,15 @@ size_t BertIndex::append(const string_view sentence) {
     }
 
     int64_t sid = ++auto_sentence_id;
-    if (cfg.debug) LOG_DEBUG_S() << "Append @" << sid << ": " << sentence;
+    if (cfg.debug)
+       LOG_DEBUG_S() << "Append @" << sid << ": " << sentence;
     return append(sentence, sid);
 }
 
 
 bool BertIndex::acquire_lock() const {
     if (!file_lock) {
-        std::string lock_path = name + IndexFileExtensions::lock;
+        std::string lock_path = full_storage_path(name + IndexFileExtensions::lock);
         file_lock = std::make_unique<FileLock>(lock_path);
     }
 
@@ -375,7 +389,7 @@ static bool pid_active_other(pid_t pid) {
 }       
 
 int BertIndex::wait_lock() const {
-    std::string lock_path = name + IndexFileExtensions::lock;
+    std::string lock_path = full_storage_path(name + IndexFileExtensions::lock);
     if (file_size (lock_path) > 0) {
       std::ifstream ifs(lock_path);
       int pid = -1;
@@ -394,7 +408,7 @@ int BertIndex::wait_lock() const {
 }
 
 bool BertIndex::remove_lockfile() const {
-   const std::string lock_path = name + IndexFileExtensions::lock;
+   const std::string lock_path = full_storage_path(name + IndexFileExtensions::lock);
    if (file_exists(lock_path)) {
      return  std::filesystem::remove(lock_path);
    }
@@ -456,6 +470,8 @@ std::vector<float> BertIndex::encode_text(const std::string& text)
 // class by creating a new shard with the appropriate dimension.  
 size_t BertIndex::append(const std::string_view sentence, int64_t sentence_id, uint32_t span) {
 
+std::cerr << "Append \"" << sentence << "\"  span=" << span << std::endl;
+
     if (cfg.lock_on_append && wait_lock()) {
         LOG_FATAL_S() << "Can't append, other process competing (race).";
         return 0;
@@ -482,11 +498,25 @@ size_t BertIndex::append(const std::string_view sentence, int64_t sentence_id, u
     for (auto &chunk : chunks) {
         size_t label = allocate_label();
 
+#if 0
         // --- Write sentence chunk to sentences file ---
         sentences_file.seekp(0, std::ios::end);
+#endif
+
+#if 1
+	fseek(sentences_fd, 0, SEEK_END);
+	int64_t file_start = ftell(sentences_fd);
+	fwrite(chunk.text.data(), 1, chunk.text.size(), sentences_fd);
+	fflush(sentences_fd);
+	int64_t file_end = ftell(sentences_fd);
+#else
         int64_t file_start = (int64_t)sentences_file.tellp();
+        if (file_start  == -1) std::cerr << "BAD Sentence address(START) " << file_start << std::endl;
         sentences_file.write(chunk.text.data(), chunk.text.size());
         int64_t file_end = (int64_t)sentences_file.tellp();
+#endif
+	if (file_start == -1 || file_end == -1)
+	  LOG_ERROR_S() << "BAD Sentence address [" << file_start << "," << file_end << "]\n"; 
 
         // --- Insert into HNSW index ---
         // encode & add
@@ -682,7 +712,11 @@ void BertIndex::flush() {
     if (!cfg.flush_offsets_each && offsets)
       offsets->flush(); // msync during add
 
+#if 1
+    ::fflush(sentences_fd);
+#else
     sentences_file.flush();
+#endif
 
     if (cfg.debug)  LOG_DEBUG_S() <<  "Flushed index + sentences to disk";
   } else if (size() == 0) {
@@ -1265,3 +1299,127 @@ result.file_end    = e.file_end;
 
 
 */
+
+
+bool BertIndex::set_storage_path_dir(const std::string new_path) {
+    namespace fs = std::filesystem;
+
+    // --- Guard: reject relative "escape" paths ---
+    // Normalize to an absolute, canonical-style path first (without requiring it to exist yet)
+    fs::path abs_new = fs::weakly_canonical(fs::absolute(new_path));
+
+    // Reject if it resolves to the current working directory itself
+    if (abs_new == fs::weakly_canonical(fs::current_path())) {
+	LOG_ERROR_S() << "BertIndexManager::set_storage_path: path must not resolve to the current working directory\n";
+	return false;
+    }
+
+    // Reject if it is a parent of (or equal to) the cwd — e.g. "../", "../../"
+    fs::path cwd = fs::weakly_canonical(fs::current_path());
+    for (fs::path p = cwd; !p.empty() && p != p.parent_path(); p = p.parent_path()) {
+        if (abs_new == p.parent_path()) {
+	    LOG_ERROR_S() << "BertIndexManager::set_storage_path: path must not resolve to a parent of the working directory\n";
+	    return false;
+        }
+    }
+
+    // Reject empty or bare-root paths  e.g. "/"  "C:\"
+    if (new_path.empty() || abs_new == abs_new.root_path()) {
+        LOG_ERROR_S() << "BertIndexManager::set_storage_path: path must not be empty or a filesystem root.\n";
+	return false;
+    }
+
+    // --- Clean up the OLD path ---
+    if (!path_dir.empty()) {
+        fs::path abs_old = fs::weakly_canonical(fs::absolute(path_dir));
+        if (fs::exists(abs_old)) {
+            if (!fs::is_directory(abs_old)) {
+                throw std::runtime_error("Old path '" + abs_old.string() + "' exists but is not a directory.");
+            }
+            if (fs::is_empty(abs_old)) {
+                fs::remove(abs_old);
+            }
+        }
+    }
+
+    // --- Validate / prepare the NEW path ---
+    if (fs::exists(abs_new)) {
+        if (!fs::is_directory(abs_new)) {
+            throw std::runtime_error("New path '" + abs_new.string() + "' exists but is not a directory.");
+        }
+        // Already a valid directory — nothing to do
+    } else {
+        if (!fs::create_directories(abs_new)) {
+            throw std::runtime_error("Failed to create directory '" + abs_new.string() + "'.");
+        }
+        fs::permissions(abs_new,
+                        fs::perms::owner_read  | fs::perms::owner_write  | fs::perms::owner_exec |
+                        fs::perms::group_read  | fs::perms::group_exec   |
+                        fs::perms::others_read | fs::perms::others_exec,
+                        fs::perm_options::replace);
+    }
+
+    path_dir = abs_new.string();   // store the normalised absolute path
+    return true;
+}
+
+std::string BertIndex::full_storage_path(const std::string& filename) const {
+    namespace fs = std::filesystem;
+
+    if (path_dir.empty()) return filename; // 
+    return (fs::path(path_dir) / filename).string();
+}
+
+int BertIndex::unlink(const std::string &path)
+{
+    int errors = 0;
+    int saw    = 0;
+
+    for (const auto &ext : {
+            IndexFileExtensions::sentences,
+            IndexFileExtensions::offsets,
+            IndexFileExtensions::hnsw })
+    {
+        std::string s = path + ext;
+	if (file_exists(s)) {
+	  saw++;
+          if (::unlink(s.c_str()) == -1)
+            errors++;
+        }
+    }
+
+    if (saw == 0) return -1;
+    return errors;
+}
+
+#if 1
+
+// 
+bool BertIndex::open_sentences() {
+  if (sentences_path.empty()) return false; // No path!
+//  if (sentences_file) {
+//     delete sentences_file;
+//     sentences_file = nullptr;
+//  }
+  if (sentences_fd) ::fclose(sentences_fd);
+
+  // Read/Write binary, append to end-of-file
+  sentences_fd = schmate_util::fopen_high(sentences_path.c_str(), "a+b");
+  if (!sentences_fd) {
+     // log_errno("Failed to open sentences file");
+     return false;
+  }
+//  sentences_file = new FILEostream(sentences_fd);
+  return true;
+}
+
+void BertIndex::close_sentences() {
+//   delete sentences_file;
+//   sentences_file = nullptr;
+   if (sentences_fd) {
+       ::fflush(sentences_fd);
+       ::fclose(sentences_fd);
+       sentences_fd = nullptr;
+   }
+}
+#endif

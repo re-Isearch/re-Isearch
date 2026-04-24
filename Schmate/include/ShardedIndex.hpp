@@ -10,6 +10,7 @@ class ShardedIndex {
     SBertGGML & embedder;
     hnswlib::HnswConfig & cfg;
     std::string base_name;
+    std::string base_dir;
 
     std::vector<std::unique_ptr<BertIndex>> shards;
     std::vector<std::unique_ptr<EfSearchTuner>> shard_tuners;
@@ -23,14 +24,22 @@ public:
     BertIndex & get_shard(size_t i) const;
     size_t shard_count() const;
 
+    void set_base_dir(std::string &dir) { base_dir = dir;  }
+    std::string get_base_dir() const    { return base_dir; }
+
+    static bool Exists(const std::string &name);
+
     void clear();
+    // unlink files (naive, brute-force
+    static bool unlink(const std::string &path);
+
 
     void append(const std::string_view sentence);
     void append(const std::string_view sentence, int64_t sentence_id, uint32_t span = 0);
 
     std::vector<size_t> find_labels_by_sid(int64_t sid, size_t shard = 0) const;
 
-   int64_t get_sentence_id(size_t label, size_t shard = 0);
+    int64_t get_sentence_id(size_t label, size_t shard = 0);
 
     void remove(size_t label);
     void remove(size_t label, size_t shard);

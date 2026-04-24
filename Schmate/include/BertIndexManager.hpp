@@ -37,21 +37,23 @@ LlamaEmbedder embedder("llama-2-7b.Q4_K_M.gguf");
 
 
 class BertIndexManager {
-    SBertGGML & embedder;
-    hnswlib::HnswConfig & cfg;
-    bool  searchOnly;
+    SBertGGML           &embedder;
+    hnswlib::HnswConfig &cfg;
+    bool                searchOnly;
+    std::string         base_dir;
 #if USE_LRUCACHE
     LRUCache<std::string, ShardedIndex> index_cache;
 #else
     std::unordered_map<std::string, std::unique_ptr<ShardedIndex>> indexes;
 #endif
-
 public:
 #if USE_LRUCACHE
     BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c, size_t max_cached=3, bool searchOnly = false);
 #else
     BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c);
 #endif
+
+    void set_base_dir(const std::string& new_dir) { base_dir = new_dir; }
 
     void clear(const std::string &name);
 

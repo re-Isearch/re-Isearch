@@ -28,7 +28,6 @@ Description:	Class INDEX
 
 #ifdef VECTOR_INDEX
 #include "EmbeddingIndexer.hpp"
-class EmbeddingIndexer;
 #endif
 
 class FPT;
@@ -359,6 +358,7 @@ private:
     if ( _IB_smiles_hash) return _IB_smiles_hash(String.c_str());
     return 0;
   }
+  STRING      getFileName(const STRING& FieldName, FIELDTYPE FieldType);
   FILE       *OpenForAppend(const STRING& FieldName, FIELDTYPE FieldType);
 
 // Variables (constants)
@@ -391,7 +391,7 @@ private:
   bool useSoundex;
   INT         IndexNum; // count of indexes to merge
 #ifdef VECTOR_INDEX
-  EmbeddingIndexer *embeddingIndexer;
+  EmbeddingIndexer *embeddingIndexer = nullptr;
 #endif
 
   // Volatile and active stuff

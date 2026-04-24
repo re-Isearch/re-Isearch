@@ -32,7 +32,7 @@ Description:	Class IRSET - Internal Search Result Set
 extern enum NormalizationMethods {
   Unnormalized = 0, NoNormalization, NormalizationL2, NormalizationL1, MaxNormalization, LogNormalization, BytesNormalization,
   preCosineMetricNormalization, CosineMetricNormalization, EuclideanNormalization,
-  AuxNormalization1, AuxNormalization2, AuxNormalization3, NormalizationAF,  UndefinedNormalization
+  AuxNormalization1, AuxNormalization2, AuxNormalization3, NormalizationAF,  HybridNormalization,  UndefinedNormalization
 } defaultNormalization;
 const int CosineNormalization=NormalizationL2;
 
@@ -127,6 +127,9 @@ public:
   OPOBJ *ComputeScoresLogNormalization (const int TermWeight);
   OPOBJ *ComputeScoresBytesNormalization (const int TermWeight);
   OPOBJ *ComputeScoresCosineMetricNormalization (const int TermWeight);
+
+  OPOBJ *ComputeScoresHybridNormalization(const int TermWeight);
+  void SetPrecomputed(enum NormalizationMethods Method);
 
   // Stubs
   OPOBJ *ComputeScoresAux1Normalization (const int TermWeight);
@@ -254,6 +257,7 @@ public:
     SortRequest = SortBy;
   }
   INT GetSort() const { return (INT)Sort; }
+  void setSortedByScore() { Sort = ByScore; }
 
   void SetParent (PIDBOBJ const NewParent) { Parent = NewParent; }
   PIDBOBJ GetParent () const               { return Parent;      }

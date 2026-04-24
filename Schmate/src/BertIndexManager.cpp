@@ -35,6 +35,14 @@ void HNSWIndex::append( const string& buffer, const string& fieldname,  GPTYPE s
 */
 #endif
 
+ShardedIndex * BertIndexManager::get(const std::string &name)
+{
+    if (ShardedIndex::Exists(name)) {
+        return &getOrCreate(name);
+    }
+    return nullptr;
+}
+
 #if USE_LRUCACHE
 
 /*
@@ -58,13 +66,6 @@ BertIndexManager::BertIndexManager(SBertGGML & e, hnswlib::HnswConfig & c, size_
       })
 {}
 
-
-ShardedIndex * BertIndexManager::get(const std::string &name) {
-   auto idx = index_cache.get(name);
-   if (idx) return &(*idx);
-   return  nullptr;
-}
-
 ShardedIndex & BertIndexManager::getOrCreate(const std::string &name)
 {
     auto idx = index_cache.get(name);
@@ -73,6 +74,7 @@ ShardedIndex & BertIndexManager::getOrCreate(const std::string &name)
 //std::cerr << "CFG Storage XXXX = " << storage_type_to_string(cfg.storage_type()) << std::endl;
         auto new_index = std::make_shared<ShardedIndex>(embedder, cfg, name, searchOnly);
         index_cache.put(name, new_index);
+	new_index->set_base_dir(base_dir);
         return *new_index;
     }
     return *idx;
@@ -85,17 +87,13 @@ BertIndexManager::BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c) : embe
 
 
 
-ShardedIndex * BertIndexManager::get(const std::string &name) {
-   auto it = indexes.find(name);
-   if (it != indexes.end()) return &(*it->second);
-   return  nullptr;
-}
-
 ShardedIndex& BertIndexManager::getOrCreate(const std::string & name) {
     auto it = indexes.find(name);
     if (it != indexes.end()) return *it->second;
     // create new
     indexes[name] = std::make_unique<ShardedIndex>(embedder, cfg, name, searchOnly);
+    indexes[name]->set_base_dir(base_dir);
+
     return *indexes[name];
 }
 #endif // LRU_CACHE
@@ -271,7 +269,12 @@ int64_t BertIndexManager::get_sentence_id(const std::string &name, size_t label,
 
 
 void BertIndexManager::clear(const std::string &name) {
+#if 1
+    auto idx = get(name);
+    if (idx) idx->clear();
+#else
     auto &idx = getOrCreate(name);
     idx.clear();
+#endif
 }
 

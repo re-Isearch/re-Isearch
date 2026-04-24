@@ -259,4 +259,5 @@ inline std::pair<std::vector<float>, DataType> hexToVecWithType<float>(const std
     return { hexToVector<float>(hex, type), type };
 }
 
+
 } // namespace schmate_util
