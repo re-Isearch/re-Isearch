@@ -1,0 +1,390 @@
+cmake_minimum_required(VERSION 3.20)
+project(reIsearch VERSION 4.7 LANGUAGES C CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# ─────────────────────────────────────────────
+# Options
+# ─────────────────────────────────────────────
+option(BUILD_VECTOR_INDEX  "Build with HNSW/vector index support"  ON)
+option(BUILD_SHARED_LIBS   "Build shared libraries"                ON)
+option(USE_LIBMAGIC        "Use libmagic for file type detection"   ON)
+option(USE_JEMALLOC        "Use jemalloc allocator"                ON)
+option(USE_OPENMP          "Use OpenMP"                            ON)
+option(USE_BERKELEY_DB     "Use Berkeley DB"                       ON)
+
+# ─────────────────────────────────────────────
+# Paths (override on command line with -D)
+# ─────────────────────────────────────────────
+set(BERKELEY_DB_ROOT "/opt/homebrew/Cellar/berkeley-db/18.1.40_2"
+    CACHE PATH "Berkeley DB root")
+set(LIBMAGIC_ROOT "/opt/homebrew/Cellar/libmagic/5.45"
+    CACHE PATH "libmagic root")
+set(OPENSSL_ROOT "/opt/homebrew/Cellar/openssl@3/3.5.2"
+    CACHE PATH "OpenSSL root (for autoremote plugin)")
+set(SCHMATE_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/../Schmate/include"
+    CACHE PATH "Schmate/HNSW include dir")
+
+set(INSTALL_BIN_DIR   "/usr/local/bin"       CACHE PATH "Executable install dir")
+set(INSTALL_LIB_DIR   "/usr/local/lib/ib"    CACHE PATH "Library install dir")
+
+# ─────────────────────────────────────────────
+# Compiler flags
+# ─────────────────────────────────────────────
+add_compile_options(
+    -m64
+    -O3
+    -fvectorize
+    -ffast-math
+    -ftree-vectorize
+    -fpic
+)
+
+# Global defines (mirrors DEFINES in Makefile)
+add_compile_definitions(
+    SVR4
+    BSD
+    WWW_SUPPORT
+    __CSTRING__
+    BSDN_EXTENSIONS=2
+    DO_BUILD_IB64=1
+)
+
+if(USE_LIBMAGIC)
+    add_compile_definitions(USE_LIBMAGIC)
+endif()
+
+if(BUILD_VECTOR_INDEX)
+    add_compile_definitions(VECTOR_INDEX=1)
+endif()
+
+# ─────────────────────────────────────────────
+# Find packages
+# ─────────────────────────────────────────────
+find_package(Threads REQUIRED)
+
+if(USE_OPENMP)
+    find_package(OpenMP REQUIRED)
+endif()
+
+if(USE_BERKELEY_DB)
+    find_library(BDB_LIB db HINTS "${BERKELEY_DB_ROOT}/lib" REQUIRED)
+    find_path(BDB_INCLUDE db.h HINTS "${BERKELEY_DB_ROOT}/include" REQUIRED)
+endif()
+
+if(USE_LIBMAGIC)
+    find_library(MAGIC_LIB magic HINTS "${LIBMAGIC_ROOT}/lib" REQUIRED)
+    find_path(MAGIC_INCLUDE magic.h HINTS "${LIBMAGIC_ROOT}/include" REQUIRED)
+endif()
+
+if(USE_JEMALLOC)
+    find_library(JEMALLOC_LIB jemalloc HINTS /opt/homebrew/lib REQUIRED)
+endif()
+
+# ─────────────────────────────────────────────
+# Source directories
+# ─────────────────────────────────────────────
+set(SRC_DIR     "${CMAKE_SOURCE_DIR}/../src")
+set(DOCTYPE_DIR "${CMAKE_SOURCE_DIR}/../doctype")
+
+# ─────────────────────────────────────────────
+# ibUtils  (common/base utility library)
+# ─────────────────────────────────────────────
+set(BAS_SRCS
+    ${SRC_DIR}/string.cxx       ${SRC_DIR}/fuzzy.cxx
+    ${SRC_DIR}/qsort.cxx        ${SRC_DIR}/vlist.cxx
+    ${SRC_DIR}/plist.cxx        ${SRC_DIR}/common.cxx
+    ${SRC_DIR}/error.cxx        ${SRC_DIR}/glob.cxx
+    ${SRC_DIR}/fieldmatch.cxx   ${SRC_DIR}/pathname.cxx
+    ${SRC_DIR}/inode.cxx        ${SRC_DIR}/numbers.cxx
+    ${SRC_DIR}/snefru.cxx       ${SRC_DIR}/directory.cxx
+    ${SRC_DIR}/logger.cxx       ${SRC_DIR}/mmap.cxx
+    ${SRC_DIR}/object.cxx       ${SRC_DIR}/dictionary.cxx
+    ${SRC_DIR}/strlist.cxx      ${SRC_DIR}/strstack.cxx
+    ${SRC_DIR}/lang-codes.cxx   ${SRC_DIR}/unicode.cxx
+    ${SRC_DIR}/htmlcat.cxx      ${SRC_DIR}/date.cxx
+    ${SRC_DIR}/listof.cxx       ${SRC_DIR}/hash.cxx
+    ${SRC_DIR}/hashof.cxx       ${SRC_DIR}/buffer.cxx
+    ${SRC_DIR}/glist.cxx        ${SRC_DIR}/gstack.cxx
+    ${SRC_DIR}/registry.cxx     ${SRC_DIR}/fprec.cxx
+    ${SRC_DIR}/fpt.cxx          ${SRC_DIR}/crc64.cxx
+    ${SRC_DIR}/utf8.cxx         ${SRC_DIR}/eudex.cxx
+    ${SRC_DIR}/metaphone.cxx
+)
+
+add_library(ibUtils ${BAS_SRCS})
+target_include_directories(ibUtils PUBLIC
+    ${SRC_DIR} ${DOCTYPE_DIR}
+    /opt/homebrew/include
+)
+set_target_properties(ibUtils PROPERTIES OUTPUT_NAME ibUtils)
+
+# ─────────────────────────────────────────────
+# ibIO  (network/IO library)
+# ─────────────────────────────────────────────
+set(IO_SRCS
+    ${SRC_DIR}/io.cxx
+    ${SRC_DIR}/protman.cxx
+    ${SRC_DIR}/netbox.cxx
+    ${SRC_DIR}/strbox.cxx
+    ${SRC_DIR}/treebox.cxx
+)
+if(USE_BERKELEY_DB)
+    list(APPEND IO_SRCS ${SRC_DIR}/rldcache.cxx)
+endif()
+
+add_library(ibIO ${IO_SRCS})
+target_include_directories(ibIO PUBLIC ${SRC_DIR} ${DOCTYPE_DIR})
+target_link_libraries(ibIO PUBLIC ibUtils)
+if(USE_BERKELEY_DB)
+    target_include_directories(ibIO PUBLIC ${BDB_INCLUDE})
+    target_link_libraries(ibIO PUBLIC ${BDB_LIB})
+endif()
+
+# ─────────────────────────────────────────────
+# ibProcess
+# ─────────────────────────────────────────────
+add_library(ibProcess
+    ${SRC_DIR}/popen.cxx
+    ${SRC_DIR}/process.cxx
+)
+target_include_directories(ibProcess PUBLIC ${SRC_DIR})
+target_link_libraries(ibProcess PUBLIC ibUtils)
+
+# ─────────────────────────────────────────────
+# ibLocal  (ctype/ranking — C sources)
+# ─────────────────────────────────────────────
+add_library(ibLocal
+    ${SRC_DIR}/ctype.c
+    ${SRC_DIR}/ranking.c
+    ${SRC_DIR}/extras.c
+)
+target_include_directories(ibLocal PUBLIC ${SRC_DIR})
+
+# ─────────────────────────────────────────────
+# ibSearch  (engine library)
+# ─────────────────────────────────────────────
+set(ENG_SRCS
+    ${SRC_DIR}/attr.cxx         ${SRC_DIR}/attrlist.cxx
+    ${SRC_DIR}/df.cxx           ${SRC_DIR}/dfd.cxx
+    ${SRC_DIR}/dfdt.cxx         ${SRC_DIR}/dft.cxx
+    ${SRC_DIR}/fc.cxx           ${SRC_DIR}/fct.cxx
+    ${SRC_DIR}/nodetree.cxx     ${SRC_DIR}/idbobj.cxx
+    ${SRC_DIR}/idb.cxx          ${SRC_DIR}/metadata.cxx
+    ${SRC_DIR}/scan.cxx         ${SRC_DIR}/vidb.cxx
+    ${SRC_DIR}/index.cxx        ${SRC_DIR}/db_string.cxx
+    ${SRC_DIR}/numsearch.cxx    ${SRC_DIR}/datesearch.cxx
+    ${SRC_DIR}/dsearch.cxx      ${SRC_DIR}/geosearch.cxx
+    ${SRC_DIR}/nlist.cxx        ${SRC_DIR}/dlist.cxx
+    ${SRC_DIR}/nfldmgr.cxx      ${SRC_DIR}/intlist.cxx
+    ${SRC_DIR}/intfield.cxx     ${SRC_DIR}/gpolylist.cxx
+    ${SRC_DIR}/gpolyfield.cxx   ${SRC_DIR}/bboxfield.cxx
+    ${SRC_DIR}/bboxlist.cxx     ${SRC_DIR}/nfield.cxx
+    ${SRC_DIR}/dfield.cxx       ${SRC_DIR}/lock.cxx
+    ${SRC_DIR}/iresult.cxx      ${SRC_DIR}/resource.cxx
+    ${SRC_DIR}/irset.cxx        ${SRC_DIR}/mdt.cxx
+    ${SRC_DIR}/mdthashtable.cxx ${SRC_DIR}/mdtrec.cxx
+    ${SRC_DIR}/opobj.cxx        ${SRC_DIR}/operand.cxx
+    ${SRC_DIR}/operator.cxx     ${SRC_DIR}/opstack.cxx
+    ${SRC_DIR}/reclist.cxx      ${SRC_DIR}/record.cxx
+    ${SRC_DIR}/recordsyntax.cxx ${SRC_DIR}/result.cxx
+    ${SRC_DIR}/rset.cxx         ${SRC_DIR}/soundex.cxx
+    ${SRC_DIR}/squery.cxx       ${SRC_DIR}/thesaurus.cxx
+    ${SRC_DIR}/sterm.cxx        ${SRC_DIR}/termobj.cxx
+    ${SRC_DIR}/rcache.cxx       ${SRC_DIR}/fcache.cxx
+    ${SRC_DIR}/filemap.cxx      ${SRC_DIR}/mergeunit.cxx
+    ${SRC_DIR}/infix2rpn.cxx    ${SRC_DIR}/tokengen.cxx
+    ${SRC_DIR}/merge.cxx        ${SRC_DIR}/stoplist.cxx
+    ${SRC_DIR}/support.cxx      ${SRC_DIR}/defs.cxx
+)
+
+add_library(ibSearch ${ENG_SRCS})
+target_include_directories(ibSearch PUBLIC
+    ${SRC_DIR} ${DOCTYPE_DIR}
+    /opt/homebrew/include
+)
+target_link_libraries(ibSearch PUBLIC ibUtils ibLocal)
+
+if(USE_OPENMP)
+    target_link_libraries(ibSearch PUBLIC OpenMP::OpenMP_CXX)
+endif()
+if(USE_LIBMAGIC)
+    target_include_directories(ibSearch PUBLIC ${MAGIC_INCLUDE})
+    target_link_libraries(ibSearch PUBLIC ${MAGIC_LIB})
+endif()
+if(BUILD_VECTOR_INDEX)
+    target_include_directories(ibSearch PUBLIC ${SCHMATE_INCLUDE_DIR})
+    target_link_libraries(ibSearch PUBLIC schmate)
+endif()
+
+# ─────────────────────────────────────────────
+# ibDoc  (document type library)
+# ─────────────────────────────────────────────
+set(DOC_SRCS
+    ${SRC_DIR}/dtreg.cxx
+    ${DOCTYPE_DIR}/doctype.cxx      ${DOCTYPE_DIR}/autodetect.cxx
+    ${DOCTYPE_DIR}/resourcedoc.cxx  ${DOCTYPE_DIR}/image.cxx
+    ${DOCTYPE_DIR}/plaintext.cxx    ${DOCTYPE_DIR}/simple.cxx
+    ${DOCTYPE_DIR}/para.cxx         ${DOCTYPE_DIR}/ptext.cxx
+    ${DOCTYPE_DIR}/binary.cxx       ${DOCTYPE_DIR}/filter.cxx
+    ${DOCTYPE_DIR}/xfilter.cxx      ${DOCTYPE_DIR}/ftp.cxx
+    ${DOCTYPE_DIR}/bibtex.cxx       ${DOCTYPE_DIR}/firstline.cxx
+    ${DOCTYPE_DIR}/colondoc.cxx     ${DOCTYPE_DIR}/tsldoc.cxx
+    ${DOCTYPE_DIR}/csvdoc.cxx       ${DOCTYPE_DIR}/ozsearch.cxx
+    ${DOCTYPE_DIR}/psdoc.cxx        ${DOCTYPE_DIR}/iknowdoc.cxx
+    ${DOCTYPE_DIR}/roadsdoc.cxx     ${DOCTYPE_DIR}/colongrp.cxx
+    ${DOCTYPE_DIR}/euromedia.cxx    ${DOCTYPE_DIR}/mismedia.cxx
+    ${DOCTYPE_DIR}/bibcolon.cxx     ${DOCTYPE_DIR}/dif.cxx
+    ${DOCTYPE_DIR}/iafadoc.cxx      ${DOCTYPE_DIR}/mailfolder.cxx
+    ${DOCTYPE_DIR}/newsfolder.cxx   ${DOCTYPE_DIR}/referbib.cxx
+    ${DOCTYPE_DIR}/irlist.cxx       ${DOCTYPE_DIR}/mailman.cxx
+    ${DOCTYPE_DIR}/listdigest.cxx   ${DOCTYPE_DIR}/maildigest.cxx
+    ${DOCTYPE_DIR}/yahoolist.cxx    ${DOCTYPE_DIR}/digesttoc.cxx
+    ${DOCTYPE_DIR}/medline.cxx      ${DOCTYPE_DIR}/filmline.cxx
+    ${DOCTYPE_DIR}/oneline.cxx      ${DOCTYPE_DIR}/dvbline.cxx
+    ${DOCTYPE_DIR}/memodoc.cxx      ${DOCTYPE_DIR}/soif.cxx
+    ${DOCTYPE_DIR}/harvest.cxx      ${DOCTYPE_DIR}/sgmltag.cxx
+    ${DOCTYPE_DIR}/gils.cxx         ${DOCTYPE_DIR}/sgmlnorm.cxx
+    ${DOCTYPE_DIR}/sgml.cxx         ${DOCTYPE_DIR}/xml.cxx
+    ${DOCTYPE_DIR}/gilsxml.cxx      ${DOCTYPE_DIR}/gils_isoteia.cxx
+    ${DOCTYPE_DIR}/rss2.cxx         ${DOCTYPE_DIR}/html.cxx
+    ${DOCTYPE_DIR}/HTMLEntities.cxx ${DOCTYPE_DIR}/htmlmeta.cxx
+    ${DOCTYPE_DIR}/htmlhead.cxx     ${DOCTYPE_DIR}/htmlremote.cxx
+    ${DOCTYPE_DIR}/antihtml.cxx     ${DOCTYPE_DIR}/htmlcache.cxx
+    ${DOCTYPE_DIR}/filter2.cxx      ${DOCTYPE_DIR}/pandoc.cxx
+    ${DOCTYPE_DIR}/pdf.cxx
+)
+
+add_library(ibDoc ${DOC_SRCS})
+target_include_directories(ibDoc PUBLIC ${SRC_DIR} ${DOCTYPE_DIR})
+target_link_libraries(ibDoc PUBLIC ibUtils ibLocal)
+
+# ─────────────────────────────────────────────
+# ibApps  (main entry points shared lib)
+# ─────────────────────────────────────────────
+add_library(ibApps
+    ${SRC_DIR}/iindex_main.cxx
+    ${SRC_DIR}/isearch_main.cxx
+    ${SRC_DIR}/iutil_main.cxx
+)
+target_include_directories(ibApps PUBLIC ${SRC_DIR} ${DOCTYPE_DIR})
+target_link_libraries(ibApps PUBLIC ibUtils ibSearch ibDoc ibProcess)
+
+# ─────────────────────────────────────────────
+# Common link helper
+# ─────────────────────────────────────────────
+set(COMMON_LINK_LIBS
+    ibLocal ibUtils ibSearch ibDoc ibProcess ibIO ibApps
+    m dl
+)
+if(USE_LIBMAGIC)
+    list(APPEND COMMON_LINK_LIBS ${MAGIC_LIB})
+endif()
+if(USE_BERKELEY_DB)
+    list(APPEND COMMON_LINK_LIBS ${BDB_LIB})
+endif()
+if(USE_JEMALLOC)
+    list(APPEND COMMON_LINK_LIBS ${JEMALLOC_LIB})
+endif()
+if(USE_OPENMP)
+    list(APPEND COMMON_LINK_LIBS OpenMP::OpenMP_CXX)
+endif()
+if(BUILD_VECTOR_INDEX)
+    list(APPEND COMMON_LINK_LIBS schmate)
+endif()
+
+# ─────────────────────────────────────────────
+# Executables
+# ─────────────────────────────────────────────
+foreach(exe Iindex Isearch Iutil)
+    add_executable(${exe} ${SRC_DIR}/${exe}.c)
+    target_link_libraries(${exe} PRIVATE ${COMMON_LINK_LIBS})
+    set_target_properties(${exe} PROPERTIES
+        COMPILE_FLAGS "-m64"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../bin"
+    )
+endforeach()
+
+add_executable(Idelete ${SRC_DIR}/Idelete.cxx)
+target_include_directories(Idelete PRIVATE ${SRC_DIR} ${DOCTYPE_DIR})
+target_link_libraries(Idelete PRIVATE ${COMMON_LINK_LIBS})
+set_target_properties(Idelete PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../bin"
+)
+
+# Small utilities
+foreach(util siscompress sisdump sisdump32)
+    string(REPLACE "32" "" src_base ${util})
+    add_executable(${util} ${SRC_DIR}/${util}.c)
+    set_target_properties(${util} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../bin"
+    )
+endforeach()
+
+add_executable(sischeck ${SRC_DIR}/sischeck.cxx)
+target_link_libraries(sischeck PRIVATE ${COMMON_LINK_LIBS})
+set_target_properties(sischeck PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../bin"
+)
+
+add_executable(Iwatch ${SRC_DIR}/Iwatch.c)
+set_target_properties(Iwatch PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../bin"
+)
+
+add_executable(zipper ${SRC_DIR}/zipper.cxx)
+set_target_properties(zipper PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../bin"
+)
+
+add_executable(zpresent ${SRC_DIR}/zpresent.cxx)
+target_include_directories(zpresent PRIVATE ${SRC_DIR} ${DOCTYPE_DIR})
+target_link_libraries(zpresent PRIVATE ${COMMON_LINK_LIBS})
+set_target_properties(zpresent PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../bin"
+)
+
+add_executable(zsearch ${SRC_DIR}/zsearch.cxx)
+target_include_directories(zsearch PRIVATE ${SRC_DIR} ${DOCTYPE_DIR})
+target_link_libraries(zsearch PRIVATE ${COMMON_LINK_LIBS})
+set_target_properties(zsearch PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../bin"
+)
+
+# ─────────────────────────────────────────────
+# autoremote plugin (needs OpenSSL)
+# ─────────────────────────────────────────────
+find_library(SSL_LIB   ssl   HINTS "${OPENSSL_ROOT}/lib")
+find_library(CRYPTO_LIB crypto HINTS "${OPENSSL_ROOT}/lib")
+
+if(SSL_LIB AND CRYPTO_LIB)
+    add_library(autoremote MODULE ${DOCTYPE_DIR}/autoremote.cxx)
+    target_include_directories(autoremote PRIVATE
+        ${SRC_DIR} ${DOCTYPE_DIR}
+        "${OPENSSL_ROOT}/include"
+    )
+    target_link_libraries(autoremote PRIVATE
+        ${COMMON_LINK_LIBS} ${SSL_LIB} ${CRYPTO_LIB}
+    )
+    set_target_properties(autoremote PROPERTIES
+        PREFIX ""
+        SUFFIX ".dylib"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../lib/plugins"
+    )
+endif()
+
+# ─────────────────────────────────────────────
+# Install
+# ─────────────────────────────────────────────
+install(TARGETS Iindex Isearch Iutil Idelete zpresent zsearch Iwatch zipper
+    RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
+)
+install(TARGETS ibUtils ibSearch ibDoc ibProcess ibLocal ibIO ibApps
+    LIBRARY DESTINATION "${INSTALL_LIB_DIR}"
+)
+
+# ─────────────────────────────────────────────
+# Plugin user dir
+# ─────────────────────────────────────────────
+file(MAKE_DIRECTORY "$ENV{HOME}/.ib/lib/plugins")
