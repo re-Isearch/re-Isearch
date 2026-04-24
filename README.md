@@ -1,5 +1,13 @@
 ## This is the respositiory for re-Isearch.
 
+### NEWS
+The evolving version of re-Isearch+Schmate is getting ready for release-- its already pre-release. It now supports all the magic from Schmate using an interface layer. This allows Schmate standalone to continue to not just be used outside of re-Isearch but enables Schmate to search even in vector indexes created by re-Isearchi, viz. without the query and lexical baggage.
+
+Towards this aim and making build easier we are transitioning towards CMAKE.. Re-Isearch without the vector can continue to use Makefiles such it be demanded by the platform but as the vector search demands a bit more computational resources (embeddings and HNSW vector search) we consider it reasonable to expect cmake. 
+
+Please note: The vector variant (VECTOR_INDEX enabled in compile) is a pre-release. Its not yet ready for production deployment.
+
+
 ### Project re-isearch:
 a novel multimodal search and retrieval engine using mathematical models and algorithms different from the all-too-common inverted index (popularized by Salton in the 1960s). The design allows it to have, in practice, effectively no limits on the frequency of words, term length, number of fields or complexity of structured data and support even overlap--- where fields or structures cross other's boundaries (common examples are quotes, line/sentences, biblical verse, annotations). Its model enables a completely flexible unit of retrieval and modes of search.
 
