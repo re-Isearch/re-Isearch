@@ -7,6 +7,11 @@ Towards this aim and making build easier we are transitioning towards CMAKE.. Re
 
 Please note: The vector variant (VECTOR_INDEX enabled in compile) is a pre-release. Its not yet ready for production deployment.
 
+##### Building ####
+From the root distribution directory create a sub-directory (build etc.). From that direction cmake ..  followed by make.
+
+cmake provides a few options.
+
 
 ### Project re-isearch:
 a novel multimodal search and retrieval engine using mathematical models and algorithms different from the all-too-common inverted index (popularized by Salton in the 1960s). The design allows it to have, in practice, effectively no limits on the frequency of words, term length, number of fields or complexity of structured data and support even overlap--- where fields or structures cross other's boundaries (common examples are quotes, line/sentences, biblical verse, annotations). Its model enables a completely flexible unit of retrieval and modes of search.
