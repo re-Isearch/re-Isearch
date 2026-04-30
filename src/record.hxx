@@ -114,6 +114,7 @@ public:
   void           SetDft(const DFT& NewDft)    { Dft = NewDft;    }
   void           GetDft(PDFT DftBuffer) const { *DftBuffer = Dft;}
   const DFT     *GetDftPtr() const            { return &Dft;     }
+  void           AddEntry(const DF &df)       { Dft.AddEntry(df); }
 
   void           Write(PFILE fp) const;
   bool    Read(PFILE fp);
