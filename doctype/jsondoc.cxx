@@ -54,17 +54,15 @@ const char *JSONDOC::Description(PSTRLIST List) const
     const STRING ThisDoctype("JSON");
     if (Doctype != ThisDoctype && List->IsEmpty())
       List->AddEntry(Doctype);
-    List->AddEntry (ThisDoctype);
+    List->AddEntry(ThisDoctype);
     COLONDOC::Description(List);
   }
-
-  return "JSON Document Type – indexes key/value pairs by field coordinates; "
-         "nested keys joined with path-separator (default '|').\n\
+  return "JSON Document Type – indexes key/value pairs by field coordinates;\n\
+Limited to \"pure JSON\" (RFC 8259). Nested keys are joined with path-separator.\n\
 Indexing options (defined in .ini):\n\
   [General]\n\
   AutodetectFieldtypes=True|False // Guess fieldtypes\n\
-  IndexArrayElements=True|False\n\
-  PathSep=Character";
+  IndexArrayElements=True|False\n  PathSep=Character (default '|')";
 }
 
 void JSONDOC::SourceMIMEContent(PSTRING StringPtr) const
@@ -74,12 +72,247 @@ void JSONDOC::SourceMIMEContent(PSTRING StringPtr) const
 }
 
 // ---------------------------------------------------------------------------
-// ParseRecords – delegate to COLONDOC (handles file/record boundaries)
+// ParseRecords
+//
+// Scans the file buffer for top-level JSON values — either objects { }
+// or arrays [ ] — and emits one RECORD per value via Db->DocTypeAddRecord.
+// Multiple JSON values may appear consecutively in the same file
+// (newline-delimited JSON / JSON-seq style), separated by arbitrary
+// whitespace or comments.
+//
+// The state machine mirrors the BibTeX parser:
+//   ScanToStart  – looking for the opening '{' or '['
+//   InRecord     – inside a value; counting brace/bracket depth
+//
+// Strings (double-quoted) are tracked so that braces/brackets inside
+// string values are not counted.  JSON escape sequences (including \")
+// are handled.  C-style // and /* */ comments are skipped.
 // ---------------------------------------------------------------------------
 
 void JSONDOC::ParseRecords(const RECORD& FileRecord)
 {
-  COLONDOC::ParseRecords(FileRecord);
+  STRING fn(FileRecord.GetFullFileName());
+  RECORD Record(FileRecord); // copy so we can adjust start/end
+
+  // Always map the whole file from byte 0.
+  // ParseRecords is responsible for discovering record boundaries, so
+  // it must see the entire file regardless of what RecordStart/End the
+  // engine passes in (the engine may pass a pre-guessed single-record
+  // range that only covers the first record).
+  GPTYPE RecStart = 0;
+  GPTYPE RecEnd   = 0;
+  {
+    PFILE fp2 = Db->ffopen(fn, "rb");
+    if (fp2) { RecEnd = GetFileSize(fp2); ffclose(fp2); }
+  }
+
+#ifndef NO_MMAP
+  MMAP mapping(fn, RecStart, RecEnd, MapSequential);
+  if (!mapping.Ok()) {
+    message_log(LOG_ERRNO, "%s::ParseRecords: Could not map '%s' into memory",
+                Doctype.c_str(), fn.c_str());
+    return;
+  }
+  PCHR   RecBuffer    = (PCHR)mapping.Ptr();
+  GPTYPE ActualLength = mapping.Size();
+
+#else
+  // RecStart / RecEnd already resolved above
+  PFILE fp = Db->ffopen(fn, "rb");
+  if (!fp) {
+    message_log(LOG_ERRNO, "%s::ParseRecords: Could not access '%s'",
+                Doctype.c_str(), fn.c_str());
+    return;
+  }
+  if (RecEnd <= RecStart) {
+    message_log(LOG_WARN, "zero-length record '%s'[%ld-%ld] -- skipping",
+                (const char *)fn, (long)RecStart, (long)RecEnd);
+    ffclose(fp);
+    return;
+  }
+  if (fseek(fp, RecStart, 0) == -1) {
+    message_log(LOG_ERRNO, "%s::ParseRecords(): Seek '%s' to %ld failed",
+                Doctype.c_str(), fn.c_str(), (long)RecStart);
+    ffclose(fp);
+    return;
+  }
+
+  GPTYPE RecLength = RecEnd - RecStart + 1;
+  PCHR   RecBuffer = (PCHR)recBuffer.Want(RecLength + 2);
+  GPTYPE ActualLength = (GPTYPE)fread(RecBuffer, 1, RecLength, fp);
+  ffclose(fp);
+
+  if (ActualLength == 0) {
+    message_log(LOG_ERRNO, "%s::ParseRecords(): Failed to fread '%s'",
+                Doctype.c_str(), fn.c_str());
+    return;
+  }
+  if (ActualLength != RecLength) {
+    message_log(LOG_WARN, "%s::ParseRecords(): Expected %ld bytes, got %ld",
+                Doctype.c_str(), (long)RecLength, (long)ActualLength);
+  }
+  RecBuffer[ActualLength] = '\0';
+#endif
+
+  // ------------------------------------------------------------------
+  // State machine
+  //
+  // braceDepth and bracketDepth are tracked independently because JSON
+  // freely nests objects inside arrays and vice versa.  A single
+  // depth counter using only one delimiter pair breaks on e.g.
+  // {"a": [1,2]} because '['/']' would not match '{'/'}' and depth
+  // would never return to zero correctly.
+  // ------------------------------------------------------------------
+  enum { ScanToStart, InRecord } State = ScanToStart;
+
+  off_t  Start        = 0;
+  int    braceDepth   = 0;
+  int    bracketDepth = 0;
+  bool   topIsObject  = true;
+  bool   inString     = false;
+  int    errors       = 0;
+
+  for (off_t i = 0; i < (off_t)ActualLength; i++)
+    {
+      char c = RecBuffer[i];
+
+      // ---- string handling (takes priority over everything else) ----
+      if (inString)
+        {
+          if (c == '\\')
+            i++;
+          else if (c == '"')
+            inString = false;
+          continue;
+        }
+
+      // ---- comment handling (only outside strings) ----
+      if (c == '/' && (i + 1) < (off_t)ActualLength)
+        {
+          if (RecBuffer[i+1] == '/')
+            {
+              while (++i < (off_t)ActualLength &&
+                     RecBuffer[i] != '\n' && RecBuffer[i] != '\r')
+                /* loop */;
+              continue;
+            }
+          else if (RecBuffer[i+1] == '*')
+            {
+              i += 2;
+              while (i + 1 < (off_t)ActualLength &&
+                     !(RecBuffer[i] == '*' && RecBuffer[i+1] == '/'))
+                i++;
+              if (i + 1 < (off_t)ActualLength) i++;
+              continue;
+            }
+        }
+
+      // ---- enter string ----
+      if (c == '"')
+        {
+          inString = true;
+          continue;
+        }
+
+      // ---- state machine ----
+      if (State == ScanToStart)
+        {
+          if (c == '{')
+            {
+              topIsObject  = true;
+              // Do NOT update Start here — it was set to i+1 after the
+              // previous record closed, giving contiguous coverage with
+              // no gaps.  The engine requires records to be contiguous.
+              braceDepth   = 1;
+              bracketDepth = 0;
+              State        = InRecord;
+            }
+          else if (c == '[')
+            {
+              topIsObject  = false;
+              bracketDepth = 1;
+              braceDepth   = 0;
+              State        = InRecord;
+            }
+        }
+      else // InRecord
+        {
+          if      (c == '{') braceDepth++;
+          else if (c == '[') bracketDepth++;
+          else if (c == '}')
+            {
+              braceDepth--;
+              if (topIsObject && braceDepth == 0 && bracketDepth == 0)
+                {
+                  // Record ends at the closing '}' — do NOT advance i
+                  // past trailing whitespace here; ScanToStart handles
+                  // that naturally, and skipping here can push Start
+                  // past ActualLength causing a record overflow.
+                  Record.SetRecordStart((GPTYPE)(RecStart + Start));
+                  Record.SetRecordEnd  ((GPTYPE)(RecStart + i));
+                  Db->DocTypeAddRecord(Record);
+                  Start        = i + 1;
+                  braceDepth   = 0;
+                  bracketDepth = 0;
+                  State        = ScanToStart;
+                }
+            }
+          else if (c == ']')
+            {
+              bracketDepth--;
+              if (!topIsObject && bracketDepth == 0 && braceDepth == 0)
+                {
+                  Record.SetRecordStart((GPTYPE)(RecStart + Start));
+                  Record.SetRecordEnd  ((GPTYPE)(RecStart + i));
+                  Db->DocTypeAddRecord(Record);
+                  Start        = i + 1;
+                  braceDepth   = 0;
+                  bracketDepth = 0;
+                  State        = ScanToStart;
+                }
+            }
+        }
+    }
+
+  // ------------------------------------------------------------------
+  // Post-scan error / residual checks (mirrors BibTeX pattern)
+  // ------------------------------------------------------------------
+  if (inString) {
+    message_log(LOG_ERROR, "%s: Runaway string in '%s'",
+                Doctype.c_str(), (const char *)fn);
+    errors++;
+  }
+  if (State == InRecord) {
+    message_log(LOG_ERROR, "%s: Unterminated JSON value in '%s' (braceDepth=%d bracketDepth=%d)",
+                Doctype.c_str(), (const char *)fn, braceDepth, bracketDepth);
+
+
+    errors++;
+  }
+
+  // Handle any trailing unparsed bytes
+  if ((off_t)Start < (off_t)ActualLength)
+    {
+      if (errors) {
+        message_log(LOG_WARN, "Marking %s %ld-%ld deleted",
+                    (const char *)fn,
+                    (long)(RecStart + Start),
+                    (long)(RecStart + ActualLength));
+      } else if (Start != 0) {
+        message_log(LOG_INFO, "Ignoring %s trailing bytes %ld-%ld",
+                    (const char *)fn,
+                    (long)(RecStart + Start),
+                    (long)(RecStart + ActualLength));
+      } else {
+        message_log(LOG_INFO, "Ignoring '%s', no valid %s records found",
+                    (const char *)fn, Doctype.c_str());
+      }
+      Record.SetBadRecord();
+      Record.SetDocumentType("<NIL>");
+      Record.SetRecordStart((GPTYPE)(RecStart + Start));
+      Record.SetRecordEnd  ((GPTYPE)(RecStart + ActualLength));
+      Db->DocTypeAddRecord(Record);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -101,17 +334,22 @@ void JSONDOC::ParseFields(PRECORD NewRecord)
   GPTYPE recEnd = NewRecord->GetRecordEnd();
   size_t recLen = (size_t)(recEnd - base + 1);
 
-  PFILE fp = fopen(FileName.c_str(), "rb");
+  PFILE fp = Db->ffopen(FileName, "rb");
   if (!fp) {
     message_log(LOG_ERROR, "JSONDOC::ParseFields: cannot open '%s'",
-                FileName.c_str());
+                (const char*)FileName);
     return;
   }
 
-  fseek(fp, (long)base, SEEK_SET);
+  if (fseek(fp, (long)base, SEEK_SET) != 0) {
+    message_log(LOG_ERROR, "JSONDOC::ParseFields: fseek to %ld failed in '%s'",
+                (long)base, (const char*)FileName);
+    Db->ffclose(fp);
+    return;
+  }
   char *buf = new char[recLen + 1];
   size_t nRead = fread(buf, 1, recLen, fp);
-  fclose(fp);
+  Db->ffclose(fp);
   buf[nRead] = '\0';
 
   size_t pos = 0;
@@ -409,9 +647,13 @@ void JSONDOC::AddField(PRECORD record,
   if (!record || fieldname.IsEmpty() || end < start)
     return;
 
+  // FC offsets are record-relative: the engine adds the record base
+  // (GetRecordStart) when resolving absolute GPs, so subtract it here.
+  // For record 1 (recStart=0) this is a no-op.
+  GPTYPE recStart = record->GetRecordStart();
   FC fc;
-  fc.SetFieldStart(start);
-  fc.SetFieldEnd  (end);
+  fc.SetFieldStart(start - recStart);
+  fc.SetFieldEnd  (end   - recStart);
 
   FCT fct;
   fct.AddEntry(fc);          // FC& overload
@@ -422,19 +664,17 @@ void JSONDOC::AddField(PRECORD record,
 
   if (Db) {
     DFD dfd;
-    // Autodetect field type from the transient content string. 
+    // Autodetect field type from the transient content string.
     // GuessFieldType calls Db->AddFieldType internally when it makes a
     // determination, so we only need to call it — we don't act on the
     // return value here.
     FIELDTYPE ft;
-
     if (m_AutoFieldTypes && contents.GetLength() > 0)
       ft = GuessFieldType(fieldname, contents);
     dfd.SetFieldName(fieldname);
-    if (ft.Defined()) dfd.SetFieldType( ft ); // Set the type
+    if (ft.Defined()) dfd.SetFieldType(ft); // Set the type
     Db->DfdtAddEntry(dfd);  // register field name globally (idempotent)
   }
 
-  // preserve fields already added for this record
-  record->AddEntry(df);
+  record->AddEntry(df);  // preserve fields already added for this record
 }
