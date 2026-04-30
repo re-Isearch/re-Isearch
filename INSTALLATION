@@ -1,6 +1,6 @@
 The basic steps are:
 
-1) clone the repository.
+1a) clone the repository.
    $ git clone https://github.com/re-Isearch/re-Isearch.git
 
    Prerequisites you need:
@@ -17,6 +17,26 @@ The basic steps are:
   If you do not have libmagic (and don't want to install or build it). Turn it off. It is controlled by
   USE_LIBMAGIC 
   See doctype/autodetect.hxx.
+
+1b) If supporting vector search (Schmate)
+    change dir to the Schmate basedir
+
+    $cd Schmate
+    
+    It ONLY supports cmake so:
+
+    $mkdir build
+    $cd build
+    $make
+
+    In the build directory you will find the libschmate libs needed
+    for the vector search
+
+    Copy these into the lib directory
+
+    NOTE: The Schmate library depends upon: bert.cpp and/or llama.cpp libraries as well
+    as the ggml tensor library. Since we are using for bert.cpp a modified fork these
+    are added into libschmate
 
 2a) On modern platforms:
    create under the base of the installaion a new directory: build
