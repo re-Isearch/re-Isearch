@@ -1,0 +1,114 @@
+/*-@@@
+File:           jsondoc.hxx
+Version:        1.02
+Description:    Class JSONDOC - JSON Document Type
+Author:         Based on COLONDOC by Edward C. Zimmermann
+Copyright:      Copyright (c) 2024 re-Isearch Project
+                Licensed under the Apache 2.0 license
+
+Notes:
+  Parses simple JSON documents and indexes each key-value pair by
+  recording the FC (field coordinates = absolute byte offsets into the
+  original file) of each leaf value.  No copy of the value is stored
+  in the index.
+
+  Nested objects use '|' as a path separator (configurable), e.g.
+
+    { "author": { "first": "John", "last": "Doe" } }
+
+  produces fields  author|first  and  author|last.
+
+  Arrays are indexed by element number (0-based):
+
+    { "keywords": ["search", "retrieval"] }
+
+  produces fields  keywords|0  and  keywords|1.
+
+  Configurable via doctype options in the .ini / IDB option string:
+    PathSep=<char>              default: |
+    IndexArrayElements=true     default: true
+@@@-*/
+
+#ifndef JSONDOC_HXX
+#define JSONDOC_HXX
+
+#include "colondoc.hxx"
+
+#ifndef JSON_PATH_SEP
+# define JSON_PATH_SEP '|'
+#endif
+
+#ifndef JSON_MAX_DEPTH
+# define JSON_MAX_DEPTH 32
+#endif
+
+
+class JSONDOC : public COLONDOC {
+public:
+  JSONDOC(PIDBOBJ DbParent, const STRING& Name);
+
+  const char *Description(PSTRLIST List) const;
+
+  void ParseRecords(const RECORD& FileRecord);
+  void ParseFields(PRECORD NewRecord);
+
+  void SourceMIMEContent(PSTRING StringPtr) const;
+
+  ~JSONDOC();
+
+private:
+  // ---------------------------------------------------------------
+  // Recursive descent parser.
+  //
+  // Every function receives:
+  //   json   - null-terminated buffer of the whole record
+  //   pos    - current read cursor (modified in place)
+  //   prefix - field-name path accumulated so far
+  //   depth  - current recursion depth
+  //   record - the RECORD being built
+  //   base   - absolute file offset of json[0], so that
+  //            FC.start = base + pos_before_value_content
+  //            FC.end   = base + pos_after_value_content - 1
+  // ---------------------------------------------------------------
+
+  void ParseValue (const char *json, size_t& pos,
+                   const STRING& prefix, int depth,
+                   PRECORD record, GPTYPE base);
+
+  void ParseObject(const char *json, size_t& pos,
+                   const STRING& prefix, int depth,
+                   PRECORD record, GPTYPE base);
+
+  void ParseArray (const char *json, size_t& pos,
+                   const STRING& prefix, int depth,
+                   PRECORD record, GPTYPE base);
+
+  // Skip a quoted string; returns buffer-relative indices of the
+  // content bytes INSIDE the quotes (the range we want the FC to cover).
+  void SkipString   (const char *json, size_t& pos,
+                     size_t& contentStart, size_t& contentEnd);
+
+  // Skip a primitive (number/bool/null); returns its buffer-relative range.
+  void SkipPrimitive(const char *json, size_t& pos,
+                     size_t& valueStart,   size_t& valueEnd);
+
+  void SkipWhitespace(const char *json, size_t& pos);
+
+  STRING SanitiseFieldName(const STRING& raw) const;
+
+  // Register fieldname + FC with the engine.  contents is used only
+  // transiently for field-type autodetection (GuessFieldType); it is
+  // never stored in the index.
+  void AddField(PRECORD record,
+                const STRING& fieldname,
+                GPTYPE start, GPTYPE end,
+                const STRING& contents);
+
+  char m_PathSep;
+  bool m_IndexArrayElements;
+  bool m_AutoFieldTypes;
+};
+
+typedef JSONDOC* PJSONDOC;
+
+#endif /* JSONDOC_HXX */

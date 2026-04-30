@@ -62,5 +62,6 @@ It is made available and licensed under the Apache 2.0 license: see LICENSE */
 #include "../doctype/gils_isoteia.hxx"
 #include "../doctype/xfilter.hxx"
 #include "../doctype/pandoc.hxx"
+#include "../doctype/jsondoc.hxx"
 
 #endif
