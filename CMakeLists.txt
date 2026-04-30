@@ -346,6 +346,7 @@ add_library(ibDoc
     ${DOCTYPE_DIR}/antihtml.cxx     ${DOCTYPE_DIR}/htmlcache.cxx
     ${DOCTYPE_DIR}/filter2.cxx      ${DOCTYPE_DIR}/pandoc.cxx
     ${DOCTYPE_DIR}/pdf.cxx
+    ${DOCTYPE_DIR}/jsondoc.cxx
 )
 ib_common_includes(ibDoc)
 target_link_libraries(ibDoc PUBLIC ibUtils ibLocal)
@@ -393,7 +394,7 @@ endif()
 # ─────────────────────────────────────────────
 # Main executables — thin C wrappers calling into ibApps
 # ─────────────────────────────────────────────
-foreach(exe Iindex Isearch Iutil)
+foreach(exe Iindex Isearch Iutil quarry)
     add_executable(${exe} ${SRC_DIR}/${exe}.c)
     target_compile_options(${exe} PRIVATE -m64)
     target_link_libraries(${exe} PRIVATE ${COMMON_LINK_LIBS})

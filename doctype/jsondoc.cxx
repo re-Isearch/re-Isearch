@@ -409,13 +409,6 @@ void JSONDOC::AddField(PRECORD record,
   if (!record || fieldname.IsEmpty() || end < start)
     return;
 
-  // Autodetect field type from the transient content string.
-  // GuessFieldType calls Db->AddFieldType internally when it makes a
-  // determination, so we only need to call it — we don't act on the
-  // return value here.
-  if (m_AutoFieldTypes && contents.GetLength() > 0)
-    GuessFieldType(fieldname, contents);
-
   FC fc;
   fc.SetFieldStart(start);
   fc.SetFieldEnd  (end);
@@ -427,12 +420,21 @@ void JSONDOC::AddField(PRECORD record,
   df.SetFieldName(fieldname);
   df.SetFct(fct);
 
-  DFD dfd;
-  dfd.SetFieldName(fieldname);
-  if (Db) Db->DfdtAddEntry(dfd);  // register field name globally (idempotent)
+  if (Db) {
+    DFD dfd;
+    // Autodetect field type from the transient content string. 
+    // GuessFieldType calls Db->AddFieldType internally when it makes a
+    // determination, so we only need to call it — we don't act on the
+    // return value here.
+    FIELDTYPE ft;
 
-  DFT dft;
-  record->GetDft(&dft);           // preserve fields already added for this record
-  dft.AddEntry(df);
-  record->SetDft(dft);
+    if (m_AutoFieldTypes && contents.GetLength() > 0)
+      ft = GuessFieldType(fieldname, contents);
+    dfd.SetFieldName(fieldname);
+    if (ft.Defined()) dfd.SetFieldType( ft ); // Set the type
+    Db->DfdtAddEntry(dfd);  // register field name globally (idempotent)
+  }
+
+  // preserve fields already added for this record
+  record->AddEntry(df);
 }
