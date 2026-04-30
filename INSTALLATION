@@ -18,8 +18,21 @@ The basic steps are:
   USE_LIBMAGIC 
   See doctype/autodetect.hxx.
 
+2a) On modern platforms:
+   create under the base of the installaion a new directory: build
+   $mkdir build
+   $cd build
 
-2) Go into the build/ directory
+   Run cmake
+   $cmake ..
+
+
+   Now build:
+
+   $make
+
+
+2b) Go into the build/ directory
    $ cd re-Isearch/build/
 
    if you have g++/gcc-10 installed and are running Ubuntu x86 64-bit you could just type Make and it should just build. 
