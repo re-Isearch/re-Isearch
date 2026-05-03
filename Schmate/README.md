@@ -18,6 +18,46 @@ All code is implemented in modern C++17, optimized for macOS and Linux.
 
 While this code uses bert.cpp, support for llama.cpp is also provided.
 
+=== Pre-Computed Vector Interface  ===
+
+Alongside using Sentence Transformers (S-BERTS) we accept pre-computed vectors as hex-encoded
+float32, base64-encoded binary (MongoDB BSON vector subtype 0x09, $binary with subType: "09")
+or JSON-like encoded raw float arrays ([0.123, ...]).
+
+
+Base64 — the most common standard
+- MongoDB Atlas Vector Search — BSON binary subtype 0x09, exported as base64 in Extended JSON
+- Elasticsearch/OpenSearch — dense_vector fields serialized as base64 in bulk API
+- PostgreSQL pgvector — binary protocol uses base64 when exported via JSON
+- Google Vertex AI Vector Search — base64 in REST API payloads
+- Amazon OpenSearch — base64 for binary vector serialization
+- Pinecone — base64 in their JSON export format
+- Weaviate — base64 for binary vector fields in GraphQL/REST responses
+- BSON/MessagePack — binary types always base64 when rendered to JSON/XML
+- Protocol Buffers over HTTP — bytes fields become base64 in JSON transcoding (per proto3 JSON mapping spec)
+- JWT — base64url for all binary payloads
+- XML Binary — xs:base64Binary is the W3C standard type for binary in XML Schema
+
+
+Hexdecimal encoding (mainly niche uses)
+- re-Isearch pipeline — deliberate choice for human readability and fast validation.
+- Some other internal research pipelines — easier to eyeball and debug than base64
+- Faiss — when manually serializing index entries for debugging
+- GeoJSON — sometimes hex for geometry binary extensions (non-standard)
+- Web3 — 0x-prefixed hex is the universal binary encoding convention, including for
+embeddings stored on-chain 
+
+
+Many modern APIs just use JSON float arrays directly and avoid the binary encoding question entirely:
+- OpenAI Embeddings API — returns [0.123, -0.456, ...] float arrays
+- Hugging Face Inference API — float arrays
+- Cohere Embed API — float arrays
+- Most LangChain/LlamaIndex integrations — float arrays
+- Qdrant — float arrays in REST, binary in gRPC
+- Chroma — float arrays
+
+NOTE: re-Isearch now supports a number of JSON types include extended JSON (e.g. MongoDb).
+
 === Interface to re-Isearch ===
 
 Interface code to re-Isearch is provided by the EmbeddingIndexer class.
