@@ -54,15 +54,17 @@ const char *JSONDOC::Description(PSTRLIST List) const
     const STRING ThisDoctype("JSON");
     if (Doctype != ThisDoctype && List->IsEmpty())
       List->AddEntry(Doctype);
-    List->AddEntry(ThisDoctype);
+    List->AddEntry (ThisDoctype);
     COLONDOC::Description(List);
   }
+
   return "JSON Document Type – indexes key/value pairs by field coordinates;\n\
 Limited to \"pure JSON\" (RFC 8259). Nested keys are joined with path-separator.\n\
 Indexing options (defined in .ini):\n\
   [General]\n\
   AutodetectFieldtypes=True|False // Guess fieldtypes\n\
-  IndexArrayElements=True|False\n  PathSep=Character (default '|')";
+  IndexArrayElements=True|False\n\
+  PathSep=Character (default '|')";
 }
 
 void JSONDOC::SourceMIMEContent(PSTRING StringPtr) const
@@ -70,6 +72,7 @@ void JSONDOC::SourceMIMEContent(PSTRING StringPtr) const
   if (StringPtr)
     *StringPtr = "application/json";
 }
+
 
 // ---------------------------------------------------------------------------
 // ParseRecords
@@ -315,6 +318,7 @@ void JSONDOC::ParseRecords(const RECORD& FileRecord)
     }
 }
 
+
 // ---------------------------------------------------------------------------
 // ParseFields
 // ---------------------------------------------------------------------------
@@ -334,23 +338,25 @@ void JSONDOC::ParseFields(PRECORD NewRecord)
   GPTYPE recEnd = NewRecord->GetRecordEnd();
   size_t recLen = (size_t)(recEnd - base + 1);
 
-  PFILE fp = Db->ffopen(FileName, "rb");
+cerr << "ParseFields: base=" << base << " recEnd=" << recEnd << " recLen=" << recLen << endl;
+
+
+  PFILE fp = fopen(FileName.c_str(), "rb");
   if (!fp) {
     message_log(LOG_ERROR, "JSONDOC::ParseFields: cannot open '%s'",
-                (const char*)FileName);
+                FileName.c_str());
     return;
   }
 
-  if (fseek(fp, (long)base, SEEK_SET) != 0) {
-    message_log(LOG_ERROR, "JSONDOC::ParseFields: fseek to %ld failed in '%s'",
-                (long)base, (const char*)FileName);
-    Db->ffclose(fp);
-    return;
-  }
+  fseek(fp, (long)base, SEEK_SET);
   char *buf = new char[recLen + 1];
   size_t nRead = fread(buf, 1, recLen, fp);
-  Db->ffclose(fp);
+  fclose(fp);
   buf[nRead] = '\0';
+
+cerr << "ParseFields: nRead=" << nRead << " first10=[" ;
+for(int _i=0;_i<10&&_i<(int)nRead;_i++) cerr << buf[_i];
+cerr << "]" << endl;
 
   size_t pos = 0;
   SkipWhitespace(buf, pos);
@@ -585,7 +591,7 @@ void JSONDOC::SkipPrimitive(const char *json, size_t& pos,
 // SkipWhitespace  (tolerates // and /* */ comments found in JSON5/configs)
 // ---------------------------------------------------------------------------
 
-void JSONDOC::SkipWhitespace(const char *json, size_t& pos) const
+void JSONDOC::SkipWhitespace(const char *json, size_t& pos)
 {
   while (json[pos]) {
     if (isspace((unsigned char)json[pos])) {
@@ -644,17 +650,11 @@ void JSONDOC::AddField(PRECORD record,
                        GPTYPE start, GPTYPE end,
                        const STRING& contents)
 {
-  // Handle field/path unification (which also handles flags to ignore fields/paths)
-  const STRING name ( UnifiedName(fieldname) );
-
-  if (!record || name.IsEmpty() || end < start)
+  if (!record || fieldname.IsEmpty() || end < start)
     return;
-
-  // FC offsets are record-relative: the engine adds the record base
-  // (GetRecordStart) when resolving absolute GPs, so subtract it here.
-  // For record 1 (recStart=0) this is a no-op.
-  GPTYPE recStart = record->GetRecordStart();
   FC fc;
+
+  GPTYPE recStart = record->GetRecordStart();
   fc.SetFieldStart(start - recStart);
   fc.SetFieldEnd  (end   - recStart);
 
@@ -662,111 +662,24 @@ void JSONDOC::AddField(PRECORD record,
   fct.AddEntry(fc);          // FC& overload
 
   DF df;
-  df.SetFieldName(name);
+  df.SetFieldName(fieldname);
   df.SetFct(fct);
 
   if (Db) {
     DFD dfd;
-    // Autodetect field type from the transient content string.
+    // Autodetect field type from the transient content string. 
     // GuessFieldType calls Db->AddFieldType internally when it makes a
     // determination, so we only need to call it — we don't act on the
     // return value here.
     FIELDTYPE ft;
+
     if (m_AutoFieldTypes && contents.GetLength() > 0)
-      ft = GuessFieldType(name, contents);
-    dfd.SetFieldName(name);
-    if (ft.Defined()) dfd.SetFieldType(ft); // Set the type
+      ft = GuessFieldType(fieldname, contents);
+    dfd.SetFieldName(fieldname);
+    if (ft.Defined()) dfd.SetFieldType( ft ); // Set the type
     Db->DfdtAddEntry(dfd);  // register field name globally (idempotent)
   }
 
-  record->AddEntry(df);  // preserve fields already added for this record
+  // preserve fields already added for this record
+  record->AddEntry(df);
 }
-
-
-const char *NDJSON::Description(PSTRLIST List) const {
-  if (List) {
-    const STRING ThisDoctype("NDJSON");
-    if (Doctype != ThisDoctype && List->IsEmpty())
-      List->AddEntry(Doctype);
-    List->AddEntry(ThisDoctype);
-    JSONDOC::Description(List);
-  }
-  return "Newline Delimited JSON Document Type\n\
-Specific Indexing options (defined in .ini):\n\
-  [General]\n\
-  NewLinesInQuotes=True|False // Default False (as in NDJSON specification)";
-}
-
-
-// We accept newlines in fields if within quotes!!!!
-void NDJSON::ParseRecords(const RECORD& FileRecord)
-{
-  const STRING FileName (FileRecord.GetFullFileName() );
-  MMAP         FileMap (FileName, MapSequential); // We are sequentially reading
-  if (!FileMap.Ok())
-    {
-      message_log (LOG_ERRNO, "%s could not access '%s'", Doctype.c_str(), FileName.c_str());
-      return;			// File not accessed
-    }
-  off_t RecStart = FileRecord.GetRecordStart();
-  off_t RecEnd = FileRecord.GetRecordEnd();
-  const off_t FileEnd = FileMap.Size();
-
-  if (RecEnd == 0) RecEnd = FileEnd;
-
-  if (RecEnd - RecStart <= 0)
-    {
-      message_log (LOG_WARN, "zero-length record '%s'[%ld-%ld] -- skipping",
-	FileName.c_str(), (long)RecStart, (long)RecEnd);
-      return;
-    }
-  else if (RecStart > FileEnd)
-    {
-      message_log (LOG_ERROR, "%s::ParseRecords(): Seek '%s' to %ld failed",
-	Doctype.c_str(), FileName.c_str(), RecStart);
-      return;
-    }
-  else if (RecEnd > FileEnd)
-    {
-      message_log (LOG_WARN, "%s::ParseRecord(): End after EOF (%d>%d) in '%s'?",
-	Doctype.c_str(), RecEnd, FileEnd, FileName.c_str());
-      RecEnd = FileEnd;
-    }
-  RECORD Record (FileRecord);
-  off_t Position = RecStart;
-  
-  unsigned char  ci = 0;
-  const unsigned char *ptr = FileMap.Ptr(); // NOTE: This is a memory mapped file!
-
-  const char quoteChar = '\"'; // We assume ONLY " for quotes
-  bool inQuote = false;
-  while (Position < RecEnd)
-    {
-      // Need to handle newlines in quoted columns
-      for (; !(!inQuote && (ci == '\n' || ci =='\r')) && Position <= RecEnd; ci=*ptr++, Position++) {
-	if (newLinesInQuotes && ci == quoteChar) {
-	  if (*ptr == quoteChar) ptr++, Position++; // skip
-	  else inQuote = !inQuote;
-	}
-      }
-      // I may be in a quote but that's an error so I'm in trouble anyway..
-      // as I'll keep going until end of file... ignoring the CR and LF.
-
-      if (*ptr == '\r' || *ptr == '\n') {
-        ptr++; Position++; // Skip second newline (such as in MSDOS)
-      }
-
-      if (RecStart != Position)
-	{
-	  Record.SetRecordStart(RecStart);
-	  Record.SetRecordEnd(Position-1);
-//cerr << "Record is: " << RecStart << "-" << Position-1 << endl;
-	  Db->DocTypeAddRecord(Record);
-	}
-      if (ci=='\n' || ci == '\r')
-	ci=0;// save an EOF, but hide a newline so it will loop again
-      RecStart = Position;
-    }
-  if (inQuote) message_log (LOG_ERROR, "Runaway record. Missing end-quotes (%c). Check format.", quoteChar);
-};
-

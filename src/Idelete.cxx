@@ -46,6 +46,7 @@ static int Link(const STRING& from, const STRING& to)
   return 0;
 }
 
+
 int main (int argc, char **argv)
 {
   if (argc < 2)
@@ -364,3 +365,4 @@ override the command line arguments!" << endl;
   delete pdb;
   return 0;
 }
+

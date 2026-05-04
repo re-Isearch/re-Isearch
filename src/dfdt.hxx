@@ -12,6 +12,10 @@ Description:	Class DFDT - Data Field Definitions Table
 
 class IDBOBJ;
 
+
+// NOTE: The capacity for fields is limited at 65535 (16-bit int).
+// Realistic since we don't expect to ever see more than 600 fields/paths
+// in an index.  Typically we'll many less.
 class DFDT {
 public:
   DFDT();
@@ -83,7 +87,7 @@ private:
   void        CleanUp();
   size_t      Lookup (const STRING& FieldName) const;
 
-  PDFD Table;
+  PDFD Table; // This fits in memory
   size_t TotalEntries;
   size_t MaxEntries;
 

@@ -44,8 +44,6 @@ Notes:
 
 
 class JSONDOC : public COLONDOC {
-  friend class JSONLDDOC;
-  friend class EJSONDOC;
 public:
   JSONDOC(PIDBOBJ DbParent, const STRING& Name);
 
@@ -58,7 +56,7 @@ public:
 
   ~JSONDOC();
 
-protected:
+private:
   // ---------------------------------------------------------------
   // Recursive descent parser.
   //
@@ -73,15 +71,15 @@ protected:
   //            FC.end   = base + pos_after_value_content - 1
   // ---------------------------------------------------------------
 
-  virtual void ParseValue (const char *json, size_t& pos,
+  void ParseValue (const char *json, size_t& pos,
                    const STRING& prefix, int depth,
                    PRECORD record, GPTYPE base);
 
-  virtual void ParseObject(const char *json, size_t& pos,
+  void ParseObject(const char *json, size_t& pos,
                    const STRING& prefix, int depth,
                    PRECORD record, GPTYPE base);
 
-  virtual void ParseArray (const char *json, size_t& pos,
+  void ParseArray (const char *json, size_t& pos,
                    const STRING& prefix, int depth,
                    PRECORD record, GPTYPE base);
 
@@ -94,36 +92,18 @@ protected:
   void SkipPrimitive(const char *json, size_t& pos,
                      size_t& valueStart,   size_t& valueEnd);
 
-  void SkipWhitespace(const char *json, size_t& pos) const;
+  void SkipWhitespace(const char *json, size_t& pos);
 
   STRING SanitiseFieldName(const STRING& raw) const;
 
-  // Register fieldname + FC with the engine.  contents is used only
-  // transiently for field-type autodetection (GuessFieldType); it is
-  // never stored in the index.
+  // Register fieldname + FC with the engine.  No value is stored.
   void AddField(PRECORD record,
                 const STRING& fieldname,
-                GPTYPE start, GPTYPE end,
-                const STRING& contents);
+                GPTYPE start, GPTYPE end);
 
   char m_PathSep;
   bool m_IndexArrayElements;
-  bool m_AutoFieldTypes;
 };
-
-
-// NDJSON (Newline Delimited JSON) 
-class NDJSON : public JSONDOC {
-public:
-  NDJSON(PIDBOBJ DbParent, const STRING& Name) : JSONDOC (DbParent, Name) {
-     newLinesInQuotes = Getoption("NewLinesInQuotes", "true").GetBool();
-  }
-  const char *Description(PSTRLIST List) const;
-  void ParseRecords(const RECORD& FileRecord);
-private:
-  bool newLinesInQuotes;
-};
-
 
 typedef JSONDOC* PJSONDOC;
 

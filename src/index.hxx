@@ -27,7 +27,7 @@ Description:	Class INDEX
 #include "fuzzy.hxx"
 
 #ifdef VECTOR_INDEX
-#include "EmbeddingIndexer.hpp"
+#include "EmbeddingIndexer.hxx"
 #endif
 
 class FPT;

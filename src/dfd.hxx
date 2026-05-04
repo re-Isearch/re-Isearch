@@ -24,7 +24,6 @@ public:
   FIELDOBJ GetFieldObj() const {
     return Attributes.AttrGetFieldObj();
   }
-
   FIELDTYPE  GetFieldType() const {
     return Attributes.AttrGetFieldObj().GetFieldType();
   }
@@ -89,7 +88,7 @@ public:
 
 ~DFD();
 private:
-  INT         FileNumber;
+  uint16_t    FileNumber;
   ATTRLIST    Attributes;
 };
 

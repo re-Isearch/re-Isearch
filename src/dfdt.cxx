@@ -350,6 +350,10 @@ size_t DFDT::Lookup (const STRING& FieldName) const
 
   message_log(LOG_DEBUG, "DFDT Lookup (%s) // Total=%d", Field.c_str(), TotalEntries);
 
+  // Lets look at the last...
+  if (lastIndex && (Table[lastIndex-1].GetFieldName () == Field)) {
+    return lastIndex;
+   }
 #if 1
   if (!Field.IsPlain())
     {
@@ -380,7 +384,7 @@ size_t DFDT::Lookup (const STRING& FieldName) const
 	else if (x > 0)
 	  low = ip+1;
 	else
-	  return ip + 1; // Found it
+	  return lastIndex = (ip + 1); // Found it
 	if ((size_t)((ip = (high+low) / 2)) >= TotalEntries)
 	  ip = TotalEntries - 1;
 	else if (ip < 0)
@@ -390,11 +394,11 @@ size_t DFDT::Lookup (const STRING& FieldName) const
   else
     {
       // Linear search
-      for (size_t i = 0; i < TotalEntries; i++)
+      for (size_t i = 1; i <= TotalEntries; i++)
 	{
 	  size_t j = (lastIndex + i) % TotalEntries;
 	  if (Table[j].GetFieldName () == Field)
-	    return (lastIndex = j) + 1; // Found it
+	    return lastIndex = (j + 1); // Found it
 	}
     }
   // Not found

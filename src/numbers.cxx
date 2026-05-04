@@ -162,10 +162,67 @@ NUMERICALRANGE::~NUMERICALRANGE()
 
 bool NUMERICALRANGE::SetRange(const STRING& RangeString)
 {
+#if 1
+    double start = BAD_NUMBER;
+    double end   = BAD_NUMBER;
+    char tail[2]; 
+    int fields = 0;
+
+    const STRING range ( RangeString.Strip(STRING::both) );
+    const char* tcp = range.c_str();
+
+    if (!tcp  || *tcp == '\0') return false;
+    // 1. PRE-SCREEN: Reject if we see Time/Date indicators like ':' or 'T' or 'Z'
+    // This immediately kills cases like "12.12:0-30" or "2023-10-1T12:00"
+    if (strpbrk(tcp, ":TZtz")) {
+        return false;
+    }
+
+    switch(*tcp) {
+        case '[': 
+            fields = sscanf(tcp, "[%lf,%lf]%1s", &start, &end, tail);
+            break;
+
+        case '(': 
+            fields = sscanf(tcp, "(%lf,%lf)%1s", &start, &end, tail);
+            break;
+
+        default:
+            // 2. Try the ".." separator (Preferred)
+            fields = sscanf(tcp, "%lf..%lf%1s", &start, &end, tail);
+            
+            // 3. Try the "-" separator (The tricky one)
+            if (fields != 2) {
+                // To support negative numbers, we use sscanf logic carefully.
+                // This will match "10-20", "-10-20", or "10--20"
+                fields = sscanf(tcp, "%lf-%lf%1s", &start, &end, tail);
+            }
+
+            // 4. Fallback: Try a single float
+            if (fields != 2) {
+                fields = sscanf(tcp, "%lf%1s", &start, tail);
+                if (fields == 1) end = start;
+            }
+            break;
+    }
+
+    // 5. FINAL VALIDATION
+    // fields == 1 means sscanf found one double and nothing else.
+    // fields == 2 means sscanf found two doubles and nothing else.
+    // If fields is 3, tail captured junk (like "123-456ABC"), so we reject.
+    if (fields == 2) {
+        d_start = start;
+        d_end = end;
+        return true;
+    }
+
+    return false;
+#else
   int         fieldcount = 0;
   const char *tcp        = RangeString.c_str();
   DOUBLE      start      = BAD_NUMBER;
   DOUBLE      end        = BAD_NUMBER;
+  char        tail[2];
 
   while (isspace(*tcp)) tcp++;  // Skip blanks
 
@@ -174,18 +231,20 @@ bool NUMERICALRANGE::SetRange(const STRING& RangeString)
     case '[': fieldcount = sscanf(tcp,"[%lf,%lf]", &start, &end); break;
     case '(': fieldcount = sscanf(tcp,"(%lf,%lf)", &start, &end); break;
     default:
-    if ((fieldcount = sscanf(tcp,"%lf..%lf", &start, &end)) == 1)
+    if ((fieldcount = sscanf(tcp,"%lf..%lf%1s", &start, &end, tail)) == 1)
       {
 	if (start == (double)(int)(start))
 	  {
 	    long istart, iend;
-	    if ((fieldcount = sscanf(tcp,"%ld..%ld", &istart, &iend)) == 2)
+	    if ((fieldcount = sscanf(tcp,"%ld..%ld%1s", &istart, &iend, tail)) >= 2)
 	      {
+		if (fieldcount == 3) return false;
 		end = iend;
 		break;
 	      }
-	    else if ((fieldcount = sscanf(tcp,"%ld--%ld", &istart, &iend)) == 2)
+	    else if ((fieldcount = sscanf(tcp,"%ld--%ld%1s", &istart, &iend, tail)) >= 2)
 	     {
+		if (fieldcount == 3) return false;
 		end = iend;
 		break;
 	     }
@@ -193,6 +252,9 @@ bool NUMERICALRANGE::SetRange(const STRING& RangeString)
 	if (!isdigit(*tcp) && (*tcp != '.'))
 	  break; // Not a number
 	while(isdigit(*tcp)) tcp++;
+
+	if (*tcp == 'T' || *tcp == 'Z') // Its a date!
+	   return false;
 	if (*tcp == '.') tcp++;
 	while (isdigit(*tcp)) tcp++;
 	// Now do we have another number?
@@ -222,6 +284,7 @@ bool NUMERICALRANGE::SetRange(const STRING& RangeString)
   d_start = start;
   d_end   = end;
   return fieldcount == 2;
+#endif
 }
 
 
@@ -272,10 +335,10 @@ bool MONETARYOBJ::Set(const STRING& s)
   memcpy(dup, ptr, len+1);
 
   char *tcp = dup + len; // End of field
-  const char  money = 164; // Also EURO in 8859-15
-  const char  yen   = 165;
-  const char  pound = 163;
-  const char  cent  = 162;
+  const char  money = (char)164; // Also EURO in 8859-15
+  const char  yen   = (char)165;
+  const char  pound = (char)163;
+  const char  cent  = (char)162;
   size_t cents = 0;
 
   ptr = dup;

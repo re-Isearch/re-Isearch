@@ -16,6 +16,7 @@ message(STATUS "Project root : ${PROJECT_ROOT}")
 message(STATUS "Source dir   : ${SRC_DIR}")
 message(STATUS "Doctype dir  : ${DOCTYPE_DIR}")
 
+
 # ─────────────────────────────────────────────
 # Platform detection
 # ─────────────────────────────────────────────
@@ -91,6 +92,7 @@ else()
     # GCC: -ftree-vectorize covers it; export symbols for plugin resolution
     add_link_options(-Wl,--export-dynamic)
 endif()
+
 
 # ─────────────────────────────────────────────
 # Global preprocessor defines
@@ -351,6 +353,9 @@ add_library(ibDoc
     ${DOCTYPE_DIR}/filter2.cxx      ${DOCTYPE_DIR}/pandoc.cxx
     ${DOCTYPE_DIR}/pdf.cxx
     ${DOCTYPE_DIR}/jsondoc.cxx
+    ${DOCTYPE_DIR}/jsonlddoc.cxx
+    ${DOCTYPE_DIR}/ejsondoc.cxx
+
 )
 ib_common_includes(ibDoc)
 target_link_libraries(ibDoc PUBLIC ibUtils ibLocal)
@@ -394,6 +399,10 @@ endif()
 if(IS_LINUX)
     list(APPEND COMMON_LINK_LIBS Threads::Threads)
 endif()
+
+
+add_subdirectory(doctype/plugins)
+
 
 # ─────────────────────────────────────────────
 # Main executables — thin C wrappers calling into ibApps
@@ -453,22 +462,22 @@ endforeach()
 # ─────────────────────────────────────────────
 # autoremote plugin (optional — needs OpenSSL)
 # ─────────────────────────────────────────────
-if(SSL_LIB AND CRYPTO_LIB AND OPENSSL_INCLUDE)
-    add_library(autoremote MODULE ${DOCTYPE_DIR}/autoremote.cxx)
-    ib_common_includes(autoremote)
-    target_include_directories(autoremote PRIVATE ${OPENSSL_INCLUDE})
-    target_link_libraries(autoremote PRIVATE
-        ${COMMON_LINK_LIBS} ${SSL_LIB} ${CRYPTO_LIB}
-    )
-    set_target_properties(autoremote PROPERTIES
-        PREFIX ""
-        # CMake sets .dylib on macOS, .so on Linux for MODULE targets automatically
-        LIBRARY_OUTPUT_DIRECTORY "${PROJECT_ROOT}/lib/plugins"
-    )
-    message(STATUS "autoremote plugin: enabled")
-else()
-    message(STATUS "autoremote plugin: disabled (OpenSSL not found)")
-endif()
+#if(SSL_LIB AND CRYPTO_LIB AND OPENSSL_INCLUDE)
+#    add_library(autoremote MODULE ${DOCTYPE_DIR}/autoremote.cxx)
+#    ib_common_includes(autoremote)
+#   target_include_directories(autoremote PRIVATE ${OPENSSL_INCLUDE})
+#   target_link_libraries(autoremote PRIVATE
+#       ${COMMON_LINK_LIBS} ${SSL_LIB} ${CRYPTO_LIB}
+#   )
+#   set_target_properties(autoremote PROPERTIES
+#       PREFIX ""
+#       # CMake sets .dylib on macOS, .so on Linux for MODULE targets automatically
+#       LIBRARY_OUTPUT_DIRECTORY "${PROJECT_ROOT}/lib/plugins"
+#   )
+#   message(STATUS "autoremote plugin: enabled")
+#else()
+#    message(STATUS "autoremote plugin: disabled (OpenSSL not found)")
+#endif()
 
 # ─────────────────────────────────────────────
 # Install

@@ -2122,6 +2122,24 @@ STRING STRING::After(char ch, bool Last) const
   return str;
 }
 
+UINT STRING::Replace(char oldCh, char newCh, bool bReplaceAll)
+{
+  UINT count = 0;
+  STRING strTemp (*this);
+  char *pCurrent = strTemp.m_pchData;
+  for (size_t i=0; i < Len(); i++)
+    {
+      if (pCurrent[i] == oldCh) {
+	pCurrent[i] = newCh;
+	count++;
+	if (!bReplaceAll) break; // First already done
+      }
+    }
+  if (count)
+    *this = strTemp;
+  return count;
+}
+
 // replace first (or all) occurences of some substring with another one
 UINT STRING::Replace(const char *szOld, const char *szNew, bool bReplaceAll)
 {
@@ -2203,6 +2221,31 @@ bool STRING::IsPlainWord() const
 //         by a sequence of hexadecimal digits optionally containing a decimal-
 //         point character.
 //
+
+#if 0
+bool STRING::IsHexadecimal(size_t length) const
+{
+  const unsigned char *s = (const unsigned char *)*this;
+  if (!s || !*s) return false;
+
+  if (*s == '0' && (s[1] == 'x' || s[1] == 'X'))
+     s += 2; // Skip the 0x
+  size_t len = 0;
+  while (s[len])
+    {
+      if (!isxdigit(s[len]))
+        return false;
+      ++len;
+    }
+
+  // If length specified: must match exactly (length = bytes, so len = length*2)
+  if (length > 0)
+    return len == length * 2;
+
+  // General case: even length, at least 2 chars
+  return len >= 2 && (len % 2) == 0;
+}
+#endif
 
 bool STRING::IsNumber() const
 {
@@ -2305,7 +2348,8 @@ bool STRING::IsFilePath() const
 
 bool STRING::IsDate() const
 {
-  if ((Len() > 5 || Len() < 512) && !IsFilePath())
+  // Dates should have at least 6 characters and be not too long
+  if ((Len() > 5 && Len() < 512) && !IsFilePath())
     {
       return SRCH_DATE(*this).Ok();
     }

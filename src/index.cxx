@@ -1333,11 +1333,17 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
 	    case FIELDTYPE::db_hnsw: /* HNSW */
 	    {
 #ifdef VECTOR_INDEX
-	      message_log(LOG_DEBUG, "Appending to a HNSW index '%s'", FileName.c_str());
+	      message_log(LOG_DEBUG, "Appending to a HNSW index '%s'", FieldName.c_str());
 	      // Create if not yet already created...
 	      if (embeddingIndexer == NULL) embeddingIndexer = new EmbeddingIndexer (Parent);
+	      // TODO: Move from FileName to FieldName !!!!!! 
+#if 1
+              if (embeddingIndexer->Ok() && embeddingIndexer->Append (Buffer, FieldName, FC(gp, gp+flen-1)))       
+                items++;
+#else
 	      if (embeddingIndexer->Ok() && embeddingIndexer->Append (Buffer, FileName, FC(gp, gp+flen-1)))
 		items++;
+#endif
 #else /* NOT YET ENABLED */
 	      message_log (LOG_ERROR, "Dense Vectors Not Yet Enabled.");
 #endif /* VECTOR_INDEX */
@@ -3823,7 +3829,16 @@ cerr << "Field " << FieldName << " did not exist!" << endl;
               else if (aFieldType.IsHNSW()) {
 #ifdef VECTOR_INDEX
 		message_log(LOG_DEBUG, "Vector Search within '%s'", FieldName.c_str());
-		if (embeddingIndexer == NULL) embeddingIndexer = new EmbeddingIndexer (Parent);
+		// If not created before we create now as searchOnly
+		if (embeddingIndexer == NULL) embeddingIndexer = new EmbeddingIndexer (Parent, true);
+#if 1 /* Used FieldName */
+		if (embeddingIndexer->Ok()) { // HNSW index
+		   Method = HybridNormalization ; // Need to mix/match with Vectors!!  April 2026
+                   NewIrset = embeddingIndexer->search(FieldName, Term);
+		} else
+		   Parent->SetErrorCode( 3 ); // Temporarily not available
+
+#else /* Uses FileName */
                 STRING FileName = getFileName(FieldName, FieldType);
 		message_log(LOG_DEBUG, "The vector index = %s", FileName.c_str());
 		if (embeddingIndexer->Ok() && !FileName.IsEmpty()) // HNSW index
@@ -3835,6 +3850,7 @@ cerr << "Field " << FieldName << " did not exist!" << endl;
 		   Parent->SetErrorCode( 3 ); // Temporarily not available
 		   NewIrset = new IRSET (Parent);
 		}
+#endif
 #else
 		Parent->SetErrorCode(3); //  "Unsupported search"
                 NewIrset = new IRSET (Parent);

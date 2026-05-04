@@ -133,7 +133,8 @@ enum Doctypes {
   _IMAGEPNG,
   _IMAGETIFF,
   _IMAGEJPEG,
-  _JSON,
+  _JSON, _NDJSON, _LDJSON, _EJSON,
+
   _MAX_ID, // This is the "last real" doctype
   _PLUGIN = 126
 };
@@ -206,6 +207,9 @@ static const struct {
   { "TIFF",       _IMAGETIFF,  false}, { "JPEG",       _IMAGEJPEG,  false},
 
   { "JSON",        _JSON,       true}, // Supports ONLY simple JSON
+  { "NDJSON",      _NDJSON,     true}, // Newline Delimited JSON 
+  { "JSON-LD",     _LDJSON,     true},
+  { "EJSON",       _EJSON,      true},
 
   /* Aliases */
   { "TBINARY",    _TBINARY,     false},
@@ -237,6 +241,9 @@ static const struct {
   { "TSVDOC",     _TSVDOC,     false}, // Old name
 
   { "JSONDOC",    _JSON,    false}, // Supports ONLY simple JSON
+  { "RFC8259",    _JSON,    false},
+  { "JSONL",      _NDJSON,  false},
+  { "JSONLD",     _LDJSON,  false},
 
 
   { "PLUGIN",     _PLUGIN,      false}
@@ -829,6 +836,12 @@ PDOCTYPE        DTREG::GetDocTypePtr(const DOCTYPE_ID& DoctypeId)
       return RegisterDocType (Ident, new GILS_ISOTEIA(Db, Name));
     case _JSON:
       return RegisterDocType (Ident, new JSONDOC(Db, Name));
+    case _NDJSON:
+      return RegisterDocType (Ident, new NDJSON(Db, Name));
+    case _LDJSON:
+      return RegisterDocType (Ident, new JSONLDDOC(Db, Name));
+    case _EJSON:
+      return RegisterDocType (Ident, new EJSONDOC(Db, Name));
     case _PLUGIN:
       // Now look at the plugins
       STRING DocType = DoctypeId.Name;

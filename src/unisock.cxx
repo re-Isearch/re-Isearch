@@ -25,6 +25,29 @@ static __sighandler_t sigsave;
 static struct itimerval itimer;
 static int timer_timeouts;
 struct sigaction newaction, oldaction;
+
+
+#if 0
+
+static void (*sigsave)(int) = NULL;
+
+static void alarm_handler(int x)
+{
+  timer_timeouts += 1;
+  itimer.it_interval.tv_sec  = 0;
+  itimer.it_interval.tv_usec = 0;
+  itimer.it_value.tv_sec     = 0;
+  itimer.it_value.tv_usec    = 0;
+
+  if (sigsave) {
+    signal(SIGALRM, sigsave);
+    sigsave = NULL;
+    longjmp(sig_buf, 1);
+  }
+  abort();
+}
+
+#endif
  
 static void alarm_handler (int x)
 {

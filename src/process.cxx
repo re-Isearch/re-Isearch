@@ -119,11 +119,12 @@ int _IB_system (const char * const *argv, int Async)
 # define BUFSIZ 1024*4
 #endif
 
-#if defined(sun) || defined(__ultrix) || defined(__bsdi__) || defined (__linux__) || defined(linux) || defined(BSD)
-# define FORK vfork
-#else
+//#if defined(sun) || defined(__ultrix) || defined(__bsdi__) || defined (__linux__) || defined(linux) || defined(BSD)
+//# define FORK vfork
+//#else
+/* On modern systems vfork is either identical to fork or actively problematic */
 # define FORK fork
-#endif
+//#endif
 
 
 //#if !defined(SVR4) && !defined(sun) && !defined(__sgi) && !defined(__hpux) && !defined(BSD)

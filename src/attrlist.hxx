@@ -39,6 +39,8 @@ public:
   void           AvailableTypesList(STRLIST *Strlist) const;
   void           AvailableTypesHelp(ostream& os) const;
 
+  // Lookup 
+  static int    GetType(const STRING& TypeName);
 
   void           Clear() { Type = any; }
 
@@ -86,10 +88,15 @@ public:
   friend ostream& operator <<(ostream&, const FIELDTYPE&);
   friend bool operator ==(const FIELDTYPE& s1, const FIELDTYPE& s2);
   friend bool operator !=(const FIELDTYPE& s1, const FIELDTYPE& s2);
-  friend bool operator ==(const FIELDTYPE& s1, const BYTE s2);
-  friend bool operator !=(const FIELDTYPE& s1, const BYTE s2);
-  friend bool operator ==(const BYTE s1, const FIELDTYPE& s2);
-  friend bool operator !=(const BYTE s1, const FIELDTYPE& s2);
+  friend bool operator ==(const FIELDTYPE& s1, const int s2);
+  friend bool operator !=(const FIELDTYPE& s1, const int s2);
+  friend bool operator ==(const int s1, const FIELDTYPE& s2);
+  friend bool operator !=(const int s1, const FIELDTYPE& s2);
+
+#if 0
+  friend bool operator ==(const FIELDTYPE& s1, FIELDTYPE::datatypes  s2) { return s2 == s1.Type;}
+  friend bool operator ==(FIELDTYPE::datatypes s1, const FIELDTYPE& s2)  { return s1 == s2.Type;}
+#endif
 
 private:
   bool IsExternal(const BYTE& type) const { return type >= db_string && type <= special;}
@@ -233,8 +240,8 @@ public:
   ~ATTRLIST();
 private:
   PATTR       Table;
-  size_t      TotalEntries;
-  size_t      MaxEntries;
+  uint16_t    TotalEntries;
+  uint16_t    MaxEntries;
 };
 
 typedef ATTRLIST* PATTRLIST;

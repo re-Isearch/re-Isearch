@@ -714,7 +714,6 @@ public:
       MainFpt.Revalidate();
   }
 
-
   bool setUseRelativePaths(bool val);
   bool setAutoDeleteExpired(bool val);
 

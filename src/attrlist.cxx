@@ -197,21 +197,21 @@ bool operator !=(const FIELDTYPE& s1, const FIELDTYPE& s2)
   return s1.Type != s2.Type;
 }
 
-bool operator ==(const FIELDTYPE& s1, const BYTE s2)
+bool operator ==(const FIELDTYPE& s1, const int s2)
 {
-  return (BYTE)(s1.Type) == s2;
+  return s1.Type == s2;
 }
-bool operator !=(const FIELDTYPE& s1, const BYTE s2)
+bool operator !=(const FIELDTYPE& s1, const int s2)
 {
-  return (BYTE)(s1.Type) != s2;
+  return s1.Type != s2;
 }
-bool operator ==(const BYTE s1, const FIELDTYPE& s2)
+bool operator ==(const int s1, const FIELDTYPE& s2)
 {
-  return (BYTE)(s2.Type) == s1;
+  return s2.Type == s1;
 }
-bool operator !=(const BYTE s1, const FIELDTYPE& s2)
+bool operator !=(const int s1, const FIELDTYPE& s2)
 {
-  return (BYTE)(s2.Type) != s1;
+  return s2.Type != s1;
 }
 
 
@@ -251,27 +251,39 @@ static const char undef_msg[] = "Can't use fieldtype '%s', private action (callb
 
 FIELDTYPE::FIELDTYPE(const STRING& TypeName)
 {
-  if (!TypeName.IsEmpty())
-    {
-      Type = (enum datatypes)TypeName.GetInt();
-      for (size_t i = 0; Type == 0 && i < sizeof(DataTypes)/sizeof(DataType); i++)
-	{
-	  if (TypeName == DataTypes[i].Name)
-	    {
-	      if ((Type = (enum datatypes)(DataTypes[i].Type)) == FIELDTYPE::privhash)
-		{
-		  if (!_IB_private_hash)
-		    {
-		      Type = FIELDTYPE::any;
-		      message_log (LOG_ERROR, undef_msg, TypeName.c_str());
-		    }
-		}
-	    }
-	}
-    }
-  else
-   Type = FIELDTYPE::any;
+  if ((Type = (enum datatypes)GetType(TypeName)) == FIELDTYPE::unknown)
+   Type = FIELDTYPE::any; // Fallback
 }
+
+
+// Defined as a static method
+int FIELDTYPE::GetType(const STRING& TypeName)
+{
+  int Type = FIELDTYPE::unknown;
+  if (!TypeName.IsEmpty()) 
+    {
+      int val = TypeName.GetInt(); // Support internal ints 
+      if (val > 0 && val < __last)
+	Type = (enum datatypes)val; // Specified
+      // Walk through the list
+      else for (size_t i = 0; Type == FIELDTYPE::unknown && i < sizeof(DataTypes)/sizeof(DataType); i++)
+        {
+          if (TypeName == DataTypes[i].Name)
+            {
+              if ((Type = (enum datatypes)(DataTypes[i].Type)) == FIELDTYPE::privhash)
+                {
+                  if (!_IB_private_hash)
+                    {
+                      Type = FIELDTYPE::unknown;
+                      message_log (LOG_ERROR, undef_msg, TypeName.c_str());
+                    }
+                }
+            }
+        }
+    }
+  return Type;
+}
+
 
 FIELDTYPE::FIELDTYPE(const char * TypeName)
 {
@@ -701,7 +713,6 @@ bool ATTRLIST::AttrGetFieldType(PSTRING StringBuffer) const
 	s = ft.c_str();
     }
   if (StringBuffer) *StringBuffer = s;
-
   return s.GetLength();
 }
 

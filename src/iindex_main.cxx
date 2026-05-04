@@ -393,7 +393,7 @@ int _Iindex_main (int argc, char **argv)
   timeout = __Register_IB_Application(argv0,  stdout, false);
   if (argc < 2)
     {
-      std::cout << "IB indexer " <<  _iindex_main_version  << "." << SRCH_DATE(__DATE__).ISOdate()  << "." << __IB_Version << " " <<
+      std::cout << "Quarry indexer " <<  _iindex_main_version  << "." << SRCH_DATE(__DATE__).ISOdate()  << "." << __IB_Version << " " <<
 	 sizeof(_index_id_t)*8 << ":" << sizeof(GPTYPE)*8 << "-bit edition (" << __HostPlatform 
 #ifdef _OPENMP
       << " MultiThreaded"

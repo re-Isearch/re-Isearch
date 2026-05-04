@@ -559,6 +559,7 @@ public:
       @return the number of replacements made
       */
   UINT Replace(const char *szOld, const char *szNew, bool bReplaceAll = true);
+  UINT Replace(char oldCh, char newCh, bool bReplaceAll = true);
 
   STRINGINDEX FirstWhiteSpace() const;
 

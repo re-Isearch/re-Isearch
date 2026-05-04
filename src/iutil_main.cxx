@@ -45,9 +45,9 @@ int _Iutil_main(int argc, char **argv)
 */
 
   if (argc < 2) {
-    cout << endl << "Iutil, Version " << __IB_Version
-    << " " << __DATE__ << " (" << __HostPlatform << ")" << endl
-    << __CopyrightData << endl << endl;
+    cout << endl << "Quarry util, Version " << __IB_Version
+    << " " << __DATE__ << " (" << __HostPlatform << ")" << endl ;
+//    << __CopyrightData << endl << endl;
     cout << "Usage is: " << argv[0] << " [-d db] [options]" << endl
       << "Options:" << endl
       << " -d (X)         // Use (X) as the root name for database files." << endl
@@ -102,8 +102,8 @@ int _Iutil_main(int argc, char **argv)
       << " -copyright (X) // Set database copyright statement." << endl
       << " -comments (X)  // Set database comments statement." << endl
       << " -o (X)         // Document type specific option." << endl << endl
-      << "Example:  Iutil -d POETRY -del key1 key2 key3" << endl 
-      << "          Iutil -d LITERATURE -import POETRY" << endl << endl;
+      << "Example:  "<< argv[0] << " -d POETRY -del key1 key2 key3" << endl 
+      << "          "<< argv[0] << " -d LITERATURE -import POETRY" << endl << endl;
     return 0;
   } 
   STRLIST         DocTypeOptions;
