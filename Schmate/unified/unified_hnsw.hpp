@@ -34,6 +34,65 @@
 
 namespace hnswlib {
 
+
+// ── Bit layout ────────────────────────────────────────────────
+//  bits [0..15]  → id  (16 bits, max 65535 paths/fields, real experience < 600)
+//  bits [16..63] → X   (per-user incrementing embedding index)
+
+static constexpr int      _ID_BITS = 16; 
+static constexpr uint64_t _ID_MASK = (1ULL << _ID_BITS) - 1; 
+
+// Mask id into the label using the incremention identifier x
+inline labeltype make_label(uint64_t id, uint64_t x) {
+    return (x << _ID_BITS) | (id & _ID_MASK);
+}
+// Extract back the id
+inline uint64_t label_id(labeltype label) { return label & _ID_MASK; }
+// Extract back the x (the incrementing label that is unique)
+inline uint64_t label_x(labeltype label) { return label >> _ID_BITS; }
+
+struct IdFilter : BaseFilterFunctor {
+    uint64_t target_id;
+
+    explicit IdFilter(uint64_t uid) : target_id(uid) {}
+
+
+    // Return true  → include this vector in results
+    // Return false → skip it
+    bool operator()(labeltype label) override {
+        return label_id(label) == target_id;
+    }
+};
+
+
+// This is to encapsulate what index
+struct  TargetName {
+   TargetName() : id(0) {;}
+   TargetName(const std::string &filename, int _id = 0) : name(filename), id(_id) {;}
+   std::string name; // For the file to read
+   int         id; // For the filter
+
+   operator std::string() const { return name; }
+   operator int() const         { return id;   }
+
+   TargetName& operator =(const TargetName& target) {
+      name = target.name;
+      id   = target.id;
+      return *this;
+   }
+
+   friend std::string operator+(const TargetName& target, const std::string& other) {
+      return target.name + other;
+   }
+
+  friend std::ostream& operator<<(std::ostream& os, const TargetName& target) {
+    if (target.id == 0) os <<  target.name;
+    else os << target.name << "(" << target.id << ")";
+    return os; 
+  }
+
+} ;
+
 //enum class Metric { L1 = 0, L2 = 1, IP = 2, Cosine = 3 };
 
 // Conversion to and from string names
@@ -370,7 +429,7 @@ private:
     void addPoint_internal(const float* data, labeltype label);
 
     std::priority_queue<std::pair<float, labeltype>> searchKnn_internal(
-        const float* query, size_t k, bool use_rescoring);
+        const float* query, size_t k, BaseFilterFunctor* isIdAllowed, bool use_rescoring);
 
     std::vector<std::pair<float, labeltype>> searchKnnCloserFirst_internal(
 	const float* query, size_t k, BaseFilterFunctor* isIdAllowed, bool use_rescoring) const;
@@ -428,7 +487,8 @@ public:
         const float* query, size_t k, bool use_rescoring = false);
 
     std::vector<std::pair<float, labeltype>> searchWithStopCondition(
-        const float* query, float epsilon, size_t min_cand, size_t max_cand);
+        const float* query, float epsilon, size_t min_cand, size_t max_cand,
+	BaseFilterFunctor* isIdAllowed = nullptr);
 
     std::vector<std::pair<float, labeltype>>
         searchKnnCloserFirst(const float* query, size_t k, bool use_rescoring) const;
