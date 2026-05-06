@@ -122,7 +122,13 @@ static void quantize(StorageType type, const T* emb, uint8_t* out, size_t dim) {
             pack_int3_to(emb, out, dim);
             break;
         case StorageType::INT4:
+#ifdef NEON
+            pack_int4_to_neon(emb, out, dim);
+#elif defined(AVX2)
+            pack_int4_to_avx2(emb, out, dim);
+#else
             pack_int4_to(emb, out, dim);
+#endif
             break;
         case StorageType::INT5:
             pack_int5_to(emb, out, dim);
@@ -138,16 +144,17 @@ static void quantize(StorageType type, const T* emb, uint8_t* out, size_t dim) {
             break;
         case StorageType::FP16: {
             auto* out16 = reinterpret_cast<uint16_t*>(out);
+            for (size_t i = 0; i < dim; ++i) {
+		// Cast emb[i] to float explicitly to handle T=double
+                float val = static_cast<float>(emb[i]);
     #if defined(HAS_AVX512FP16)
-            for (size_t i = 0; i < dim; ++i)
-                out16[i] = _cvtss_sh(float(emb[i]), 0);
+                out16[i] = _cvtss_sh(val, 0);
     #elif defined(HAS_NEON_FP16)
-            for (size_t i = 0; i < dim; ++i)
-                out16[i] = vcvt_f16_f32(vdup_n_f32(float(emb[i])))[0];
+                out16[i] = vcvt_f16_f32(vdup_n_f32(val))[0];
     #else
-            for (size_t i = 0; i < dim; ++i)
-                out16[i] = float_to_half_bits(float(emb[i]));
+                out16[i] = float_to_half_bits(val);
     #endif
+	    }
             break;
         }
 
@@ -160,7 +167,16 @@ static void quantize(StorageType type, const T* emb, uint8_t* out, size_t dim) {
 	break;
 
         case StorageType::FLOAT32:
+#if 1
+          if constexpr (std::is_same_v<T, float>) {
+             std::memcpy(out, emb, dim * sizeof(float));
+          } else {
+             float* out_f32 = reinterpret_cast<float*>(out);
+             for (size_t i = 0; i < dim; ++i) out_f32[i] = static_cast<float>(emb[i]);
+         }
+#else
             std::memcpy(out, emb, dim * sizeof(float));
+#endif
             break;
 
 
@@ -382,6 +398,251 @@ inline void unpack_int3_from(const uint8_t* in, float* dst, size_t dim) const {
 
 
 
+#if 1
+
+
+template<typename T>
+static void pack_int4_to(const T* src, uint8_t* out, size_t dim) {
+    const float SCALE = 64.0f; 
+
+    for (size_t i = 0; i < dim; i += 2) {
+        auto q = [&](float val) {
+            // SBERT elements are small; let's use the full signed range
+            int8_t v = (int8_t)std::round(val * SCALE);
+            return (int)std::max(-8, std::min(7, (int)v));
+        };
+        int q0 = q(src[i]);
+        int q1 = (i + 1 < dim) ? q(src[i + 1]) : 0;
+        
+        // Store as two 4-bit signed nibbles in one byte
+        out[i / 2] = (uint8_t)((q1 & 0x0F) << 4) | (uint8_t)(q0 & 0x0F);
+    }
+}
+
+#elif
+
+template<typename T>
+static void pack_int4_to(const T* src, uint8_t* out, size_t dim) {
+    // Try a higher scale. 100.0f is safer for 384-dim.
+    const float SCALE = 100.0f; 
+
+    for (size_t i = 0; i < dim; i += 2) {
+        auto quantize = [&](float val) {
+            // Force explicit rounding to nearest integer
+            int q = static_cast<int>(std::floor(val * SCALE + 0.5f));
+            return std::clamp(q, -8, 7);
+        };
+
+        int q0 = quantize(static_cast<float>(src[i]));
+        int q1 = (i + 1 < dim) ? quantize(static_cast<float>(src[i+1])) : 0;
+
+        // Use bit masking to ensure only 4 bits are stored
+        uint8_t nibble0 = static_cast<uint8_t>(q0) & 0x0F;
+        uint8_t nibble1 = static_cast<uint8_t>(q1) & 0x0F;
+        
+        out[i / 2] = (nibble1 << 4) | nibble0;
+    }
+}
+
+
+#elif 0
+template<typename T>
+static void pack_int4_to(const T* src, uint8_t* out, size_t dim) {
+    // 127 is the max scale to keep values within -8 to 7 
+    // for standard SBERT distributions.
+    const float FIXED_SCALE = 127.0f; 
+
+    for (size_t i = 0; i < dim; i += 2) {
+        auto q = [&](T val) {
+            float v = static_cast<float>(val) * FIXED_SCALE;
+            return std::clamp((int)std::round(v), -8, 7);
+        };
+        
+        int q0 = q(src[i]);
+        int q1 = (i + 1 < dim) ? q(src[i + 1]) : 0;
+        
+        // Ensure q0 and q1 are treated as 4-bit nibbles
+        out[i / 2] = (uint8_t)((q1 & 0x0F) << 4) | (uint8_t)(q0 & 0x0F);
+    }
+}
+
+
+#elif 0
+template<typename T>
+static void pack_int4_to(const T* src, uint8_t* out, size_t dim) {
+    // A scale of 100.0 means the range [-0.08, 0.07] maps to [-8, 7]
+    // Adjust this based on your specific BERT model's distribution
+    const float FIXED_SCALE = 100.0f; 
+
+    size_t idx = 0;
+    for (size_t i = 0; i < dim; i += 2) {
+        auto q = [&](T val) {
+            float scaled = static_cast<float>(val) * FIXED_SCALE;
+            return std::clamp((int)std::round(scaled), -8, 7);
+        };
+        
+        int q0 = q(src[i]);
+        int q1 = (i + 1 < dim) ? q(src[i + 1]) : 0;
+        
+        // Store as raw nibbles
+        out[idx++] = (uint8_t)((q1 & 0x0F) << 4) | (uint8_t)(q0 & 0x0F);
+    }
+}
+
+
+#elif 0
+
+template<typename T>
+static void pack_int4_to(const T* src, uint8_t* out, size_t dim) {
+    // SBERT values are small. Let's map -0.12 to 0 and +0.12 to 15.
+    // This uses the full 4-bit spectrum.
+    const float SCALE = 60.0f; 
+    const int OFFSET = 8; // Center point
+
+    size_t idx = 0;
+    for (size_t i = 0; i < dim; i += 2) {
+        auto q = [&](T val) {
+            // Transform float to 0-15 range
+            int quantized = std::round(static_cast<float>(val) * SCALE + OFFSET);
+            return std::clamp(quantized, 0, 15);
+        };
+        
+        int q0 = q(src[i]);
+        int q1 = (i + 1 < dim) ? q(src[i + 1]) : 8; // Default to neutral offset
+        out[idx++] = (uint8_t)((q1 << 4) | (q0 & 0x0F));
+    }
+}
+
+
+#elif 0
+template<typename T>
+static void pack_int4_to(const T* src, uint8_t* out, size_t dim) {
+    // SBERT vectors have a max value around 0.1 - 0.2.
+    // 64.0 * 0.11 = 7 (the max for INT4). 
+    const float FIXED_SCALE = 64.0f; 
+
+    size_t idx = 0;
+    for (size_t i = 0; i < dim; i += 2) {
+        auto q = [&](T val) {
+            return std::clamp(int(std::round(static_cast<float>(val) * FIXED_SCALE)), -8, 7);
+        };
+        int q0 = q(src[i]);
+        int q1 = (i + 1 < dim) ? q(src[i + 1]) : 0;
+        out[idx++] = (uint8_t)((q1 & 0x0F) << 4) | (uint8_t)(q0 & 0x0F);
+    }
+}
+
+
+
+#elif 0
+
+template<typename T>
+static void pack_int4_to(const T* src, uint8_t* out, size_t dim) {
+    // We need to find the multiplier that turns these small floats
+    // back into the -8...7 range.
+    float max_abs = 0.00001f;
+    for(size_t i = 0; i < dim; ++i) {
+        max_abs = std::max(max_abs, std::abs(float(src[i])));
+    }
+    
+    // Scale so the largest value hits 7 (the INT4 max)
+    float multiplier = 7.0f / max_abs;
+
+    size_t idx = 0;
+    for (size_t i = 0; i < dim; i += 2) {
+        auto q = [&](T val) {
+            return std::clamp(int(std::round(float(val) * multiplier)), -8, 7);
+        };
+        int q0 = q(src[i]);
+        int q1 = (i + 1 < dim) ? q(src[i + 1]) : 0;
+        out[idx++] = (uint8_t)((q1 & 0x0F) << 4) | (uint8_t)(q0 & 0x0F);
+    }
+}
+
+
+
+#elif 0
+
+
+template<typename T>
+static void pack_int4_to(const T* src, uint8_t* out, size_t dim) {
+    // 1. Find the max absolute value in THIS vector
+    float max_v = 1e-6f; 
+    for(size_t i = 0; i < dim; ++i) {
+        float abs_v = std::abs(static_cast<float>(src[i]));
+        if (abs_v > max_v) max_v = abs_v;
+    }
+
+    // 2. Calculate the scale to stretch the max value to 7
+    float scale = 7.0f / max_v;
+
+    // 3. Pack
+    size_t idx = 0;
+    for (size_t i = 0; i < dim; i += 2) {
+        auto q = [&](T val) {
+            return std::clamp(int(std::round(static_cast<float>(val) * scale)), -8, 7);
+        };
+        int q0 = q(src[i]);
+        int q1 = (i + 1 < dim) ? q(src[i + 1]) : 0;
+        out[idx++] = (uint8_t)((q1 & 0x0F) << 4) | (uint8_t)(q0 & 0x0F);
+    }
+}
+
+
+
+#elif 0
+
+template<typename T>
+static void pack_int4_to(const T* src, uint8_t* out, size_t dim) {
+    // SBERT values are typically small. Let's use a scale that maps
+    // -0.25 to -8 and +0.22 to +7.
+    const float scale = 32.0f; 
+
+    size_t idx = 0;
+    for (size_t i = 0; i < dim; i += 2) {
+        // Helper to map float -> signed 4-bit (-8 to 7)
+        auto q = [&](T val) {
+            float v = static_cast<float>(val) * scale;
+            return std::clamp(int(std::round(v)), -8, 7);
+        };
+
+        int q0 = q(src[i]);
+        int q1 = (i + 1 < dim) ? q(src[i + 1]) : 0;
+
+        // Use 0x0F mask to ensure only the low 4 bits are kept before shifting
+        out[idx++] = (uint8_t)((q1 & 0x0F) << 4) | (uint8_t)(q0 & 0x0F);
+    }
+}
+
+#elif 0
+
+// Need to dynamically scale since we were jsquashing a high-precision normalized
+// vector into just two possible values (0 and 1), losing almost all the information
+template<typename T>
+static void pack_int4_to(const T* src, uint8_t* out, size_t dim) {
+    // 1. Find the range (or use a pre-computed scale)
+    // For SBERT, values are small, so let's map -0.2 to 0.2 -> 0 to 15
+    float scale = 7.0f / 0.2f; 
+    // float scale = 15.0f / 0.4f; 
+    float offset = 0.2f;
+
+    size_t idx = 0;
+    for (size_t i = 0; i < dim; i += 2) {
+        auto quantize = [&](T val) {
+            float normalized = (static_cast<float>(val) + offset) * scale;
+            return std::clamp(int(std::round(normalized)), 0, 15);
+        };
+
+        int q0 = std::clamp(int(std::round(src[i] * scale)), -8, 7);
+        // int q0 = quantize(src[i]);
+        int q1 = (i + 1 < dim) ? quantize(src[i + 1]) : 0;
+        out[idx++] = uint8_t((q1 << 4) | (q0 & 0x0F));
+    }
+}
+
+
+#else
+
 template<typename T>
 static void pack_int4_to(const T* src, uint8_t* out, size_t dim) {
     size_t idx = 0;
@@ -391,6 +652,8 @@ static void pack_int4_to(const T* src, uint8_t* out, size_t dim) {
         out[idx++] = uint8_t((q1 << 4) | (q0 & 0x0F));
     }
 }
+
+#endif
 
 inline void unpack_int4_from(const uint8_t* in, float* dst, size_t dim) const {
     size_t bytepos = 0;
@@ -669,6 +932,88 @@ inline void pack_int16_to_avx2(const T* src, uint8_t* out, size_t dim) {
     }
 #endif
 }
+
+
+#if defined(__aarch64__) && (defined(__ARM_NEON) || defined(__ARM_NEON__))
+
+template<typename T>
+static void pack_int4_neon(const T* src, uint8_t* out, size_t dim) {
+    float32x4_t vscale = vdupq_n_f32(64.0f);
+    int32x4_t vmin = vdupq_n_s32(-8);
+    int32x4_t vmax = vdupq_n_s32(7);
+    
+    size_t i = 0;
+    for (; i + 8 <= dim; i += 8) {
+        // Load 8 floats
+        float32x4_t f0 = vld1q_f32((const float*)src + i);
+        float32x4_t f1 = vld1q_f32((const float*)src + i + 4);
+
+        // Scale and Round
+        int32x4_t i0 = vcvtnq_s32_f32(vmulq_f32(f0, vscale));
+        int32x4_t i1 = vcvtnq_s32_f32(vmulq_f32(f1, vscale));
+
+        // Clamp/Saturate to signed 4-bit range (-8 to 7)
+        i0 = vmaxq_s32(vmin, vminq_s32(vmax, i0));
+        i1 = vmaxq_s32(vmin, vminq_s32(vmax, i1));
+
+        // Narrow: 32-bit -> 16-bit -> 8-bit
+        int16x4_t n0 = vmovn_s32(i0);
+        int16x4_t n1 = vmovn_s32(i1);
+        int8x8_t combined8 = vcombine_s8(vmovn_s16(vcombine_s16(n0, n0)), 
+                                         vmovn_s16(vcombine_s16(n1, n1))); 
+        
+        // At this point, combined8 has 8 signed bytes. 
+        // We need to pack nibbles: Low nibbles from indices 0,2,4,6 and High from 1,3,5,7
+        // A simpler way:
+        uint8_t raw[8];
+        vst1_u8(raw, vreinterpret_u8_s8(combined8));
+        
+        out[i/2]   = (raw[0] & 0x0F) | (raw[1] << 4);
+        out[i/2+1] = (raw[2] & 0x0F) | (raw[3] << 4);
+        out[i/2+2] = (raw[4] & 0x0F) | (raw[5] << 4);
+        out[i/2+3] = (raw[6] & 0x0F) | (raw[7] << 4);
+    }
+    // ... scalar fallback for remainder ...
+}
+#endif
+
+#ifdef AVX
+
+template<typename T>
+static void pack_int4_avx2(const T* src, uint8_t* out, size_t dim) {
+    __m256 vscale = _mm256_set1_ps(64.0f);
+    
+    size_t i = 0;
+    for (; i + 16 <= dim; i += 16) {
+        // Load and Scale
+        __m256 f0 = _mm256_loadu_ps((const float*)src + i);
+        __m256 f1 = _mm256_loadu_ps((const float*)src + i + 8);
+        
+        // Convert to Int32 with rounding
+        __m256i i0 = _mm256_cvtps_epi32(_mm256_mul_ps(f0, vscale));
+        __m256i i1 = _mm256_cvtps_epi32(_mm256_mul_ps(f1, vscale));
+
+        // Pack 32-bit -> 16-bit (Saturating)
+        __m256i p16 = _mm256_packs_epi32(i0, i1);
+        
+        // Pack 16-bit -> 8-bit (Saturating)
+        __m256i p8 = _mm256_packs_epi16(p16, p16); 
+
+        // Fix AVX2 lane permutation and Extract low 128-bit
+        __m128i final8 = _mm_castps_si128(_mm256_extractf128_ps(_mm256_castsi256_ps(_mm256_permute4x64_epi64(p8, 0xD8)), 0));
+
+        // Mask and Shift to create nibbles
+        alignas(16) int8_t raw[16];
+        _mm_storeu_si128((__m128i*)raw, final8);
+
+        for(int j=0; j<8; ++j) {
+            out[(i/2) + j] = (raw[j*2] & 0x0F) | (raw[j*2+1] << 4);
+        }
+    }
+    // ... scalar fallback ...
+}
+
+#endif /* AVX */
 
 template<typename T>
 inline void pack_int8_to_neon(const T* src, uint8_t* out, size_t dim) {

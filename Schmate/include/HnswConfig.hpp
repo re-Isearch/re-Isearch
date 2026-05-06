@@ -43,7 +43,7 @@ enum class SearchModes {
 class SpecificationString {
 public:
    // We set defaults here since parse below can fail!
-   Metric      metric_ = Metric::L2;
+   Metric      metric_ = Metric::IP;
    QuantMode   quantization_ = QuantMode::NONE;
    OptBinMode  mode_ = OptBinMode::PASS ;
    StorageType storage_type_ = StorageType::FLOAT32;
@@ -171,7 +171,7 @@ struct HnswConfig {
     bool lock_on_append = true;
 
     // debug
-    bool debug = true;  // default debug enabled
+    bool debug = false;  // default debug disabled
 
     // search defaults
     size_t default_k = 5;          // k for knn
@@ -204,6 +204,8 @@ struct HnswConfig {
 
     size_t min_candidates = 10;    // Min candidates for epsilon
     size_t max_candidates_cap = 0; // 0 = auto
+
+    bool unified_index = false; // Don't fold into single HNSW index
 
     // performance tuning
     size_t knn_lookahead_scale = 5;

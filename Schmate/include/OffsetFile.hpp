@@ -70,6 +70,12 @@ public:
 
     bool validate_offsets(bool fix = false, bool verbose = true);
 
+    static size_t current_capacity(size_t filesize) {
+      if (filesize > 16)
+        return (filesize - 16)/sizeof(OffsetEntry);
+      return 0;
+    }
+
 private:
     size_t detect_used_entries() const;
     size_t capacity(size_t length = 0) const {
@@ -83,11 +89,12 @@ private:
     int fd = -1;
     void *map = nullptr;
     size_t filesize = 0;
-    size_t header_size = 16; // magic + entry_size
-    size_t entry_size = sizeof(OffsetEntry);
+    const size_t entry_size = sizeof(OffsetEntry);
+    const size_t header_size = 16; // sizeof(magic) + sizeof(entry_size)
     size_t max_entries;
     size_t used_entries;     // number actually used
     mutable std::shared_mutex rwmutex; // readers/writers lock
+
 };
 
 

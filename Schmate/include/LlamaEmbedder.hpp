@@ -4,10 +4,13 @@
 #include <memory>
 #include "llama.h"
 
-class LlamaEmbedder {
+class LlamaEmbedder : public BaseEmbedder {
 public:
     explicit LlamaEmbedder(const std::string &model_path, int n_threads = 4)
         : threads(n_threads) {
+
+        // Note: llama_backend_init is global; calling it multiple times is okay,
+        // but llama_backend_free should ideally be called at program exit.
         llama_backend_init(false);
         
         llama_model_params model_params = llama_model_default_params();
@@ -28,7 +31,69 @@ public:
         dim = llama_n_embd(model.get());
     }
 
-    std::vector<float> encode_text(const std::string &text, bool debug = false) {
+
+    std::vector<float> encode_text(const std::string &text, bool debug = false) override {
+#if 1
+    // 1. Tokenize
+    std::vector<llama_token> tokens(text.size() * 2 + 16);
+    int n_tokens = llama_tokenize(model.get(), text.c_str(), (int)text.length(), 
+                                  tokens.data(), (int)tokens.size(), true, true);
+    if (n_tokens < 0) {
+        tokens.resize(-n_tokens);
+        n_tokens = llama_tokenize(model.get(), text.c_str(), (int)text.length(), 
+                                  tokens.data(), (int)tokens.size(), true, true);
+    }
+    tokens.resize(n_tokens);
+
+    if (tokens.empty()) return {};
+
+    // 2. Batching: We send the whole string as one sequence (ID 0)
+    llama_batch batch = llama_batch_get_one(tokens.data(), (int)tokens.size(), 0, 0);
+
+    // 3. Decode 
+    if (llama_decode(ctx.get(), batch) != 0) {
+        throw std::runtime_error("llama_decode failed");
+    }
+
+    // 4. Retrieve Embeddings
+    // Note: llama_get_embeddings_seq is the modern way to get the pooled output for sequence 0
+    const float* embd = llama_get_embeddings_seq(ctx.get(), 0);
+    
+    // Fallback for older versions of the new API
+    if (embd == nullptr) {
+        embd = llama_get_embeddings(ctx.get());
+    }
+
+    if (embd == nullptr) {
+        throw std::runtime_error("Model did not return embeddings (check if pooling is enabled)");
+    }
+
+    return std::vector<float>(embd, embd + dim);
+#elif  1 /* Code for the latest version of Llama.cpp */
+        auto tokens = text_to_tokens(text);
+        if (tokens.empty()) throw std::runtime_error("No tokens produced");
+
+        // 1. Create a batch for a single sequence
+        // Arguments: (tokens_ptr, n_tokens, sequence_id, last_token_pos)
+        llama_batch batch = llama_batch_get_one(tokens.data(), (int)tokens.size(), 0, 0);
+
+        // 2. Compute the embeddings
+        if (llama_decode(ctx.get(), batch) != 0) {
+            throw std::runtime_error("llama_decode failed");
+        }
+
+        // 3. Extract the result
+        // For embeddings, we usually want the pooled result or the last token's output
+        const float *embd = llama_get_embeddings(ctx.get());
+        if (!embd) {
+            // Some newer models require getting embeddings by sequence ID
+            embd = llama_get_embeddings_seq(ctx.get(), 0);
+        }
+
+        if (!embd) throw std::runtime_error("Failed to retrieve embeddings from llama context");
+
+        return std::vector<float>(embd, embd + dim);
+#else
         std::vector<llama_token> tokens(text_to_tokens(text));
         if (tokens.empty()) throw std::runtime_error("Tokenization failed for text");
 
@@ -45,15 +110,34 @@ public:
         }
 
         return result;
+#endif
     }
 
-    size_t embedding_dim() const { return dim; }
+    size_t embedding_dim() const override { return dim; }
 
 private:
+
     std::vector<llama_token> text_to_tokens(const std::string &text) {
-        std::vector<llama_token> tokens(text.size() + 10);
+#if 1 /* NEW CODE (for latest Llama.cpp */
+        // Over-allocate slightly for safety
+        std::vector<llama_token> tokens(text.size() * 2 + 8);
+    
+        // Modern signature: note the extra 'false' at the end for "parse special"
+        int n_tokens = llama_tokenize(model.get(), text.c_str(), (int)text.length(), 
+                                  tokens.data(), (int)tokens.size(), true, true);
+    
+        if (n_tokens < 0) {
+            // If buffer was too small, resize and try once more
+            tokens.resize(-n_tokens);
+            n_tokens = llama_tokenize(model.get(), text.c_str(), (int)text.length(), 
+                                  tokens.data(), (int)tokens.size(), true, true);
+        }
+        tokens.resize(std::max(0, n_tokens));
+#else
+        std::vector<llama_token> tokens(text.size()*2 + 5);
         int n = llama_tokenize(model.get(), text.c_str(), tokens.data(), tokens.size(), true);
         tokens.resize(n > 0 ? n : 0);
+#endif
         return tokens;
     }
 

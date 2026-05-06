@@ -15,6 +15,7 @@ This is the bridge re-Isearch <--> Schmate. This is the basis for DeepQuarry.
 
 #define MT_DELETE 
 
+#define ENABLE_PASSTHROUGH 1
 
 // Define VECTOR_INDEX is the code is to be used as part of re-Isearch (for coreQuarry). 
 #ifdef VECTOR_INDEX
@@ -30,6 +31,7 @@ This is the bridge re-Isearch <--> Schmate. This is the basis for DeepQuarry.
 
 // Bridge
 #include "EmbeddingIndexer.hpp"
+#include "unified_hnsw.hpp"
 
 #ifdef MT_DELETE
 #include <future>
@@ -38,6 +40,8 @@ This is the bridge re-Isearch <--> Schmate. This is the basis for DeepQuarry.
 static const char default_model[] = "sbert.ggml";
 static const char search_path[] = "/opt/nonmonotonic/schmate/etc:/usr/local/ib/etc:~/.ib/models:../lib:.";
 
+
+#ifdef DEBUG
 
 // Unified printResults() for all search modes
 template <typename ResultVec>
@@ -86,14 +90,14 @@ inline void printResults(const ResultVec &results, bool debug = false) {
         }
     }
 }
-
+#endif
 
 // To handle multiple embedding models we'll use the Virtual DBs.. each
 // DB in the ensemble can have its own model.. Eg. a virtual DB with two
 // DBs: A and B. DbA for modelA and DbB for modelB.
 // A search of the ensembed A+B would search both each with their own model..
 
-EmbeddingIndexer::EmbeddingIndexer(IDBOBJ *Parent_) : Parent(Parent_) {
+EmbeddingIndexer::EmbeddingIndexer(IDBOBJ *Parent_, bool searchOnly) : Parent(Parent_) {
 
   Logger::instance().setPrefix( _globalMessageLogger.get_prefix()); 
 
@@ -113,9 +117,18 @@ EmbeddingIndexer::EmbeddingIndexer(IDBOBJ *Parent_) : Parent(Parent_) {
     }
 
    // create embedder first
+#if ENABLE_PASSTHROUGH
+   auto q = get_ggml_model_quant(model);
+   hnswlib::StorageType storage = q.first;
+   if (storage != hnswlib::StorageType::FLOAT32) {
+     message_log (LOG_INFO, "MODEL is %s (%s)", q.second.c_str(), storage_type_to_string(storage).c_str() );
+     cfg->set_storage_type(storage);
+     cfg->set_quantization( hnswlib::QuantMode::NONE);
+   }
+#endif
 #ifdef USE_EMBEDDER_FACTORY
    // Use the factory to handle both bert.cpp and llama.cpp
-   embedder = std::make_unique<EmbedderFactory>(model);
+   embedder = EmbedderFactory(model);
 #else
    // Need to search since this logic is part of the factory above..
    auto found = find_model(model, search_path);
@@ -134,10 +147,11 @@ EmbeddingIndexer::EmbeddingIndexer(IDBOBJ *Parent_) : Parent(Parent_) {
    size_t cache_size = embedder ? determine_optimal_hnsw_cache_size(*cfg, embedder->n_embd) : 0;
    if (cfg->debug) LOG_DEBUG_S() << "Optimal Index Cache Size: " << cache_size;
    if (embedder-> ctx) {
+
 #if USE_LRUCACHE
-     manager = std::make_unique<BertIndexManager>(*embedder, *cfg, cache_size);
+     manager = std::make_unique<BertIndexManager>(*embedder, *cfg, cache_size, searchOnly);
 #else
-     manager = std::make_unique<BertIndexManager>(*embedder, *cfg);
+     manager = std::make_unique<BertIndexManager>(*embedder, *cfg, searchOnly);
 #endif
   }
  }
@@ -160,11 +174,11 @@ bool EmbeddingIndexer::Ok() const
 
 // Make deleted in the Vector DB what is deleted in the re-Isearch index
 #ifdef MT_DELETE /* Do this parallel across the shards! */
-size_t EmbeddingIndexer::deleteDeleted(const STRING &fieldname)
+size_t EmbeddingIndexer::deleteDeleted(const STRING &filename)
 {
     size_t deleted_count = 0;
     if (manager) {
-        const std::string name        = fieldname.toStdString();
+        const std::string name        = filename.toStdString();
 
         // Get the index once, single-threaded, before launching futures
         auto              index       = manager->get(name);
@@ -194,11 +208,11 @@ size_t EmbeddingIndexer::deleteDeleted(const STRING &fieldname)
 }
 
 #else // Serial 
-size_t  EmbeddingIndexer::deleteDeleted(const STRING &fieldname)
+size_t  EmbeddingIndexer::deleteDeleted(const STRING &filename)
 {
   size_t deleted_count = 0;
   if (manager) {
-    const std::string  name = fieldname.toStdString();
+    const std::string  name = filename.toStdString();
     auto               index       = manager->get(name);
 
     if (!index) return 0;
@@ -216,14 +230,26 @@ size_t  EmbeddingIndexer::deleteDeleted(const STRING &fieldname)
 #endif // MT
 
 
-
-#if 1
+// TODO: Implement the unified code (use TargetName) in the rest of
+// the library
 
 PIRSET EmbeddingIndexer::search(const STRING &fieldname, const STRING &query)
 {
     if (!manager) return nullptr;
 
-    const std::string name  = fieldname.toStdString();
+    STRING fileStem;
+    int field_id = Parent->GetMainDfdt()->GetFileNumber(fieldname);
+    if (unified) {
+       fileStem = Parent->GetDbFileStem();
+    } else if (field_id > 0) {
+       fileStem = Parent->ComposeDbFn(field_id);
+    } else {
+       message_log (LOG_ERROR, "[EmbeddingIndex] Could not get a filename for '%s'. DFD Defect?", fieldname.c_str() );
+       Parent->SetErrorCode( 2 ); // "Temporary system error"
+       return NULL;
+    }
+    const hnswlib::TargetName name (fileStem.toStdString(), field_id);
+    // We now have both field_id and fileStem (which HNSW to search)
     const float       boost = 1.0f;
 
     auto              index       = manager->get(name);
@@ -293,7 +319,6 @@ PIRSET EmbeddingIndexer::search(const STRING &fieldname, const STRING &query)
             fc.SetFieldEnd(gp + r.span);
             iresult.SetHitTable(fc);
             pirset->FastAddEntry(iresult); // Can add fast since we are building from scratch
-// std::cerr << "Added to priset" << std::endl;
         }
         return deleted_count;
     };
@@ -303,7 +328,6 @@ PIRSET EmbeddingIndexer::search(const STRING &fieldname, const STRING &query)
                 static_cast<size_t>(results.size() * cfg->deletion_threshold_pc));
     while (true) {
         size_t deleted = process_results(results);
-//std::cerr << "DELETED = " << deleted << std::endl;
         if (deleted < deletion_threshold) return pirset;
         results = index->search(query.toStdString());
     }
@@ -314,102 +338,23 @@ PIRSET EmbeddingIndexer::search(const STRING &fieldname, const STRING &query)
 }
 
 
-
-
-
-#else
-
-
-PIRSET  EmbeddingIndexer::search(const STRING &fieldname, const STRING &query) {
-  const float           boost = 1.0;
-
-  if (manager) {
-    IRESULT         iresult;
-    MDTREC          mdtrec;
-    FC              fc;
-    PIRSET          pirset = NULL;
-
-#if 1
-    INDEX_ID  idx;
-    idx.SetVirtualIndex((UCHR)( Parent->GetVolume(NULL) ) );
-#else
-    iresult.SetVirtualIndex( (UCHR)( Parent->GetVolume(NULL) ) );
-#endif
-    iresult.SetMdt (Parent->GetMainMdt() );
-    iresult.SetHitCount (1);
-    iresult.SetAuxCount (1);
-    const std::string  name = fieldname.toStdString();
-
-#ifdef GC_DEL_UPDATE
-    size_t   deleted;
-search_again:
-    deleted = 0;
-#endif
-    // Here gplist from SearchResult sentence_id and a loop 
-    auto results = manager->search(name, query.toStdString() );
-
-//std::cerr << "search returned " << results.size() << " elements" << std:endl;
-
-    // NOTE: IRSET will expand itself when needed!
-    if (pirset == NULL) pirset = new IRSET ( Parent, results.size() + 1);
-
-
-    for (const auto &r : results) {
-     const GPTYPE gp = r.sentence_id;
-     float mult = boost; //  + (r.token_end - r.token_start)/50.0; 
-cerr << "LOOKUP GP address " << endl;
-     size_t w = Parent->GetMainMdt ()->LookupByGp (gp);
-cerr << "GOT it: " << w << endl;
-     if (w == 0) continue; // Could not find GP
-     if (Parent->GetMainMdt ()->GetEntry (w, &mdtrec)) {
-        if (mdtrec.GetDeleted()) {
-#ifdef GC_DEL
-          // Should delete  r.label from the index
-          manager->remove(name, r.label, r.shard);
-#ifdef GC_DEL_UPDATE
-          deleted++;
-#endif
-#endif
-          continue; // Deleted entry
-        }
-#ifdef GC_DEL_UPDATE
-        if (deleted) goto search_again; 
-#endif
-
-//std::cerr << "Adding Index " << s << " GP= (" << gp << ", " << gp + r.span << ")" << std:endl;
-#if 1
-	idx.SetMdtIndex(w);
-	iresult.SetIndex(idx);
-#else
-        iresult.SetMdtIndex (w);
-#endif
-        iresult.SetScore(r.score * mult);
-#if 1 /* Include the whole range.. Let IRSET fix it */
-        fc.SetFieldStart(gp);
-        fc.SetFieldEnd(gp + r.span);
-#else /* include only the bits */
-        fc.SetFieldStart(gp + r.start_tok);
-        fc.SetFieldEnd(gp + r.end_tok); 
-#endif
-        iresult.SetHitTable (fc);
-        // Add entry
-        pirset->AddEntry (iresult, true);
-     }
-    }
-    return pirset;
-  }
-  return NULL;
-}
-#endif
-
-
-
 // We generally call this with buffer, fieldname, GPStart and GPEnd
 bool EmbeddingIndexer::Append(const STRING& buffer, const STRING &fieldname, const FC& fc) {
     if (manager) {
-//std::cerr << "DEBUG: Appending: " << buffer << std::endl;
-       // Schmate uses std::string so need to convert, the buffer is string_view so gets casted
-       manager->append(fieldname.toStdString(), buffer, fc.GetFieldStart(), (uint32_t)fc.Span());
+      STRING fileStem;
+      int field_id = Parent->GetMainDfdt()->GetFileNumber(fieldname);
+      if (unified) {
+        fileStem = Parent->GetDbFileStem();
+      } else if (field_id > 0) {
+        fileStem = Parent->ComposeDbFn(field_id);
+      } else {
+        message_log (LOG_ERROR, "[EmbeddingIndex] Could not get a filename for '%s'. DFD Defect?", fieldname.c_str() );
+        Parent->SetErrorCode( 109 ); // "Database unavailable"
+        return false;
+       }
+       const hnswlib::TargetName  name (fileStem.toStdString(), field_id);
+       // We now have both field_id and fileStem (which HNSW to search)
+       manager->append(name, buffer, fc.GetFieldStart(), (uint32_t)fc.Span());
     }
     else return false;
     return true;
@@ -430,10 +375,12 @@ bool RemoveEmbeddingIndexFile(const STRING& path)
   return ShardedIndex::unlink(path.toStdString()) ;
 }
 
-std::vector<SearchResult> EmbeddingIndexer::search(const std::string &fieldname, const std::string &query) {
-    if (manager) return manager->search(fieldname, query);
+/*
+std::vector<SearchResult> EmbeddingIndexer::search(const std::string &filename, const std::string &query) {
+    if (manager) return manager->search(filename, query);
     return {};
 }
+*/
 
 
 EmbeddingIndexer::~EmbeddingIndexer() = default;

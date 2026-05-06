@@ -170,18 +170,33 @@ static int find_best_thread_count(struct bert_ctx * ctx,
     return best_threads;
 }
 
+
+void SBertGGML::encode(const char ** texts, float ** embeddings, int n_inputs, int batch_size) {
+    // 1. Calculate threads based on the size of the batch
+    int n_threads = calculate_optimal_threads(0, n_inputs);
+
+    if (n_inputs == 1) {
+        // Use the simpler single-string API if only one input
+        bert_encode(ctx, n_threads, texts[0], embeddings[0]);
+    } else {
+        // Use the batch API for multiple strings
+        // n_batch_size: how many to process in parallel (internal GGML batching)
+        // n_inputs: the total number of strings in your 'texts' array
+        bert_encode_batch(ctx, n_threads, batch_size, n_inputs, texts, embeddings);
+    }
+}
+
+
 void SBertGGML::encode( const char * texts, float * embeddings, int batch_size)
 {
     int n_threads = calculate_optimal_threads(0 , batch_size);
-    
     bert_encode(ctx, n_threads, texts, embeddings);
 }
 
 void SBertGGML::eval (bert_vocab_id * tokens, int32_t n_tokens, float * embeddings)
 {
     int n_threads = calculate_optimal_threads();
-
-    return bert_eval(ctx, n_threads, tokens, n_tokens, embeddings);
+    bert_eval(ctx, n_threads, tokens, n_tokens, embeddings);
 }
 
 

@@ -1,0 +1,161 @@
+#pragma once
+#include <vector>
+#include <string>
+#include <fstream>
+#include <algorithm>
+#include <cmath>
+#include <cstdint>
+#include <stdexcept>
+
+#include "hnswlib/hnswlib.h"
+
+namespace hnswlib {
+
+enum class QuantBits { INT4 = 4, INT8 = 8 };
+
+/// Unified 4-bit / 8-bit quantization + storage helper
+/// Two values per byte for INT4, one per byte for INT8.
+template<typename T=float>
+class IntStorage {
+public:
+    struct Entry {
+        std::vector<uint8_t> codes;  // packed quantized data
+        float scale;
+        float zero_point;
+    };
+
+    IntStorage(size_t dim = 0, QuantBits bits = QuantBits::INT8)
+        : dim_(dim), bits_(bits) {}
+
+    size_t dim() const noexcept { return dim_; }
+    QuantBits bits() const noexcept { return bits_; }
+
+    size_t packed_bytes() const noexcept {
+        if (bits_ == QuantBits::INT8)
+            return dim_;
+        else
+            return (dim_ + 1) / 2; // two 4-bit values per byte
+    }
+
+    // Quantize a single float vector → packed INT4/INT8 codes
+    Entry quantize(const std::vector<T>& input) const {
+        if (dim_ == 0) throw std::runtime_error("IntStorage: dim not set");
+        if (input.size() != dim_)
+            throw std::runtime_error("IntStorage: wrong input dimension");
+
+        Entry e;
+        e.codes.resize(packed_bytes());
+
+        // Compute symmetric linear quantization parameters
+        auto [min_it, max_it] = std::minmax_element(input.begin(), input.end());
+        e.zero_point = *min_it;
+        int levels = (bits_ == QuantBits::INT8) ? 255 : 15;
+        e.scale = (*max_it - *min_it) / float(levels);
+        if (e.scale == 0) e.scale = 1e-8f;
+
+        if (bits_ == QuantBits::INT8) {
+            for (size_t i = 0; i < dim_; ++i) {
+                int q = int(std::round((input[i] - e.zero_point) / e.scale));
+                q = std::clamp(q, 0, 255);
+                e.codes[i] = static_cast<uint8_t>(q);
+            }
+        } else { // INT4
+            for (size_t i = 0; i < dim_; i += 2) {
+                int q0 = int(std::round((input[i] - e.zero_point) / e.scale));
+                q0 = std::clamp(q0, 0, 15);
+                int q1 = 0;
+                if (i + 1 < dim_) {
+                    q1 = int(std::round((input[i + 1] - e.zero_point) / e.scale));
+                    q1 = std::clamp(q1, 0, 15);
+                }
+                e.codes[i >> 1] = static_cast<uint8_t>((q1 << 4) | (q0 & 0x0F));
+            }
+        }
+        return e;
+    }
+
+    // Dequantize back to float
+    std::vector<T> dequantize(const Entry& e) const {
+        std::vector<T> out(dim_);
+        if (bits_ == QuantBits::INT8) {
+            for (size_t i = 0; i < dim_; ++i)
+                out[i] = e.scale * e.codes[i] + e.zero_point;
+        } else { // INT4
+            for (size_t i = 0; i < dim_; i += 2) {
+                uint8_t packed = e.codes[i >> 1];
+                uint8_t q0 = packed & 0x0F;
+                uint8_t q1 = (packed >> 4) & 0x0F;
+                out[i] = e.scale * q0 + e.zero_point;
+                if (i + 1 < dim_)
+                    out[i + 1] = e.scale * q1 + e.zero_point;
+            }
+        }
+        return out;
+    }
+
+    // Save entries to disk
+
+ // Save entries to disk
+    bool  save(const std::string& path, const std::vector<Entry>& entries) const {
+        std::ofstream ofs(path, std::ios::binary);
+        if (!ofs) {
+            HNSWERR <<  "Cannot write open " << path;
+            return false;
+        }
+        return save(ofs, entries);
+    }
+    bool save(std::ofstream ofs, const std::vector<Entry>& entries) const {
+        if (!ofs) return false;
+        uint32_t n = static_cast<uint32_t>(entries.size());
+        uint32_t d = static_cast<uint32_t>(dim_);
+        uint8_t bits = (bits_ == QuantBits::INT8) ? 8 : 4;
+        ofs.write((char*)&bits, sizeof(bits));
+        ofs.write((char*)&n, sizeof(n));
+        ofs.write((char*)&d, sizeof(d));
+        for (const auto& e : entries) {
+            ofs.write((char*)&e.scale, sizeof(float));
+            ofs.write((char*)&e.zero_point, sizeof(float));
+            ofs.write((char*)e.codes.data(), packed_bytes());
+        }
+        return true;
+    }
+
+  // Load entries from disk
+  std::vector<Entry> load(const std::string& path) {
+      std::ifstream ifs(path, std::ios::binary);
+      if (!ifs) {
+        HNSWERR <<  "Cannot open " << path;
+        return {};
+     return load(ifs);
+   }
+
+    // Load entries from disk
+    std::vector<Entry> load(std::ifstream ifs) {
+        uint8_t bits = 8;
+        uint32_t n = 0, d = 0;
+        ifs.read((char*)&bits, sizeof(bits));
+        ifs.read((char*)&n, sizeof(n));
+        ifs.read((char*)&d, sizeof(d));
+        bits_ = (bits == 4 ? QuantBits::INT4 : QuantBits::INT8);
+        if (dim_ == 0) dim_ = d;
+        if (d != dim_) {
+             HNSWERR << "IntStorage: dim mismatch " << dim << "!=" << dim_;
+             return {};
+        }
+        std::vector<Entry> entries(n);
+        for (auto& e : entries) {
+            ifs.read((char*)&e.scale, sizeof(float));
+            ifs.read((char*)&e.zero_point, sizeof(float));
+            e.codes.resize(packed_bytes());
+            ifs.read((char*)e.codes.data(), packed_bytes());
+        }
+        return entries;
+    }
+
+private:
+    size_t dim_;
+    QuantBits bits_;
+};
+
+} // namespace hnswlib
+

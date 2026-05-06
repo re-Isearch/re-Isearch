@@ -149,17 +149,15 @@ int main(int argc, char **argv) {
 
     //StderrCapture::instance().start(); // redirect stderr 
 
-#if 0
    auto q = get_ggml_model_quant(model);
    StorageType storage = q.first;
    if (storage != StorageType::FLOAT32) {
-     cerr << "MODEL is " << q.second << "(" << storage_type_to_string(storage) << ")" << endl;
+     // cerr << "MODEL is " << q.second << "(" << storage_type_to_string(storage) << ")" << endl;
      cfg.set_storage_type(storage);
      cfg.set_quantization( QuantMode::NONE);
    }
-#endif
 
-#if 1
+#if 0
    cfg.print(); 
 #endif
 

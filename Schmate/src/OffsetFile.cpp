@@ -8,6 +8,7 @@
 #include <cstring>
 #include <stdexcept>
 #include "Logger.hpp"
+#include "Util.hpp"
 
 static const char magic[8] = "SBIDXv2";
 

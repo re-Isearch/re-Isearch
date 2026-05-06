@@ -221,6 +221,11 @@ public:
     OptBinModeIP bin_mode_;
     size_t bytes_per_vector =0;
 
+    // Energy
+    struct QuantizedContext {
+       double query_energy = 1000.0f;
+    };
+
     // Mean vector for centering (crucial for IP)
     std::vector<T> mean_;
     
@@ -255,28 +260,13 @@ public:
     std::vector<T> norms_;
     bool use_normalization_;
 
-#if 0 /* FIXUP */
-
-    explicit SpaceQuantizedIP(size_t dim, StorageType storage_type,
+    explicit SpaceQuantizedIP(size_t dim, StorageType storage_type, QuantModeIP qmode,
                               OptBinModeIP bin_mode = OptBinModeIP::STANDARD,
                               const std::vector<std::vector<T>>* sample_embeddings = nullptr,
                               size_t buffer_capacity = 1000,
                               bool normalize = false)
         : dim_(dim), storage_type_(storage_type), bin_mode_(bin_mode), buffer_capacity_(buffer_capacity),
-          use_normalization_(normalize) {
-
-        qmode_ = toQuantMode(storage_type_);
-#else
-    explicit SpaceQuantizedIP(size_t dim, QuantModeIP qmode,
-                              OptBinModeIP bin_mode = OptBinModeIP::STANDARD,
-                              const std::vector<std::vector<T>>* sample_embeddings = nullptr,
-                              size_t buffer_capacity = 1000,
-                              bool normalize = false)
-        : dim_(dim), qmode_(qmode), bin_mode_(bin_mode), buffer_capacity_(buffer_capacity),
-          use_normalization_(normalize) {
-
-       storage_type_ = toStorageType(qmode_); 
-#endif
+          qmode_(qmode), use_normalization_(normalize) {
 
         assert(dim>0);
 
@@ -332,6 +322,7 @@ public:
             // Passthrough mode
 #if 1 /* FIXUP  */    
             size_t bits_per_component = hnswlib::IntStorage::bits_per_element(storage_type_);
+
             size_t vector_bits = dim * bits_per_component;
             bytes_per_vector= (vector_bits + 7) / 8;
 #endif
@@ -807,12 +798,114 @@ private:
     }
 
 
+#if 1
+
+inline float finalize_dist(double acc) const {
+    // For 384 dims at scale 100:
+    // Max theoretical acc is roughly 384 * (7*7) = 18816
+    // Expected acc for a match is ~10000
+    
+    float dot = (float)acc / 3932.0f ; // was 10000.0f;
+    
+    return 1.0f - dot;
+}
+
+#elif 0
+
+inline float finalize_dist(double acc) const {
+    // Distance = 1.0 - (Sum(A*B) / (Scale_A * Scale_B))
+    float dot = (float)acc / 16129.0f;
+    
+    // Safety check: clip dot to [-1, 1] to prevent distance < 0
+    if (dot > 1.0f) dot = 1.0f;
+    if (dot < -1.0f) dot = -1.0f;
+
+    return 1.0f - dot;
+}
+
+#elif 0
+
+
+inline float finalize_dist(double acc) const {
+    // 100 * 100 = 10000
+    float dot = (float)acc / 10000.0f;
+
+    // For HNSW Cosine Similarity: 
+    // Distance = 1.0 - CosineSimilarity
+    // SBERT vectors are normalized, so Dot Product == Cosine Similarity
+    return 1.0f - dot;
+}
+
+
+#elif 0
+
+
+float finalize_dist(double acc) const {
+    // Since we multiplied both A and B by 64, 
+    // the dot product is multiplied by 64 * 64 = 4096.
+    float dot = (float)acc / 4096.0f;
+    
+    // SBERT Dot Product is usually between 0.0 and 1.0
+    // HNSW wants: 1.0 - dot
+    return 1.0f - dot;
+}
+
+
+
+#elif 0
+
+float finalize_dist(double acc) const {
+    // Max dot per dim is 7*7 = 49 (or 8*8 = 64). 
+    // Let's use 50 * dim as a rough "max possible" for a 1.0 score.
+    double max_raw_score = 50.0 * dim_; 
+    
+    // Dot product normalized to ~0.0 - 1.0
+    double dot = acc / max_raw_score;
+
+    // Return distance
+    return (float)(1.0 - dot);
+}
+
+
+#elif 0
+  inline float finalize_dist(double acc) const {
+    // SBERT vectors are unit length (magnitude 1.0).
+    // Our quantized dot product is (Scale * Scale) * (Original Dot Product).
+    // Therefore: Original Dot Product = acc / (Scale * Scale)
+
+    const float fixed_scale = 32.0f; // Must match your pack routine
+    float dot = static_cast<float>(acc) / (fixed_scale * fixed_scale);
+
+    // Safety clamp: Dot product for normalized vectors should be between -1 and 1
+    if (dot > 1.0f) dot = 1.0f;
+    if (dot < -1.0f) dot = -1.0f;
+
+    return 1.0f - dot;
+}
+
+
+#elif 0
+   inline float finalize_dist(double acc) const {
+    // You must normalize the integer accumulator back to the 0.0 - 1.0 range.
+    // Since you scaled by ~32.0 in 'pack', the dot product is scaled by 32*32 = 1024.
+    // If both vectors were normalized, the dot product should be divided by that scale.
+    
+    float norm_factor = 32.0f * 32.0f; 
+    float dot = static_cast<float>(acc) / norm_factor;
+
+    // HNSW IP space expects: 1 - dot_product
+    return 1.0f - dot;
+}
+
+
+#else
     inline float finalize_dist(float dot) const {
       if (use_normalization_)
         return 1.0f - dot / dim_; // Normalize and convert to distance
       else
         return -dot;
     }
+#endif
 
     // IP distance for pre-quantised vectors
     float compute_dist_pass(int bits, const uint8_t* a, const uint8_t* b, size_t dim) const
@@ -826,7 +919,6 @@ private:
             }
             return finalize_dist(acc);
         }
-
         // Fast path INT4
         if (bits == 4) {
             size_t bytes = (dim + 1) >> 1;

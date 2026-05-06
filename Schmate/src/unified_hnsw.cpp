@@ -85,12 +85,14 @@ void UnifiedIndex::create_quantized_space() {
            throw std::runtime_error ("L1 Space Quantization is NOT SUPPORTED!");
            break;
         case Metric::L2:
-	   space_ = std::make_unique<hnswlib::SpaceQuantized<float>>(dim_, quantization_, bin_mode_);
+	   space_ = std::make_unique<hnswlib::SpaceQuantized<float>>(dim_, storage_type_,
+		quantization_, bin_mode_);
            break;
         case Metric::Cosine:
            normalize_ = true;
         case Metric::IP:
-           space_ = std::make_unique<hnswlib::SpaceQuantizedIP<float>>(dim_, quantization_, bin_mode_);
+           space_ = std::make_unique<hnswlib::SpaceQuantizedIP<float>>(dim_, storage_type_,
+		quantization_, bin_mode_);
            break;
     }
 
@@ -251,10 +253,50 @@ const float* UnifiedIndex::getOriginalVector(labeltype label) const {
 #endif
 }
 
+/* Masking to handle multiple fields in a single HNSW index */
+/* Example
+    uint64_t user_id = 42;
+    index.addPoint(vec.data(), make_label(user_id, x));
+
+    IdFilter filter{42};
+    BaseFilterFunctor* isIdAllowed = &filter;
+
+    auto results = index.searchKnnCloserFirst(query.data(), k, isIdAllowed);
+
+    for (auto& [dist, label] : results) {
+        printf("user=%llu  x=%llu  dist=%.4f\n",
+               label_user_id(label), label_x(label), dist);
+    }
+*/
+
+
+// Calculate the actual energy of this specific quantized query.
+static double calculate_query_energy(const uint8_t *quantized, size_t dim)
+{
+    // --- CALIBRATION ---
+    double energy = 0;
+    for (size_t i = 0; i < (dim + 1) / 2; ++i) {
+        uint8_t byte = quantized[i];
+        
+        // Extract signed nibbles (same logic as distance func)
+        int q0 = byte & 0x0F; if (q0 >= 8) q0 -= 16;
+        int q1 = byte >> 4;   if (q1 >= 8) q1 -= 16;
+ 
+        energy += (q0 * q0);
+        if (2 * i + 1 < dim) {
+            energy += (q1 * q1);
+        }
+    }
+std::cerr << "QUERY energy = " << energy << std::endl;
+    return energy;
+}
+
+
 
 std::vector<std::pair<float, labeltype>>
         UnifiedIndex::searchKnnCloserFirst(const float* query, size_t k,
 	bool use_rescoring) const {
+    // null filter
     return searchKnnCloserFirst(query, k, nullptr, use_rescoring);
 }
 
@@ -263,7 +305,7 @@ std::vector<std::pair<float, labeltype>>
 	BaseFilterFunctor* isIdAllowed, bool use_rescoring) const {
 
     if (!index_) return {};
- 
+
     if (normalize_) {
         std::vector<float> normalized(query, query + dim_);
         normalize_l2(normalized.data(), dim_);
@@ -277,7 +319,7 @@ std::vector<std::pair<float, labeltype>>
         UnifiedIndex::searchKnnCloserFirst_internal(const float* query, size_t k,
         BaseFilterFunctor* isIdAllowed, bool use_rescoring) const {
 
-    if (quantization_ == QuantMode::NONE) {
+    if (!is_quantized()) {
         return index_->searchKnnCloserFirst(query, k, isIdAllowed);
     }
 
@@ -288,7 +330,13 @@ std::vector<std::pair<float, labeltype>>
 
     // With PASS (pass-through we NEVER rescore)
     if (!use_rescoring || bin_mode_ == OptBinMode::PASS) {
-	return index_->searchKnnCloserFirst(quantized.data(), k, isIdAllowed);
+        double energy = calculate_query_energy(quantized.data(), dim_);
+
+	//  ctx.query_energy = calculate_query_energy(quantized.data(), dim_);
+	//  space_->set_dist_param(&ctx);
+	auto result =  index_->searchKnnCloserFirst(quantized.data(), k, isIdAllowed);
+	//  my_quant_space->set_dist_param(nullptr);
+	return result;
     }
 
      // Get more candidates for rescoring
@@ -313,24 +361,27 @@ std::priority_queue<std::pair<float, labeltype>> UnifiedIndex::searchKnn(
     if (normalize_) {
         std::vector<float> normalized(query, query + dim_);
         normalize_l2(normalized.data(), dim_);
-        return searchKnn_internal(normalized.data(), k, use_rescoring);
+        return searchKnn_internal(normalized.data(), k, nullptr, use_rescoring);
     } else {
-        return searchKnn_internal(query, k, use_rescoring);
+        return searchKnn_internal(query, k, nullptr, use_rescoring);
     }
 }
 
 std::priority_queue<std::pair<float, labeltype>> UnifiedIndex::searchKnn_internal(
-    const float* query, size_t k, bool use_rescoring) {
-    
-    if (quantization_ == QuantMode::NONE) {
-        return index_->searchKnn(query, k);
-    }
-    
+    const float* query, size_t k, BaseFilterFunctor* isIdAllowed, bool use_rescoring ) {
+
+   // If 32-bit Floating point can pass ..
+   if (!is_quantized()) {
+      return index_->searchKnn(query, k);
+   }
+
     std::vector<uint8_t> quantized;
     quantized.resize(space_->get_data_size()); // was get_bytes_per_vector());
     space_->quantize(query, quantized.data());
-    
+
     if (!use_rescoring || !enable_rescoring_) {
+        double energy = calculate_query_energy(quantized.data(), dim_);
+
         auto results = index_->searchKnn(quantized.data(), k);
         std::priority_queue<std::pair<float, labeltype>> converted;
         while (!results.empty()) {
@@ -425,7 +476,7 @@ std::vector<std::pair<float, labeltype>> UnifiedIndex::apply_rescoring(
 
 
 std::vector<std::pair<float, labeltype>> UnifiedIndex::searchWithStopCondition(
-    const float* query, float epsilon, size_t min_cand, size_t max_cand) {
+    const float* query, float epsilon, size_t min_cand, size_t max_cand, BaseFilterFunctor* isIdAllowed) {
     
     std::vector<float> query_normalized;
     const float* query_ptr = query;
@@ -438,11 +489,11 @@ std::vector<std::pair<float, labeltype>> UnifiedIndex::searchWithStopCondition(
     
     std::vector<std::pair<float, labeltype>> results;
     
-    if (quantization_ == QuantMode::NONE) {
+    if (!is_quantized()) {
         size_t original_ef = index_->ef_;
         index_->setEf(max_cand);
         
-        auto candidates = index_->searchKnn(query_ptr, max_cand);
+        auto candidates = index_->searchKnn(query_ptr, max_cand, isIdAllowed);
         index_->setEf(original_ef);
         
         if (candidates.empty()) return results;

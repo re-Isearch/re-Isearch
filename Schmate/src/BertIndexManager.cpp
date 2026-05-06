@@ -35,10 +35,10 @@ void HNSWIndex::append( const string& buffer, const string& fieldname,  GPTYPE s
 */
 #endif
 
-ShardedIndex * BertIndexManager::get(const std::string &name)
+ShardedIndex * BertIndexManager::get(const std::string &name, size_t id)
 {
     if (ShardedIndex::Exists(name)) {
-        return &getOrCreate(name);
+        return &getOrCreate(name, id);
     }
     return nullptr;
 }
@@ -66,7 +66,7 @@ BertIndexManager::BertIndexManager(SBertGGML & e, hnswlib::HnswConfig & c, size_
       })
 {}
 
-ShardedIndex & BertIndexManager::getOrCreate(const std::string &name)
+ShardedIndex & BertIndexManager::getOrCreate(const std::string &name, size_t identity)
 {
     auto idx = index_cache.get(name);
     if (!idx) {
@@ -82,12 +82,12 @@ ShardedIndex & BertIndexManager::getOrCreate(const std::string &name)
 
 
 #else /* NOT LRU_CACHE */
-BertIndexManager::BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c) : embedder(e), cfg(c)
+BertIndexManager::BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c, bool s) : embedder(e), cfg(c), searchOnly(s)
 {}
 
 
 
-ShardedIndex& BertIndexManager::getOrCreate(const std::string & name) {
+ShardedIndex& BertIndexManager::getOrCreate(const std::string & name, size_t identity) {
     auto it = indexes.find(name);
     if (it != indexes.end()) return *it->second;
     // create new

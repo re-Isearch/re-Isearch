@@ -1,0 +1,16 @@
+#include "space_quantized.h"
+#include "hnswlib/hnswlib.h"
+
+// Example:
+std::vector<std::vector<float>> sample_vectors = load_samples(...);
+
+hnswlib::SpaceQuantized<float> space(
+    384,                        // dimension
+    hnswlib::QuantMode::BIN1,   // or INT4 / INT8
+    hnswlib::BinMode::BETTER,   // or STANDARD
+    &sample_vectors
+);
+
+// Build HNSW index:
+hnswlib::HierarchicalNSW<uint8_t> index(&space, "index.bin", false);
+

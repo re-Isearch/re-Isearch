@@ -57,6 +57,9 @@ friend class ShardedIndex;
 
     std::string path_dir; // Directory
     std::string name;
+
+    hnswlib::TargetName target; 
+
     std::string sentences_path;
     std::string offsets_path;
     std::string index_path;
@@ -189,6 +192,7 @@ private:
 #else
 //    std::fstream sentences_file;
 #endif
+   bool searchOnly;
 };
 
 

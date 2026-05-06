@@ -65,6 +65,8 @@ std::optional<QuantMode>  string_to_quantzation(const std::string &s) {
 	return QuantMode::INT4;
    if (s == "Octet" || s == "INT8" || s == "Quarter" || s.at(0) == 'o')
 	return QuantMode::INT8;
+   if (s == "Int16" || s == "INT16")
+	return QuantMode::INT16;
    if (s == "Fp32" || s == "FLOAT32" || s == "NONE" || s == "None")
 	return QuantMode::NONE;
    LOG_ERROR_S() << "Unknown/unsupported quantization: " << s << "\n";
@@ -136,6 +138,40 @@ std::string storage_type_to_string(StorageType type)
 };
 
 
+#if 1
+
+inline int parse_storage_bits(const std::string& str) {
+    if (str.empty()) throw std::invalid_argument("Empty storage string");
+
+    // Convert prefix to uppercase for easier comparison
+    std::string prefix = str.substr(0, 3);
+    for (auto & c: prefix) c = (char)toupper(c);
+
+    bool is_fp = (prefix.substr(0, 2) == "FP" || prefix.substr(0, 2) == "BF");
+    bool is_int = (prefix == "INT");
+    bool is_bin = (prefix == "BIN");
+
+    if (!is_fp && !is_int && !is_bin) {
+        throw std::invalid_argument("Storage string must start with FP, BF, INT or BIN: " + str);
+    }
+
+    size_t prefix_len = is_fp ? 2 : 3;
+    
+    if (str.length() <= prefix_len) {
+        throw std::invalid_argument("No bit-width specified: " + str);
+    }
+
+    try {
+        int bits = std::stoi(str.substr(prefix_len));
+        if (bits <= 0) throw std::invalid_argument("Bit width must be positive");
+        return bits;
+    } catch (...) {
+        throw std::invalid_argument("Invalid bit-width in: " + str);
+    }
+}
+
+#else
+
 inline int parse_storage_bits(const std::string& str) {
     if (str.empty()) {
         throw std::invalid_argument("Empty storage string");
@@ -171,6 +207,7 @@ inline int parse_storage_bits(const std::string& str) {
         throw std::invalid_argument("Number too large in storage string: " + str);
     }
 }
+#endif
 
 StorageType string_to_storage_type(const std::string& s)
 {
@@ -340,6 +377,7 @@ StorageType string_to_storage_type(const std::string& s)
         write_value(auto_tune_ef);
         write_value(auto_tune_eps);
         write_value(deletion_threshold_pc);
+	write_value(unified_index);
     }
 
     void HnswConfig::load(std::ifstream& is) {
@@ -389,6 +427,7 @@ StorageType string_to_storage_type(const std::string& s)
         read_value(auto_tune_eps);
 
         read_value(deletion_threshold_pc);
+	read_value(unified_index);
 
         
         if (!validate()) {
@@ -477,6 +516,7 @@ StorageType string_to_storage_type(const std::string& s)
         OVERRIDE_IF_DIFFERENT(auto_tune_eps);
 
         OVERRIDE_IF_DIFFERENT(deletion_threshold_pc);
+	OVERRIDE_IF_DIFFERENT(unified_index);
         
         #undef OVERRIDE_IF_DIFFERENT
     }
@@ -493,6 +533,7 @@ StorageType string_to_storage_type(const std::string& s)
         os << "  specification: " << specification << "\n";
 //        os << "  metric: " << hnswlib::metric_to_string(specification.metric_) << "\n";
         os << "  normalize_embeddings: " << (normalize_embeddings ? "yes" : "no") << "\n";
+	os << "  unified_index: " << (unified_index ? "yes" : "no") << "\n";
         
         os << "\nEmbedding:\n";
         os << "  bert_n_threads: " << bert_n_threads << "\n";
@@ -613,6 +654,7 @@ StorageType string_to_storage_type(const std::string& s)
             PROCESS_BOOL_FIELD("enable_rescoring", specification.rescore_);
             PROCESS_BOOL_FIELD("auto_tune_ef", auto_tune_ef);
             PROCESS_BOOL_FIELD("auto_tune_eps", auto_tune_eps);
+	    PROCESS_BOOL_FIELD("unified_index", unified_index);
             
             // enum fields
             if (key == "metric") {
@@ -692,6 +734,7 @@ StorageType string_to_storage_type(const std::string& s)
         if (key == "enable_rescoring") return enable_rescoring() ? "true" : "false";
 	if (key == "auto_tune_ef") return auto_tune_ef ? "enabled" : "off";
 	if (key == "auto_tune_eps") return auto_tune_eps ? "enabled" : "off";
+	if (key == "unified")        return unified_index ? "enabled" : "off";
         
         // enum fields
         if (key == "metric") return hnswlib::metric_to_string(specification.metric_);
@@ -789,6 +832,8 @@ bool SpecificationString::parse(const std::string& s) {
         }
         auto mode = string_to_bin_mode(tokens[2]);
         if (mode) mode_ = *mode;
+	if (mode_ == OptBinMode::RABITQ || mode_ == OptBinMode::RABITQ_EXTENDED)
+	  quantization_ = QuantMode::BIN1;
         use_storage_ = false;
     }
 
@@ -796,6 +841,48 @@ bool SpecificationString::parse(const std::string& s) {
     LOG_DEBUG_S() << "\"" << s << "\"-->\"" << *this << "\"\n"; 
     return true;
 }
+
+#if 1
+
+// Fixup
+SpecificationString::operator std::string() const {
+    std::string result;
+
+    // 1. Metric
+    result += hnswlib::metric_to_string(metric_); // "IP"
+    result += "-";
+
+    // 2. Quantization Mode
+    if (quantization_ == QuantMode::NONE) {
+        // If it's a pre-quantized type (not FP32), we call it "PASS"
+        // If it's standard high-precision, we call it "NONE"
+        result += (storage_type_ == StorageType::FLOAT32) ? "NONE" : "PASS";
+    } else {
+        result += hnswlib::quantization_to_string(quantization_); // "RABITQ"
+    }
+    result += "-";
+
+    // 3. Storage Type / Bin Mode
+    // If we are quantizing (e.g. RABITQ), show the mode. 
+    // Otherwise, show the storage type.
+    if (quantization_ != QuantMode::NONE) {
+        result += hnswlib::bin_mode_to_string(mode_);
+    } else {
+        result += storage_type_to_string(storage_type_); // "FP32" or "INT4"
+    }
+
+    // 4. Rescore (Only if we actually quantized)
+    if (rescore_ && quantization_ != QuantMode::NONE) {
+        result += "-RESCORE";
+    }
+
+    return result;
+}
+
+
+
+
+#else
 
 SpecificationString::  operator std::string() const {
     std::string result;
@@ -826,6 +913,6 @@ SpecificationString::  operator std::string() const {
     return result;
 
 }
-
+#endif
 
 }; // Namespace

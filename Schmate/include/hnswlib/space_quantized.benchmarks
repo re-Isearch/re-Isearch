@@ -1,0 +1,27 @@
+=== Results ===
+
+Dimension: 384    Data points: 1500000    Queries: 1000
+Params: M = 32, ef_construction = 400, ef_search = 400, k = 10
+
+
+Mode                  Build (ms)  Query (ms)    Recall Bytes/Vec Memory (KB)
+----------------------------------------------------------------------------
+BASELINE-L2 (Float32)   125687                  0.9291
+INT8-STANDARD           296901.2     1528.78    0.9300       384       56250
+INT8-CENTROID           295993.2     1472.35    0.9299       384       56250
+INT8-ROTATIONAL         303102.5     1539.10    0.9312       384       56250
+INT4-STANDARD           409685.2     2032.55    0.9504       192       28125
+INT4-ROTATIONAL         411333.6     2004.03    0.9505       192       28125
+BIN1-STANDARD            22037.9      134.80    0.8290        48        7031
+BIN1-BETTER              11669.8       70.87    0.5517        48        7031
+BIN1-CENTROID            19517.8      139.52    0.7958        48        7031
+BIN1-ROTATIONAL          32580.4      191.94    0.7964        48        7031
+BIN1-RABITQ              17344.6      126.37    0.9993       112       16406
+BIN1-RABITQ-EXT          39074.8      326.32    0.9810       304       44531
+
+=== Analysis ===
+Best recall: BIN1-RABITQ (0.9993)
+Fastest query: BIN1-BETTER (70.87 ms)
+Smallest memory: BIN1-STANDARD (7031 KB)
+
+Recomendation:  BIN1-RABITQ + Re-scoring

@@ -308,6 +308,8 @@ bool ShardedIndex::merge_last_two()
 bool  ShardedIndex::merge_two_parallel(size_t n) {
     if (n < 2) return false;
 
+    // O(NlogN) because we are re-inserting into a new HNSW. 
+
     size_t first = n - 2;
     size_t second = n - 1;
     auto &A = *shards[first];

@@ -1,47 +1,38 @@
 #pragma once
-// Space L2 Quantized
-
+#include <vector>
+#include <cmath>
+#include <cstdint>
+#include <cstring>
+#include <algorithm>
+#include <numeric>
+#include <thread>
+#include <atomic>
+#include <cassert>
+#include <iostream>
+#include <fstream>
 #include <mutex>
-#include <random>
 
-#include "int_storage.h"
-#include "quantized.h"
+#include "hnswlib.h"
 #include "pearson_corr.h"
 
 /*
-Performance:
-
-Dimension: 384    Data points: 50000    Queries: 1000
-Params: M = 32, ef_construction = 400, ef_search = 400, k = 10
+Dimension: 384      Data points: 50000     Queries: 1000
+Params: M = 16, ef_construction = 200, ef_search=5 k=10
 
 Mode                  Build (ms)  Query (ms)    Recall Bytes/Vec Memory (KB)
 ----------------------------------------------------------------------------
-BASELINE-L2 (FLOAT32)    23317                  0.9864
-INT8-STANDARD            18228.4      363.46    0.9885       384       18750
-INT8-CENTROID            18483.1      375.71    0.9864       384       18750
-INT8-ROTATIONAL          19952.2      413.05    0.9872       384       18750
-INT4-STANDARD            77728.5     1359.43    0.9903       192        9375
-INT4-ROTATIONAL          81096.9     1368.87    0.9859       192        9375
-BIN1-STANDARD             4884.9       83.97    0.8504        48        2343
-BIN1-BETTER               3380.7       49.37    0.6087        48        2343
-BIN1-CENTROID             4807.9       81.08    0.8205        48        2343
-BIN1-ROTATIONAL           8913.5      134.93    0.8452        48        2343
-BIN1-RABITQ               4324.5       76.55    0.9999       112        5468
-BIN1-RABITQ-EXT           7041.7      167.17    0.9987       304       14843
+BASELINE-L2 (FLOAT32)    23220                  0.9864
+INT8-STANDARD            59680.2      999.14    0.9884       384       18750
+INT8-CENTROID            59339.2      986.74    0.9864       384       18750
+INT8-ROTATIONAL          64809.7     1099.86    0.9867       384       18750
+INT4-STANDARD            78128.2     1329.59    0.9903       192        9375
+INT4-ROTATIONAL          84984.5     1429.52    0.9862       192        9375
+BIN1-STANDARD             5208.9       88.36    0.8504        48        2343
+BIN1-ROTATIONAL          12962.8      204.71    0.8411        48        2343
 
-=== Analysis ===
-Best recall: BIN1-RABITQ (0.9999)
-Fastest query: BIN1-BETTER (49.37 ms)
+Best recall: INT4-STANDARD (0.9903)
+Fastest query: BIN1-STANDARD (88.36 ms)
 Smallest memory: BIN1-STANDARD (2343 KB)
-
-Recommendations (derived from the test data):
-
-- ⭐ Use BIN1-RABITQ for production
-- INT8-CENTROID is a good fallback if you need slightly better recall
-- BIN1-BETTER is fast but really only suitable with rescoring.
-- ❌ Skip ROTATIONAL modes - they're slower with no accuracy benefit
-- ❌ Skip INT4 - it's 18× slower than BIN1-RABITQ with similar recall
-
 */
 
 #if defined(__AVX512F__)
@@ -60,6 +51,9 @@ Recommendations (derived from the test data):
 
 namespace hnswlib {
 
+enum class QuantMode { BIN1=0, INT158=1, INT4=2, INT8=3 };
+enum class OptBinMode  { STANDARD=0, BETTER=1, CENTROID=2, ROTATIONAL=3 };
+
 // =============================================================================
 template<typename T=float>
 class SpaceQuantized : public SpaceInterface<float> {
@@ -67,14 +61,13 @@ public:
     using DISTFUNC_TYPE = DISTFUNC<float>;
 
     size_t dim;
-    StorageType storage_type;
     QuantMode qmode;
     OptBinMode bin_mode;
-    size_t bytes_per_vector = 0;
+    size_t bytes_per_vector;
 
     std::vector<T> thresholds;
     std::vector<T> scale, minval, scale_sq;
-
+    
     // Ternary quantization (INT158) state
     std::vector<T> ternary_threshold_low_;
     std::vector<T> ternary_threshold_high_;
@@ -83,12 +76,6 @@ public:
     // Rotational quantization state
     std::vector<T> rotation_matrix_;  // dim x dim matrix stored row-major
     bool use_rotation_;
-    
-    // RaBitQ state (for BIN1 only)
-    std::vector<std::vector<T>> residuals_;  // Store residuals per vector
-    size_t residual_dims_;  // Number of dimensions to keep in residual
-    bool use_rabitq_;
-    std::mutex residual_mutex_;
     
     // Centroid-based quantization state
     std::vector<T> centroid_;
@@ -99,35 +86,15 @@ public:
     size_t buffer_count_;
     mutable std::mutex centroid_mutex_;
 
-    explicit SpaceQuantized(size_t dim_, StorageType storage_type_, QuantMode qmode_,
+    explicit SpaceQuantized(size_t dim_,
+                            QuantMode qmode_,
                             OptBinMode bin_mode_ = OptBinMode::STANDARD,
                             const std::vector<std::vector<T>>* sample_embeddings = nullptr,
                             size_t buffer_capacity = 1000)
-        : dim(dim_), storage_type(storage_type_), bin_mode(bin_mode_), qmode(qmode_),
-          count_(0), buffer_capacity_(buffer_capacity), buffer_count_(0) {
+        : dim(dim_), qmode(qmode_), bin_mode(bin_mode_),
+          count_(0), buffer_capacity_(buffer_capacity), buffer_count_(0),
+          use_rotation_(bin_mode_ == OptBinMode::ROTATIONAL) {
         assert(dim>0);
-
-        use_rotation_  = (bin_mode_ == OptBinMode::ROTATIONAL);
-        use_rabitq_    = (bin_mode_ == OptBinMode::RABITQ || bin_mode_ == OptBinMode::RABITQ_EXTENDED);
-        residual_dims_ = (use_rabitq_ ?
-                        (bin_mode_ == OptBinMode::RABITQ_EXTENDED ?
-                         std::min(size_t(64), dim_ / 4) :  // Extended: 64 dims or 25%
-                         std::min(size_t(16), dim_ / 8))   // Standard: 16 dims or 12.5%
-                        : 0) ;
-        
-        // Initialize RaBitQ residuals if needed
-
-//std::cerr << "XXXXX QMODE = " << quantization_to_string(qmode) << std::endl;
-//std::cerr << "      BINMODE = " << bin_mode_to_string(bin_mode) << std::endl;
-#if 0
-        if (use_rabitq_) {
-            if (bin_mode_ == OptBinMode::RABITQ_EXTENDED) {
-                HNSWDEBUG << "  [RaBitQ-Extended: keeping " << residual_dims_ << " residual dims]";
-            } else {
-                HNSWDEBUG << "  [RaBitQ: keeping " << residual_dims_ << " residual dims]";
-            }
-        }
-#endif
         
         // Initialize rotation matrix if needed
         if (use_rotation_) {
@@ -144,40 +111,17 @@ public:
             }
         }
         
-        // Initialize centroid structures if using CENTROID mode or RaBitQ
-        if (bin_mode == OptBinMode::CENTROID || bin_mode == OptBinMode::RABITQ) {
-            if (centroid_.empty()) {
-                centroid_.assign(dim, T(0));
-                sum_.assign(dim, T(0));
-            }
+        // Initialize centroid structures if using CENTROID mode
+        if (bin_mode == OptBinMode::CENTROID) {
+            centroid_.assign(dim, T(0));
+            sum_.assign(dim, T(0));
         }
-
-        if (bin_mode == OptBinMode::PASS || qmode == QuantMode::NONE) {
-	   // We do nothing
-#if 1 /* FIXUP  */
-           // storage_type = StorageType::INT4;
-// std::cerr << "XX Quantized StorageType " << storage_type_to_string( storage_type );
-            size_t bits_per_component = hnswlib::IntStorage::bits_per_element(storage_type);
-            size_t vector_bits = dim * bits_per_component;
-// std::cerr << "BITS = " << bits_per_component << std::endl;
-            bytes_per_vector= (vector_bits + 7) / 8;
-#endif
-#if 1
-        } else if (qmode == QuantMode::INT16) {
-            bytes_per_vector=  sizeof(float) + dim * sizeof(int16_t);
-#endif
-        } else if (qmode==QuantMode::BIN1) {
+        
+        if (qmode==QuantMode::BIN1) {
             bytes_per_vector=(dim+7)/8;
             thresholds.assign(dim,T(0));
             
             if (bin_mode == OptBinMode::CENTROID) {
-                if (sample_embeddings) {
-                    train_centroid(*sample_embeddings);
-                }
-            } else if (bin_mode == OptBinMode::RABITQ || bin_mode == OptBinMode::RABITQ_EXTENDED) {
-                // RaBitQ needs thresholds/centroid for reconstruction
-                centroid_.assign(dim, T(0));
-                sum_.assign(dim, T(0));
                 if (sample_embeddings) {
                     train_centroid(*sample_embeddings);
                 }
@@ -218,34 +162,12 @@ public:
     }
 
     // -- interface compliance --------------------------------------------------
-    size_t get_bytes_per_vector() override {
-       return  bytes_per_vector;
-    }
-    size_t get_data_size() override { 
-        size_t base_size = bytes_per_vector;
-        // RaBitQ adds residual storage
-        if (use_rabitq_) {
-            base_size += residual_dims_ * sizeof(T);
-        }
-        return base_size;
-    }
+    size_t get_data_size() override { return bytes_per_vector; }
     DISTFUNC_TYPE get_dist_func() override { return &SpaceQuantized::fstdist_; }
     void* get_dist_func_param() override { return this; }
 
     // -------------------------------------------------------------------------
-    void quantize(const T* emb, uint8_t* out) const override {
-        //
-        if (bin_mode == OptBinMode::PASS || qmode == QuantMode::NONE || 
-		qmode == QuantMode::FP16 || qmode == QuantMode::BF16) {
-#if 1 /* FIXUP */
-           IntStorage::quantize(storage_type, emb, out, dim); // pack passthrough
-#else
-           auto st = toStorageType(qmode);
-           IntStorage::quantize(st, emb, out, dim); // pack passthrough
-#endif
-           return;
-        }
-
+    void quantize(const T* emb, uint8_t* out) const {
         // Apply rotation if enabled
         std::vector<T> rotated;
         const T* input = emb;
@@ -256,88 +178,21 @@ public:
             input = rotated.data();
         }
         
-        // Quantize main vector
         switch(qmode){
-            case QuantMode::BIN1:   quantize_bin(input,out); break;
+            case QuantMode::BIN1: quantize_bin(input,out); break;
             case QuantMode::INT158: quantize_ternary_simd(input,out); break;
-            case QuantMode::INT8:   quantize_int8_simd(input,out); break;
-            case QuantMode::INT4:   quantize_int4_simd(input,out); break;
-
-	    case QuantMode::INT16:  quantize_int16(input, out); break;
-
-            // These should never be reached
-            case QuantMode::FP16: IntStorage::quantize(StorageType::FP16, input, out, dim); break;
-            case QuantMode::BF16: IntStorage::quantize(StorageType::BF16, input, out, dim); break;
-            case QuantMode::NONE: IntStorage::quantize(StorageType::FLOAT32, input, out, dim); break;
-
-        }
-        
-        // For RaBitQ, add residual at the end
-        if (use_rabitq_ && qmode == QuantMode::BIN1) {
-            T* residual_ptr = reinterpret_cast<T*>(out + bytes_per_vector);
-            compute_residual(input, out, residual_ptr);
+            case QuantMode::INT8: quantize_int8_simd(input,out); break;
+            case QuantMode::INT4: quantize_int4_simd(input,out); break;
         }
     }
     
     // =================== CENTROID TRAINING ==================================
-    void compute_residual(const T* original, const uint8_t* binary_code, T* residual) const {
-        // Get threshold values for reconstruction
-        const T* thr = nullptr;
-        
-        if (bin_mode == OptBinMode::RABITQ && !centroid_.empty()) {
-            thr = centroid_.data();
-        } else if (!thresholds.empty()) {
-            thr = thresholds.data();
-        } else {
-            // Fallback: use zeros (shouldn't happen)
-            std::memset(residual, 0, residual_dims_ * sizeof(T));
-            return;
-        }
-        
-        // Collect largest reconstruction errors
-        std::vector<std::pair<T, size_t>> errors;
-        errors.reserve(dim);
-        
-        for (size_t i = 0; i < dim; ++i) {
-            size_t byte_idx = i / 8;
-            size_t bit_idx = i % 8;
-            bool bit = (binary_code[byte_idx] >> bit_idx) & 1;
-            
-            // Reconstruct value based on bit and threshold
-            // If bit=1, value was >= threshold, approximate as threshold + 0.5
-            // If bit=0, value was < threshold, approximate as threshold - 0.5
-            T reconstructed = bit ? (thr[i] + T(0.5)) : (thr[i] - T(0.5));
-            T error = original[i] - reconstructed;
-            
-            errors.push_back({std::abs(error), i});
-        }
-        
-        // Sort by error magnitude to find top-K dimensions
-        std::partial_sort(errors.begin(), 
-                         errors.begin() + residual_dims_,
-                         errors.end(),
-                         [](const auto& a, const auto& b) { return a.first > b.first; });
-        
-        // Store residuals for top dimensions (actual error, not absolute)
-        for (size_t i = 0; i < residual_dims_; ++i) {
-            size_t dim_idx = errors[i].second;
-            
-            // Recompute actual error (not absolute)
-            size_t byte_idx = dim_idx / 8;
-            size_t bit_idx = dim_idx % 8;
-            bool bit = (binary_code[byte_idx] >> bit_idx) & 1;
-            T reconstructed = bit ? (thr[dim_idx] + T(0.5)) : (thr[dim_idx] - T(0.5));
-            
-            residual[i] = original[dim_idx] - reconstructed;
-        }
-    }
-    
     void compute_rotation_matrix(const std::vector<std::vector<T>>& samples) {
         // Compute PCA-based rotation using covariance matrix
         const size_t n = samples.size();
         if (n == 0) return;
         
-        // HNSWDEBUG << "  Computing rotation matrix via PCA...";
+        std::cout << "  Computing rotation matrix via PCA..." << std::flush;
         
         // 1. Compute mean
         std::vector<T> mean(dim, 0);
@@ -395,57 +250,17 @@ public:
             }
         }
         
-        // HNSWDEBUG << " done" ;
+        std::cout << " done" << std::flush;
     }
     
     void apply_rotation(const T* input, T* output) const {
         // Matrix-vector multiply: output = rotation_matrix * input
-#if defined(HNSW_SIMD_AVX2)
-        for (size_t i = 0; i < dim; ++i) {
-            size_t j = 0;
-            __m256 sum = _mm256_setzero_ps();
-            
-            for (; j + 7 < dim; j += 8) {
-                __m256 row = _mm256_loadu_ps(&rotation_matrix_[i * dim + j]);
-                __m256 inp = _mm256_loadu_ps(&input[j]);
-                sum = _mm256_fmadd_ps(row, inp, sum);
-            }
-            
-            alignas(32) float tmp[8];
-            _mm256_store_ps(tmp, sum);
-            output[i] = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6] + tmp[7];
-            
-            for (; j < dim; ++j) {
-                output[i] += rotation_matrix_[i * dim + j] * input[j];
-            }
-        }
-#elif defined(HNSW_SIMD_NEON)
-        for (size_t i = 0; i < dim; ++i) {
-            size_t j = 0;
-            float32x4_t sum = vdupq_n_f32(0.0f);
-            
-            for (; j + 3 < dim; j += 4) {
-                float32x4_t row = vld1q_f32(&rotation_matrix_[i * dim + j]);
-                float32x4_t inp = vld1q_f32(&input[j]);
-                sum = vmlaq_f32(sum, row, inp);
-            }
-            
-            float tmp[4];
-            vst1q_f32(tmp, sum);
-            output[i] = tmp[0] + tmp[1] + tmp[2] + tmp[3];
-            
-            for (; j < dim; ++j) {
-                output[i] += rotation_matrix_[i * dim + j] * input[j];
-            }
-        }
-#else
         for (size_t i = 0; i < dim; ++i) {
             output[i] = 0;
             for (size_t j = 0; j < dim; ++j) {
                 output[i] += rotation_matrix_[i * dim + j] * input[j];
             }
         }
-#endif
     }
     
     void train_centroid(const std::vector<std::vector<T>>& samples) {
@@ -606,72 +421,8 @@ public:
         return in.good();
     }
     
-    std::vector<T> get_centroid() { return centroid_; }
     size_t get_centroid_count() const { return count_; }
     size_t get_buffer_count() const { return buffer_count_; }
-
-    // Fit/train the quantization parameters from sample embeddings
-    void fit(const std::vector<std::vector<T>>& sample_embeddings) override {
-        if (sample_embeddings.empty()) {
-            // HNSWDEBUG << "  [SpaceQuantized::fit] Warning: empty sample set provided";
-            return;
-        }
-        
-        const size_t n = sample_embeddings.size();
-        // HNSWDEBUG << "  [SpaceQuantized::fit] Training on " << n << " samples, dim=" << dim;
-        
-        // Initialize rotation matrix if needed
-        if (use_rotation_) {
-            compute_rotation_matrix(sample_embeddings);
-        }
-        
-        // Initialize centroid if using CENTROID or RaBitQ modes
-        if (bin_mode == OptBinMode::CENTROID || bin_mode == OptBinMode::RABITQ) {
-            train_centroid(sample_embeddings);
-        }
-        
-        // Compute quantization parameters based on mode
-        if (bin_mode == OptBinMode::PASS) {
-            // HNSWDEBUG << "  [PASS] No quantization training needed";
-        } else if (qmode == QuantMode::BIN1) {
-            // Binary quantization
-            if (bin_mode == OptBinMode::CENTROID) {
-                // Centroid already trained above
-                // HNSWDEBUG << "  [BIN1-CENTROID] Using centroid as thresholds";
-            } else if (bin_mode == OptBinMode::RABITQ || bin_mode == OptBinMode::RABITQ_EXTENDED) {
-                // RaBitQ: train centroid for reconstruction
-                if (centroid_.empty()) {
-                    centroid_.assign(dim, T(0));
-                    sum_.assign(dim, T(0));
-                    train_centroid(sample_embeddings);
-                }
-                // HNSWDEBUG << "  [BIN1-RABITQ] Centroid trained for residual reconstruction";
-            } else {
-                // STANDARD or BETTER mode
-                compute_thresholds(sample_embeddings);
-                // HNSWDEBUG << "  [BIN1] Thresholds computed";
-            }
-        } else if (qmode == QuantMode::INT158) {
-            // Ternary quantization
-            if (bin_mode == OptBinMode::CENTROID) {
-                compute_ternary_thresholds_from_centroid();
-            } else {
-                compute_ternary_thresholds(sample_embeddings);
-            }
-            // HNSWDEBUG << "  [INT158] Ternary thresholds computed";
-        } else if (qmode == QuantMode::INT4 || qmode == QuantMode::INT8) {
-            // INT4/INT8 quantization
-            double levels = (qmode == QuantMode::INT8) ? 255.0 : 15.0;
-            if (bin_mode == OptBinMode::CENTROID) {
-                compute_scale_min_from_centroid(sample_embeddings, levels);
-            } else {
-                compute_scale_min(sample_embeddings, levels);
-            }
-            // HNSWDEBUG << "  [" << (qmode == QuantMode::INT8 ? "INT8" : "INT4") << "] Scale/min computed";
-        }
-        
-        // HNSWDEBUG << "  [SpaceQuantized::fit] Training complete\n";
-    }
 
 private:
     // =================== DISTANCE ===========================================
@@ -681,94 +432,21 @@ private:
                                        reinterpret_cast<const uint8_t*>(p2));
         // Safety check
         if (std::isnan(dist) || std::isinf(dist)) {
-            HNSWERR << "Invalid distance computed by fstdist_ (SpaceQuantized): " << dist;
+            std::cerr << "ERROR: Invalid distance computed: " << dist << std::endl;
             return 1e9;
         }
         return dist;
     }
 
     float compute_dist(const uint8_t* a, const uint8_t* b) const {
-        float base_dist = 0;
-
-        // We are pass-through so use other dist function!
-        if (bin_mode == OptBinMode::PASS) {
-          size_t bits = 4; // hnswlib::IntStorage::bits_per_element(storage_type);
-//std::cerr << "BITS = " << bits << std::endl;
-	  return compute_dist_L2_pass(bits, a, b, dim);
-         }
         if (qmode==QuantMode::BIN1) {
             // Hamming distance
             uint32_t acc=0;
             for(size_t i=0;i<bytes_per_vector;++i) acc+=__builtin_popcount(a[i]^b[i]);
-            base_dist = float(acc) / float(dim);
-            
-            // RaBitQ: refine with residuals
-            if (use_rabitq_) {
-                const T* res_a = reinterpret_cast<const T*>(a + bytes_per_vector);
-                const T* res_b = reinterpret_cast<const T*>(b + bytes_per_vector);
-                
-                float residual_dist = 0;
-                
-#if defined(HNSW_SIMD_AVX2)
-                size_t i = 0;
-                __m256 sum = _mm256_setzero_ps();
-                
-                // Process 8 floats at a time
-                for (; i + 7 < residual_dims_; i += 8) {
-                    __m256 va = _mm256_loadu_ps(res_a + i);
-                    __m256 vb = _mm256_loadu_ps(res_b + i);
-                    __m256 diff = _mm256_sub_ps(va, vb);
-                    sum = _mm256_fmadd_ps(diff, diff, sum);
-                }
-                
-                // Horizontal sum
-                alignas(32) float tmp[8];
-                _mm256_store_ps(tmp, sum);
-                residual_dist = tmp[0] + tmp[1] + tmp[2] + tmp[3] + tmp[4] + tmp[5] + tmp[6] + tmp[7];
-                
-                // Scalar remainder
-                for (; i < residual_dims_; ++i) {
-                    float diff = res_a[i] - res_b[i];
-                    residual_dist += diff * diff;
-                }
-#elif defined(HNSW_SIMD_NEON)
-                size_t i = 0;
-                float32x4_t sum = vdupq_n_f32(0.0f);
-                
-                // Process 4 floats at a time
-                for (; i + 3 < residual_dims_; i += 4) {
-                    float32x4_t va = vld1q_f32(res_a + i);
-                    float32x4_t vb = vld1q_f32(res_b + i);
-                    float32x4_t diff = vsubq_f32(va, vb);
-                    sum = vmlaq_f32(sum, diff, diff);
-                }
-                
-                // Horizontal sum
-                float tmp[4];
-                vst1q_f32(tmp, sum);
-                residual_dist = tmp[0] + tmp[1] + tmp[2] + tmp[3];
-                
-                // Scalar remainder
-                for (; i < residual_dims_; ++i) {
-                    float diff = res_a[i] - res_b[i];
-                    residual_dist += diff * diff;
-                }
-#else
-                // Scalar fallback
-                for (size_t i = 0; i < residual_dims_; ++i) {
-                    float diff = res_a[i] - res_b[i];
-                    residual_dist += diff * diff;
-                }
-#endif
-                
-                // Adaptive weighting: more residuals = higher weight
-                float residual_weight = (bin_mode == OptBinMode::RABITQ_EXTENDED) ? 0.5f : 0.3f;
-                base_dist = (1.0f - residual_weight) * base_dist + 
-                           residual_weight * residual_dist / residual_dims_;
-            }
-            
-            return base_dist;
-
+            // For HNSW, smaller distance = more similar
+            // Hamming distance already satisfies this (0 bits different = identical)
+            // Normalize to [0,1] range for better numerical stability
+            return float(acc) / float(dim);
         } else if (qmode==QuantMode::INT158) {
             // Ternary distance computation
             double acc = 0;
@@ -812,55 +490,14 @@ private:
                 acc += diff * diff * double(scale_sq[i]);
             }
             return float(acc);
-#if 1
-        } else if (qmode == QuantMode::INT16) {
-           float sa = *reinterpret_cast<const float*>(a);
-           float sb = *reinterpret_cast<const float*>(b);
-
-           const int16_t* da = reinterpret_cast<const int16_t*>(a + sizeof(float));
-           const int16_t* db = reinterpret_cast<const int16_t*>(b + sizeof(float));
-           int64_t acc = 0;
-           for (size_t i = 0; i < dim; ++i)
-              acc += int32_t(da[i]) * int32_t(db[i]);
-           return float(acc) * (sa * sb);
-#endif
         } else { // INT4
-
-	  double acc = 0;
-	  if (bin_mode != OptBinMode::PASS) {
+            double acc=0;
             for(size_t d=0;d<dim;d+=2){
                 uint8_t ba=a[d>>1], bb=b[d>>1];
                 uint8_t a0=ba&0x0F,a1=ba>>4,b0=bb&0x0F,b1=bb>>4;
                 int diff0=int(a0)-int(b0);
                 acc+=diff0*diff0*double(scale_sq[d]);
                 if(d+1<dim){int diff1=int(a1)-int(b1); acc+=diff1*diff1*double(scale_sq[d+1]);}
-              }
-	    }
-           else {
-size_t bytes = (dim + 1) >> 1;   // ceil(dim / 2)
-for (size_t i = 0; i < bytes; ++i) {
-    uint8_t ba = a[i];
-    uint8_t bb = b[i];
-
-    int a0 = int(ba & 0x0F);
-    int b0 = int(bb & 0x0F);
-    if (a0 >= 8) a0 -= 16;
-    if (b0 >= 8) b0 -= 16;
-
-    int diff0 = a0 - b0;
-    acc += diff0 * diff0;
-
-    if (2*i + 1 < dim) {
-        int a1 = int(ba >> 4);
-        int b1 = int(bb >> 4);
-        if (a1 >= 8) a1 -= 16;
-        if (b1 >= 8) b1 -= 16;
-
-        int diff1 = a1 - b1;
-        acc += diff1 * diff1;
-    }
-}
-
             }
             return float(acc);
         }
@@ -927,8 +564,6 @@ for (size_t i = 0; i < bytes; ++i) {
     }
     
     void compute_thresholds(const std::vector<std::vector<T>>& samples){
-        if (bin_mode == OptBinMode::PASS) return;
-
         const size_t n=samples.size();
         std::vector<T> col(n);
         for(size_t d=0;d<dim;++d){
@@ -936,7 +571,7 @@ for (size_t i = 0; i < bytes; ++i) {
             if(bin_mode==OptBinMode::STANDARD){
                 std::nth_element(col.begin(),col.begin()+n/2,col.end());
                 thresholds[d]=col[n/2];
-            }else{ // bin_mode==OptBinMode::BETTER 
+            }else{
                 std::sort(col.begin(),col.end());
                 T best_thr=col[n/2]; float best_corr=-1;
                 for(int k=1;k<99;++k){
@@ -964,7 +599,8 @@ for (size_t i = 0; i < bytes; ++i) {
         
         // Debug: Print scale info for first dimension
         if (dim > 0) {
-            // HNSWDEBUG << "  [Scale debug: dim0 range=[" << minval[0] << "," << (minval[0] + scale[0]*levels) << "], scale=" << scale[0] << "]";
+            std::cout << "  [Scale debug: dim0 range=[" << minval[0] << "," << (minval[0] + scale[0]*levels) 
+                      << "], scale=" << scale[0] << "]" << std::flush;
         }
     }
 
@@ -1090,27 +726,6 @@ for (size_t i = 0; i < bytes; ++i) {
         }
 #endif
     }
-
-#if 1
-     // INT16
-    void quantize_int16(const float* src, uint8_t* out) const {
-      float* scale_ptr = reinterpret_cast<float*>(out);
-      int16_t* dst = reinterpret_cast<int16_t*>(out + sizeof(float));
-
-      // compute scale
-      float max_abs = 0.f;
-      for (size_t i = 0; i < dim; ++i)
-          max_abs = std::max(max_abs, std::abs(src[i]));
-
-      float scale = (max_abs > 0) ? max_abs / 32767.f : 1.f;
-      *scale_ptr = scale;
-
-      for (size_t i = 0; i < dim; ++i) {
-          int v = int(std::round(src[i] / scale));
-          dst[i] = int16_t(std::clamp(v, -32767, 32767));
-      }
-  }
-#endif
 
     void quantize_int8_simd(const T* emb,uint8_t* out) const {
 #if defined(HNSW_SIMD_AVX2)
@@ -1349,159 +964,6 @@ for (size_t i = 0; i < bytes; ++i) {
             }
         }
     }
-
-    // Persistance for Params
-
-    /*
-    // Train and save
-    space->fit(training_samples);
-    space->save_quantization_params("quant_params.bin");
-
-    // Later, load without retraining
-    auto space = new hnswlib::SpaceQuantized<float>(dim, qmode, bin_mode);
-    space->load_quantization_params("quant_params.bin");
-    */
-
-    // Save all quantization parameters
-
-    bool save_quantization_params(const std::string& filepath) const {
-        std::ofstream out(filepath, std::ios::binary);
-        // When writing directly to a file we may want to have a magic!
-        return save_quantization_params(out);
-    }
-
-bool save_quantization_params(std::ofstream &out) const override{
-    if (!out.is_open()) return false;
-    
-    // Write header
-    out.write(reinterpret_cast<const char*>(&dim), sizeof(dim));
-    int qmode_int = static_cast<int>(qmode);
-    int bin_mode_int = static_cast<int>(bin_mode);
-    out.write(reinterpret_cast<const char*>(&qmode_int), sizeof(qmode_int));
-    out.write(reinterpret_cast<const char*>(&bin_mode_int), sizeof(bin_mode_int));
-    out.write(reinterpret_cast<const char*>(&bytes_per_vector), sizeof(bytes_per_vector));
-    out.write(reinterpret_cast<const char*>(&use_rotation_), sizeof(use_rotation_));
-    out.write(reinterpret_cast<const char*>(&use_rabitq_), sizeof(use_rabitq_));
-    out.write(reinterpret_cast<const char*>(&residual_dims_), sizeof(residual_dims_));
-    
-    // Write quantization parameters based on mode
-    if (qmode == QuantMode::BIN1) {
-        out.write(reinterpret_cast<const char*>(thresholds.data()), dim * sizeof(T));
-    } else if (qmode == QuantMode::INT158) {
-        out.write(reinterpret_cast<const char*>(ternary_threshold_low_.data()), dim * sizeof(T));
-        out.write(reinterpret_cast<const char*>(ternary_threshold_high_.data()), dim * sizeof(T));
-        out.write(reinterpret_cast<const char*>(ternary_scale_.data()), dim * sizeof(T));
-    } else if (qmode == QuantMode::INT4 || qmode == QuantMode::INT8) {
-        out.write(reinterpret_cast<const char*>(scale.data()), dim * sizeof(T));
-        out.write(reinterpret_cast<const char*>(minval.data()), dim * sizeof(T));
-        out.write(reinterpret_cast<const char*>(scale_sq.data()), dim * sizeof(T));
-    }
-    
-    // Write rotation matrix if used
-    if (use_rotation_) {
-        out.write(reinterpret_cast<const char*>(rotation_matrix_.data()), 
-                  dim * dim * sizeof(T));
-    }
-    
-    // Write centroid if used
-    if (bin_mode == OptBinMode::CENTROID || bin_mode == OptBinMode::RABITQ) {
-        out.write(reinterpret_cast<const char*>(centroid_.data()), dim * sizeof(T));
-        out.write(reinterpret_cast<const char*>(sum_.data()), dim * sizeof(T));
-        out.write(reinterpret_cast<const char*>(&count_), sizeof(count_));
-    }
-    
-    return out.good();
-}
-
-// Load all quantization parameters
-
-bool load_quantization_params(const std::string& filepath) {
-    std::ifstream in(filepath, std::ios::binary);
-    // When reading directly fromfile we may want to have a magic and check it!
-    return load_quantization_params(in);
-}
-
-bool load_quantization_params(std::ifstream &in) override {
-    if (!in.is_open()) return false;
-    
-    // Read and verify header
-    size_t file_dim;
-    int qmode_int, bin_mode_int;
-    in.read(reinterpret_cast<char*>(&file_dim), sizeof(file_dim));
-    if (file_dim != dim) {
-        HNSWERR << "Dimension mismatch: expected " << dim << ", got " << file_dim;
-        return false;
-    }
-    
-    in.read(reinterpret_cast<char*>(&qmode_int), sizeof(qmode_int));
-    in.read(reinterpret_cast<char*>(&bin_mode_int), sizeof(bin_mode_int));
-    
-    if (static_cast<QuantMode>(qmode_int) != qmode) {
-        HNSWERR << "QuantMode mismatch";
-        return false;
-    }
-    if (static_cast<OptBinMode>(bin_mode_int) != bin_mode) {
-        HNSWERR << "OptBinMode mismatch";
-        return false;
-    }
-    
-    in.read(reinterpret_cast<char*>(&bytes_per_vector), sizeof(bytes_per_vector));
-    in.read(reinterpret_cast<char*>(&use_rotation_), sizeof(use_rotation_));
-    in.read(reinterpret_cast<char*>(&use_rabitq_), sizeof(use_rabitq_));
-    in.read(reinterpret_cast<char*>(&residual_dims_), sizeof(residual_dims_));
-    
-    // Read quantization parameters based on mode
-    if (qmode == QuantMode::BIN1) {
-        thresholds.resize(dim);
-        in.read(reinterpret_cast<char*>(thresholds.data()), dim * sizeof(T));
-    } else if (qmode == QuantMode::INT158) {
-        ternary_threshold_low_.resize(dim);
-        ternary_threshold_high_.resize(dim);
-        ternary_scale_.resize(dim);
-        in.read(reinterpret_cast<char*>(ternary_threshold_low_.data()), dim * sizeof(T));
-        in.read(reinterpret_cast<char*>(ternary_threshold_high_.data()), dim * sizeof(T));
-        in.read(reinterpret_cast<char*>(ternary_scale_.data()), dim * sizeof(T));
-    } else if (qmode == QuantMode::INT4 || qmode == QuantMode::INT8) {
-        scale.resize(dim);
-        minval.resize(dim);
-        scale_sq.resize(dim);
-        in.read(reinterpret_cast<char*>(scale.data()), dim * sizeof(T));
-        in.read(reinterpret_cast<char*>(minval.data()), dim * sizeof(T));
-        in.read(reinterpret_cast<char*>(scale_sq.data()), dim * sizeof(T));
-    }
-    
-    // Read rotation matrix if used
-    if (use_rotation_) {
-        rotation_matrix_.resize(dim * dim);
-        in.read(reinterpret_cast<char*>(rotation_matrix_.data()), 
-                dim * dim * sizeof(T));
-    }
-    
-    // Read centroid if used
-    if (bin_mode == OptBinMode::CENTROID || bin_mode == OptBinMode::RABITQ) {
-        centroid_.resize(dim);
-        sum_.resize(dim);
-        in.read(reinterpret_cast<char*>(centroid_.data()), dim * sizeof(T));
-        in.read(reinterpret_cast<char*>(sum_.data()), dim * sizeof(T));
-        in.read(reinterpret_cast<char*>(&count_), sizeof(count_));
-    }
-    
-    return in.good();
-}
-
-// Getters for inspection
-const std::vector<T>& get_thresholds() const { return thresholds; }
-const std::vector<T>& get_scale() const { return scale; }
-const std::vector<T>& get_minval() const { return minval; }
-const std::vector<T>& get_ternary_threshold_low() const { return ternary_threshold_low_; }
-const std::vector<T>& get_ternary_threshold_high() const { return ternary_threshold_high_; }
-const std::vector<T>& get_rotation_matrix() const { return rotation_matrix_; }
-bool is_using_rotation() const { return use_rotation_; }
-bool is_using_rabitq() const { return use_rabitq_; }
-size_t get_residual_dims() const { return residual_dims_; }
-
-
-
 };
 
 } // namespace hnswlib

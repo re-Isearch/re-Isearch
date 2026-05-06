@@ -15,23 +15,14 @@ public:
 
   const auto model             =  find_ggml_model(filename, searchPath);
 
-  const std::string model_path = model->first; 
-  const GGML_TYPE   model_type = model->second;
+  const std::string model_path = model.first; 
+  const GGML_TYPE   model_type = model.second;
+
   switch (model_type) {
       case GGML_TYPE::GGML: { 
-        auto info = read_ggml_info(model_path);
-        LOG_INFO_S() << "GGML model detected\n"
-                  << "       Embedding dim: " << info->n_embd << "\n"
-                  << "       Quantization: " << (info->f16 == 1 ? "F16" : "F32/QX") << "\n";
         return std::make_unique<SBertGGML>(model_path);
       }
       case GGML_TYPE::GGUF: {
-        auto info = read_gguf_info(model_path);
-        LOG_INFO_S() << "GGUF model detected\n"
-                  << "       Architecture: " << info.architecture << "\n"
-                  << "       Embedding dim: " << info.embedding_length << "\n"
-                  << "       Quantization: " << info.quant_type << "\n";
-
         return std::make_unique<LlamaEmbedder>(model_path);
      }
      default:
@@ -40,9 +31,6 @@ public:
 		"Unsupported/Unknown model file format: " :
 		"Model file not found: " ) + filename);
     }
-    model_name = basename(model_path);
  }
- std::string model_name;
-
 };
 

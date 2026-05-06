@@ -257,7 +257,7 @@ inline float compute_dist_L2_pass(int bits, const uint8_t* a, const uint8_t* b, 
                 acc += diff1 * diff1;
             }
         }
-std::cerr << "ACC = " << acc << std::endl;
+//std::cerr << "ACC = " << acc << std::endl;
         return float(acc);
     }
 

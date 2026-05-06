@@ -50,16 +50,16 @@ public:
 #if USE_LRUCACHE
     BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c, size_t max_cached=3, bool searchOnly = false);
 #else
-    BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c);
+    BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c, bool searchOnly = false);
 #endif
 
     void set_base_dir(const std::string& new_dir) { base_dir = new_dir; }
 
     void clear(const std::string &name);
 
-    ShardedIndex *get(const std::string &name);
+    ShardedIndex *get(const std::string &name, size_t identity = 0);
     // get or create a named index
-    ShardedIndex & getOrCreate(const std::string & name);
+    ShardedIndex & getOrCreate(const std::string & name, size_t identity = 0);
 
     // shorthands
     void append(const std::string &name, const std::string_view sentence);

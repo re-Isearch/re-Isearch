@@ -80,7 +80,8 @@ float BertIndex::score_from_dist(float dist) const {
 }
 
 // n + ext = path of the index 
-BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool searchOnly) : embedder(emb), cfg(c), name(n)
+BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool s) : embedder(emb), cfg(c), name(n),
+  searchOnly(s)
 {
     size_t max_elements = cfg.max_elements;
     sentences_path = full_storage_path(name + IndexFileExtensions::sentences);
@@ -92,7 +93,7 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool sea
     search_ctrl.adaptive_epsilon = cfg.auto_tune_eps;
     if (cfg.ef_search) search_ctrl.set_ef(cfg.ef_search);
 
-    UnifiedIndexMeta meta(emb.dim(), cfg);
+    UnifiedIndexMeta meta(emb.embedding_dim(), cfg);
 
     LOG_DEBUG_S() << "BertIndex: Storage is " <<  storage_type_to_string(meta.storage_type_) << "\n";
     LOG_DEBUG_S() << "BertIndex: Quantization is " << quantization_to_string(meta.quantization_) << "\n";
@@ -116,9 +117,16 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool sea
 
   // Try to load offsets if they exist
   // was    load_offsets();
+  if (searchOnly) {
+     const off_t length = file_size(offsets_path);
+     if (length > 0) {
+       size_t capacity = OffsetFile::current_capacity(length) ;
+       if (capacity) max_elements = capacity; 
+     }
+  }
   offsets = std::make_unique<OffsetFile>(offsets_path, max_elements);
 
-  if (cfg.debug && !offsets->validate_offsets(/*fix=*/true))
+  if (cfg.debug && !searchOnly && !offsets->validate_offsets(/*fix=*/true))
      LOG_WARN_S() << "Offset file contained invalid entries; they were reset.";
 
 #if 0
@@ -135,6 +143,10 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool sea
 //
 
 void BertIndex::clear() {
+    if (searchOnly) {
+       LOG_INFO_S() << "[clear] Can't clear  " << name << " as its set searchOnly";
+       return;
+    }
     acquire_lock(); // 🔒 Ensure no one else writes
     ScopedLock guard([&]() { release_lock(); }); // auto-unlock
 
@@ -207,6 +219,7 @@ void BertIndex::clear() {
 
 BertIndex::~BertIndex() {
     search_ctrl.save(name);
+    if (sentences_fd) ::fclose(sentences_fd);
     try {
         flush(); // persist any unsaved changes
         remove_lockfile(); // We ignore if it fails since it is probably 0 from another process
@@ -461,7 +474,7 @@ std::vector<float> BertIndex::encode_text(const std::string& text)
 // Append with explicit sentence_id -> returns label
 
 // Takes 1) a string of any length. Longer strings get sliced into chunks
-// 2) A hex encoded string representing the Float32 vector of the embedding.
+// 2) A hex/base64 encoded string representing the Float32 vector of the embedding.
 // This can be potentially useful in some edge use cases such as when it is
 // desireable to store the embedding vector in the document. A typical application
 // is for image retrieval. Its main constraint is that the dimension of the
@@ -470,7 +483,7 @@ std::vector<float> BertIndex::encode_text(const std::string& text)
 // class by creating a new shard with the appropriate dimension.  
 size_t BertIndex::append(const std::string_view sentence, int64_t sentence_id, uint32_t span) {
 
-std::cerr << "Append \"" << sentence << "\"  span=" << span << std::endl;
+//  std::cerr << "Append \"" << sentence << "\"  span=" << span << std::endl;
 
     if (cfg.lock_on_append && wait_lock()) {
         LOG_FATAL_S() << "Can't append, other process competing (race).";
@@ -478,17 +491,59 @@ std::cerr << "Append \"" << sentence << "\"  span=" << span << std::endl;
     }
     if (span == 0) span = sentence.length();
 
+
     bool insert_raw = false;
     std::vector<Chunk> chunks;
-    // NEW: If the sentence passed is a string containing a hex encoded
-    // Float32 vector of the right dim then treat as such (pass-through)
-    if (schmate_util::isHexFloat32Vector(sentence, embedder.n_embd)) {
-      // Looks like a Float32 encoded vector: just hex and right length
-      // chunks.push_back({sentence, 0, sentence.length()}); 
-      // Below is because can construct Chunk directly inside vector
-      chunks.emplace_back( std::string(sentence.data(), sentence.size()), 0, sentence.size());
-      insert_raw = true;
-    } else chunks = chunk_tokens(sentence);
+
+   // NEW: If the sentence passed is a string containing a hex or base64
+   // encoded vector of the right dim then treat as such (pass-through)
+   //
+   // We've added Base64 since it is the overwhelming standard for binary-in-text formats.
+   // Here's the landscape for Base64:
+   //  - MongoDB Atlas Vector Search — BSON binary subtype 0x09, exported as base64 in Extended JSON
+   //  - Elasticsearch/OpenSearch — dense_vector fields serialized as base64 in bulk API
+   //  - PostgreSQL pgvector — binary protocol uses base64 when exported via JSON
+   //  - Google Vertex AI Vector Search — base64 in REST API payloads
+   //  - Amazon OpenSearch — base64 for binary vector serialization
+   //  - Pinecone — base64 in their JSON export format
+   //  - Weaviate — base64 for binary vector fields in GraphQL/REST responses
+   //  - BSON/MessagePack — binary types always base64 when rendered to JSON/XML
+   //
+   // And for transport:
+   //  - Protocol Buffers over HTTP — bytes fields become base64 in JSON transcoding (per proto3 JSON mapping spec)
+   //  - JWT — base64url for all binary payloads
+   //  - XML Binary — xs:base64Binary is the W3C standard type for binary in XML Schema
+   //
+   // The landscape for Hex:
+   //  - re-Isearch pipeline — deliberate choice for human readability
+   //  - Some assorted (niche) internal research pipelines — easier to eyeball and debug than base64
+   //  - Faiss — when manually serializing index entries for debugging
+   //  - GeoJSON — sometimes hex for geometry binary extensions (non-standard)
+   //  - Ethereum/Web3 — 0x-prefixed hex is the universal binary encoding convention, including for
+   // embeddings stored on-chain (a niche use case)
+
+   // For now we ONLY care about Fp32.. Extended should we need it in the future
+    enum { _none, _float32, _base64, _arrays, _hex_int8, _hex_int4, _hex_binary } encoding;
+
+    if (schmate_util::isEncodedFloat32Vector(sentence, embedder.n_embd))
+       encoding = _float32;
+    else if (schmate_util::isBase64Float32Vector(sentence, embedder.n_embd))
+       encoding = _base64;
+    else if (schmate_util::isFloatArrayVector(sentence, embedder.n_embd))
+       encoding = _arrays;
+    else
+       encoding = _none;
+
+   if (encoding != _none)
+     {
+       chunks.emplace_back(std::string(sentence.data(), sentence.size()), 0, sentence.size());
+       insert_raw = true;
+     }
+   else
+     {
+       // Plain text — embed via configured model
+       chunks = chunk_tokens(sentence);
+     }
 
     size_t last_label = 0;
 
@@ -520,13 +575,29 @@ std::cerr << "Append \"" << sentence << "\"  span=" << span << std::endl;
 
         // --- Insert into HNSW index ---
         // encode & add
-        if (insert_raw) {
-          auto emb = schmate_util::hexToFloat32 (chunk.text);
-          index->addPoint(emb.data(), (hnswlib::labeltype)(label));
-        } else {
-          auto emb = encode_text(chunk.text);
-          index->addPoint(emb.data(), (hnswlib::labeltype)(label));
-        }
+        if (insert_raw)
+         {
+           std::vector<float> emb;
+           switch (encoding)
+             {
+               case _float32:
+                 emb = schmate_util::hexToFloat32(chunk.text);
+                 break;
+               case _base64:
+                 emb = schmate_util::base64ToFloat32(chunk.text);
+                 break;
+               case _arrays:
+                 emb = schmate_util::floatArrayToFloat32(chunk.text);
+                 break;
+               default: break;
+             }
+           index->addPoint(emb.data(), (hnswlib::labeltype)(label));
+         }
+       else
+         {
+           auto emb = encode_text(chunk.text);
+           index->addPoint(emb.data(), (hnswlib::labeltype)(label));
+         }
 
         // --- Write OffsetEntry into mmap ---
         OffsetEntry e{ sentence_id,
@@ -762,13 +833,15 @@ std::vector<SearchResult> BertIndex::filter_knn_results(const std::string &query
     if (size() == 0 || !is_valid_query(query))
         return {}; // Nothing to do 
 
+    BaseFilterFunctor* isIdAllowed = nullptr; // No filter at this time
     // std::cerr << "QUERY=" << query << std::endl;
     std::vector<float> emb = encode_text(query); 
 
     if (search_ctrl.adaptive_ef) index->setEf(search_ctrl.get_ef());
 
     auto beg = std::chrono::high_resolution_clock::now();
-    auto candidates = index->searchKnnCloserFirst(emb.data(), max_k);
+
+    auto candidates = index->searchKnnCloserFirst(emb.data(), max_k, isIdAllowed);
     auto end = std::chrono::high_resolution_clock::now();
     auto latency_ms = duration_cast<std::chrono::microseconds>(end - beg).count();
     search_ctrl.update_after_knn(latency_ms, cfg.debug);
@@ -860,11 +933,13 @@ std::vector<SearchResult> BertIndex::radius(const std::string &query, float r) {
 
 
 std::vector<SearchResult> BertIndex::relative(const std::string &query, float alpha, size_t max_k) {
+    BaseFilterFunctor* isIdAllowed = nullptr; // No filter at this time
+
     if (alpha<0) alpha = cfg.default_alpha;
     if (max_k <=0) max_k = cfg.default_k*cfg.knn_lookahead_scale;
 
     std::vector<float> emb = encode_text(query); // embed(query);
-    auto topk = index->searchKnnCloserFirst(emb.data(), max_k);
+    auto topk = index->searchKnnCloserFirst(emb.data(), max_k, isIdAllowed);
     if (topk.empty()) return {};
 
     float best = topk.front().first;
@@ -886,9 +961,11 @@ std::vector<SearchResult> BertIndex::adaptive(const std::string &query,
     if (minN==0) minN=cfg.default_minN;
     if (lookahead==0) lookahead=cfg.default_lookahead;
     if (gapDelta<0) gapDelta=cfg.default_gapDelta;
+    BaseFilterFunctor* isIdAllowed = nullptr; // No filter at this time
+
 
     std::vector<float> emb = encode_text(query);// embed(query);
-    auto topk = index->searchKnnCloserFirst(emb.data(), lookahead);
+    auto topk = index->searchKnnCloserFirst(emb.data(), lookahead, isIdAllowed);
     if (topk.empty()) return {};
 
     float last_score = -1;
@@ -926,6 +1003,9 @@ In epsilon search we don't tune the ef_search!
 
 
 std::vector<SearchResult> BertIndex::epsilon_search(const std::string &query, float epsilon) {
+
+    BaseFilterFunctor* isIdAllowed = nullptr; // No filter at this time
+
     size_t cur_count = size(); // index->cur_element_count;
     if (cur_count == 0 || !is_valid_query(query) )
         return {}; // Empty index or invalid query
@@ -974,7 +1054,8 @@ TYPICAL USE CASES:
 */
 
 #if 1 /* Use new unified code */
-    auto candidates = index->searchWithStopCondition(emb.data(), epsilon, min_candidates, max_candidates);
+    auto candidates = index->searchWithStopCondition(emb.data(), epsilon, min_candidates,
+	max_candidates, isIdAllowed);
 #else
     // Create a stop condition
     hnswlib::EpsilonSearchStopCondition<float> stop_condition( epsilon, min_candidates, max_candidates);
@@ -1310,7 +1391,7 @@ bool BertIndex::set_storage_path_dir(const std::string new_path) {
 
     // Reject if it resolves to the current working directory itself
     if (abs_new == fs::weakly_canonical(fs::current_path())) {
-	LOG_ERROR_S() << "BertIndexManager::set_storage_path: path must not resolve to the current working directory\n";
+	LOG_DEBUG_S() << "BertIndexManager::set_storage_path: path must not resolve to the current working directory. Not set.\n";
 	return false;
     }
 

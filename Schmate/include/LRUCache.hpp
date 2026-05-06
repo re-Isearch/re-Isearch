@@ -324,7 +324,7 @@ inline size_t determine_optimal_hnsw_cache_size(const hnswlib::HnswConfig &cfg, 
 
   if (cfg.debug) LOG_DEBUG_S() << "Avg. consumption per "
         << dim << "D " << hnswlib::metric_to_string(cfg.metric())
-        << " vector: ~" << size << " bytes";
+        << " vector: ~" << size/(1024*1024) << " MBytes";
     
     return HNSWCacheConfig::calculate_cache_size(size_for_index).max_cache_size;
 }
