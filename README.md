@@ -1,6 +1,19 @@
 ## This is the respositiory for re-Isearch.
 
 ### NEWS
+
+May 7 2026
+
+We are getting ready to finally release later this month. 
+- Build system is now CMake
+- Plugins are now in a sub-directory of doctypes/ 
+- Extremely performant vector search using SIMD for search (HNSW) and accelerators (among others, CUDA, Metal, Vulkan) for the embedding models (GGML and GGUF formats).
+- Quantization, Pass-through, etc. have now been fully tested with real-world data. 
+- Configuration editor and standalone tool for use also as debugger for vector indexes.
+- Support for JSON ingest. This includes not just Pure-JSON (which supports multiple JSON records in a single file), JSON-NL (New-line JSON often used for logs), JSON-LD (Linked Data) and EJSON (including inner-mappings to understand MongoDb JSON). JSON also supports datatype discover for a large number of the data types the core understands including: bounding-box (spherical), date, numerical, date, date-range, .... 
+
+April 24 2026
+
 The evolving version of re-Isearch+Schmate is getting ready for release-- its already pre-release. It now supports all the magic from Schmate using an interface layer. This allows Schmate standalone to continue to not just be used outside of re-Isearch but enables Schmate to search even in vector indexes created by re-Isearchi, viz. without the query and lexical baggage.
 
 Towards this aim and making build easier we are transitioning towards CMAKE.. Re-Isearch without the vector can continue to use Makefiles such it be demanded by the platform but as the vector search demands a bit more computational resources (embeddings and HNSW vector search) we consider it reasonable to expect cmake. 
