@@ -24,6 +24,52 @@ Author:		Edward C. Zimmermann, edz@nonmonotonic.net
 
 #define MaxCOLONGRPSize 10240
 
+/*
+
+The Field Name Group is a reserved name. It supports some structure via Groupings.
+Group: GroupName
+	Field: Value
+	Field: Value
+	Field: Value
+End_Group
+
+
+Groups may contains groups. For each Group one must specify End_Group to inform the parser where the end
+of the group is.
+
+Field: Value
+Field: Value
+Group: GroupName
+	Field: Value
+	Field: Value
+	Group: GroupName
+		Field: Value
+		Field: Value
+		Field: Value
+	End_Group
+End_Group
+
+
+Example:
+
+Entry_ID: 1013DS-A.cdf
+Group: Technical_Contact
+	First_name: Frances
+	Middle_name: S.
+	Last_name: Hotchkiss
+	Phone: 508-457-2242
+	Phone: FAX 508-457-2310
+	Group: Address
+		384 Woods Hole Road
+		Quissett Campus
+		Woods Hole, MA 02543-1598
+		USA
+	End_Group
+End_Group
+
+
+*/
+
 
 COLONGRP::COLONGRP (PIDBOBJ DbParent, const STRING& Name):
 	COLONDOC (DbParent, Name)
@@ -32,9 +78,15 @@ COLONGRP::COLONGRP (PIDBOBJ DbParent, const STRING& Name):
 
 const char *COLONGRP::Description(PSTRLIST List) const
 {
-  List->AddEntry ("COLONGRP");
+ const STRING ThisDoctype("COLONGRP");
+  if ( List->IsEmpty() && Doctype != ThisDoctype)
+    List->AddEntry(Doctype);
+  List->AddEntry (ThisDoctype);
+
   COLONDOC::Description(List);
-  return "COLONDOC-like text with DIF inspired groups.";
+  return "COLONDOC-like text with DIF inspired groups.\n\
+The Field Name Group is a reserved name. Each grouping must end with a End_Group\n\
+to inform the parser the end of the group. Groups may contains groups\n";
 }
 
 

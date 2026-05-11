@@ -24,6 +24,92 @@ COLONDOC does for the text following a colon tag.
 #include "common.hxx"
 #include "doc_conf.hxx"
 
+
+// ---------------------------------------------------------------------------
+// Detector (Determine the flavour of JSON, e.g. which Doctype to use)
+// --------------------------------------------------------------------------
+
+enum class JsonFlavor { JSON, JSONL, JSONLD, EJSON, UNKNOWN };
+
+
+static const char *JsonClass( JsonFlavor flavor)
+{
+  switch (flavor) {
+    case JsonFlavor::JSONL:   return "NDJSON";
+    case JsonFlavor::JSONLD:  return "JSON-LD";
+    case JsonFlavor::EJSON:   return "EJSON";
+    case JsonFlavor::JSON:    return "JSON";
+    case JsonFlavor::UNKNOWN: return "UNKNOWN";
+  }
+}
+
+static JsonFlavor identify_flavor(const STRING& content) {
+    if (content.empty()) return JsonFlavor::UNKNOWN;
+    const size_t len = content.size();
+
+    // 1. Check for JSONL (Multiple JSON objects separated by newlines)
+    // Heuristic: First line ends with '}' and second line starts with '{'
+    size_t first_newline = content.Find('\n');
+    if (first_newline && first_newline < len ) {
+        unsigned next_char = content.find_first_not_of(" \t\n\r", first_newline);
+        if (next_char < len  && content[next_char] == '{') {
+            return JsonFlavor::JSONL;
+        }
+    }
+
+    // 2. Check for JSON-LD (Look for reserved @context keyword)
+    if (content.Find("\"@context\"") < len) {
+        return JsonFlavor::JSONLD;
+    }
+
+    // 3. Check for EJSON (Look for MongoDB-style $ keys like $date or $oid)
+    if (content.Find("\"$") < len) {
+        return JsonFlavor::EJSON;
+    }
+
+    // 4. Fallback to standard JSON
+    const CHR ch  = content.GetChr(content.FirstNonWhiteSpace()); // First non-white character
+    if (ch == '{' || ch == '[') {
+        return JsonFlavor::JSON;
+    }
+
+    return JsonFlavor::UNKNOWN;
+}
+
+static JsonFlavor detectJSON(FILE *fp, off_t Start = 0)
+{
+  char buffer[1024];
+  if (Start && ::fseek(fp, Start, 0) == -1)
+    return JsonFlavor::UNKNOWN;
+  if (::fread(buffer, sizeof(char), sizeof(buffer) - 1, fp) <= 0)
+    return JsonFlavor::UNKNOWN;
+  return identify_flavor(buffer);
+}
+const char *JSONDETECT::Description(PSTRLIST List) const
+{
+  if (List) {
+    const STRING ThisDoctype("JSONDETECT");
+    if (Doctype != ThisDoctype && List->IsEmpty())
+      List->AddEntry(Doctype);
+    List->AddEntry(ThisDoctype);
+    DOCTYPE::Description(List);
+  }
+  return "JSON Document Type detector -- determines which JSON class to use";
+}
+void JSONDETECT::ParseRecords(const RECORD& FileRecord)
+{
+  STRING fn(FileRecord.GetFullFileName());
+  RECORD Record(FileRecord); // copy so we can adjust start/end
+  PFILE fp = Db->ffopen(fn, "rb");
+  auto typ = detectJSON(fp);
+  Db->ffclose(fp);
+  STRING handler = JsonClass(typ);
+  message_log (LOG_INFO, "Handling '%s' as %s", fn.c_str(), handler.c_str());
+  Record.SetDocumentType (handler);
+   Db->ParseRecords (Record);
+}
+
+
 // ---------------------------------------------------------------------------
 // Constructor
 // ---------------------------------------------------------------------------

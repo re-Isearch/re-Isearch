@@ -41,8 +41,12 @@ public:
 
 DictionaryEntry::~DictionaryEntry()
 {
-    if (value) delete value;
-    if (next)  delete next;
+    if (value) {
+      delete value; value = NULL;
+    }
+    if (next) {
+      delete next; next = NULL;
+    }
 }
 
 void DictionaryEntry::release()

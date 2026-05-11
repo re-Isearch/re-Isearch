@@ -977,11 +977,12 @@ cerr << "NO CONTENT (empty tag)" << endl;
 		if (ft.Ok())
 		  {
 		    Db->AddFieldType(TagPath, ft);
-		    dfd.SetFieldType( ft ); // Get the type
+		    dfd.SetFieldType( ft ); // Set the type
 		    dfd.SetFieldName ( TagPath );
-		    Db->DfdtAddEntry (dfd);
+		    Db->DfdtAddEntry (dfd); // register globally
 		    continue;
 		  }
+		else message_log(LOG_WARN, "Datatype '%s' failed in %s", ft.c_str(), Doctype.c_str());
 	      }
 	    }
 	    // ---- end added code of 9 Nov 2003

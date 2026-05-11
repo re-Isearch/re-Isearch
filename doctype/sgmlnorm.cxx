@@ -72,6 +72,7 @@ SGMLNORM::SGMLNORM (PIDBOBJ DbParent, const STRING& Name) :
 
 const char *SGMLNORM::Description(PSTRLIST List) const
 {
+  if (List == NULL) return "SGMLNORM";
   const STRING ThisDoctype("SGMLNORM");
   if ( List->IsEmpty() && Doctype != ThisDoctype)
     List->AddEntry(Doctype);

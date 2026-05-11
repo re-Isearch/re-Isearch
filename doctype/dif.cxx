@@ -34,7 +34,12 @@ const char *DIF::Description(PSTRLIST List) const
 {
   List->AddEntry ("DIF");
   COLONGRP::Description(List);
-  return "DIF Document Type";
+  return "DIF Document Type versions 1 to 5 (pre-XML)\n\
+The Directory Interchange Format (DIF) is a standardized, ASCII-based metadata\n\
+format developed in 1987 to describe, exchange, and document scientific data sets,\n\
+primarily within Earth science and environmental communities. It is widely used by\n\
+NASA’s Global Change Master Directory (GCMD) and the Common Metadata Repository (CMR)\n\
+to facilitate data discovery and interoperability.";
 }
 
 

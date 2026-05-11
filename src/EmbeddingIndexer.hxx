@@ -54,7 +54,7 @@ private:
   std::unique_ptr<hnswlib::HnswConfig> cfg;
   std::unique_ptr<BertIndexManager> manager;
 #ifdef USE_EMBEDDER_FACTORY
-  std::unique_ptr<EmbedderFactory> embedder;
+  std::unique_ptr<BaseEmbedder> embedder; 
 #else
   std::unique_ptr<SBertGGML> embedder;
 #endif

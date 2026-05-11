@@ -93,20 +93,38 @@ const char *EJSONDOC::Description(PSTRLIST List) const
     List->AddEntry(ThisDoctype);
     JSONDOC::Description(List);
   }
+
+#ifdef VECTOR_INDEX
   return "Extended JSON Document Type (MongoDB EJSON v1/v2 + re-Isearch $type convention).\n\
 { \"$typename\": value } wrappers set the field type explicitly.\n\
 $typename is looked up as a re-Isearch FIELDTYPE name (all aliases supported).\n\
 MongoDB-specific names ($numberLong/$oid/$bool/$timestamp etc.) also handled.\n\
 MongoDB Examples:\n\
-  { box:  { $box:       51.5,-0.1,52,0.1 } }  -> box\n\
-  { loc:  { $box:       [-74.0,40.7],[-73.9,40.8] } } -> box (re-written)\n\
-  { name: { $metaphone: Smith            } }  -> metaphone\n\
-  { id:   { $oid:       507f1f77...      } }  -> casehash\n\
+  { \"box\":  { \"$box\":       \"51.5,-0.1,52,0.1\" } }  -> box\n\
+  { \"loc\":  { \"$box\":       \"[-74.0,40.7],[-73.9,40.8]\" } } -> box (re-written)\n\
+  { \"name\": { \"$metaphone\": \"Smith\"            } }  -> metaphone\n\
+  { \"id\":   { \"$oid\":       \"507f1f77...\"      } }  -> casehash\n\
 Native examples:\n\
-  { date:  { $date:     Mon May  4 10:33:00 CEST 2026 } } -> date\n\
-  { contents: { $hnsw:  \"Caesar, and companion me with my mistress.\" } } -> hnsw\n\
+  { \"date\":  { \"$date\":     \"Mon May  4 10:33:00 CEST 2026\" } } -> date\n\
+  { \"contents\": { \"$hnsw\":  \"Caesar, and companion me with my mistress.\" } } -> hnsw\n\
+We also support hex, base64 and JSON vectors for hnsw but their dimension must match model.\n\
 For a list of native built-in datatypes: quarry index -help types  (command line indexer)\n\
 Options: see JSON.";
+#else
+  return "Extended JSON Document Type (MongoDB EJSON v1/v2 + re-Isearch $type convention).\n\
+{ \"$typename\": value } wrappers set the field type explicitly.\n\
+$typename is looked up as a re-Isearch FIELDTYPE name (all aliases supported).\n\
+MongoDB-specific names ($numberLong/$oid/$bool/$timestamp etc.) also handled.\n\
+MongoDB Examples:\n\
+  { \"box\":  { \"$box\":       \"51.5,-0.1,52,0.1\" } }  -> box\n\
+  { \"loc\":  { \"$box\":       \"[-74.0,40.7],[-73.9,40.8]\" } } -> box (re-written)\n\
+  { \"name\": { \"$metaphone\": \"Smith\"            } }  -> metaphone\n\
+  { \"id\":   { \"$oid\":       \"507f1f77...\"      } }  -> casehash\n\
+Native examples:\n\
+  { \"date\":  { \"$date\":     \"Mon May  4 10:33:00 CEST 2026\" } } -> date\n\
+For a list of native built-in datatypes: quarry index -help types  (command line indexer)\n\
+Options: see JSON.";
+#endif
 }
 
 void EJSONDOC::SourceMIMEContent(PSTRING StringPtr) const
@@ -162,15 +180,9 @@ bool EJSONDOC::IsEJsonWrapper(const char *json, size_t pos,
   //    types and aliases with no side effects and no error logging.
   //    Returns FIELDTYPE::unknown for unrecognised names.
   //    Covers: $date, $box, $iban, $metaphone, $xs:dateTime, etc.
-  {
 
-    int t = FIELDTYPE::GetType(STRING(nameBuf));
-    if (t != FIELDTYPE::unknown)
-      {
-//        ft = FIELDTYPE((BYTE)t);
-        return true;
-      }
-  }
+  if ( FIELDTYPE::GetType(STRING(nameBuf)) != FIELDTYPE::unknown)
+    return true;
 
   // 2. MongoDB-specific alias table — names that don't match any
   //    re-Isearch FIELDTYPE name ($numberLong, $oid, $bool, etc.)
@@ -181,18 +193,13 @@ bool EJSONDOC::IsEJsonWrapper(const char *json, size_t pos,
         sizeof(MongoAliases[0]), CmpMongoAlias);
     if (alias)
       {
-        int t = FIELDTYPE::GetType(STRING(alias->reisearch));
-        if (t != FIELDTYPE::unknown)
-          {
- //           ft = FIELDTYPE((BYTE)t);
-            return true;
-          }
+	if ( FIELDTYPE::GetType(STRING(alias->reisearch)) !=  FIELDTYPE::unknown)
+	  return true;
       }
   }
 
   // 3. Skip types — known MongoDB types with no indexable text content
-  if (bsearch(nameBuf, SkipTypes, SkipTypeCount,
-              sizeof(SkipTypes[0]), CmpCStr))
+  if (bsearch(nameBuf, SkipTypes, SkipTypeCount, sizeof(SkipTypes[0]), CmpCStr))
     {
       skip = true;
       return true;
@@ -468,6 +475,59 @@ void EJSONDOC::ParseObject(const char *json, size_t& pos,
 
 
 // Parse Buffer, fieldname, fld
+
+#if 1
+
+int EJSONDOC::ParseBBox(const STRING& Buffer, const STRING& FieldName, BBOXFLD *fld) const
+{
+  STRING s( Buffer);
+  s.Trim(STRING::both);
+
+  if (s.GetChr(1) == '[')
+    {
+      // MongoDB format: [[west,south],[east,north]]
+      // Parse robustly — extract exactly 4 numbers in order,
+      // ignoring all brackets, commas and whitespace.
+      double coords[4];
+      int    found = 0;
+      const char *p = s.c_str();
+
+      while (*p && found < 4)
+        {
+          // Skip anything that isn't the start of a number
+          while (*p && !isdigit((unsigned char)*p) &&
+                 *p != '-' && *p != '+' && *p != '.')
+            ++p;
+          if (!*p) break;
+
+          char *end = nullptr;
+          double v = strtod(p, &end);
+          if (end == p) break;  // no progress — malformed
+          coords[found++] = v;
+          p = end;
+        }
+
+      if (found == 4)
+        {
+          // MongoDB: [x1,y1],[x2,y2] = [lon,lat],[lon,lat]
+          // Normalise to N W S E regardless of corner order
+          double north = std::max(coords[1], coords[3]);
+          double south = std::min(coords[1], coords[3]);
+          double west  = std::min(coords[0], coords[2]);
+          double east  = std::max(coords[0], coords[2]);
+
+          s.sprintf("%.10g %.10g %.10g %.10g", north, west, south, east);
+        }
+       else // Malformed — fall through
+        message_log(LOG_WARN, "EJSONDOC::ParseBBox: could not parse '%s' as MongoDB box",
+                  (const char *)s);
+    }
+
+  // re-Isearch native formats — base class handles all variants
+  return DOCTYPE::ParseBBox(s, FieldName, fld);
+}
+
+#else
 int EJSONDOC::ParseBBox(const STRING& Buffer, const STRING& FieldName, BBOXFLD *fld) const
 {
   STRING s( Buffer );
@@ -500,15 +560,7 @@ int EJSONDOC::ParseBBox(const STRING& Buffer, const STRING& FieldName, BBOXFLD *
           const double east  = std::max(x1, x2);
 
 	  // Rewrite as re-Isearch "N W S E" canonical string
-#if 1
 	  s.sprintf( "%.10g %.10g %.10g %.10g", north, west, south, east);
-#else
-          // Rewrite as re-Isearch "N W S E" canonical string
-          char buf[128];
-          snprintf(buf, sizeof(buf), "%.10g %.10g %.10g %.10g",
-                   north, west, south, east);
-          return DOCTYPE::ParseBBox(STRING(buf), FieldName, fld);
-#endif
         }
       // Malformed MongoDB box — fall through to base class which will fail gracefully
     }
@@ -521,6 +573,6 @@ int EJSONDOC::ParseBBox(const STRING& Buffer, const STRING& FieldName, BBOXFLD *
   //   RECT{N,W,S,E}      query convention (base class handles)
   return DOCTYPE::ParseBBox(s, FieldName, fld);
 }
-  
+#endif  
 
 

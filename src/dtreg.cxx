@@ -133,7 +133,7 @@ enum Doctypes {
   _IMAGEPNG,
   _IMAGETIFF,
   _IMAGEJPEG,
-  _JSON, _NDJSON, _LDJSON, _EJSON,
+  _JSONDETECT, _JSON, _NDJSON, _LDJSON, _EJSON,
 
   _MAX_ID, // This is the "last real" doctype
   _PLUGIN = 126
@@ -206,6 +206,7 @@ static const struct {
   { "GIF",        _IMAGEGIF,   false}, { "PNG",        _IMAGEPNG,   false},
   { "TIFF",       _IMAGETIFF,  false}, { "JPEG",       _IMAGEJPEG,  false},
 
+  { "JSONDETECT",  _JSONDETECT, true},
   { "JSON",        _JSON,       true}, // Supports ONLY simple JSON
   { "NDJSON",      _NDJSON,     true}, // Newline Delimited JSON 
   { "JSON-LD",     _LDJSON,     true},
@@ -270,13 +271,14 @@ class DoctypesClassRegistry : public Object
 {
 public:
   DoctypesClassRegistry() {
-    trans = new Dictionary(101, 1.0); // was 31  edz  9 Jun 2003
+    trans = new Dictionary(101, 1.0); 
   } 
   ~DoctypesClassRegistry() {
     Object *dt_obj;
     trans->Start_Get();
-    while ((dt_obj = trans->Get_NextObject()) != NULL)
-      delete (DOCTYPE *)dt_obj;
+    while ((dt_obj = trans->Get_NextObject()) != NULL) {
+      delete (DOCTYPE *)dt_obj; 
+    }
     trans->Release();
     delete trans;
   }
@@ -834,6 +836,8 @@ PDOCTYPE        DTREG::GetDocTypePtr(const DOCTYPE_ID& DoctypeId)
       return RegisterDocType (Ident, new IMAGEJPEG(Db, Name));
     case _ISOTEIA:
       return RegisterDocType (Ident, new GILS_ISOTEIA(Db, Name));
+    case _JSONDETECT:
+      return RegisterDocType (Ident, new JSONDETECT(Db, Name));
     case _JSON:
       return RegisterDocType (Ident, new JSONDOC(Db, Name));
     case _NDJSON:
@@ -1195,9 +1199,10 @@ void DTREG::BuildPluginList (const STRING& dir, STRLIST& dtlist, STRLIST *Query)
 DTREG::~DTREG()
 {
 #if 1
-  if (DoctypesRegistry)
+  if (DoctypesRegistry) {
     delete DoctypesRegistry;
-
+    DoctypesRegistry = NULL;
+  } 
 #else
   if (pluginsLoaded == 0 && DoctypesRegistry)
     delete DoctypesRegistry;

@@ -2398,13 +2398,22 @@ bool STRING::GetBool() const
 	}
       else
 	{
-	  char ch = toupper(m_pchData[0]);
-	  // True if T[rue], T[ack], Y[es], J[a], S[i], E[in], D[a],.....
-	  if (ch == 'T' || ch == 'Y' || ch == 'J' || ch == 'S' || ch == 'E' || ch == 'D')
+	  const char ch = toupper(m_pchData[0]);
+
+	  if (ch == 'N' || ch == 'F') // No, Nein, etc...
+            result = false;
+	  // True if T[rue], T[ack], Y[es], J[a], S[i], M[arche], E[in], E[nabled],.....
+	  // E[ncendido]
+	  else if (ch == 'T' || ch == 'Y' || ch == 'J' || ch == 'S' || ch == 'E' || ch == 'M')
 	    result = true;
-	  else if (ch == 'N' || ch == 'A') // No, Nein, Aus etc...
-	    result = false;
-	  else if (CaseEquals("On") || CaseEquals("Oui")) // O case can be On or Off
+	  else if (ch == 'A') {
+	     if (CaseEquals("Apagado") ||CaseEquals("Aus"))
+		result = false;
+	     else
+	        result = true; // An, Activé, Acceso, Attivato,.. 
+	  } else if (ch == 'O' &&  CaseEquals("On") || CaseEquals("Oui")) // O case can be On or Off
+	     result = true;
+	  else if (CaseEquals("Da")) 
 	    result = true;
 	  // else Off, ...
 	}
@@ -2794,6 +2803,17 @@ STRINGINDEX STRING::FirstWhiteSpace() const
   return 0;
 }
 
+STRINGINDEX STRING::FirstNonWhiteSpace() const
+{ 
+  const size_t len = Len();
+  for (size_t i = 0; i < len; i++)
+    {
+       if (!isspace(m_pchData[i]))
+        return i+1; 
+    }
+  return 0;
+}
+
 // Search for XML paths as A\B\C or A/B/C or A|B|C
 size_t STRING::Count() const
 {
@@ -2920,8 +2940,9 @@ int STRING::Find(const char *pszSub, size_t start) const
         {
           if ((char)m_pchData[i] == *pszSub)
 	    {
-	      if (memcmp(&m_pchData[i], pszSub, pLen) == 0)
+	      if (memcmp(&m_pchData[i], pszSub, pLen) == 0) {
 		return i;
+	      }
 	    }
         }
     }
@@ -4067,3 +4088,150 @@ main()
 #endif
 
 
+
+size_t STRING::find_first_not_of(const char *sz, size_t nStart) const
+{
+  for (/*register*/ size_t i = nStart; i < size(); i++)
+    {
+      unsigned char Ch =  (unsigned char )m_pchData[i];
+      if (!strchr(sz, Ch)) return i;
+     }
+   return -1;
+}
+///
+size_t STRING::find_first_not_of(const STRING& str, size_t nStart) const {
+  for (/*register*/ size_t i = nStart; i < size(); i++)
+   {
+      unsigned char Ch = (unsigned char )m_pchData[i];
+      if (!strchr(str, Ch)) return i;
+   }
+  return -1;
+};
+///
+size_t STRING::find_first_not_of(char ch, size_t nStart) const
+{
+  for (/*register*/ size_t i = nStart; i < size(); i++)
+    if (ch != m_pchData[i]) return i;
+  return -1;
+}
+
+
+
+bool STRING::IsHex(size_t minLength) const
+{
+  if (empty()) return false;
+
+  const size_t length = size();
+
+  if (length < minLength || length % 2 != 0) return false;
+
+  // We know the length is at least 2 so can look
+  size_t pos = (m_pchData[0] == '0' && ((m_pchData[1] == 'x' || m_pchData[1] == 'X'))) ? 2 : 0;
+     pos = 2; // Skip the 0x
+
+  if (pos == length) return false; // 0x is not a good string..
+
+  char ch;
+  while (pos < length && (ch = m_pchData[pos]) != '\0')
+    {
+      if (!isxdigit(ch))
+        return false;
+      ++pos;
+    }
+  // NOTE: 0x gets passed as true if the minLength is 2;
+  return true;
+}
+
+static inline size_t GetUniqueCharCount(const char* data, size_t len) {
+    if (len == 0) return 0;
+    
+    // A bitset for all 256 possible byte values
+    uint64_t seen[4] = {0, 0, 0, 0}; // 256 bits total
+    size_t unique = 0;
+
+    for (size_t i = 0; i < len; ++i) {
+        uint8_t c = static_cast<uint8_t>(data[i]);
+        uint64_t bit = 1ULL << (c % 64);
+        uint64_t idx = c / 64;
+
+        if (!(seen[idx] & bit)) {
+            seen[idx] |= bit;
+            unique++;
+        }
+        // Early exit: Base64 usually hits >20 unique chars very quickly.
+        // No need to scan a 1.5KB embedding to the end.
+        if (unique > 24) return unique; 
+    }
+    return unique;
+}
+
+
+bool STRING::IsBase64(size_t minLength) const {
+    size_t len = Length();
+    
+    // 1. Minimum length for a 64-dim float32 vector is ~344 chars
+    if (len < minLength || len % 4 != 0) return false;
+
+    // 2. Check for common "noise" found in text but not Base64
+    // If it has spaces, it's definitely prose/text.
+    if (this->Find(' ') || this->Find('\n')) return false;
+
+    // 3. Scan the tail for padding (The "Base64 signature")
+    if (m_pchData[len-1] == '=') {
+        // Valid characters check on a few random spots or the first 32 chars
+        for(int i = 0; i < 32; i++) {
+            char c = m_pchData[i];
+            if (!isalnum(c) && c != '+' && c != '/') return false;
+        }
+        return true; 
+    }
+    // 4. Entropy Check: Base64 has a very high character variety
+    // compared to hex or English text.
+    return (GetUniqueCharCount(m_pchData, len) > 15);
+}
+
+size_t STRING::GetWordCount() const 
+{
+  size_t count = 0;
+  size_t len = 0;
+  size_t length = size();
+  char ch;
+  while (len < length && (ch = m_pchData[len]) != '\0')
+    {
+       if (!IsWordSep(ch)) {
+	count++;
+        break; // Have the start of a word
+       }
+       len++;
+    }
+  // Now count..
+  while (len < length && (ch = m_pchData[len]) != '\0')
+    {
+      if (IsWordSep(ch)) 
+        count++;
+      ++len;
+    }
+  return count;
+}
+
+bool STRING::IsContiguousBlob() const {
+    const char* p = m_pchData;
+    const size_t length = size();
+    if (length == 0) return false;
+
+    size_t start = 0;
+    // 1. Skip potential leading whitespace from XML/JSON formatting
+    while (start < length && isspace((unsigned char)p[start])) start++;
+    if (start == length) return false;
+
+    size_t end = length - 1;
+    // 2. Skip potential trailing whitespace
+    while (end > start && isspace((unsigned char)p[end])) end--;
+
+    // 3. Scan the "meat" - if we find a space in the middle, it's not a blob
+    for (size_t i = start; i <= end; i++) {
+        if (isspace((unsigned char)p[i])) return false; 
+    }
+
+    return true;
+}

@@ -4992,13 +4992,10 @@ IDB::~IDB ()
 
 bool IDB::Close()
 {
-//cerr << "** IDB Close " << endl;
 
   if (DbFileStem.IsEmpty() && MainRegistry == NULL && MainIndex == NULL && DocTypeReg == NULL)
     return false; // Already closed
 
-//cerr << "Close " << DbFileStem << endl;
- 
   message_log (LOG_DEBUG, "IDB::Close %s", DbFileStem.c_str());
   if (SortIndexFp)
     {
@@ -5007,7 +5004,6 @@ bool IDB::Close()
     }
 
   Queue1Add = Queue2Add = 0;
-//cerr << "Destroy"  << endl;
   if (MetaDefaults)
     {
       delete MetaDefaults;
@@ -5020,7 +5016,6 @@ bool IDB::Close()
       MainIndex->Dump (DebugSkip);
     }
 #endif
-//cerr << "Delete MainRegistry" << endl;
   if (MainRegistry)
     {
       const size_t total = MainMdt ? MainMdt->GetTotalEntries () : 0;
@@ -5072,7 +5067,6 @@ bool IDB::Close()
       delete MainRegistry;
       MainRegistry = NULL;
     }
-//cerr << "Delete MainIndex" << endl;
   if (MainIndex)
     {
       delete MainIndex;
@@ -5089,14 +5083,12 @@ bool IDB::Close()
 	out << p->Value() << endl;
     }
 
-//cerr << "Delete MainMdt" << endl;
   if (MainMdt)
     {
       delete MainMdt;
       MainMdt = NULL;
     }
 
-//cerr << "Delete MainDfdt" << endl;
   if (MainDfdt)
     {
       if (MainDfdt->GetChanged ())
@@ -5104,13 +5096,11 @@ bool IDB::Close()
       delete MainDfdt;
       MainDfdt = NULL;
     }
-//cerr << "Delete DocTypeReg" << endl;
   if (DocTypeReg)
     {
       delete DocTypeReg;
       DocTypeReg = NULL;
     }
-//cerr << "OK" << endl;
 
   MainFpt.CloseAll ();
 

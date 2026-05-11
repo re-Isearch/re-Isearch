@@ -43,6 +43,15 @@ Notes:
 #endif
 
 
+// Service Class to re-route JSON to the appropriate JSON doctype
+class JSONDETECT : public DOCTYPE {
+public:
+  JSONDETECT(PIDBOBJ DbParent, const STRING& Name):DOCTYPE(DbParent, Name){;}
+  const char *Description(PSTRLIST List) const;
+  void ParseRecords(const RECORD& FileRecord);
+} ;
+
+
 class JSONDOC : public COLONDOC {
   friend class JSONLDDOC;
   friend class EJSONDOC;

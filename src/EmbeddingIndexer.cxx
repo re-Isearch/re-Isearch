@@ -15,6 +15,7 @@ This is the bridge re-Isearch <--> Schmate. This is the basis for DeepQuarry.
 
 #define MT_DELETE 
 
+#define ENABLE_PASSTHROUGH 1
 
 // Define VECTOR_INDEX is the code is to be used as part of re-Isearch (for coreQuarry). 
 #ifdef VECTOR_INDEX
@@ -116,9 +117,18 @@ EmbeddingIndexer::EmbeddingIndexer(IDBOBJ *Parent_, bool searchOnly) : Parent(Pa
     }
 
    // create embedder first
+#if ENABLE_PASSTHROUGH
+   auto q = get_ggml_model_quant(model);
+   hnswlib::StorageType storage = q.first;
+   if (storage != hnswlib::StorageType::FLOAT32) {
+     message_log (LOG_INFO, "MODEL is %s (%s)", q.second.c_str(), storage_type_to_string(storage).c_str() );
+     cfg->set_storage_type(storage);
+     cfg->set_quantization( hnswlib::QuantMode::NONE);
+   }
+#endif
 #ifdef USE_EMBEDDER_FACTORY
    // Use the factory to handle both bert.cpp and llama.cpp
-   embedder = std::make_unique<EmbedderFactory>(model);
+   embedder = EmbedderFactory(model);
 #else
    // Need to search since this logic is part of the factory above..
    auto found = find_model(model, search_path);
@@ -248,6 +258,7 @@ PIRSET EmbeddingIndexer::search(const STRING &fieldname, const STRING &query)
        Parent->SetErrorCode(114); // "Unsupported Use attribute"
        return new IRSET (Parent); // No index -> Nothing to search -> Empty set
     }
+    index->set_opaque_ptr(Parent);
 
     IRESULT iresult;
 #if 1
@@ -374,6 +385,83 @@ std::vector<SearchResult> EmbeddingIndexer::search(const std::string &filename, 
 
 
 EmbeddingIndexer::~EmbeddingIndexer() = default;
+
+
+
+#if 0
+
+
+
+class ReIsearchSentenceStore : public SentenceStore {
+private:
+    IDBOBJ* parent;
+
+public:
+    ReIsearchSentenceStore(IDBOBJ* p) : parent(p) {}
+
+    bool open(const std::string& /*path*/) override {
+        // We ignore the path. The engine is already open.
+        return parent && parent->Ok();
+    }
+
+    // No-ops: The engine manages its own lifecycle and writes
+    void close() override {}
+    void flush() override {}
+    size_t size() const override { return 0; } 
+
+    // This is the "Safety Valve": We don't append via the bridge
+    int64_t append(std::string_view /*text*/) override { return -1; }
+    
+    // Likely a No-op or throws an error in bridge mode
+    int64_t append_from(SentenceStore& /*source*/) override { return 0; }
+
+    // THE ONLY ACTIVE GEAR:
+    std::string get(const OffsetEntry& e) override {
+        if (!parent) return "";
+        
+        // Construct the FC (Field Coordinates) from sid and span
+        // sid is our GPTYPE (Global Pointer)
+        FC hit(e.sid, e.sid + e.span);
+        
+        // The engine fetches the content (tags and all)
+        STRING res = parent->GetPeerContent(hit);
+        return std::string(res.c_str(), res.GetLength());
+    }
+};
+
+
+
+
+
+#endif
+
+// 
+
+class ReIsearchSentenceStore : public SentenceStore {
+    IDBOBJ* parent;
+public:
+    ReIsearchSentenceStore(IDBOBJ* p) : parent(p) {}
+
+    bool open(const std::string&) override { return parent && parent->Ok(); }
+    void close() override {}
+    int64_t append(std::string_view) override { return -1; }
+    int64_t append_from(SentenceStore&) override { return 0; }
+    size_t size() const override { return 0; }
+    void flush() override {}
+
+    std::string get(const OffsetEntry& e) override {
+        if (!parent) return "";
+        // Fetch context via Global Pointer (sid) and span
+        FC hit(e.sid, e.sid + e.span);
+        STRING res = parent->GetPeerContent(hit);
+        return std::string(res.c_str(), res.GetLength());
+    }
+};
+
+std::unique_ptr<SentenceStore> SentenceStoreFactory::CreateBridgeStore(void* ptr) {
+    if (!ptr) return nullptr;
+    return std::make_unique<ReIsearchSentenceStore>((IDBOBJ*)ptr);
+}
 
 
 

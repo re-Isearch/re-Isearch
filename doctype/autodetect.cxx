@@ -136,6 +136,13 @@ static struct {
 #else
   {"text", ""},
 #endif
+#ifdef JSONDOC_HXX
+  {".json",   "JSONDETECT"},
+  {".json5",  "JSONDETECT"},
+  {".geojson","JSON"},
+  {".jsonl",  "JSONL"},
+  {".ndjson"  "NDJSON"},
+#endif
 #ifdef MEDLINE_HXX
   {"med",     "MEDLINE"},
   {"medline", "MEDLINE"},
@@ -1224,7 +1231,6 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
   if (doctype.IsEmpty())
     {
 #if USE_LIBMAGIC
-
       if (magic_cookie == NULL)
 	{
 	  magic_cookie = magic_open( MAGIC_SYMLINK|MAGIC_ERROR  );
@@ -1273,7 +1279,13 @@ void AUTODETECT::ParseRecords (const RECORD& FileRecord)
 		  if (PluginExists("OOXML")) doctype = "OOXML:";
 		  else message_log (LOG_INFO, "No Microsoft OOXML format handler plugin installed.");
 		}
-	      if (doctype.SearchAny("tiff"))
+#ifdef JSONDOC_HXX
+	      else if (doctype.SearchAny("JSON"))
+		{
+		  doctype = "JSONDETECT";
+		}
+#endif
+	      else if (doctype.SearchAny("tiff"))
 		doctype = "TIFF";
 	      else if (doctype.SearchAny("BibTeX")) {
 		doctype = "BIBTEX";
@@ -1329,6 +1341,10 @@ message_log (LOG_DEBUG, "AFTER INDEXING");
 		     doctype = "TIFF";
 		  else if (doctype.SearchAny("CSV"))
 		     doctype = "CSVDOC";
+#ifdef JSONDOC_HXX
+		  else if (doctype.SearchAny("JSON"))
+		     doctype = "JSONDETECT";
+#endif
 		  else if (doctype.Compare("English ", 8) == 0 ||
 		       // doctype.SearchAny("ascii text") || doctype.SearchAny("ISO-8859 text") ||
 			doctyoe.Search("text")) 
@@ -1594,6 +1610,7 @@ D \010O \010N \010' \010T  \010E \010D \010I \010T\
 	    }
 	  if (Fp != NULL)
 	    {
+
 	      // Add a record.. When done the indexer looks to see
 	      // if a .bin file exists and then parses and indexes
 	      // it.

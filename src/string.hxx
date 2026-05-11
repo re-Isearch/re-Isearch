@@ -221,6 +221,11 @@ public:
   bool IsFilePath() const;
   //@}
 
+  bool IsHex(size_t minLength = 2) const;
+  bool IsBase64(size_t minLength = 4) const; 
+  size_t GetWordCount() const;
+  bool IsContiguousBlob() const;
+
   /** @ Copies */
   //@{
   // Copy into buffer
@@ -271,6 +276,9 @@ public:
     char  Last(size_t n) const    { return n < Len() ? m_pchData[Len() - n - 1] : 0; }
     /// get writable last character
     char& Last()                  { CopyBeforeWrite(); return m_pchData[Len()-1]; }
+
+    inline bool EndsWith(char ch) const   { return Last() == ch;        }
+    inline bool StartsWith(char ch) const { return m_pchData[0] == ch;  }
 
     /// operator version of GetChar
     char  operator[](signed n) const {ASSERT_VALID_INDEX( n ); return m_pchData[n]; }
@@ -550,6 +558,7 @@ public:
 
    size_t Count() const; // How many \,/ or ':'
    size_t Count(CHR Ch) const; // How many Ch are in the string?
+   size_t CountChar(CHR Ch) const { return Count(Ch); }
    size_t Count(const char *str) const;
    size_t Count(const STRING& str) const;
 
@@ -561,7 +570,8 @@ public:
   UINT Replace(const char *szOld, const char *szNew, bool bReplaceAll = true);
   UINT Replace(char oldCh, char newCh, bool bReplaceAll = true);
 
-  STRINGINDEX FirstWhiteSpace() const;
+  STRINGINDEX FirstWhiteSpace() const; // 1-based
+  STRINGINDEX FirstNonWhiteSpace() const; // 1-based
 
   STRINGINDEX Search (const STRING& OtherString, const STRINGINDEX Start = 1) const;
   STRINGINDEX Search (const CHR *CString, const STRINGINDEX Start = 1) const;

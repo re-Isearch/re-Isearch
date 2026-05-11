@@ -82,7 +82,7 @@ JSONLDDOC::~JSONLDDOC() {}
 const char *JSONLDDOC::Description(PSTRLIST List) const
 {
   if (List) {
-    const STRING ThisDoctype("JSONLD");
+    const STRING ThisDoctype("JSON-LD");
     if (Doctype != ThisDoctype && List->IsEmpty())
       List->AddEntry(Doctype);
     List->AddEntry(ThisDoctype);

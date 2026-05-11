@@ -70,6 +70,8 @@ public:
   virtual long       ParseCategory(const STRING& Buffer) const;
   virtual MONETARYOBJ ParseCurrency(const STRING& FieldName, const STRING& Buffer) const;
 
+  virtual bool       ParseBoolean(const STRING& Buffer) const; // Convert buffer -> 0 or 1
+
   // TODO: Interface may change.
   // virtual EMBEDDING ParseEmbeddings(const STRING& FieldName, const STRING& Buffer int Typ) const;
 

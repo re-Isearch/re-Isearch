@@ -1059,6 +1059,7 @@ FILE *INDEX::OpenForAppend(const STRING& FieldName, FIELDTYPE FieldType)
 	case FIELDTYPE::lexi:
 	case FIELDTYPE::smiles:
 	case FIELDTYPE::dotnumber:
+	case FIELDTYPE::boolean:
 	  fp = NUMERICLIST().OpenForAppend(FileName);
 	  break;
 	case FIELDTYPE::db_hnsw:
@@ -1457,6 +1458,16 @@ bool INDEX::WriteFieldData (const RECORD& Record, const GPTYPE GpOffset)
                   items++;
                 }
               break;
+	    }
+	    case FIELDTYPE::boolean:
+	    {
+              const NUMERICOBJ val ( (NUMBER)DocTypePtr->ParseBoolean(Buffer) );
+              if (val.Ok())
+                {
+                  NUMERICFLD(gp, val).Write(fp);
+                  items++;
+                } 
+	      break;
 	    }
 	    case FIELDTYPE::dotnumber:
             case FIELDTYPE::numerical:
@@ -1858,6 +1869,7 @@ src=\"%s\" version=\"0.1\">\n",
                   case FIELDTYPE::date:
                     count = DateScan(&sList, fieldName);
                     break;
+		  case FIELDTYPE::boolean:
                   case FIELDTYPE::numerical:
                     count = NumericalScan(&sList, fieldName);
                     break;
@@ -7973,6 +7985,7 @@ size_t INDEX::ImportIndex(INDEX *IndexPtr)
 	      switch ((int)fieldType)
 		{
 		  case FIELDTYPE::ttl:
+		  case FIELDTYPE::boolean:
 		  case FIELDTYPE::numerical:
 		  case FIELDTYPE::phonhash:
 		  case FIELDTYPE::phonhash2:

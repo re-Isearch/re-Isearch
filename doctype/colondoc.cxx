@@ -41,6 +41,28 @@ METADOC::METADOC (PIDBOBJ DbParent, const STRING& Name):
 //  SetSepChar(':');
 }
 
+#ifdef VECTOR_INDEX
+bool is_encoded_embedding(const STRING& Content)
+{
+  // 1. JSON Vector Check: [0.12, -0.5, ...]
+  if (Content.StartsWith('[') && Content.EndsWith(']')) {
+     size_t commas = Content.CountChar(',');
+     // Heuristic: If it has > 60 commas, it's likely a vector (dim 64+)
+     if (commas >= 63) return true; 
+  }
+  // 2. High-Density Blob Check (Hex or Base64)
+  // Embeddings are typically long and have NO internal spaces.
+  if (Content.Length() >= 128 && Content.IsContiguousBlob()) {
+      // Hex Check: Only 0-9, a-f
+      if (Content.IsHex()) return true;
+      // Base64 Check: Ends with '=' or has Base64 alphabet density
+      if (Content.IsBase64()) return true; 
+   }
+  return false;
+}
+#endif
+
+
 FIELDTYPE METADOC::GuessFieldType(const STRING& FieldName, const STRING& Contents)
 {
   const size_t fLen = FieldName.GetLength();
@@ -58,7 +80,12 @@ FIELDTYPE METADOC::GuessFieldType(const STRING& FieldName, const STRING& Content
       if (autoFieldTypes && fLen < 1024)
 	{
 	  if (Contents.IsGeoBoundedBox())      ft = FIELDTYPE::box;
-	  else if (Contents.IsNumberRange())   ft = FIELDTYPE::numericalrange;
+#ifdef VECTOR_INDEX
+	  else if (is_encoded_embedding(Contents)) ft = FIELDTYPE::db_hnsw;
+#endif
+          else if (Contents.IsNumberRange())   ft = FIELDTYPE::numericalrange;
+          else if (Contents.IsDate())          ft = FIELDTYPE::date;
+          else if (Contents.IsDateRange())     ft = FIELDTYPE::daterange;
 	  else if (Contents.IsNumber()) 
 	    {
 	      // CCYYMMDD
@@ -74,14 +101,20 @@ FIELDTYPE METADOC::GuessFieldType(const STRING& FieldName, const STRING& Content
 	      else
 		ft = FIELDTYPE::numerical;
             }
-	  else if (Contents.IsDate())          ft = FIELDTYPE::date;
-	  else if (Contents.IsDateRange())     ft = FIELDTYPE::daterange;
+	  // else if (Contents.IsDate())          ft = FIELDTYPE::date;
+	  // else if (Contents.IsDateRange())     ft = FIELDTYPE::daterange;
 	  // else if (Contents.IsCurrency())      ft = FIELDTYPE::currency;
 	  else if (Contents.IsDotNumber())     ft = FIELDTYPE::dotnumber;
 
 	  else ft = FIELDTYPE::text;
 	  message_log (LOG_INFO, "%s: Field '%s' autotyped as '%s'", Doctype.c_str(), FieldName.c_str(), ft.c_str());
 	}
+#ifdef VECTOR_INDEX
+     else if (fLen >= 1024 && is_encoded_embedding(Contents)) {
+        ft = FIELDTYPE::db_hnsw;
+        message_log (LOG_INFO, "%s: Field '%s' autotyped as '%s'", Doctype.c_str(), FieldName.c_str(), ft.c_str());
+     }
+#endif
       else ft = FIELDTYPE::text;
       Db->AddFieldType(FieldName, ft);
       return ft;

@@ -14,6 +14,7 @@ Description:	Class ATTRLIST - Attribute List
 #pragma ident  "@(#)attrlist.cxx"
 
 static const char *n = "n"; // Numeric
+static const char *B = "0"; // Boolean
 static const char *r = "r"; // Num Range
 static const char *d = "d"; // Date
 static const char *e = "e"; // Date Range
@@ -52,7 +53,7 @@ static struct DataType {
   {"time",      d,  FIELDTYPE::time, "Numeric computed value for seconds since 1970, used as date."},
   {"ttl",       n,  FIELDTYPE::ttl, "Numeric computed value for time-to-live in seconds."},
   {"expires",   d,  FIELDTYPE::ttl_expires, "Numeric computed ttl value as date of expiration."},
-  {"boolean",   "0",FIELDTYPE::boolean, "Boolean type"},
+  {"boolean",   B,  FIELDTYPE::boolean, "Boolean type"},
   {"currency",  "$",FIELDTYPE::currency, "Monetary currency"},
   {"dotnumber", n,  FIELDTYPE::dotnumber, "Dot number (Internet v4/v6 Addresses, UIDs etc)"},
   {"phonetic",  h,  FIELDTYPE::phonhash, "Computed phonetic hash applied to each word (for names)"},
@@ -134,7 +135,7 @@ static struct DataType {
   // derived
   {"xs:normalizedString",  _s,  FIELDTYPE::text,      NULL},
   // integer types
-  {"xs:boolean",            b,  FIELDTYPE::boolean,   NULL},
+  {"xs:boolean",            B,  FIELDTYPE::boolean,   NULL},
   {"xs:decimal",            n,  FIELDTYPE::numerical, NULL},
   {"xs:integer",            n,  FIELDTYPE::numerical, NULL},
   // derived integer types

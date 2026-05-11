@@ -282,6 +282,11 @@ See also database.ini documentation for database-specific over-rides and other o
 // linked to the DOCTYPE
 void DOCTYPE::SourceMIMEContent(const RESULT& Result, STRING *StringPtr) const
 {
+  if (!StringPtr) {
+      message_log (LOG_PANIC, "SourceMIMEContent called with Nullptr");
+      return;
+  }
+
   StringPtr->Clear();
   if (tagRegistry)
     tagRegistry->ProfileGetString(GeneralSection, "Content-Type", NulString, StringPtr);
@@ -814,6 +819,14 @@ NUMERICOBJ DOCTYPE::ParseTTL(const STRING& FieldName, const STRING& Buffer) cons
 long DOCTYPE::ParseCategory(const STRING& Buffer) const
 {
   return Buffer.GetLong();
+}
+
+bool DOCTYPE::ParseBoolean(const STRING& Buffer) const
+{
+  // Remove all spaces so even " y e s" -> "yes" -> 1
+  // NOTE: if the value is NOT boolean affirmative  -> false
+  STRING s (Buffer);
+  return s.removeWhiteSpace().GetBool();
 }
 
 
