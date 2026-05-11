@@ -5,12 +5,13 @@
 May 11 2026
 
 We've added vector encoding detection to the JSON document handlers (via METADOC). This way fields that
-have been defined with text encoded embeddings (hex, bs64 or JS arrays) get automatically detected as
-HNSW field types. The vectorization already identified these strings and by-passes the model to push these
-into the graph.
+have been defined with text encoded embeddings (hex, base64 or JSON-style arrays) get automatically detected as
+vector field types (currently HNSW). The vectorization already identified these strings and by-passes
+the model to push these into the graph.
 
-Given the significant time and resources for generate the embeddings this is in many use cases highly
-desirable: the JSON gets the embeddings pre-calculated. This significantly reduces the ingest timings.
+Given the significant time and resources to generate the embeddings this is in many use cases highly
+desirable: the JSON gets the embeddings pre-calculated. This significantly reduces the ingest timings
+(as much as 15-fold).
 
 May 7 2026
 
