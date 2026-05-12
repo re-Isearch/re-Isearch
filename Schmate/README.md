@@ -20,13 +20,13 @@ While this code uses bert.cpp, support for llama.cpp is also provided.
 
 === Quantization Algorithms supported (Added to HNSWlib)  ===
 
-Qantization sizes:
+Quantization sizes:
 - NONE, BIN1, INT158, INT4, INT8, INT16, FP16, BF16
 
 Quantization Algorithms:
 - PASS, STANDARD, BETTER, CENTROID, ROTATIONAL, RABITQ, RABITQ_EXTENDED and MRLQ (in development)
 
-A typical RaBitQ quantization consists of both Alogorithm set to "RABITQ" and size of BIN1 (Binary)
+A typical RaBitQ quantization consists of both Algorithm set to "RABITQ" and size of BIN1 (Binary)
 
 MRLQ is a special case: Matryoshka Representation Learning (MRL) is a technique creating efficient, resizable AI embeddings. Named after Russian nesting dolls, it allows smaller dimensions to capture broad semantic meaning while larger dimensions encode granular details, all in one model.  MRLQ takes this concept and applies RaBitQ quantization to a slice and re-scoring to the whole vectors. Its having you cake and eating it too.
 
@@ -34,6 +34,8 @@ MRLQ is a special case: Matryoshka Representation Learning (MRL) is a technique 
 
 Notice the algorithm "PASS". It means "pass-through". Instead of using a quantization algorithm its function is to handle pre-quantized models and using optimized packing algorithms. A 1024d INT4 (4-bit INT) model gets packed into 1/8 of the space:
 512 bytes versus 4096.  This 8:1 compression ratio, for example, allows you to store 8 million vectors in the same 4GB of RAM that would normally hold only 1 million of the same INT4 vectors padded to FP32
+
+For pass-through we support the following storage sizes: BIN1, INT2, INT3, INT4, INT5, INT6, INT8, INT16 INT32, FP16, BF16 and, of course, FLOAT32.  As with our quantization algorithms the packing code using SIMD (AVX, NEON, SVE)  whenever beneficial.
 
 Storage Efficiency: The Power of Packing
 
