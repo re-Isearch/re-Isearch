@@ -18,11 +18,58 @@ All code is implemented in modern C++17, optimized for macOS and Linux.
 
 While this code uses bert.cpp, support for llama.cpp is also provided.
 
+=== Quantization Algorithms supported (Added to HNSWlib)  ===
+
+Qantization sizes:
+- NONE, BIN1, INT158, INT4, INT8, INT16, FP16, BF16
+
+Quantization Algorithms:
+- PASS, STANDARD, BETTER, CENTROID, ROTATIONAL, RABITQ, RABITQ_EXTENDED and MRLQ (in development)
+
+A typical RaBitQ quantization consists of both Alogorithm set to "RABITQ" and size of BIN1 (Binary)
+
+MRLQ is a special case: Matryoshka Representation Learning (MRL) is a technique creating efficient, resizable AI embeddings. Named after Russian nesting dolls, it allows smaller dimensions to capture broad semantic meaning while larger dimensions encode granular details, all in one model.  MRLQ takes this concept and applies RaBitQ quantization to a slice and re-scoring to the whole vectors. Its having you cake and eating it too.
+
+=== Storage Efficiency: The Power of Packing (PASS)  ===
+
+Notice the algorithm "PASS". It means "pass-through". Instead of using a quantization algorithm its function is to handle pre-quantized models and using optimized packing algorithms. A 1024d INT4 (4-bit INT) model gets packed into 1/8 of the space:
+512 bytes versus 4096.  This 8:1 compression ratio, for example, allows you to store 8 million vectors in the same 4GB of RAM that would normally hold only 1 million of the same INT4 vectors padded to FP32
+
+Storage Efficiency: The Power of Packing
+
+By utilizing pass-through we dramatically reduce the memory footprint of high-dimensional pre-quantized embeddings without sacrificing any retrieval accuracy.
+
+=== Pre-Quantized Models (GGUF) vs. Runtime Quantization ===
+When deploying embeddings within the re-Isearch ecosystem, you have two primary paths for handling high-dimensional data: leveraging pre-quantized GGUF/GGML models or using built-in quantization (like our MRLQ/RaBitQ stack) on raw FP32 output.
+
+GGUF/GGML (GPT-Generated Unified Format) models often come pre-baked with quantization levels (e.g., Q4_K_M, Q8_0). Using these provides several distinct advantages:
+
+- Memory-Mapped Speed: GGUF is designed for fast loading via mmap. By using a pre-quantized model, the "heavy lifting" is done at the inference level. The weights are smaller, leading to faster execution on CPU-based SIMD (Neon/AVX) and reduced memory bandwidth pressure.
+
+- Reduced Inference Latency: Since the model itself is smaller, the initial transformation from text to vector happens faster.
+
+- Predictable Accuracy: Pre-quantized models are often calibrated by the community to minimize "perplexity loss" during the quantization process, ensuring the 4-bit or 8-bit output is as representative as possible.
+
+
+The Trade-off: The "Re-scoring" Bottleneck
+
+While GGUF models are excellent for "inference-to-disk" speed, they introduce a significant constraint for high-precision search: The Loss of the Original Signal.
+
+- No High-Fidelity Re-scoring: In a standard pipeline, we keep a "Golden" FP32 vector to re-score the top 100 results returned by a fast HNSW search. If the model only outputs quantized data (like INT4), you cannot "re-calculate" the distance with higher precision later. You are effectively locked into the resolution of the quantization.
+
+- Fixed Precision: Built-in quantization in the future with MRLQ will allows the engine to dynamically decide the size (64d, 128d, or 384d). With pre-quantized GGUF outputs, you are often stuck with the bit-depth chosen at the time the model was converted.
+
+- Information Ceiling: Once a vector is compressed to X bits at the model level, any noise introduced is permanent. If your HNSW graph returns a false positive, a re-scoring pass using that same X-bit data cannot correct the ranking.
+
+
+
 === Pre-Computed Vector Interface  ===
 
 Alongside using Sentence Transformers (S-BERTS) we accept pre-computed vectors as hex-encoded
 float32, base64-encoded binary (MongoDB BSON vector subtype 0x09, $binary with subType: "09")
 or JSON-like encoded raw float arrays ([0.123, ...]).
+
+Their primary advantage is speed in re-indexing. The overhead of calculating embeddings is shifted onto data creation pipeline (for example JSON records). Decoding the text encoded vectors is fast and adding them to the graph is fast.
 
 
 Base64 — the most common standard
@@ -96,16 +143,18 @@ NOTE: The tool "config_editor" can be used to view/edit/modify the configuration
 
 Example of a configuration (show command):
 <pre>
+
 === HNSW Configuration ===
 Default search mode: Knn
 
 Index parameters:
-  max_elements: 100000
+  max_elements: 500000
   M: 16
   ef_construction: 200
   ef_search: 64
   specification: L2-None-Pass
   normalize_embeddings: no
+  unified_index: no
 
 Embedding:
   bert_n_threads: 4
