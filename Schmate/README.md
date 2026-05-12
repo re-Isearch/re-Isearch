@@ -35,13 +35,14 @@ MRLQ is a special case: Matryoshka Representation Learning (MRL) is a technique 
 Notice the algorithm "PASS". It means "pass-through". Instead of using a quantization algorithm its function is to handle pre-quantized models and using optimized packing algorithms. A 1024d INT4 (4-bit INT) model gets packed into 1/8 of the space:
 512 bytes versus 4096.  This 8:1 compression ratio, for example, allows you to store 8 million vectors in the same 4GB of RAM that would normally hold only 1 million of the same INT4 vectors padded to FP32
 
-For pass-through we support the following storage sizes: BIN1, INT2, INT3, INT4, INT5, INT6, INT8, INT16 INT32, FP16, BF16 and, of course, FLOAT32.  As with our quantization algorithms the packing code using SIMD (AVX, NEON, SVE)  whenever beneficial.
+For pass-through we support the following storage sizes: BIN1, INT2, INT3, INT4, INT5, INT6, INT8, INT16 INT32, FP16, BF16 and, of course, FLOAT32.  As with our quantization algorithms, the packing code uses SIMD (AVX, NEON, SVE)  whenever beneficial.
 
 Storage Efficiency: The Power of Packing
 
 By utilizing pass-through we dramatically reduce the memory footprint of high-dimensional pre-quantized embeddings without sacrificing any retrieval accuracy.
 
 === Pre-Quantized Models (GGUF) vs. Runtime Quantization ===
+
 When deploying embeddings within the re-Isearch ecosystem, you have two primary paths for handling high-dimensional data: leveraging pre-quantized GGUF/GGML models or using built-in quantization (like our MRLQ/RaBitQ stack) on raw FP32 output.
 
 GGUF/GGML (GPT-Generated Unified Format) models often come pre-baked with quantization levels (e.g., Q4_K_M, Q8_0). Using these provides several distinct advantages:
