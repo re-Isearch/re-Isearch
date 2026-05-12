@@ -1,0 +1,11 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/build/cmake_install.cmake",
+		"/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/build/ggml/cmake_install.cmake",
+		"/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/build/ggml/src/cmake_install.cmake",
+		"/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/build/examples/cmake_install.cmake",
+		"/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/build/models/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

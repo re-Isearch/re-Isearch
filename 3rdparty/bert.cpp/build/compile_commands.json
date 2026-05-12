@@ -1,0 +1,44 @@
+[
+{
+  "directory": "/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/build",
+  "command": "/usr/bin/c++ -DGGML_USE_ACCELERATE -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/. -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/. -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/../include -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/../include/ggml -F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -O3 -DNDEBUG -O3 -std=gnu++20 -arch arm64 -Wno-format -o CMakeFiles/bert.dir/bert.cpp.o -c /Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/bert.cpp",
+  "file": "/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/bert.cpp",
+  "output": "CMakeFiles/bert.dir/bert.cpp.o"
+},
+{
+  "directory": "/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/build/ggml/src",
+  "command": "/usr/bin/cc -DGGML_USE_ACCELERATE -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/. -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/../include -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/../include/ggml -F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks              -Wall                                       -Wextra                                     -Wpedantic                                  -Wshadow                                    -Wcast-qual                                 -Wstrict-prototypes                         -Wpointer-arith                             -Wdouble-promotion                          -Wno-unused-function                        -Wmissing-prototypes                     -Werror=vla -O3 -DNDEBUG -O3 -std=gnu11 -arch arm64 -Wno-format -o CMakeFiles/ggml.dir/ggml.c.o -c /Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/ggml.c",
+  "file": "/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/ggml.c",
+  "output": "ggml/src/CMakeFiles/ggml.dir/ggml.c.o"
+},
+{
+  "directory": "/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/build/ggml/src",
+  "command": "/usr/bin/cc -DGGML_USE_ACCELERATE -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/. -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/../include -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/../include/ggml -F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks              -Wall                                       -Wextra                                     -Wpedantic                                  -Wshadow                                    -Wcast-qual                                 -Wstrict-prototypes                         -Wpointer-arith                             -Wdouble-promotion                          -Wno-unused-function                        -Wmissing-prototypes                     -Werror=vla -O3 -DNDEBUG -O3 -std=gnu11 -arch arm64 -Wno-format -o CMakeFiles/ggml.dir/ggml-alloc.c.o -c /Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/ggml-alloc.c",
+  "file": "/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/ggml-alloc.c",
+  "output": "ggml/src/CMakeFiles/ggml.dir/ggml-alloc.c.o"
+},
+{
+  "directory": "/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/build/examples",
+  "command": "/usr/bin/c++ -DGGML_USE_ACCELERATE -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/. -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/. -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/../include -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/../include/ggml -O3 -DNDEBUG -O3 -std=gnu++20 -arch arm64 -Wno-format -o CMakeFiles/server.dir/server.cpp.o -c /Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/examples/server.cpp",
+  "file": "/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/examples/server.cpp",
+  "output": "examples/CMakeFiles/server.dir/server.cpp.o"
+},
+{
+  "directory": "/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/build/examples",
+  "command": "/usr/bin/c++ -DGGML_USE_ACCELERATE -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/. -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/. -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/../include -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/../include/ggml -O3 -DNDEBUG -O3 -std=gnu++20 -arch arm64 -Wno-format -o CMakeFiles/main.dir/main.cpp.o -c /Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/examples/main.cpp",
+  "file": "/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/examples/main.cpp",
+  "output": "examples/CMakeFiles/main.dir/main.cpp.o"
+},
+{
+  "directory": "/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/build/examples",
+  "command": "/usr/bin/c++ -DGGML_USE_ACCELERATE -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/. -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/. -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/../include -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/../include/ggml -O3 -DNDEBUG -O3 -std=gnu++20 -arch arm64 -Wno-format -o CMakeFiles/test_tokenizer.dir/test_tokenizer.cpp.o -c /Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/examples/test_tokenizer.cpp",
+  "file": "/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/examples/test_tokenizer.cpp",
+  "output": "examples/CMakeFiles/test_tokenizer.dir/test_tokenizer.cpp.o"
+},
+{
+  "directory": "/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/build/models",
+  "command": "/usr/bin/c++ -DGGML_USE_ACCELERATE -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/. -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/. -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/../include -I/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/ggml/src/../include/ggml -O3 -DNDEBUG -O3 -std=gnu++20 -arch arm64 -Wno-format -o CMakeFiles/quantize.dir/quantize.cpp.o -c /Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/models/quantize.cpp",
+  "file": "/Users/edz/ib/experimental/GMML/ggml_hnsw_package/bert.cpp/models/quantize.cpp",
+  "output": "models/CMakeFiles/quantize.dir/quantize.cpp.o"
+}
+]

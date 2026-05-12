@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG -O3 -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/llvm/lib CMakeFiles/quantize.dir/quantize.cpp.o -o ../bin/quantize  ../libbert.a ../ggml/src/libggml.a -lm -framework Accelerate

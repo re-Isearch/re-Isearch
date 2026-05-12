@@ -1,0 +1,11 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/edz/ib/sbert/bert.cpp/build.new/cmake_install.cmake",
+		"/Users/edz/ib/sbert/bert.cpp/build.new/ggml/cmake_install.cmake",
+		"/Users/edz/ib/sbert/bert.cpp/build.new/ggml/src/cmake_install.cmake",
+		"/Users/edz/ib/sbert/bert.cpp/build.new/examples/cmake_install.cmake",
+		"/Users/edz/ib/sbert/bert.cpp/build.new/models/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

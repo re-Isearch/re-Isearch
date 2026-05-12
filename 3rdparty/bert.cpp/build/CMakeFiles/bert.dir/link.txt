@@ -1,0 +1,2 @@
+/usr/bin/ar qc libbert.a CMakeFiles/bert.dir/bert.cpp.o
+/usr/bin/ranlib libbert.a
