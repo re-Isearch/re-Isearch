@@ -18,6 +18,12 @@ All code is implemented in modern C++17, optimized for macOS and Linux.
 
 While this code uses bert.cpp, support for llama.cpp is also provided.
 
+=== Building  ===
+
+Build is via the CMAKE build system. Pre-requisite (min) is the bert.cpp code in the 3rdParty folder (from the base directory of re-Isearch).  Since we support other bert.cpp and llama.cpp as well as their different ggml tensor libraries the default is to link from the build directory. This libschmate.dylib (MacOS) or libschmate.so (Linux) should then be copied into a suitable directory for linking. 
+
+When building re-Isearch make sure that the VECTOR_INDEX is defined..
+
 === Quantization Algorithms supported (Added to HNSWlib)  ===
 
 Quantization sizes:
