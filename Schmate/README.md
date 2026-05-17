@@ -1,9 +1,8 @@
-# === Vector search using HNSW and Sentence Transformers ===
+# Vector search using HNSW and Sentence Transformers
 
-Semantic search with SBERT + GGML Tensor Library + HNSWlib.
+**Semantic search with SBERT + GGML Tensor Library + HNSWlib.**
 
 See tests/run_test.sh for usage.
-
 
 This system provides a sentence-embedding search engine built on:
 - SBERT (Sentence-BERT) model running via the ggml tensor library (no Python dependency)
@@ -11,14 +10,18 @@ This system provides a sentence-embedding search engine built on:
 - Memory-mapped offset files for persistent, efficient text–embedding linkage
 - Automatic sharding, flushing, and adaptive thresholding
 
+Not only is it probably the most performat vector text engine currently available for use on local hardware  but also most likely the fullest featured. Its also 100% open source (Apache 2.0) "*no strings attached*".
+
+It may be used both inside *re-Isearch* but also without. It has been designed to be used in a host of other applications. 
+
 We use a significantly enhanced (adding among other features quantized spaces) and turbo-charged (including support for x86 and ARM SIMD) HNSWlib for approximate nearest-neighbor search, and efficient mmap-backed re-scoring and offset storage for text retrieval. The system supports sharded HNSW indices, multiple search modes (kNN, radius, relative, adaptive, epsilon), deletion/undelete, merges, and incremental on-disk flushing. It also includes training for hyperparameter optimization.
 
 
 All code is implemented in modern C++17, optimized for macOS and Linux.
 
-While this code uses bert.cpp, support for llama.cpp is also provided.
+While this code uses a heavily refactored bert.cpp it also supports llama.cpp for more modern sophisticated models that don't use the BERT architecture such as EuroBERT.
 
-## === SBERT: bert.cpp, llama.cpp and the ggml tensor library  ===
+## SBERT: bert.cpp, llama.cpp and the ggml tensor library
 
 Behind our embeddings is our fork of bert.cpp and the mainlined llama.cpp. Behind these is the GGML tensor library.  Unlike mainstream vendor libraries (like PyTorch, TensorFlow, or TensorRT) built for data-center GPUs, GGML runs large transformer models efficiently on commodity hardware.
 
@@ -28,8 +31,7 @@ Mainstream libraries rely heavily on massive GPU VRAM to hold model weights duri
 - *Hardware Interoperability*: It is optimized for x86 architectures (AVX, AVX2, AVX-512) and Apple Silicon (via native ARM NEON and Metal).
 - *System RAM Utilization*: Because most modern consumer computers feature far more system RAM than GPU VRAM, GGML natively bridges the gap by enabling models to run efficiently on standard CPUs or via CPU-GPU offloading.
 
-2.*Accelerators*:
-GGML features a highly modular backend architecture. This layout allows it to offload computation graph execution to a variety of hardware accelerators via specific hardware drivers, completely bypassing heavy Python stacks.
+2. *Accelerators*: GGML features a highly modular backend architecture. This layout allows it to offload computation graph execution to a variety of hardware accelerators via specific hardware drivers, completely bypassing heavy Python stacks.
 
 
 3. **Advanced, Fine-Grained Quantization**: One of GGML's most compelling features is its pioneering approach to model quantization (compressing floating-point numbers into lower bit-widths, such as 4-bit or 5-bit).
@@ -45,34 +47,34 @@ GGML features a highly modular backend architecture. This layout allows it to of
 
 While mainstream libraries like TensorRT or PyTorch remain undisputed for model training and high-throughput server farms, GGML democratizes access to AI by allowing us to run powerful models locally on mainstream hardware.
 
-## === Accelerators ===
+## Accelerators
 
 Our HNSW implementation is internionally CPU bound (using heavily optimized SIMD instructions) to leave the accelerators free to do the heavy lifting of running the models.
 
 1. **NVIDIA CUDA**
-- Quality: This is the most mature, heavily optimized backend in the GGML ecosystem. It receives immediate day-one updates for new architectures.
-- Performance: Offers the highest token-per-second generation rates. It handles massive context windows and batched requests effortlessly.
-- Efficiency: While desktop NVIDIA cards draw significant wattage, the work-per-watt remains high because the GPU completes the generation sequence rapidly and returns to idle.
+- *Quality*: This is the most mature, heavily optimized backend in the GGML ecosystem. It receives immediate day-one updates for new architectures.
+- *Performance*: Offers the highest token-per-second generation rates. It handles massive context windows and batched requests effortlessly.
+- *Efficiency*: While desktop NVIDIA cards draw significant wattage, the work-per-watt remains high because the GPU completes the generation sequence rapidly and returns to idle.
 
 2. **Apple Metal**
-- Quality: Flawless integration natively recognized by macOS and iOS.
-- Performance: Extremely rapid. Because Apple Silicon uses a Unified Memory Architecture, the CPU and GPU share the same physical RAM pool. GGML leverages this via mmap, allowing a model to load instantly without a slow transfer over a PCIe bus.
-- Efficiency: Unmatched. Users can run quantized 70B models locally on a MacBook with minimal heat production, preserving battery life during background operations.
+- *Quality*: Flawless integration natively recognized by macOS and iOS.
+- *Performance*: Extremely rapid. Because Apple Silicon uses a Unified Memory Architecture, the CPU and GPU share the same physical RAM pool. GGML leverages this via mmap, allowing a model to load instantly without a slow transfer over a PCIe bus.
+- *Efficiency*: Unmatched. Users can run quantized 70B models locally on a MacBook with minimal heat production, preserving battery life during background operations.
 
 3. **Vulkan** (The Compatibility Champion)
-- Quality: Highly robust and serves as the best open-source, vendor-agnostic fallback.
-- Performance: While it slightly lags behind native CUDA or ROCm tweaks, it delivers impressive matrix-multiplication speeds across diverse hardware, including Steam Decks, Raspberry Pis, and mixed-GPU setups.
-- Efficiency: Balanced. Vulkan provides hardware acceleration on low-power devices that lack dedicated AI chips.
+- *Quality*: Highly robust and serves as the best open-source, vendor-agnostic fallback.
+- *Performance*: While it slightly lags behind native CUDA or ROCm tweaks, it delivers impressive matrix-multiplication speeds across diverse hardware, including Steam Decks, Raspberry Pis, and mixed-GPU setups.
+- *Efficiency*: Balanced. Vulkan provides hardware acceleration on low-power devices that lack dedicated AI chips.
 
 
 
-## === Building  ===
+## Building
 
 Build is via the CMAKE build system. Pre-requisite (min) is the bert.cpp code in the 3rdParty folder (from the base directory of re-Isearch).  Since we support other bert.cpp and llama.cpp as well as their different ggml tensor libraries the default is to link from the build directory. This libschmate.dylib (MacOS) or libschmate.so (Linux) should then be copied into a suitable directory for linking. 
 
 When building re-Isearch make sure that the VECTOR_INDEX is defined..
 
-## === Quantization Algorithms supported (Added to HNSWlib)  ===
+## Quantization Algorithms supported (Added to HNSWlib)
 
 Quantization sizes:
 - NONE, BIN1, INT158, INT4, INT8, INT16, FP16, BF16
@@ -84,7 +86,7 @@ A typical RaBitQ quantization consists of both Algorithm set to "RABITQ" and siz
 
 MRLQ is a special case: Matryoshka Representation Learning (MRL) is a technique creating efficient, resizable AI embeddings. Named after Russian nesting dolls, it allows smaller dimensions to capture broad semantic meaning while larger dimensions encode granular details, all in one model.  MRLQ takes this concept and applies RaBitQ quantization to a slice and re-scoring to the whole vectors. Its having you cake and eating it too.
 
-## === Storage Efficiency: The Power of Packing (PASS)  ===
+## Storage Efficiency: The Power of Packing (PASS)
 
 Notice the algorithm "PASS". It means "pass-through". Instead of using a quantization algorithm its function is to handle pre-quantized models and using optimized packing algorithms. A 1024d INT4 (4-bit INT) model gets packed into 1/8 of the space:
 512 bytes versus 4096.  This 8:1 compression ratio, for example, allows you to store 8 million vectors in the same 4GB of RAM that would normally hold only 1 million of the same INT4 vectors padded to FP32
@@ -95,7 +97,7 @@ Storage Efficiency: The Power of Packing
 
 By utilizing pass-through we dramatically reduce the memory footprint of high-dimensional pre-quantized embeddings without sacrificing any retrieval accuracy.
 
-## === Pre-Quantized Models (GGUF) vs. Runtime Quantization ===
+## Pre-Quantized Models (GGUF) vs. Runtime Quantization
 
 When deploying embeddings within the re-Isearch ecosystem, you have two primary paths for handling high-dimensional data: leveraging pre-quantized GGUF/GGML models or using built-in quantization (like our MRLQ/RaBitQ stack) on raw FP32 output.
 
@@ -120,7 +122,7 @@ While GGUF models are excellent for "inference-to-disk" speed, they introduce a 
 
 
 
-## === Pre-Computed Vector Interface  ===
+## Pre-Computed Vector Interface
 
 Alongside using Sentence Transformers (S-BERTS) we accept pre-computed vectors as hex-encoded
 float32, base64-encoded binary (MongoDB BSON vector subtype 0x09, $binary with subType: "09")
@@ -162,7 +164,7 @@ Many modern APIs just use JSON float arrays directly and avoid the binary encodi
 
 NOTE: re-Isearch now supports a number of JSON types include extended JSON (e.g. MongoDb).
 
-# === Interface to re-Isearch ===
+# Interface to re-Isearch
 
 Interface code to re-Isearch is provided by the EmbeddingIndexer class.
 
