@@ -31,7 +31,7 @@ Mainstream libraries rely heavily on massive GPU VRAM to hold model weights duri
 - *Hardware Interoperability*: It is optimized for x86 architectures (AVX, AVX2, AVX-512) and Apple Silicon (via native ARM NEON and Metal).
 - *System RAM Utilization*: Because most modern consumer computers feature far more system RAM than GPU VRAM, GGML natively bridges the gap by enabling models to run efficiently on standard CPUs or via CPU-GPU offloading.
 
-2. *Accelerators*: GGML features a highly modular backend architecture. This layout allows it to offload computation graph execution to a variety of hardware accelerators via specific hardware drivers, completely bypassing heavy Python stacks.
+2. **Accelerators**: GGML features a highly modular backend architecture. This layout allows it to offload computation graph execution to a variety of hardware accelerators via specific hardware drivers, completely bypassing heavy Python stacks.
 
 
 3. **Advanced, Fine-Grained Quantization**: One of GGML's most compelling features is its pioneering approach to model quantization (compressing floating-point numbers into lower bit-widths, such as 4-bit or 5-bit).
@@ -48,8 +48,9 @@ Mainstream libraries rely heavily on massive GPU VRAM to hold model weights duri
 While mainstream libraries like TensorRT or PyTorch remain undisputed for model training and high-throughput server farms, GGML democratizes access to AI by allowing us to run powerful models locally on mainstream hardware.
 
 ## Accelerators
+Our HNSW implementation is, by design, CPU bound (using heavily optimized SIMD instructions) to leave the accelerators free to do the heavy lifting of running the models. Even on an Apple M1 (Pro) we've clocked 13k QPS-- on an M5 Pro we expect 30,000 to 39,000+ QPS-- so we found ample state-of-the-art performance already on CPUs.
 
-Our HNSW implementation is internionally CPU bound (using heavily optimized SIMD instructions) to leave the accelerators free to do the heavy lifting of running the models.
+(Our Apple reference hardware is the Apple M1 Pro to set a comparatively lower threshold of hardware requirements in 2026 as we don't want to design just to be useable on the "*latest and greatest*". For ARM CUDA our reference platform is the AGX Orin64-- which we can make look like a $250 USD Orin Nano-- rather than AGX Thor or GB10. For x86 we similarly target the beloved NVIDIA GTX-1090 with AVX-2 board rather than a RTX-5090 with AVX-512 as reference. A current AVX-512 machine should get 20-50% higher HNSW QPS and between 15 and 30x faster BERT inferencing.)
 
 1. **NVIDIA CUDA**
 - *Quality*: This is the most mature, heavily optimized backend in the GGML ecosystem. It receives immediate day-one updates for new architectures.
