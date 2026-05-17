@@ -1,0 +1,3 @@
+[submodule "Schmate/ggml/ggml"]
+	path = Schmate/ggml/ggml
+	url = https://github.com/ggml-org/ggml.git
