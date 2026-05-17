@@ -1,0 +1,6 @@
+tqdm
+gguf
+numpy
+torch
+transformers
+huggingface_hub
