@@ -2,6 +2,18 @@
 
 ### NEWS
 
+May 18 2026
+
+We decided, after much consideration, to move over the the latest ggml tensor library. The performance advantages were just too overwhelming to be held back for the upcoming release. To this end we heavily refactored bert.cpp. The new bert.cpp is built on the latest ggml (0.11.1 or 0.12). We've tried to design to support most BERT architecture models.
+
+Rather than support all the accelertors in our first release we decided to keep to CUDA, Metal, Vulkan and CPU. This covers no less than 95% of all possible hosts-- probably 99.99%. Its also what we can exhaustively test against. Adding additional accelerators, as supported by ggml backends, is a relatively simple matter so should real demand exist (and are prepared to actively engage in testing and benchmarking) we will happily extend things-- its literally just few a few lines of code for each.
+
+That's the good news. The bad news is that we've dropped support for the GGML model file format.  Instead of routing ggml files through bert.cpp and gguf through llama.cpp we now route classical BERT models through bert.cpp and models such as EuroBERT through llama.cpp.
+
+More good news is that the old ggml models can be easily converted to gguf. And now with the Feb 2026 merger of GGML.ai into HuggingFace we can expect intensified GGUD support and significant synergies in ggml development.
+
+With our shift:  We've also improved our support bge and nomic BERT. 
+
 May 11 2026
 
 We've added vector encoding detection to the JSON document handlers (via METADOC). This way fields that
@@ -45,7 +57,7 @@ Despite being a new project it has a long and esteemed history reaching back int
 Featues/Uses
 * Low-code ETL / "Any-to-Any" architecture
 * No need for a “middle layer” of content manipulation code. Instead of getting URLs from a search engine, fetching documents, parsing them, and navigating the DOMs to find required elements, it lets you simply request the elements you need and they are returned directly.
-* Handles a wide range of document formats (from Atom to XML) including “live” data.
+* Handles a wide range of document formats (from Atom to JSON to XML) including “live” data.
 * Powerful Search (Structure, Objects, Spatial) / Relevancy Engine
 * NoSQL Datastore
 * Useful for Analytics
@@ -54,6 +66,7 @@ Featues/Uses
 * Customization. 
 * Support Peer-to-Peer and Federated architectures.
 * Runs on a wide range of hardware and operating systems
+* State of the Art Vector engine (Project Schmate)
 * Freely available under a permissive software license. 
 
 
@@ -78,7 +91,7 @@ A basic cheat-sheet is in [INSTALLATION](./INSTALLATION)
 In the directory bin/ and lib/ are binaries of standalone tools compiled on Ubuntu 18.04.2 LTS and targetting Intel Skylake or newer processors. They are included solely to enable fast software evaluations.
 
 ## Copyrights, attributions and acknowledgements 
-Portions Copyright (c) 1995 CNIDR/MCNC, (c) 1995-2011 BSn/Munich (BSn.com); (c) 2011-2020 NONMONOTONIC Networks (NONMONOTONIC.net); Copyright (c) 2020-23 Edward C. Zimmermann and (c) 2024-25 the re-iSearch project (re-ISearch.org). Is is made available and licensed under the Apache 2.0 license: see LICENSE
+Portions Copyright (c) 1995 CNIDR/MCNC, (c) 1995-2011 BSn/Munich (BSn.com); (c) 2011-2020 NONMONOTONIC Networks (NONMONOTONIC.net); Copyright (c) 2020-23 Edward C. Zimmermann and (c) 2024-26 the re-iSearch project. Is is made available and licensed under the Apache 2.0 license: see LICENSE
 
 The software has a lot of history (as one can see from the above copyright). For the historical last public release: [Isearch](https://github.com/edzimmermann/Isearch-1.14)
 
