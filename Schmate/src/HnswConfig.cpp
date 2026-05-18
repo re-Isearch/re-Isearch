@@ -122,6 +122,7 @@ std::string storage_type_to_string(StorageType type)
     case StorageType::INT2:    return "INT2";   // 2-bit
     case StorageType::INT3:    return "INT3";   // 3-bit
     case StorageType::INT4:    return "INT4";   // 4-bit
+    case StorageType::FP4:     return "FP4";    // 4-bit float
     case StorageType::INT5:    return "INT5";   // 5-bit
     case StorageType::INT6:    return "INT6";   // 6-bit
     case StorageType::INT8:    return "INT8";   // 8-bit
@@ -271,7 +272,8 @@ StorageType string_to_storage_type(const std::string& s)
             LOG_ERROR_S() << "deletion_threshold_pc must be in [0,1]";
             return false;
         }
-        if (max_tokens_per_chunk <= 0) {
+	// We reserve the value 0 for determine based upon the model
+        if (max_tokens_per_chunk < 0) {
             LOG_ERROR_S() << "max_tokens_per_chunk must be > 0";
             return false;
         }
@@ -539,8 +541,12 @@ StorageType string_to_storage_type(const std::string& s)
         os << "  bert_n_threads: " << bert_n_threads << "\n";
         
         os << "\nChunking:\n";
-        os << "  max_tokens_per_chunk: " << max_tokens_per_chunk << "\n";
-        os << "  overlap_percent: " << overlap_percent << "\n";
+	// max_tokens_per_chunk --> let the model decide
+	os << "  max_tokens_per_chunk: ";
+	if (max_tokens_per_chunk > 0) os << max_tokens_per_chunk;
+	else os << "dynamic (by model)";
+	
+        os << "\n  overlap_percent: " << overlap_percent << "\n";
         
         os << "\nSearch defaults:\n";
         os << "  k (knn): " << default_k << "\n";
@@ -574,6 +580,8 @@ StorageType string_to_storage_type(const std::string& s)
         
         os << "\nDebug: " << (debug ? "enabled" : "disabled") << "\n";
         os << "Model: " << (model_name.empty() ? "<Undefined>" : model_name ) << "\n";
+	if (matryoshka_dim)
+	os << "  Matryoshka Dimension: " << matryoshka_dim << "d\n"; 
 
         os << "\n===   This Platform    ===\nOS: ";
 #ifdef _WIN32

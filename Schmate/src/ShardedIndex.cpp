@@ -38,7 +38,7 @@ size_t ShardedIndex::discover_shards(const std::string &base_name) const {
 }
 
 void ShardedIndex::add_shard(size_t id, bool searchOnly) {
-    auto shard = make_unique<BertIndex>(embedder, cfg, shard_basename(id), searchOnly) ;
+    auto shard = make_unique<BertIndex>(embedder, cfg, shard_basename(id), searchOnly, opaque_ptr) ;
     shard->set_storage_path_dir (base_dir);
     shards.emplace_back(std::move(shard));
     // For the shard based auto-tuner
@@ -46,9 +46,8 @@ void ShardedIndex::add_shard(size_t id, bool searchOnly) {
 }
 
 // Creator
-ShardedIndex::ShardedIndex(SBertGGML & emb, HnswConfig & c, const string & name, bool searchOnly)
-: embedder(emb), cfg(c), base_name(name) {
-#if 1
+ShardedIndex::ShardedIndex(SBertGGML & emb, HnswConfig & c, const string & name,
+	bool searchOnly, void *ptr) : embedder(emb), cfg(c), base_name(name), opaque_ptr(ptr) {
     size_t found = discover_shards(base_name);
     if (found == 0) {
         if (searchOnly) {
@@ -64,10 +63,6 @@ ShardedIndex::ShardedIndex(SBertGGML & emb, HnswConfig & c, const string & name,
             add_shard(i, searchOnly);
         }
     }
-#else
-    // start with one shard
-    shards.push_back(make_unique<BertIndex>(embedder, cfg, shard_basename(0)));
-#endif
 }
 
 
@@ -85,7 +80,7 @@ BertIndex & ShardedIndex::current_shard() {
     auto &sh = shards.back();
     if (sh->size() >= cfg.max_elements) {
         string newname = shard_basename(shards.size());
-        shards.push_back(make_unique<BertIndex>(embedder, cfg,newname));
+        shards.push_back(make_unique<BertIndex>(embedder, cfg,newname, false, opaque_ptr));
     }
     return *shards.back();
 }
@@ -344,7 +339,7 @@ bool  ShardedIndex::merge_two_parallel(size_t n) {
       LOG_ERROR_S() << "Another process is already doing a merge: " << base_name;
       return false;
     }
-    auto merged = std::make_unique<BertIndex>(embedder, merged_cfg, merged_name);
+    auto merged = std::make_unique<BertIndex>(embedder, merged_cfg, merged_name, false, opaque_ptr);
 
     // Collect entries first to avoid holding locks
     std::vector<std::pair<std::string, int64_t>> items;
@@ -433,7 +428,7 @@ bool ShardedIndex::merge_two_serial(size_t n) {
       return false;
     }
 
-    auto merged = std::make_unique<BertIndex>(embedder, merged_cfg, merged_name);
+    auto merged = std::make_unique<BertIndex>(embedder, merged_cfg, merged_name, false, opaque_ptr);
 
     // Merge all sentences and offsets from both
     size_t label = 0;
@@ -661,3 +656,21 @@ bool ShardedIndex::unlink(const std::string &path) {
 }
 
 
+
+#if 0
+
+bool ShardedIndex::merge_two_parallel_fast(size_t src_idx, size_t dst_idx) {
+    auto& source = shards[src_idx];
+    auto& dest = shards[dst_idx];
+
+    // Lock both
+    std::scoped_lock lock(source.rwmutex, dest.rwmutex);
+
+    // DNA Check
+    if (!(source.get_meta() == dest.get_meta())) return false;
+
+    // Execute the unified merge
+    return dest.append_from(source) >= 0;
+}
+
+#endif

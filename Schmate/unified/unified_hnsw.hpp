@@ -51,6 +51,29 @@ inline uint64_t label_id(labeltype label) { return label & _ID_MASK; }
 // Extract back the x (the incrementing label that is unique)
 inline uint64_t label_x(labeltype label) { return label >> _ID_BITS; }
 
+// Managing labels in sharded indexes for faster merge (NOT YET USED)
+// ── Bit layout ────────────────────────────────────────────────
+//  bits [0..7]  → id   (8 bits, max 255 shards, practically should < 10 
+//  bits [16..63] → X   (incrementing index)
+//
+// NOTE: We used uint8_t for the number in BertIndex so if you change this
+// you must also change the storage in BertIndex
+
+static constexpr int      _SHARD_ID_BITS = sizeof(uint8_t)*8; 
+static constexpr uint64_t _SHARD_ID_MASK = (1ULL << _SHARD_ID_BITS) - 1;
+
+// == Mask the shard # into the label ====
+// Get the index number associated with the label
+inline uint64_t shard_label_x(labeltype label) { return label >> _SHARD_ID_BITS; }
+// Get the shard number associated with the label
+inline uint64_t  shard_label_id(labeltype label) { return label & _SHARD_ID_MASK; }
+// Mask id into the label using the incremention identifier x
+inline labeltype shard_make_label(uint64_t id, uint64_t x) {
+    return (x << _SHARD_ID_BITS) | (id & _SHARD_ID_MASK);
+}
+
+
+
 struct IdFilter : BaseFilterFunctor {
     uint64_t target_id;
 
@@ -172,6 +195,10 @@ friend class UnifiedIndex;
     OptBinMode bin_mode_ = OptBinMode::STANDARD;
     StorageType storage_type_ = StorageType::FLOAT32;
 
+    // Preperation for support of "Russian Dolls" search
+    uint32_t matryoshka_dim_ = 0; // 0 means "Use full dim_"
+
+
     bool   enable_rescoring_ = false; // Only effects quantized metrics
     bool   normalize_ = false; // Use normalized vectors, Always true for Cosine
 
@@ -191,6 +218,7 @@ friend class UnifiedIndex;
       std::cerr << "bin_mode = " << bin_mode_to_string(bin_mode_) << std::endl;
       std::cerr << "quantization = " << quantization_to_string(quantization_) << std::endl;
       std::cerr << "storage_type = " << storage_type_to_string(storage_type_) << std::endl;
+      std::cerr << "matryoshka_dim_ = " << matryoshka_dim_ << std::endl;
     }
 
     UnifiedIndexMeta() { ;}
@@ -205,6 +233,7 @@ friend class UnifiedIndex;
        bin_mode_        = cfg.mode();
        enable_rescoring_= cfg.enable_rescoring();
        storage_type_    = cfg.storage_type();
+       matryoshka_dim_  = cfg.matryoshka_dim;
 
        quantizer_fitted_= false;
 
@@ -217,11 +246,11 @@ friend class UnifiedIndex;
         StorageType storage_type = StorageType::FLOAT32,
 	bool enable_rescoring = false,
 	size_t M = 16,
-	size_t ef_construction = 200) :
+	size_t ef_construction = 200, size_t matryoshka_dim = 0) :
 	dim_(dim), max_elements_(max_elements), metric_(metric),
 	quantization_(quantization), bin_mode_(bin_mode),
 	storage_type_(storage_type), enable_rescoring_(enable_rescoring),
-        M_(M), ef_construction_(ef_construction) {;}
+        M_(M), ef_construction_(ef_construction), matryoshka_dim_((uint32_t)matryoshka_dim) {;}
 
     UnifiedIndexMeta& operator = (const UnifiedIndexMeta& other) {
         strcpy(identifier_, other.identifier_);
@@ -237,7 +266,19 @@ friend class UnifiedIndex;
 	ef_ = other.ef_;
 	quantizer_fitted_ = other.quantizer_fitted_;
 	storage_type_ = other.storage_type_;
+	matryoshka_dim_ = other.matryoshka_dim_;
 	return *this;
+    }
+
+    // We will use this to compare the "signatures" of shards.
+    inline bool operator == (const UnifiedIndexMeta& other) {
+       return  dim_ == other.dim_  &&
+		metric_ == other.metric_ && // Distance match
+		quantization_ == other.quantization_ &&
+		normalize_ == other.normalize_ && // Crucial for IP versus Cosine
+		storage_type_ == other.storage_type_ &&
+		matryoshka_dim_ == other.matryoshka_dim_ &&
+		strcmp(identifier_, other.identifier_) == 0;
     }
 
     bool save(std::ofstream &out) const {
@@ -255,6 +296,9 @@ friend class UnifiedIndex;
 	writeBinaryPOD(out, bin_mode_);
 	writeBinaryPOD(out, storage_type_);
 	writeBinaryPOD(out, quantizer_fitted_);
+
+	//
+        writeBinaryPOD(out, matryoshka_dim_);
 
        // Redundant elements (also in HNSW index
 	writeBinaryPOD(out, M_);
@@ -306,19 +350,21 @@ friend class UnifiedIndex;
 		<< " overrides " << storage_type_to_string(stype) << "\n";
         }
 	readBinaryPOD(input, quantizer_fitted_);
+	//
+        readBinaryPOD(input, matryoshka_dim_);
+
        // Redundant elements
 	readBinaryPOD(input, M_);
 	readBinaryPOD(input, ef_construction_);
 	readBinaryPOD(input, ef_);
 	readBinaryPOD(input, max_elements_);
-       //
        return input.good() && !input.eof();
     }
 
 
 private:
     inline static constexpr uint32_t magic_  = sizeof(size_t) == sizeof(uint64_t) ?  0x484E5357 : 0x57534E48;
-    inline static constexpr uint8_t version_ = 1;
+    inline static constexpr uint8_t version_ = 2;
 };
 
 
@@ -440,6 +486,12 @@ private:
 
 public:
 
+  std::string storage_name() const {
+    return storage_type_to_string(storage_type_);
+  }
+
+   void* get_raw_data(labeltype label) const;
+
    inline size_t get_data_size() {
        if (space_) return space_->get_data_size();
        return 0;
@@ -454,6 +506,10 @@ public:
  
     void unmarkDelete(labeltype label) {
        if (index_) index_->unmarkDelete(label);
+    }
+
+    void rawAddPoint(const void* data, labeltype label) {
+       if (index_) index_->addPoint(data, label);
     }
 
 

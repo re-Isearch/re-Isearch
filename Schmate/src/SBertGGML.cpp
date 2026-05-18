@@ -19,34 +19,25 @@ depends upon having the same model as was used during indexing.
 
 NOTE: bert.cpp:
 
-CPU-focused: The library is built on top of ggml (the same backend used by llama.cpp) and is
-optimized for CPU inference with quantization
+The library is built on top of ggml (the same backend used by llama.cpp) and is optimized for
+models with quantization.
 
-No native GPU support: The current implementation doesn't include CUDA or other GPU acceleration
-Designed for efficiency on CPU: Uses 4-bit quantization to make models very small and fast on CPU
+At this time bert.cpp has support for CUDA, Metal, Vulkan and CPU which 95% of use cases.
 
-If you need GPU (e.g. for NVIDIA Jetsons) acceleration for BERT, consider cuBERT - CUDA-optimized
-BERT implementation
+  - CUDA: Secures absolute peak performance on NVIDIA enterprise and consumer GPUs.
+  - Metal: Absolute peak performance on Apple Silicon.
+  - Vulkan: Covers AMD GPUs, Intel Arc GPUs, older NVIDIA cards, Android devices,
+    and Raspberry Pi clusters. Performance is closing the gap with native backends,
+    reducing the need for vendor-specific frameworks.
+    See: https://www.youtube.com/watch?v=xaQkt3iWsTQ&t=1783s
+    (Vulkanised 2026: Vulkan Machine Learning in ggml/llama.cpp)
+  - CPU (with support for SIMD)
 
-Since it's CPU-only a thread optimization strategy has been selected as the best approach. 
+The up-to-date platforms are defined in bert.cpp as that is the ground truth.
 
-General Guidelines:
+CPU Hyperthreading consideration:
 
-Single text encoding: Use 25-50% of hardware threads (max 4-8 threads)
-
-Small workloads don't benefit from high parallelism
-Thread overhead dominates
-
-
-Batch processing: Use 70-85% of hardware threads
-
-Leave 1-2 cores for OS and other processes
-Example: 16 threads → use 12-14 threads
-
-
-Hyperthreading consideration:
-
-For BERT (compute-intensive), physical cores often outperform logical threads
+For CPU BERT (compute-intensive), physical cores often outperform logical threads
 If you have 16 logical threads, try 6-10 threads first
 
 
@@ -170,6 +161,42 @@ static int find_best_thread_count(struct bert_ctx * ctx,
     return best_threads;
 }
 
+#if NEW_BERT_API
+
+
+void SBertGGML::encode(const char ** texts, float ** embeddings, int n_inputs) {
+    int n_threads = calculate_optimal_threads(0, n_inputs);
+
+    // Since the float** embeddings is a pointer to an array of pointers,
+    // but the new API expects a flat buffer (float*), we need a temporary flat buffer 
+    // OR we loop. 
+    
+    // Strategy: Flatten for the library, then copy back (or update your class to use flat storage)
+    std::vector<float> flat_embeddings(n_inputs * n_embd);
+    
+    bert_encode_batch_c(ctx, texts, flat_embeddings.data(), n_inputs, n_threads);
+
+
+    // The new API expects a flat: float * embeddings.
+    // Copy from flat back to your float** structure
+    for (int i = 0; i < n_inputs; ++i) {
+        std::memcpy(embeddings[i], flat_embeddings.data() + (i * n_embd), n_embd * sizeof(float));
+    }
+}
+
+
+void SBertGGML::encode(const char * text, float * embedding) {
+    // 1. Determine threads (usually 1 or 4 is best for single-string Metal)
+    int n_threads = calculate_optimal_threads(1);
+
+    // 2. Use the C-style batch helper with an input count of 1
+    // &text passes the address of your pointer, effectively a const char**
+    bert_encode_batch_c(ctx, &text, embedding, 1, n_threads);
+}
+
+
+#else
+
 
 void SBertGGML::encode(const char ** texts, float ** embeddings, int n_inputs, int batch_size) {
     // 1. Calculate threads based on the size of the batch
@@ -186,17 +213,93 @@ void SBertGGML::encode(const char ** texts, float ** embeddings, int n_inputs, i
     }
 }
 
-
 void SBertGGML::encode( const char * texts, float * embeddings, int batch_size)
 {
     int n_threads = calculate_optimal_threads(0 , batch_size);
     bert_encode(ctx, n_threads, texts, embeddings);
 }
 
+
 void SBertGGML::eval (bert_vocab_id * tokens, int32_t n_tokens, float * embeddings)
 {
     int n_threads = calculate_optimal_threads();
     bert_eval(ctx, n_threads, tokens, n_tokens, embeddings);
 }
+#endif
 
 
+#if defined(BERT_API_VERSION) &&  (BERT_API_VERSION > 1)
+extern "C" {
+void schmate_log_callback(int level, const char * text, void * user_data) {
+   (void)user_data;
+   (void)level; 
+   LOG_INFO_S() << text << "\n";
+};
+};
+#endif
+
+SBertGGML::SBertGGML(const std::string & model_path, size_t threads) : _threads(threads) {
+#ifdef __APPLE__
+       relax_macos_malloc_zones();
+#endif
+
+#if defined(BERT_API_VERSION) &&   (BERT_API_VERSION > 1)
+        ggml_log_set(schmate_log_callback, nullptr);
+#endif
+
+	clock_t start = clock();
+        ctx = bert_load_from_file(model_path.c_str());
+        if (!ctx) throw std::runtime_error("Failed to load model " + model_path);
+        name = basename(model_path); // Get the name
+        n_embd = bert_n_embd(ctx);
+	clock_t end = clock();
+	const double factor = 1000.0/CLOCKS_PER_SEC;
+        const double cpu_total = end > start ? (end - start)*factor : 0.0;
+
+#if defined(BERT_API_VERSION) &&   (BERT_API_VERSION > 1)
+        { const char *ptr = bert_get_model_name(ctx);
+	  if (ptr) name = ptr;
+	  ptr = bert_get_architecture(ctx);
+	  if (ptr) arch = ptr;
+        }
+#else
+        arch = "bert";
+#endif
+        LOG_INFO_S() << "Loaded SBERT GGML model. dim=" << n_embd << " (" << cpu_total << "ms)" ;
+
+}
+
+
+
+/*
+
+
+std::vector<float> execute_embedding(const std::string& raw_text, const GGUFInfo& info, bool is_query) {
+    std::string processed_text = raw_text;
+
+    // Handle task prefixes at the orchestration layer
+    if (is_query) {
+        if (info.architecture == "nomic-bert-moe" || info.architecture == "nomic-bert") {
+            processed_text = "search_query: " + raw_text;
+        } 
+        else if (info.quant_type.find("bge-large") != std::string::npos) { 
+            // Fallback check if your model name/metadata indicates BGE v1.5
+            processed_text = "Represent this sentence for searching relevant passages: " + raw_text;
+        }
+    } else {
+        // If it's a document/passage insertion into your HNSW net
+        if (info.architecture == "nomic-bert-moe" || info.architecture == "nomic-bert") {
+            processed_text = "search_document: " + raw_text;
+        }
+        // BGE v1.5 needs NO prefix for documents, so it stays raw_text
+    }
+
+    // Now route the processed_text safely to the correct engine
+    if (info.is_bert_cpp_compatible) {
+        return bert_cpp_encode(processed_text);
+    } else {
+        return llama_cpp_encode(processed_text);
+    }
+}
+
+*/

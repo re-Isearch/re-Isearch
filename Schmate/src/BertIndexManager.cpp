@@ -4,7 +4,7 @@
 
 using namespace hnswlib;
 
-#if 0
+#if 0 /* START XXXX */
 /* re-Isearch will enter here
 
   EmbeddingIndexer->append ( DocTypePtr->ParseBuffer(Buffer), FieldName, fc.Start(), fc.End(),type))
@@ -33,7 +33,7 @@ void HNSWIndex::append( const string& buffer, const string& fieldname,  GPTYPE s
 
 }
 */
-#endif
+#endif /* END XXXX */
 
 ShardedIndex * BertIndexManager::get(const std::string &name, size_t id)
 {
@@ -57,8 +57,9 @@ ShardedIndex * BertIndexManager::get(const std::string &name, size_t id)
 
 */
 
-BertIndexManager::BertIndexManager(SBertGGML & e, hnswlib::HnswConfig & c, size_t max_cached, bool s) : embedder(e), cfg(c),
-      searchOnly (s), index_cache(max_cached, [](const std::string &key, std::shared_ptr<ShardedIndex> idx) {
+BertIndexManager::BertIndexManager(SBertGGML & e, hnswlib::HnswConfig & c, size_t max_cached,
+		bool s, void *ptr) : embedder(e), cfg(c), searchOnly (s), opaque_ptr(ptr),
+		index_cache(max_cached, [](const std::string &key, std::shared_ptr<ShardedIndex> idx) {
           if (idx) {
               LOG_INFO_S() << "Evicting index: " << key;
               idx->flush();  // flush all shards before eviction
@@ -72,7 +73,7 @@ ShardedIndex & BertIndexManager::getOrCreate(const std::string &name, size_t ide
     if (!idx) {
 
 //std::cerr << "CFG Storage XXXX = " << storage_type_to_string(cfg.storage_type()) << std::endl;
-        auto new_index = std::make_shared<ShardedIndex>(embedder, cfg, name, searchOnly);
+        auto new_index = std::make_shared<ShardedIndex>(embedder, cfg, name, searchOnly, opaque_ptr);
         index_cache.put(name, new_index);
 	new_index->set_base_dir(base_dir);
         return *new_index;
@@ -82,8 +83,8 @@ ShardedIndex & BertIndexManager::getOrCreate(const std::string &name, size_t ide
 
 
 #else /* NOT LRU_CACHE */
-BertIndexManager::BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c, bool s) : embedder(e), cfg(c), searchOnly(s)
-{}
+BertIndexManager::BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c, bool s, void *ptr) :
+	embedder(e), cfg(c), searchOnly(s), opaque_ptr(ptr) {}
 
 
 
@@ -91,7 +92,7 @@ ShardedIndex& BertIndexManager::getOrCreate(const std::string & name, size_t ide
     auto it = indexes.find(name);
     if (it != indexes.end()) return *it->second;
     // create new
-    indexes[name] = std::make_unique<ShardedIndex>(embedder, cfg, name, searchOnly);
+    indexes[name] = std::make_unique<ShardedIndex>(embedder, cfg, name, searchOnly, opaque_ptr);
     indexes[name]->set_base_dir(base_dir);
 
     return *indexes[name];

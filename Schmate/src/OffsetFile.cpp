@@ -240,3 +240,50 @@ size_t OffsetFile::detect_used_entries() const
     }
     return 0;
 }
+
+void OffsetFile::add_offset(off_t offset) {
+    // 1. Acquire exclusive lock for writing
+    std::unique_lock<std::shared_mutex> wl(rwmutex);
+    // 2. Locate the start of the entries
+    char *base = (char*)map + header_size;
+    // 3. Iterate through and update existing entries
+    for (size_t i = 0; i < max_entries; i++) {
+        OffsetEntry *e = reinterpret_cast<OffsetEntry*>(base + i * entry_size);
+        if (e->is_valid()) {
+            e->add_offset(offset);
+        }
+    }
+   // Optional: msync could be called here if you need immediate
+   // durability guarantees before the lock is released.
+}
+
+
+/* IDEA:
+
+// When merging from a source file into a current 'offsets' mmap:
+source_offsets.for_each([&](size_t label, const OffsetEntry& e) {
+    // Copy, shift, and write into the new mmap in one fluid motion
+    offsets->set(new_label, OffsetEntry(e).add_offset(shift_amount));
+    
+    if (cfg.flush_offsets_each)
+        offsets->flush(new_label);
+});
+
+// Within your merge logic:
+for_each_in_source([&](size_t label, const OffsetEntry& e) {
+    // 1. Logic: Copy, mutate, and set
+    // This uses the new add_offset(delta) returning *this
+    offsets->set(label, OffsetEntry(e).add_offset(master_delta));
+
+    // 2. Durability:
+    if (cfg.flush_offsets_each) {
+        offsets->flush(label); 
+    }
+});
+
+// 3. Final safety catch-all
+if (!cfg.flush_offsets_each) {
+    offsets->flush(0); // Triggers the 'global' msync(map, filesize, MS_SYNC)
+}
+
+*/

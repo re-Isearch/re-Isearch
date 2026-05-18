@@ -4,6 +4,13 @@
 #include <memory>
 #include "llama.h"
 
+
+// TODO: Support for Matryoshka embeddings 
+// Need to 1) define a new distance metric for HNSW
+//         2) figure out how to read the dimension from llama.cpp
+// 
+
+
 class LlamaEmbedder : public BaseEmbedder {
 public:
     explicit LlamaEmbedder(const std::string &model_path, int n_threads = 4)
@@ -23,14 +30,36 @@ public:
         llama_context_params ctx_params = llama_context_default_params();
         ctx_params.n_threads = threads;
         ctx_params.seed = 0;
-        ctx_params.embedding = true;
+        ctx_params.embedding = true; // Required for encoder/embedding models
 
         ctx.reset(llama_new_context_with_model(model.get(), ctx_params));
         if (!ctx) throw std::runtime_error("Failed to create llama context");
 
+	// --- Extract GGUF Metadata directly using llama.cpp API ---
+        char buffer[256];
+        
+        // 1. Get Architecture (e.g., "bert", "nomic-bert-moe")
+        if (llama_model_meta_val_str(model, "general.architecture", buffer, sizeof(buffer)) > 0) {
+            arch = buffer;
+	} else {
+            arch = "unknown";
+	}
+	// 2. Get Model Family Name
+	if (llama_model_meta_val_str(model, "general.name", buffer, sizeof(buffer)) > 0) {
+            name = buffer;
+	} else {
+            name = model_path; // Fallback to filename if property missing
+	}
         dim = llama_n_embd(model.get());
     }
 
+    ~LlamaEmbedder() override {
+	if (ctx) llama_free(ctx);
+	if (model) llama_free_model(model);
+    }
+
+    std::string_view model_architecture() const override { return arch; } 
+    std::string_view model_name() const override { return name; }
 
     std::vector<float> encode_text(const std::string &text, bool debug = false) override {
 #if 1
@@ -114,6 +143,7 @@ public:
     }
 
     size_t embedding_dim() const override { return dim; }
+    size_t Matryoshka_dim() const override { return 0; } // For NOW!
 
 private:
 
@@ -148,5 +178,7 @@ private:
     std::unique_ptr<llama_context, CtxDeleter> ctx;
     int threads;
     size_t dim;
+    std::string arch;
+    std::string name;
 };
 

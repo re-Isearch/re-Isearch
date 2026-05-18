@@ -22,6 +22,10 @@ SBertGGML embedder("sbert.ggml");
 // Now:
 LlamaEmbedder embedder("llama-2-7b.Q4_K_M.gguf");
 
+or Using new bert.cpp API
+SBertGGML embedder("sbert.gguf");
+
+
 
 | Topic             | Recommendation 
 | ----------------- | --------------------------------------------------------------------------------------- |
@@ -41,6 +45,7 @@ class BertIndexManager {
     hnswlib::HnswConfig &cfg;
     bool                searchOnly;
     std::string         base_dir;
+    void               *opaque_ptr;
 #if USE_LRUCACHE
     LRUCache<std::string, ShardedIndex> index_cache;
 #else
@@ -48,12 +53,15 @@ class BertIndexManager {
 #endif
 public:
 #if USE_LRUCACHE
-    BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c, size_t max_cached=3, bool searchOnly = false);
+    BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c, size_t max_cached=3,
+	bool searchOnly = false, void *ptr = nullptr);
 #else
-    BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c, bool searchOnly = false);
+    BertIndexManager(SBertGGML & e, hnswlib::HnswConfig &c,
+	bool searchOnly = false, void *ptr = nullptr);
 #endif
 
     void set_base_dir(const std::string& new_dir) { base_dir = new_dir; }
+    void set_opaque_ptr(void *ptr) { opaque_ptr = ptr; }
 
     void clear(const std::string &name);
 

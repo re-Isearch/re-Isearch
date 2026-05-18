@@ -63,7 +63,7 @@ namespace {
 // A 4 can be an obsolete 4-bit int or a new 4-bit floating point.
 
     // See ggml/include/ggml.h
-    constexpr std::array<QuantMapping, 32> quant_mappings = {{
+    constexpr std::array<QuantMapping, 34> quant_mappings = {{
         {0, "F32", StorageType::FLOAT32},
         {1, "F16", StorageType::FP16},
         {2, "Q4_0", StorageType::INT4},
@@ -108,25 +108,24 @@ namespace {
         // GGML_TYPE_IQ4_NL_4_8 = 37,
         // GGML_TYPE_IQ4_NL_8_8 = 38,
 
-        // Below is very new
-        {39, "MXFP4", StorageType::INT4} 
+        // Below are very new
+        {39, "MXFP4", StorageType::FP4},
+        {40, "NVFP4", StorageType::FP4}, //  Nvidia specific E4M3 with block scaling
+
+        {41, "Q1_0", StorageType::BIN1}  // Extremely low-bit quantization
 /*
         Name: "MXFP4" or sometimes "mxfp4-e8m0"
         Microscaling 4-bit Floating Point with 8-bit exponent, 0-bit mantissa
 
         A native training format: Unlike other quantization methods that reduce precision
         after training, gpt-oss models were trained directly in MXFP4 format Code number 39
-        in the GGML type enum
-        4-bit format: Uses 4 bits per weight but maintains higher quality than traditional Q4 quantization
+        in the GGML type enum 4-bit format: Uses 4 bits per weight but maintains higher
+        quality than traditional Q4 quantization
         Block-based: Stores weights in blocks of 32 elements with shared scaling factors
 
         NOTE: There was an inconsistency where Ollama initially used code 4 for MXFP4, but
         llama.cpp officially assigned it code 39. This caused compatibility issues with models
         converted using different tools.
-
-        This means that sometimes 4 -> MXFP4 and sometimes an obsolete 4-bit quantization.
-        Since we are building around sBERT models it does not matter since we only expect to
-        get from {0, 1, 2, 3}
 */
 
 
@@ -215,37 +214,32 @@ std::pair<hnswlib::StorageType, std::string>
 static GGML_TYPE FileType(const std::string& filepath) {
     enum GGML_TYPE type = GGML_TYPE::UNKNOWN;
     // Check for valid GGML magic numbers
-    const uint32_t GGML_MAGIC = 0x67676d6c; // "ggml" in little-endian
-    const uint32_t GGJT_MAGIC = 0x67676a74; // "ggjt" in little-endian
-    const uint32_t GGLA_MAGIC = 0x67676c61; // "ggla" in little-endian
-    const uint32_t GGMF_MAGIC = 0x67676d66; // "ggmf" in little-endian
-    const uint32_t GGUF_MAGIC = 0x46554747; // "GGUF" in little-endian
+    const uint32_t GGML_MAGIC = 0x67676d6c; // "ggml"
+    const uint32_t GGJT_MAGIC = 0x67676a74; // "ggjt"
+    const uint32_t GGLA_MAGIC = 0x67676c61; // "ggla"
+    const uint32_t GGMF_MAGIC = 0x67676d66; // "ggmf"
+    const uint32_t GGUF_MAGIC = 0x46554747; // "GGUF" (Stored as 'G' 'G' 'U' 'F')
 
-    auto hdr = read_ggml_info (filepath);
-    if (hdr) {
-        uint32_t magic = hdr->magic;
+    std::ifstream file(filepath, std::ios::binary);
+    if (!file) {
+        return type;
+    }
+    // Read exactly 4 bytes into our magic variable
+    uint32_t magic = 0;
+    file.read(reinterpret_cast<char*>(&magic), sizeof(magic));
+
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-        magic = __builtin_bswap32(magic);
+    magic = __builtin_bswap32(magic);
 #endif
-        bool valid_magic = (magic == GGML_MAGIC || magic == GGJT_MAGIC || 
+     bool valid_magic = (magic == GGML_MAGIC || magic == GGJT_MAGIC || 
                         magic == GGLA_MAGIC || magic == GGMF_MAGIC ||
                         magic == GGUF_MAGIC);
-        if (!valid_magic) {
-            std::cerr << "Invalid magic number: 0x" << std::hex << magic << std::dec << std::endl;
-            return type ;
-        }
-        type = ( magic == GGUF_MAGIC) ? GGML_TYPE::GGUF : GGML_TYPE::GGML;
+     if (!valid_magic) {
+        std::cerr << "Invalid magic number: 0x" << std::hex << magic << std::dec << std::endl;
+        return type ;
      }
-#if 1
+   type = ( magic == GGUF_MAGIC) ? GGML_TYPE::GGUF : GGML_TYPE::GGML;
    return type ;
-#else
-    // Validate the values make sense
-    return hdr.n_embd > 0 && hdr.n_embd <= 16384 &&
-           hdr.n_layer > 0 && hdr.n_layer <= 128 &&
-           hdr.n_vocab > 0 && hdr.n_vocab <= 200000 &&
-           hdr.n_head > 0 && hdr.n_head <= 256 &&
-           (hdr.n_embd % hdr.n_head == 0) ? type : GGML_TYPE::UNKNOWN;  // n_embd must be divisible by n_head
-#endif
 }
 
 
@@ -291,7 +285,27 @@ std::optional<GGUFInfo> read_gguf_info(const std::string &path) {
                 key == "bert.embedding_length" ||
                 key == "embedding_length")
                 info.embedding_length = v;
+
+	    if (key == "bert.pooling_type" || key == "pooling_type")
+		info.pooling_type = v;
         }
+#if 0
+	else if (vtype == 9) { // GGUF_TYPE_ARRAY
+	  uint32_t array_vtype = read_le<uint32_t>(f);
+	  uint64_t n_elements = read_le<uint64_t>(f);
+    
+	  if (key == "tokenizer.ggml.mrl_dimensions" || key == "embedding.mrl_dimensions") {
+	    for (uint64_t j = 0; j < n_elements; j++) {
+            uint32_t dim = read_le<uint32_t>(f);
+            info.mrl_levels.push_back(dim); // std::vector<uint32_t> mrl_levels;
+	  }
+	} else {
+          // Skip unknown arrays
+          size_t el_size = get_gguf_type_size(array_vtype);
+          f.seekg(el_size * n_elements, std::ios::cur);
+        }
+       }
+#endif
         else {
             // skip unsupported types
             uint64_t skip = 0;
@@ -322,12 +336,19 @@ std::optional<GGUFInfo> read_gguf_info(const std::string &path) {
         uint32_t n_dims = read_le<uint32_t>(f);
         f.seekg(sizeof(uint32_t) * n_dims, std::ios::cur);  // skip dims
 
-        uint32_t type = read_le<uint32_t>(f);
+        info.f16 = read_le<uint32_t>(f);
         // Use the unified mapping function
-        info.quant_type = ggml_quant_name(type);
+        info.quant_type = ggml_quant_name(info.f16);
 
         // skip offset
         f.seekg(sizeof(uint64_t), std::ios::cur);
+    }
+
+    info.is_bert_cpp_compatible = (info.architecture == "bert" || info.architecture == "nomic-bert");
+    // If it's a Bert-style model but has no pooling info, bert.cpp might struggle 
+    // to know which layer to extract.
+    if (info.is_bert_cpp_compatible && info.pooling_type == -1) {
+      // Log a warning or mark as incompatible with bert.cpp 
     }
 
     return info;
@@ -577,5 +598,30 @@ int getThreadCount() {
         return 1; // Default fallback
     #endif
 }
+
+
+
+std::pair<hnswlib::StorageType, std::string>
+        get_gguf_model_quant(const std::string &filepath)
+{
+    auto hdr = read_gguf_info (filepath); 
+    if (hdr) return  { ggml_quant_type(hdr->f16), hdr->quant_type };
+    return { hnswlib::StorageType::FLOAT32, ggml_quant_name(-1) };
+}    
+
+
+std::pair<hnswlib::StorageType, std::string>
+        get_model_quant(const std::string &filepath)
+{       
+   switch (FileType(filepath)) {
+      case GGML_TYPE::GGUF :
+	return get_ggml_model_quant(filepath);
+      case GGML_TYPE::GGML :
+        return get_gguf_model_quant(filepath);
+      default:
+        return  { hnswlib::StorageType::FLOAT32, ggml_quant_name(-1) };
+    }
+}
+    
 
 

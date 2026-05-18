@@ -15,10 +15,13 @@ class ShardedIndex {
     std::vector<std::unique_ptr<BertIndex>> shards;
     std::vector<std::unique_ptr<EfSearchTuner>> shard_tuners;
 
+    void *opaque_ptr = nullptr; // This is passed to each BertIndex
+
     mutable std::mutex mtx;
 
 public:
-    ShardedIndex(SBertGGML & emb, hnswlib::HnswConfig & c, const std::string & name, bool searchOnly = false);
+    ShardedIndex(SBertGGML & emb, hnswlib::HnswConfig & c, const std::string & name,
+	bool searchOnly = false, void *ptr = nullptr);
 
     BertIndex & current_shard();
     BertIndex & get_shard(size_t i) const;
@@ -33,6 +36,14 @@ public:
     // unlink files (naive, brute-force
     static bool unlink(const std::string &path);
 
+
+    // Pass the pointer to our shards...
+    void set_opaque_ptr(void *ptr) {
+std::cerr << "Setting OPAQUE POINTER to " << (long long) ptr << std::endl;
+      opaque_ptr = ptr;
+      for (auto &shard : shards)
+        shard->set_opaque_ptr(ptr);
+    }
 
     void append(const std::string_view sentence);
     void append(const std::string_view sentence, int64_t sentence_id, uint32_t span = 0);

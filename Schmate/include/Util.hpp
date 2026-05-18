@@ -27,9 +27,16 @@ struct GmmlHparams {
 struct GGUFInfo {
     std::string architecture;
     uint32_t embedding_length = 0;
+    int32_t f16;              // Quantization type codes: 0=F32, 1=F16, 2=Q4_0, 3=Q4_1, etc.
     std::string quant_type;     // Human-readable ("F16", "Q4_0", ...)
+
+    // Routing
+    int32_t pooling_type = -1; // -1 = unknown, 0 = None, 1 = Mean, 2 = CLS
+    bool is_bert_cpp_compatible = false;
 };
 
+
+std::optional<GGUFInfo> read_gguf_info(const std::string &path);
 
 // NOTE: bert.cpp only supports f16 values in {0, 1, 2, 3}
 
@@ -52,8 +59,13 @@ std::pair <std::string, enum GGML_TYPE> find_model(const std::string &identity, 
 
 
 
-// Get the storage type/quantization of a GGML model
+// Get the storage type/quantization of a GGML/GGUF model
 std::pair<hnswlib::StorageType, std::string> get_ggml_model_quant(const std::string &filename) ;
+std::pair<hnswlib::StorageType, std::string> get_gguf_model_quant(const std::string &filename) ;
+
+
+std::pair<hnswlib::StorageType, std::string> get_model_quant(const std::string &filepath);
+
 
 
 #include <filesystem>

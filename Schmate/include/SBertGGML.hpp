@@ -7,53 +7,66 @@
 #include "Logger.hpp"
 #include "Embedder.hpp"
 
+#define NEW_BERT_API 0
+
 // Forward declaration of bert C API
 extern "C" {
 #include "bert.h"
 }
 
+#ifndef NEW_BERT_API
+# define NEW_BERT_API 0
+#endif
+
+
 struct SBertGGML : public BaseEmbedder {
     bert_ctx * ctx = nullptr;
     int n_embd = 0;
-    std::string model_name;
+    std::string name;
+    std::string arch;
 
-    SBertGGML(const std::string & model_path, size_t threads = 4) : _threads(threads) {
-#ifdef __APPLE__
-       relax_macos_malloc_zones();
-#endif
-	clock_t start = clock();
-        ctx = bert_load_from_file(model_path.c_str());
-        if (!ctx) throw std::runtime_error("Failed to load model " + model_path);
-        model_name = basename(model_path); // Get the name
-        n_embd = bert_n_embd(ctx);
-	clock_t end = clock();
-	const double factor = 1000.0/CLOCKS_PER_SEC;
-        const double cpu_total = end > start ? (end - start)*factor : 0.0;
+    SBertGGML(const std::string & model_path, size_t threads = 4);
 
-        LOG_INFO_S() << "Loaded SBERT GGML model. dim=" << n_embd << " (" << cpu_total << "ms)" ;
-#if 0
-
-// The bert_ctx structure contains the model
-// Access the tensors through ctx->model
-// For example, check the embedding weights:
-if (ctx && ctx->model.word_embeddings) {
-    enum ggml_type type = ctx->model.word_embeddings->type;
-    printf("Word embeddings type: %d\n", type);
-    
-    if (type == GGML_TYPE_Q4_0 || type == GGML_TYPE_Q4_1) {
-        printf("Model uses 4-bit quantization\n");
-    }
-}
-#endif
-
-    }
+    std::string_view model_architecture() const override { return arch; }
+    std::string_view model_name() const override { return name; }
 
     size_t embedding_dim() const override { return (size_t)n_embd; }
+    size_t Matryoshka_dim() const override { return 0; }
+
 
     ~SBertGGML() {
         if (ctx) bert_free(ctx);
     }
 
+#if NEW_BERT_API
+  std::vector<float> encode_text(const std::string & text, bool debug=false) override {
+    if (text.empty()) return std::vector<float>(n_embd, 0.0f);
+
+    // This ensures only one thread uses the ggml backend at a time
+    std::lock_guard<std::mutex> lock(encode_mutex);
+
+    // 1. Tokenize using the new API 
+    int32_t N = bert_n_max_tokens(ctx);
+    bert_tokens tokens = bert_tokenize(ctx, text.c_str(), N);
+
+    if (tokens.empty()) return std::vector<float>(n_embd, 0.0f);
+
+    // 2. Wrap tokens in a batch of size 1
+    bert_batch batch;
+    batch.push_back(tokens);
+
+    // 3. Prepare output buffer
+    std::vector<float> emb(n_embd);
+    int n_threads = calculate_optimal_threads();
+
+    // 4. Use the new forward_batch call
+    bert_forward_batch(ctx, batch, emb.data(), n_threads);
+
+    return emb;
+  }
+
+   void encode(const char ** texts, float ** embeddings, int n_inputs);
+#else
     std::vector<float> encode_text(const std::string & text, bool debug=false) override {
         const int MAX_TOKENS = 512;
         std::vector<bert_vocab_id> tokens(MAX_TOKENS);
@@ -69,16 +82,19 @@ if (ctx && ctx->model.word_embeddings) {
         return emb;
     }
 
+   void eval (bert_vocab_id * tokens, int32_t n_tokens, float * embeddings);
    void encode(const char ** texts, float ** embeddings, int n_inputs, int batch_size = 1);
    void encode( const char * texts, float * embeddings, int batch_size = 1);
-   void eval (bert_vocab_id * tokens, int32_t n_tokens, float * embeddings);
+#endif
 
    void reset_context() {
      bert_free(ctx);
+     ctx = nullptr;
    }
 
 private:
    size_t _threads;
+   std::mutex encode_mutex; // The hardware gatekeeper
 };
 
 

@@ -12,6 +12,7 @@
 #include "Logger.hpp"
 #include "StderrCapture.hpp"
 #include "ParseArgs.hpp"
+#include "SentenceStore.hpp"
 
 #include <unistd.h>
 
@@ -28,6 +29,7 @@ static void print_help() {
     "  appendid <sid> <sentence>\n"
     "  ingest <file_path>\n"
     "  search <query>\n"
+    "  showfull <query>\n"
     "  knn [k] <query>\n"
 //    "  pknn [k] <query>\n"
     "  radius [minScore] <query>\n"
@@ -48,6 +50,7 @@ static void print_help() {
     "  set <key> <value>\n"
     "  list keys\n"
     "  show config\n"
+    "  show version\n"
     "  help\n"
     "  quit\n";
 }
@@ -228,7 +231,7 @@ int main(int argc, char **argv) {
             if (line.rfind("append ", 0) == 0) {
                 string txt = line.substr(7);
                 manager.append(current, txt);
-                cout << "Appended.\n";
+		cout << "Appended.\n";
                 continue;
             }
 
@@ -419,6 +422,10 @@ if (line.rfind("epsilon", 0) == 0) {
 		cfg.print();
                 continue;
             }
+	    if (line == "show version") {
+		std::cout << "built: " << __TIMESTAMP__ << endl;
+		continue;
+	    }
 	    if (line == "list keys") {
 	        auto keys = cfg.get_all_keys();
 		for (string i: keys)
@@ -436,6 +443,13 @@ if (line.rfind("epsilon", 0) == 0) {
     }
 
     return 0;
+}
+
+
+// Bridge creation for Embedded mode so NULL in standalone
+std::unique_ptr<SentenceStore> SentenceStoreFactory::CreateBridgeStore(void* parent)
+{
+   return nullptr; 
 }
 
 

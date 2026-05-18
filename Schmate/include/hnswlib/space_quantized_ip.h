@@ -1569,6 +1569,15 @@ bool save_quantization_params(std::ofstream &out) const override {
         out.write(reinterpret_cast<const char*>(offset.data()), dim_ * sizeof(T));
         out.write(reinterpret_cast<const char*>(scale_rcp.data()), dim_ * sizeof(T));
     }
+#if 0
+    else if (qmode_ == QuantModeIP::MRLQ) {
+      out.write(reinterpret_cast<const char*>(&mrl_dim_), sizeof(mrl_dim_));
+      // RaBitQ params for the truncated head
+      out.write(reinterpret_cast<const char*>(mrl_centroid_.data()), mrl_dim_ * sizeof(T));
+      out.write(reinterpret_cast<const char*>(mrl_scale_rcp.data()), mrl_dim_ * sizeof(T));
+    }
+
+#endif
     
     // Write rotation matrix if used
     if (use_rotation_) {

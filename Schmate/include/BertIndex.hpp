@@ -10,6 +10,7 @@
 #include "OffsetFile.hpp"
 #include "AdaptiveSearchController.hpp"
 #include "FileStreamCache.hpp"
+#include "SentenceStore.hpp"
 
 #include <unordered_map>
 #include <string>
@@ -75,11 +76,25 @@ friend class ShardedIndex;
 
     size_t dirty_count = 0;
 
+    void *opaque_ptr = nullptr; // This is for the SentenceStore;
+
 public:
-    BertIndex(SBertGGML & emb, hnswlib::HnswConfig & c, const std::string & n, bool searchOnly = false);
+    BertIndex(SBertGGML & emb, hnswlib::HnswConfig & c, const std::string & n,
+	bool searchOnly = false, void *ptr = nullptr);
     ~BertIndex();
 
-    const std::string model_name() { return embedder.model_name; }
+    const std::string      model_ident() const;
+    const std::string_view model_name() const { return embedder.model_name(); }
+
+    //  instruction-tuned or asymmetric embedding
+    enum ModelClass { VANILLA, BGE, NOMIC, E5, E5_MISTRAL, GTE, GTE_INSTRUCT,
+                INSTRUCTOR, SFR, JINA, MXBAI, UNKNOWN};
+    struct ModelProfile {
+	ModelClass model_class = ModelClass::UNKNOWN;
+	size_t max_tokens = 0;
+	size_t overlap_tokens = 0;
+    };
+    ModelProfile model_profile;
 
     // Remove the index bits from the disk..
     // return -1 for none found, 0 for OK, >=1 for experienced error
@@ -90,6 +105,19 @@ public:
     bool set_storage_path_dir(const std::string new_path);
 
     size_t get_data_size() { return index ? index->get_data_size() : 0;}
+
+    void* get_raw_data(hnswlib::labeltype label) const {
+	if (index) return index->get_raw_data(label);
+	return nullptr;
+    }
+
+    void set_opaque_ptr(void *ptr) {
+      if (bool(ptr) ^ bool(opaque_ptr)) {
+	 close_sentences();
+	 open_sentences();
+      }
+      opaque_ptr = ptr;
+    }
 
 #if 1
 
@@ -158,7 +186,7 @@ public:
     AdaptiveSearchController search_ctrl;
 
 
-
+   int64_t append_from(BertIndex& source);
 
 private:
    template<typename FilterFn>
@@ -174,7 +202,8 @@ private:
    int  wait_lock() const;
    bool remove_lockfile() const;
 
-   std::vector<float> encode_text(const std::string& text);
+   void initialize_model_profile();
+   std::vector<float> encode_text(const std::string& text, bool search = false);
 
    // convert raw hnsw distance to a score 
    float score_from_dist(float dist) const;
@@ -187,10 +216,11 @@ private:
 //    bool load_offsets();
     std::unique_ptr<OffsetFile> offsets;
 
-#if 1
+
+#if USE_FILEIO
    FILE *sentences_fd = nullptr;
 #else
-//    std::fstream sentences_file;
+   std::unique_ptr<SentenceStore> sentences; // Replacement sentences_fd
 #endif
    bool searchOnly;
 };

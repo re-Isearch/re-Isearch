@@ -8,8 +8,6 @@
 # include "arm_sve_suport.hpp"
 #endif
 
-#define UNIFIED_INDEX_ 0 /* Set to 1 when we activate the code */
-
 #define LSMVECTORSTORAGE 1
 
 /*
@@ -287,7 +285,6 @@ static double calculate_query_energy(const uint8_t *quantized, size_t dim)
             energy += (q1 * q1);
         }
     }
-std::cerr << "QUERY energy = " << energy << std::endl;
     return energy;
 }
 
@@ -331,12 +328,9 @@ std::vector<std::pair<float, labeltype>>
     // With PASS (pass-through we NEVER rescore)
     if (!use_rescoring || bin_mode_ == OptBinMode::PASS) {
         double energy = calculate_query_energy(quantized.data(), dim_);
+	LOG_INFO_S() << "Energy = " << energy << "\n"; 
 
-	//  ctx.query_energy = calculate_query_energy(quantized.data(), dim_);
-	//  space_->set_dist_param(&ctx);
-	auto result =  index_->searchKnnCloserFirst(quantized.data(), k, isIdAllowed);
-	//  my_quant_space->set_dist_param(nullptr);
-	return result;
+	return  index_->searchKnnCloserFirst(quantized.data(), k, isIdAllowed);
     }
 
      // Get more candidates for rescoring
@@ -1199,5 +1193,24 @@ void UnifiedIndex::printStats() const {
     std::cout << "  Total vectors: " << stats.total_vectors << "\n";
 }
 
+
+
+void* UnifiedIndex::get_raw_data(labeltype label) const {
+    if (!index_) return nullptr;
+
+    // 1. Find the internal ID from the label
+    auto search = index_->label_lookup_.find(label);
+    if (search == index_->label_lookup_.end()) {
+        return nullptr;
+    }
+
+    tableint internal_id = search->second;
+    
+    // 2. Calculate the offset
+    // In some versions, data_level0_memory_ is char*, in others it's specialized.
+    // We cast to char* to ensure the pointer arithmetic is in bytes.
+    char* base_ptr = (char*)index_->data_level0_memory_;
+    return (void*)(base_ptr + (size_t)internal_id * index_->size_data_per_element_);
+}
 
 }; // namespace hnswlib

@@ -37,7 +37,14 @@ This is the bridge re-Isearch <--> Schmate. This is the basis for DeepQuarry.
 #include <future>
 #endif
 
+#ifdef BERT_API_VERSION 
+static const char default_model[] = "sbert.gguf";
+#else
+# define BERT_API_VERSION 0
 static const char default_model[] = "sbert.ggml";
+#endif
+
+
 static const char search_path[] = "/opt/nonmonotonic/schmate/etc:/usr/local/ib/etc:~/.ib/models:../lib:.";
 
 
@@ -118,7 +125,7 @@ EmbeddingIndexer::EmbeddingIndexer(IDBOBJ *Parent_, bool searchOnly) : Parent(Pa
 
    // create embedder first
 #if ENABLE_PASSTHROUGH
-   auto q = get_ggml_model_quant(model);
+   auto q = get_model_quant(model);
    hnswlib::StorageType storage = q.first;
    if (storage != hnswlib::StorageType::FLOAT32) {
      message_log (LOG_INFO, "MODEL is %s (%s)", q.second.c_str(), storage_type_to_string(storage).c_str() );
@@ -136,10 +143,16 @@ EmbeddingIndexer::EmbeddingIndexer(IDBOBJ *Parent_, bool searchOnly) : Parent(Pa
      message_log (LOG_ERROR, "GGML model '%s' not resolved", model.c_str()); 
      return;
    } 
+#if BERT_API_VERSION == 2
+   if (found.second == GGML_TYPE::GGML) {
+     message_log (LOG_ERROR, "Model '%s' uses obsolete format (GGML). Use GGUF.", model.c_str());
+   }
+#endif
+
    model = found.first;
    embedder = std::make_unique<SBertGGML>(model);
 #endif
-   cfg->model_name = embedder->model_name;
+   cfg->model_name = embedder->model_name();
 
    Parent->RevalidateFileCache(); // Work around should the libs have messed with handles!
 
@@ -149,9 +162,9 @@ EmbeddingIndexer::EmbeddingIndexer(IDBOBJ *Parent_, bool searchOnly) : Parent(Pa
    if (embedder-> ctx) {
 
 #if USE_LRUCACHE
-     manager = std::make_unique<BertIndexManager>(*embedder, *cfg, cache_size, searchOnly);
+     manager = std::make_unique<BertIndexManager>(*embedder, *cfg, cache_size, searchOnly, Parent);
 #else
-     manager = std::make_unique<BertIndexManager>(*embedder, *cfg, searchOnly);
+     manager = std::make_unique<BertIndexManager>(*embedder, *cfg, searchOnly, Parent);
 #endif
   }
  }
@@ -258,7 +271,6 @@ PIRSET EmbeddingIndexer::search(const STRING &fieldname, const STRING &query)
        Parent->SetErrorCode(114); // "Unsupported Use attribute"
        return new IRSET (Parent); // No index -> Nothing to search -> Empty set
     }
-
     IRESULT iresult;
 #if 1
     INDEX_ID  idx;
@@ -384,6 +396,76 @@ std::vector<SearchResult> EmbeddingIndexer::search(const std::string &filename, 
 
 
 EmbeddingIndexer::~EmbeddingIndexer() = default;
+
+
+class ReIsearchSentenceStore : public SentenceStore {
+private:
+    IDBOBJ* parent;
+
+public:
+    ReIsearchSentenceStore(IDBOBJ* p) : parent(p) {}
+
+    bool open(const std::string& /*path*/) override {
+        // We ignore the path. The engine is already open.
+        return parent && parent->Ok();
+    }
+
+    // No-ops: The engine manages its own lifecycle and writes
+    void close() override {}
+    void flush() override {}
+    size_t size() const override { return 0; } 
+
+    // This is the "Safety Valve": We don't append via the bridge
+    int64_t append(std::string_view /*text*/) override { return 0; }
+    
+    // Likely a No-op or throws an error in bridge mode
+    int64_t append_from(SentenceStore& /*source*/) override { return 0; }
+
+    // THE ONLY ACTIVE GEAR:
+    std::string get(const OffsetEntry& e) override {
+        if (!parent) return "";
+        
+        // Construct the FC (Field Coordinates) from sid and span
+        // sid is our GPTYPE (Global Pointer)
+        FC hit(e.sid, e.sid + e.span);
+        
+        // The engine fetches the content (tags and all)
+        STRING res = parent->GetPeerContent(hit);
+        return std::string(res.c_str(), res.GetLength());
+    }
+};
+
+
+std::unique_ptr<SentenceStore> SentenceStoreFactory::CreateBridgeStore(void* ptr) {
+    if (!ptr) return nullptr;
+    return std::make_unique<ReIsearchSentenceStore>((IDBOBJ*)ptr);
+}
+
+
+#if BERT_API_VERSION > 1
+
+// Custom message handler
+// Install as     ggml_log_set(schmate_message_router, nullptr);
+static void schmate_message_router(enum ggml_log_level level, const char * text, void * user_data) {
+    // user_data can point to an instance of your logger class if needed
+    // e.g., MyLogger* logger = static_cast<MyLogger*>(user_data);
+
+    switch (level) {
+        case GGML_LOG_LEVEL_ERROR:
+	    message_log (LOG_ERROR, text);,
+            break;
+        case GGML_LOG_LEVEL_WARN:
+            message_log (LOG_WARN, text);,
+            break;
+        case GGML_LOG_LEVEL_INFO:
+        default:
+            message_log (LOG_INFO, text);,
+            break;
+    }
+}
+
+#endif
+
 
 
 

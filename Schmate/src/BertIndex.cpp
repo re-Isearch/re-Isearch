@@ -1,3 +1,6 @@
+
+#define USE_FILE_IO 0
+
 #include "BertIndex.hpp"
 #include "Util.hpp"
 #include "IO.hpp"
@@ -44,6 +47,148 @@ inline bool is_valid_query(const std::string& query) {
 }
 
 
+const std::string   BertIndex::model_ident() const {
+   std::string val;
+   val += embedder.model_architecture();
+   val += "-";
+   val += embedder.model_name();
+   val += ":";
+   val += index->storage_name();
+   return val;
+}
+
+//
+// ---- Model Specialties
+//
+
+// We encode here the know-how about the individual models.
+
+    
+struct ChunkConfig {                                            
+    int max_tokens;
+    int overlap_tokens;
+};
+
+
+inline ChunkConfig model_chunk_config(BertIndex::ModelClass model_class) {
+    switch (model_class) {
+        // Long-Context Giants (LLM & Native 8K Encoders)
+        case BertIndex::ModelClass::E5_MISTRAL:
+        case BertIndex::ModelClass::GTE_INSTRUCT:
+        case BertIndex::ModelClass::SFR:
+        case BertIndex::ModelClass::NOMIC:
+        case BertIndex::ModelClass::JINA:
+            return {512, 64}; // Or {1024, 128} depending on documentation verbosity
+
+        // Standard 512-limit BERT Engines
+        case BertIndex::ModelClass::BGE:
+        case BertIndex::ModelClass::MXBAI:
+        case BertIndex::ModelClass::E5:
+        case BertIndex::ModelClass::GTE:
+            return {384, 48};
+
+        // Fallback for tight, fast legacy models (like MiniLM)
+        case BertIndex::ModelClass::VANILLA:
+        default:
+            return {256, 32};
+    }
+}
+
+
+// Handle Asymentry
+inline const char* embedding_prefix(BertIndex::ModelClass model_class, bool is_search) {
+    switch (model_class) {
+        case BertIndex::ModelClass::NOMIC:
+            return is_search ? "search_query: " : "search_document: ";
+        case BertIndex::ModelClass::E5: // Old standard BERT-style E5
+            return is_search ? "query: " : "passage: ";
+        case BertIndex::ModelClass::E5_MISTRAL: // 7B LLM-style E5
+            return is_search ? "Instruct: Retrieve relevant passages\nQuery: " : nullptr;
+        case BertIndex::ModelClass::BGE:
+            return is_search ? "Represent this sentence for searching relevant passages: " : nullptr;
+        case BertIndex::ModelClass::GTE_INSTRUCT:
+            return is_search ? "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: " : nullptr;
+        case BertIndex::ModelClass::SFR:
+            return is_search ? "Given a web search query, retrieve relevant passages that answer the query\nQuery: " : nullptr;
+	case BertIndex::ModelClass::JINA: // Added Jina's explicit task syntax
+	    return is_search ? "retrieval.query" : "retrieval.passage";
+	case BertIndex::ModelClass::MXBAI: // Added Mixedbread AI instruction alignment
+	    return is_search ? "Represent this sentence for searching relevant passages: " : nullptr;
+
+	case BertIndex::ModelClass::GTE:
+        case BertIndex::ModelClass::VANILLA:
+        default:
+            return nullptr; 
+    }
+}
+
+void BertIndex::initialize_model_profile() {
+  // Once set we don't need to run it again..
+  if (model_profile.model_class == UNKNOWN) {
+    string_view name = embedder.model_name();
+    string_view arch = embedder.model_architecture();
+        
+    // 1. Specific sub-variants FIRST to prevent greedy intercept drops
+    if      (name.find("e5-mistral") != std::string_view::npos)
+	model_profile.model_class = ModelClass::E5_MISTRAL;
+    else if (name.find("e5")         != std::string_view::npos)
+	model_profile.model_class = ModelClass::E5;
+    else if (name.find("gte-qwen")   != std::string_view::npos)
+	model_profile.model_class = ModelClass::GTE_INSTRUCT;
+    else if (name.find("gte")        != std::string_view::npos)
+	model_profile.model_class = ModelClass::GTE;
+
+    else if (name.find("sfr-embed")  != std::string_view::npos)
+	model_profile.model_class = ModelClass::SFR;
+    else if (name.find("salesforce") != std::string_view::npos)
+	model_profile.model_class = ModelClass::SFR;
+        
+    // 1b. NEW: Jina and Mixedbread intercept lines
+    else if (name.find("jina")       != std::string_view::npos)
+	model_profile.model_class = ModelClass::JINA;
+    else if (name.find("mxbai")      != std::string_view::npos)
+	model_profile.model_class = ModelClass::MXBAI;
+
+    // 1c. Generic families and architectures
+    else if (name.find("bge")        != std::string_view::npos)
+	model_profile.model_class = ModelClass::BGE;
+    else if (name.find("instructor") != std::string_view::npos)
+	model_profile.model_class = ModelClass::INSTRUCTOR;
+    else if (arch == "nomic-bert-moe" || arch == "nomic-bert")
+	model_profile.model_class = ModelClass::NOMIC;
+    
+    // 1d. Fallback for standard models requiring no prefix modifications (e.g., MiniLM)
+    else  model_profile.model_class = ModelClass::VANILLA;
+
+    // 2. Resolve Max Tokens (Use user-defined override if provided, otherwise
+    // fallback to dynamic architecture baseline)
+    size_t target_max = (size_t)cfg.max_tokens_per_chunk;
+    size_t min_overlap = 0;
+
+    if (target_max == 0) {
+        auto dynamic_cfg = model_chunk_config(model_profile.model_class);
+        target_max  = dynamic_cfg.max_tokens;
+        min_overlap = dynamic_cfg.overlap_tokens;
+    }
+    model_profile.max_tokens = target_max;
+
+    // 3. Resolve and Lock In Overlap Tokens
+    size_t calculated_overlap = (size_t)((cfg.overlap_percent * model_profile.max_tokens) / 100.0);
+    model_profile.overlap_tokens = std::max(calculated_overlap, min_overlap);
+
+    // 4. Hard Structural Ceiling Safety Guard
+    if (model_profile.overlap_tokens >= model_profile.max_tokens) {
+        model_profile.overlap_tokens = model_profile.max_tokens - 1;
+    }
+  }
+};
+
+//
+// -- End Model Specialties 
+//
+
+
+
 // ---------------------------------------------------------------------------
 // Convert raw HNSW distance to a normalized score in [0,1]
 // Handles cosine, L2, and inner product safely.
@@ -80,10 +225,21 @@ float BertIndex::score_from_dist(float dist) const {
 }
 
 // n + ext = path of the index 
-BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool s) : embedder(emb), cfg(c), name(n),
-  searchOnly(s)
+BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool s, void *ptr) :
+	embedder(emb), cfg(c), name(n), searchOnly(s), opaque_ptr(ptr)
 {
     size_t max_elements = cfg.max_elements;
+
+    initialize_model_profile();
+
+    // NOTE: We don't need the sentences file if we are running inside re-Isearch
+    // as we have the Gp to lookup and have the end address so can read the original
+    // We leave these in for now since they help debugging..
+    // 
+    // May in the future have this via a callback class.. so standalone does a
+    // callback to a handling class to store the sentences while when in re-Isearch its just a nullptr..
+    // -- similar to the design of the re-Isearch plugin but much simpler 
+
     sentences_path = full_storage_path(name + IndexFileExtensions::sentences);
     offsets_path   = full_storage_path(name + IndexFileExtensions::offsets);
     index_path     = full_storage_path(name + IndexFileExtensions::hnsw);
@@ -106,14 +262,7 @@ BertIndex::BertIndex(SBertGGML & emb, HnswConfig & c, const string & n, bool s) 
 
     if (index && search_ctrl.adaptive_ef) index->setEf(search_ctrl.get_ef());
 
-
-#if 1
    open_sentences();
-#else
-    sentences_file.open(sentences_path, ios::in|ios::out|ios::binary | ios::app);
-    if (!sentences_file) throw runtime_error("Failed to open sentences file: " + sentences_path);
-#endif
-
 
   // Try to load offsets if they exist
   // was    load_offsets();
@@ -159,15 +308,7 @@ void BertIndex::clear() {
         offsets.reset();
     }
 
-
-#if 1
     close_sentences();
-#else
-    if (sentences_file.is_open()) {
-        sentences_file.flush();
-        sentences_file.close();
-    }
-#endif
 
     // --- Step 2: Remove existing files ---
     auto try_remove = [&](const std::string &path) {
@@ -219,7 +360,11 @@ void BertIndex::clear() {
 
 BertIndex::~BertIndex() {
     search_ctrl.save(name);
+#if USE_FILE_IO 
     if (sentences_fd) ::fclose(sentences_fd);
+#else 
+    close_sentences();
+#endif
     try {
         flush(); // persist any unsaved changes
         remove_lockfile(); // We ignore if it fails since it is probably 0 from another process
@@ -231,6 +376,72 @@ BertIndex::~BertIndex() {
 
 // --- chunking ---
 
+#if 0
+
+std::vector<Chunk> BertIndex::chunk_tokens(std::string_view sentence, ModelClass model_class, double overlap_percent) {
+    std::vector<Chunk> chunks;
+
+    // 1. Tokenize into string_views (Zero-copy stack scan)
+    std::vector<std::string_view> tokens;
+    tokens.reserve(256); // Optimized buffer allocation size for modern context lengths
+
+    size_t i = 0;
+    const size_t n = sentence.size();
+
+    while (i < n) {
+        while (i < n && std::isspace((unsigned char)sentence[i])) i++;
+        size_t start = i;
+
+        while (i < n && !std::isspace((unsigned char)sentence[i])) i++;
+
+        if (start < i) {
+            tokens.emplace_back(sentence.data() + start, i - start);
+        }
+    }
+
+    size_t n_tokens = tokens.size();
+    if (n_tokens == 0) return chunks;
+
+    // 2. Fetch dynamic thresholds based on the loaded GGUF model properties
+    ChunkConfig dynamic_cfg = model_chunk_config(model_class);
+    size_t max_tokens = dynamic_cfg.max_tokens;
+    
+    // Protected by your validation trap [0, 1), guaranteeing overlap < max_tokens
+    size_t overlap = (size_t)(overlap_percent * max_tokens); 
+
+    // 3. Sliding Window Chunking Execution Loop
+    size_t start_tok = 0;
+    while (start_tok < n_tokens) {
+        size_t end_tok = std::min(start_tok + max_tokens, n_tokens);
+
+        // Build chunk string layout with a single continuous reservation
+        std::string text;
+        size_t approx_len = 0;
+        for (size_t t = start_tok; t < end_tok; t++) {
+            approx_len += tokens[t].size() + 1;
+        }
+        text.reserve(approx_len);
+
+        for (size_t t = start_tok; t < end_tok; t++) {
+            if (!text.empty()) text.push_back(' ');
+            text.append(tokens[t].data(), tokens[t].size());
+        }
+
+        // std::move transfers the buffer pointer, bypassing deep character copies
+        chunks.push_back({std::move(text), start_tok, end_tok});
+
+        if (end_tok == n_tokens) break;
+        
+        // Window sliding logic
+        size_t next_start = end_tok - overlap;
+        start_tok = (next_start <= start_tok) ? start_tok + 1 : next_start; 
+    }
+
+    return chunks;
+}
+
+#endif
+
 #if 1
 
 
@@ -240,7 +451,7 @@ std::vector<Chunk> BertIndex::chunk_tokens(std::string_view sentence) {
 
     // --- Tokenize into string_views (no allocations) ---
     std::vector<std::string_view> tokens;
-    tokens.reserve(64); // small optimization
+    tokens.reserve(256); // Was 64. Optimized buffer allocation size for modern context lengths
 
     size_t i = 0;
     const size_t n = sentence.size();
@@ -257,11 +468,13 @@ std::vector<Chunk> BertIndex::chunk_tokens(std::string_view sentence) {
             tokens.emplace_back(sentence.data() + start, i - start);
         }
     }
-
     // --- Chunking ---
     size_t n_tokens = tokens.size();
     size_t max_tokens = cfg.max_tokens_per_chunk;
-    size_t overlap = (size_t)(cfg.overlap_percent * max_tokens / 100.0);
+    size_t min_overlap = 0;
+
+    size_t overlap   = model_profile.overlap_tokens;
+    size_t max_token = model_profile.max_tokens;
 
     size_t start_tok = 0;
     while (start_tok < n_tokens) {
@@ -429,46 +642,26 @@ bool BertIndex::remove_lockfile() const {
 }
 
 
-std::vector<float> BertIndex::encode_text(const std::string& text)
+std::vector<float> BertIndex::encode_text(const std::string& text, bool search)
 {
    // std::cerr << "BertIndex::encode_text(" << text << ")\n";
    if (text.empty()) return {}; // Empty text 
 
-   // Need to check/set lock
+  // Determine prefix (empty for VANILLA)
+  const char *prefix = embedding_prefix(model_profile.model_class, search);
 
-   auto emb = embedder.encode_text(text, cfg.debug);
-
-#if !defined(UNIFIED_INDEX_) || UNIFIED_INDEX_ == 0
-// When we shift over to the UnifiedIndex we need to remove this
-// code 
-   // ---------------------------------------------------------------------
-   // Normalize for cosine similarity if required.
-   // ---------------------------------------------------------------------
-   if (metric == Metric::Cosine) {
-        float norm = 0.f;
-        for (float v : emb) norm += v * v;
-        norm = std::sqrt(norm);
-        if (norm > 0.f) for (float &v : emb) v /= norm;
-//        if (cfg.debug) LOG_DEBUG_S() << "embedding normalized (cosine)";
-    } else if (cfg.debug) {
-        float norm = 0.f;
-        for (float v : emb) norm += v * v;
-        LOG_DEBUG_S() << "embedding norm=" << std::sqrt(norm);
+   if (prefix == nullptr)
+    {
+      // No copy — pass original string directly
+      return embedder.encode_text(text, cfg.debug); // Mutex set in SBert class
     }
 
-#if 0
-  if (cfg.debug) {
-    float norm = 0;
-    LOG_DEBUG_S() << "Embedding preview:";
-    for (int i = 0; i < 10; ++i) {
-        LOG_DEBUG_S() << "  e[" << i << "]=" << emb[i];
-        norm += emb[i] * emb[i];
-    }
-    LOG_DEBUG_S() << "embedding norm=" << sqrt(norm);
-   }
-#endif
-#endif
-    return emb;
+   // Only allocate when prefix needed — reserve exact size
+   std::string prefixed;
+   prefixed.reserve(strlen(prefix) + text.size());
+   prefixed  = prefix;
+   prefixed += text;
+   return embedder.encode_text(prefixed, cfg.debug); // Mutex set in SBert class
 }
 
 // Append with explicit sentence_id -> returns label
@@ -553,22 +746,20 @@ size_t BertIndex::append(const std::string_view sentence, int64_t sentence_id, u
     for (auto &chunk : chunks) {
         size_t label = allocate_label();
 
-#if 0
+#if USE_FILE_IO
         // --- Write sentence chunk to sentences file ---
-        sentences_file.seekp(0, std::ios::end);
-#endif
-
-#if 1
+        // sentences_file.seekp(0, std::ios::end);
 	fseek(sentences_fd, 0, SEEK_END);
 	int64_t file_start = ftell(sentences_fd);
 	fwrite(chunk.text.data(), 1, chunk.text.size(), sentences_fd);
 	fflush(sentences_fd);
 	int64_t file_end = ftell(sentences_fd);
-#else
-        int64_t file_start = (int64_t)sentences_file.tellp();
-        if (file_start  == -1) std::cerr << "BAD Sentence address(START) " << file_start << std::endl;
-        sentences_file.write(chunk.text.data(), chunk.text.size());
-        int64_t file_end = (int64_t)sentences_file.tellp();
+#else /* NEW CODE */
+        int64_t file_start = sentences->append(chunk.text);
+	if (file_start < 0) {
+	  // handle error
+	}
+	int64_t file_end = file_start + chunk.text.size();
 #endif
 	if (file_start == -1 || file_end == -1)
 	  LOG_ERROR_S() << "BAD Sentence address [" << file_start << "," << file_end << "]\n"; 
@@ -614,7 +805,7 @@ size_t BertIndex::append(const std::string_view sentence, int64_t sentence_id, u
         // while deferring heavy I/O (HNSW saves) until necessary.
 
         if (cfg.flush_offsets_each)
-	   offsets->flush(label); // Syncs only 16 bytes (1 entry) 
+	   offsets->flush(label); // Syncs only 32 bytes (1 entry) 
 
         if (cfg.debug) {
              LOG_DEBUG_S() << "append label=" << label
@@ -783,10 +974,10 @@ void BertIndex::flush() {
     if (!cfg.flush_offsets_each && offsets)
       offsets->flush(); // msync during add
 
-#if 1
+#if USE_FILE_IO
     ::fflush(sentences_fd);
-#else
-    sentences_file.flush();
+#else /* NEW CODE */
+    sentences->flush();
 #endif
 
     if (cfg.debug)  LOG_DEBUG_S() <<  "Flushed index + sentences to disk";
@@ -1245,7 +1436,7 @@ string BertIndex::reconstruct_sentence(int64_t sentence_id) const {
 
 
 
-#if 1
+#if USE_FILE_IO
 // Debugging version (to solve core dump)
 std::string BertIndex::get_text_by_label(size_t label) const {
     if (!offsets) {
@@ -1290,8 +1481,25 @@ std::string BertIndex::get_text_by_label(size_t label) const {
 }
 
 
-#else 
+#else
 
+std::string BertIndex::get_text_by_label(size_t label) const {
+    if (sentences) {
+      // 1. Look up the metadata for this HNSW label
+      OffsetEntry *e = offsets->get_mut (label);
+      if (e) {
+        // 2. Delegate the fetch to the store.
+        // If sentences is a FileSentenceStore, it reads the local .sentences bytes.
+        // If sentences is a ReIsearchSentenceStore, it calls GetPeerContent(sid).
+        return sentences->get(*e);
+      }
+    }
+    return "";
+}
+#endif
+
+/* OLD CODE */
+/*
 std::string BertIndex::get_text_by_label(size_t label) const {
     auto it = chunk_token_map.find(label);
     if (it == chunk_token_map.end()) return "";
@@ -1323,7 +1531,8 @@ std::string BertIndex::get_text_by_label(size_t label) const {
 
     return text;
 }
-#endif
+*/
+
 
 
 int64_t BertIndex::get_sentence_id(size_t label) const {
@@ -1473,15 +1682,10 @@ int BertIndex::unlink(const std::string &path)
     return errors;
 }
 
-#if 1
+#if USE_FILE_IO 
 
-// 
 bool BertIndex::open_sentences() {
   if (sentences_path.empty()) return false; // No path!
-//  if (sentences_file) {
-//     delete sentences_file;
-//     sentences_file = nullptr;
-//  }
   if (sentences_fd) ::fclose(sentences_fd);
 
   // Read/Write binary, append to end-of-file
@@ -1490,17 +1694,96 @@ bool BertIndex::open_sentences() {
      // log_errno("Failed to open sentences file");
      return false;
   }
-//  sentences_file = new FILEostream(sentences_fd);
   return true;
 }
 
 void BertIndex::close_sentences() {
-//   delete sentences_file;
-//   sentences_file = nullptr;
    if (sentences_fd) {
        ::fflush(sentences_fd);
        ::fclose(sentences_fd);
        sentences_fd = nullptr;
    }
 }
+
+#else /* NEW CODE */
+
+bool BertIndex::open_sentences() {
+  if (sentences_path.empty()) return false; // No path!
+  // The Factory decides which implementation to give us
+
+std::cerr << "OPAQUE POINTER = " << (long long)opaque_ptr << std::endl;
+  sentences = SentenceStoreFactory::Create(sentences_path, opaque_ptr);
+  if (!sentences) return false;
+  return true;
+}
+
+void BertIndex::close_sentences() {
+  if (sentences) sentences->close();
+}
+
+#endif /* open_sentences */
+
+
+#if 0
+// Add to BertIndex
+int64_t BertIndex::append_from(BertIndex& source) {
+    // 1. Lock check: Caller should have locked these, but we can verify
+    
+    // 2. Physical File Append
+    fseek(this->sentences_fd, 0, SEEK_END);
+    int64_t delta = ftell(this->sentences_fd);
+
+    fseek(source.sentences_fd, 0, SEEK_SET);
+    char buffer[1024 * 1024]; 
+    size_t bytes;
+    while ((bytes = fread(buffer, 1, sizeof(buffer), source.sentences_fd)) > 0) {
+        fwrite(buffer, 1, bytes, this->sentences_fd);
+    }
+    fflush(this->sentences_fd);
+
+    // 3. Metadata Migration
+    // We iterate the source, allocate new labels in 'this', 
+    // and write the shifted OffsetEntries.
+    source.offsets->for_each([&](size_t old_label, const OffsetEntry& e) {
+        size_t new_label = this->allocate_label();
+        
+        // Use the pipeline method we added to the struct
+        this->offsets->set(new_label, OffsetEntry(e).add_offset(delta));
+        
+        // 4. HNSW Injection
+        // Note: Since addPoint needs the raw vector, we still need 
+        // access to the source's storage.
+        const void* raw_vec = source.get_raw_data(old_label);
+        index->rawAddPoint(raw_vec, new_label);
+    });
+
+    return delta; 
+}
+#endif
+
+#if 0
+
+bool merge_fast(BertIndex& source) {
+    // 1. DNA Check (Safety first)
+    if (!(this->meta == source.meta)) return false;
+
+    // The "Heavy" transfer
+    int64_t delta = this->sentences->append_from(*source.sentences);
+    if (delta < 0) return false;
+
+    // The "Metadata" transfer
+    source.offsets.for_each([&](size_t old_label, const OffsetEntry& e) {
+       size_t new_label = this->allocate_label();
+            
+       // Shift the offsets but keep the SID identity
+       this->offsets.set(new_label, OffsetEntry(e).add_offset(delta));
+
+       // Link the graph
+       void* raw_bits = source.index->get_raw_data(old_label);
+       this->index->rawAddPoint(raw_bits, new_label);
+    });
+    this->offsets.flush(0);
+    return true;
+}
+
 #endif

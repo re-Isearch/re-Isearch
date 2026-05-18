@@ -123,6 +123,8 @@ struct HnswConfig {
     | > 1 M      | 300–800+  | */
     size_t ef_search = 64;
 
+    size_t matryoshka_dim = 0;
+
     // This contains the index specification
     // --> This allows us to better extend in the future
     SpecificationString specification;
@@ -165,8 +167,8 @@ struct HnswConfig {
     size_t bert_n_threads = 4;
 
     // chunking
-    int max_tokens_per_chunk = 128;
-    float overlap_percent = 0.1f;
+    int max_tokens_per_chunk = 0;
+    float overlap_percent = 0.125f;
 
     bool lock_on_append = true;
 

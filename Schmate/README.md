@@ -14,12 +14,15 @@ Not only is it probably the most performat vector text engine currently availabl
 
 It may be used both inside *re-Isearch* but also without. It has been designed to be used in a host of other applications. 
 
-We use a significantly enhanced (adding among other features quantized spaces) and turbo-charged (including support for x86 and ARM SIMD) HNSWlib for approximate nearest-neighbor search, and efficient mmap-backed re-scoring and offset storage for text retrieval. The system supports sharded HNSW indices, multiple search modes (kNN, radius, relative, adaptive, epsilon), deletion/undelete, merges, and incremental on-disk flushing. It also includes training for hyperparameter optimization.
 
+## HNSW 
+
+Hierarchical Navigable Small World (HNSW) is a graph-based algorithm used in vector databases to find similar items in
+high-dimensional datasets. Originally published in 2016 [Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs] (https://arxiv.org/abs/1603.09320) by Yury Malkov, his C++ implementation is not only reference but widely regarded as one of the most performant.
+
+Stating with Malkov's HNSWlib as a basis we significantly enhanced (adding among other features quantized spaces) and turbo-charged (including support for x86 and ARM SIMD) it while also adding efficient mmap-backed re-scoring and offset storage for text retrieval. Our system supports sharded HNSW indices, multiple search modes (kNN, radius, relative, adaptive, epsilon), deletion/undelete, merges, and incremental on-disk flushing. It also includes training for hyperparameter optimization.
 
 All code is implemented in modern C++17, optimized for macOS and Linux.
-
-While this code uses a heavily refactored bert.cpp it also supports llama.cpp for more modern sophisticated models that don't use the BERT architecture such as EuroBERT.
 
 ## SBERT: bert.cpp, llama.cpp and the ggml tensor library
 
@@ -47,6 +50,8 @@ Mainstream libraries rely heavily on massive GPU VRAM to hold model weights duri
 
 While mainstream libraries like TensorRT or PyTorch remain undisputed for model training and high-throughput server farms, GGML democratizes access to AI by allowing us to run powerful models locally on mainstream hardware.
 
+While we build upon a heavily refactored bert.cpp we also support llama.cpp for more modern sophisticated models that don't use the BERT architecture such as EuroBERT.
+
 ## Accelerators
 Our HNSW implementation is, by design, CPU bound (using heavily optimized SIMD instructions) to leave the accelerators free to do the heavy lifting of running the models. Even on an Apple M1 (Pro) we've clocked 13k QPS-- on an M5 Pro we expect 30,000 to 39,000+ QPS-- so we found ample state-of-the-art performance already on CPUs.
 
@@ -67,7 +72,56 @@ Our HNSW implementation is, by design, CPU bound (using heavily optimized SIMD i
 - *Performance*: While it slightly lags behind native CUDA or ROCm tweaks, it delivers impressive matrix-multiplication speeds across diverse hardware, including Steam Decks, Raspberry Pis, and mixed-GPU setups.
 - *Efficiency*: Balanced. Vulkan provides hardware acceleration on low-power devices that lack dedicated AI chips.
 
+## Asysmetric Models
 
+### Model Routing and Embedding Prefix Protocol
+To maximize retrieval precision across asymmetric vector spaces (matching short, intent-heavy search queries to dense, informational document chunks), the embedding orchestration pipeline utilizes a strongly typed classification framework.
+
+Different deep learning text transformers are trained with highly specific prefix strings or natural language instructions. Passing raw text without these triggers—or applying instructions to models that expect unpolluted text—destabilizes the hidden attention matrices and heavily degrades Top-K retrieval performance.
+
+Our architecture maps internal GGUF metadata string lookups (general.name and general.architecture) down to a lightweight runtime ModelClass enum at instantiation. This guarantees that all downstream string formatting resolves instantly via an optimized jump table with zero allocations during active processing.
+
+<pre>enum ModelClass { VANILLA, BGE, NOMIC, E5, E5_MISTRAL, GTE, GTE_INSTRUCT,
+                INSTRUCTOR, SFR, JINA, MXBAI, UNKNOWN}
+</pre>
+
+### Supported Embedding Model Families
+
+1. Nomic Embed (NOMIC)
+- Architecture Base: Modernized BERT with Rotary Position Embeddings (RoPE), FlashAttention, and Masked Language Modeling (MLM). Natively supports an extended 8192 token context window.
+- Asymmetry Strategy: Strict two-sided task classification.
+
+2. Legacy E5 (E5)
+- Architecture Base: Traditional BERT-style symmetric bi-encoders (e.g., e5-large-v2).
+- Asymmetry Strategy: Direct functional prefixes added to differentiate intention.
+
+3. Jina AI Embeddings (JINA)
+- Architecture Base: Symmetric bi-encoders utilizing advanced ALIBI linear position biases to handle a massive 8192 context length cleanly on standard hardware.
+- Asymmetry Strategy: Explicit dot-notation task tagging.
+
+4. E5 Mistral Instruct (E5_MISTRAL)
+- Architecture Base: Large Language Model (LLM) decoder-only architecture (Mistral-7B) adapted for dense text retrieval.
+- Asymmetry Strategy: Autoregressive task conditioning. The model expects an explicit instruction prompt to trigger retrieval behavior on queries, while documents are ingested completely raw to preserve structural data bounds.
+
+5. BGE - Beijing General Embedding (BGE)
+- Architecture Base: Highly optimized standard BERT-style bi-encoders (e.g., bge-large-en-v1.5).
+- Asymmetry Strategy: Asymmetric instruction activation. It applies an explicit retrieval prompt only during semantic matching queries.
+
+6. Mixedbread AI (MXBAI)
+- Architecture Base: High-performance, English-optimized BERT variants tuned specifically for fine-grained retrieval-augmented generation (RAG) pipelines.
+- Asymmetry Strategy: Asymmetric instruction activation matching the standard BGE protocol layout.
+
+7. GTE Instruct (GTE_INSTRUCT)
+- Architecture Base: LLM decoder-only architectures adapted from the Alibaba Qwen model framework (e.g., gte-Qwen2-7B-instruct).
+- Asymmetry Strategy: Strict conversational task-instruction framing.
+
+8. Salesforce SFR-Embedding (SFR)
+- Architecture Base: Ultra-large, dense LLM-based embedding models optimized for complex, multi-hop semantic retrieval tracking.
+- Asymmetry Strategy: Natural language search-space task constraint.
+
+9. Standard GTE & Vanilla Models (GTE / VANILLA)
+- Architecture Base: Standard bi-encoders (e.g., gte-large, all-MiniLM-L6-v2).
+- Asymmetry Strategy: Symmetric mapping. These models map text directly to a unified vector space without calculating conversational or positional task headers.
 
 ## Building
 
@@ -84,6 +138,19 @@ Quantization Algorithms:
 - PASS, STANDARD, BETTER, CENTROID, ROTATIONAL, RABITQ, RABITQ_EXTENDED and MRLQ (in development)
 
 A typical RaBitQ quantization consists of both Algorithm set to "RABITQ" and size of BIN1 (Binary)
+
+### TurboQuant
+
+We don't yet support *TurboQuant*.  When Google published their pre-print [paper](https://arxiv.org/abs/2504.19874) (presented at ICLR 2026 last January)  we wondered "*could this be a better RaBitQ for embeddings*"?  Our results and benchmarks with RaBitQ have been nothing short of spectacular. We were on the fence.  The Apr 2026 paper ["Revisiting RaBitQ and TurboQuant: A Symmetric Comparison of Methods, Theory, and Experiments" ](https://arxiv.org/abs/2604.19528) by Jianyang Gao (the original author of the 2024 RaBitQ paper) et al. reinforced our initial concerns that it was not just slower-- relevant for central design philosophy to be as efficient as possible on mainstream hardware-- but, at best, only marginally "better" or to quote the paper *"TurboQuant offers no clear and consistent advantage over RaBitQ in directly comparable settings."*.
+
+- Accuracy: In direct head-to-head tests, RaBitQ matched or outperformed TurboQuant in nearest-neighbor recall and inner-product stability across most bit widths.
+- Speed: When tested on identical GPU hardware, RaBitQ was found to be 1.2x to 1.8x faster than TurboQuant.
+- Reproducibility: The independent study found that TurboQuant's reported runtime and recall results could not be reproduced using the officially released implementation on the stated hardware.
+
+That all said: if there is real need it should not be terribly difficult to extend our HNSWlib fork to support TurboQuant. 
+
+
+### Matryoshka Representation Learning + Quantization (MRLQ)
 
 MRLQ is a special case: Matryoshka Representation Learning (MRL) is a technique creating efficient, resizable AI embeddings. Named after Russian nesting dolls, it allows smaller dimensions to capture broad semantic meaning while larger dimensions encode granular details, all in one model.  MRLQ takes this concept and applies RaBitQ quantization to a slice and re-scoring to the whole vectors. Its having you cake and eating it too.
 

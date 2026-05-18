@@ -26,6 +26,18 @@ struct OffsetEntry {
     uint32_t  start_tok;   // token start in original sentence
     uint32_t  end_tok;     // token end in original sentence
     uint32_t  span;    // sid = ID start . sid + span = ID end
+
+    // Increments file offsets by a given delta
+    OffsetEntry& add_offset(off_t delta) {
+        file_start += delta;
+        file_end += delta;
+	return *this;
+    }
+    
+    // Checks if the entry is actually populated
+    bool is_valid() const {
+        return sid != 0 || file_start != 0 || file_end != 0;
+    }
 };
 
 
@@ -49,6 +61,8 @@ public:
 
     // iterate through all valid entries
     void for_each(const std::function<void(size_t label, const OffsetEntry &)> &fn) const;
+
+    void add_offset(off_t offset); // Increase by offset the file_start and file_end
 
 
     // The sentence id associated with a given label
