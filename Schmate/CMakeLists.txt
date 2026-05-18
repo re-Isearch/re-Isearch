@@ -15,8 +15,10 @@ option(USE_THREADPOOL "Use cached thread pool for parallel_search" OFF)
 # =========================
 # External libraries
 # =========================
-set(BERT "${CMAKE_SOURCE_DIR}/lib/libbert.a")
-set(GGML "${CMAKE_SOURCE_DIR}/lib/libggml.a")
+#set(BERT "${CMAKE_SOURCE_DIR}/lib/libbert.a")
+#set(GGML "${CMAKE_SOURCE_DIR}/lib/libggml.a")
+set(BERT "${CMAKE_SOURCE_DIR}/lib/libbert.dylib")
+set(GGML "${CMAKE_SOURCE_DIR}/lib/libggml.dylib")
 
 # =========================
 # Core sources (library only)
