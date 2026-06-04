@@ -2,6 +2,10 @@
 
 ### NEWS
 
+4 June 2026
+
+re-Isearch plus Schmate is now published under CoreQuarry. This Repo will be frozen. 
+
 May 18 2026
 
 We decided, after much consideration, to move over the the latest ggml tensor library. The performance advantages were just too overwhelming to be held back for the upcoming release. To this end we heavily refactored bert.cpp. The new bert.cpp is built on the latest ggml (0.11.1 or 0.12). We've tried to design to support most BERT architecture models.
