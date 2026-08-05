@@ -1,4 +1,4 @@
-## This is the respositiory for re-Isearch.
+## This is the respositiory for re-Isearch. (Frozen)
 
 ### NEWS
 
