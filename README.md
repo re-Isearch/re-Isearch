@@ -4,7 +4,7 @@
 
 4 June 2026
 
-re-Isearch plus Schmate is now published under CoreQuarry. This Repo will be frozen. 
+re-Isearch plus Schmate is now published under [CoreQuarry](https://corequarry.com). This Repo will be frozen. 
 
 May 18 2026
 
