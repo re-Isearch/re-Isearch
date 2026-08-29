@@ -12,6 +12,7 @@ LCDMapHandle = CreateFileMapping(LCDhandle, 0, PAGE_READWRITE, 0, 0, NULL);
 LCDptr = (int *)MapViewOfFile(LCDMapHandle, PAGE_ALL_ACCESS, 0, 0, 0); 
 */
 
+#include <cstdint>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
