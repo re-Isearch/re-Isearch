@@ -2,36 +2,36 @@ UNAME := $(shell uname)
 
 all:
 ifeq ($(UNAME), Darwin)
-	make -j 5  -f Makefile.MacOS-OMP $(MFLAGS)  
+	$(MAKE) -f Makefile.MacOS-OMP $(MFLAGS)
 endif
 ifeq ($(UNAME), Linux)
-	make -j 3  -f Makefile.ubuntu $(MFLAGS)
+	$(MAKE) -f Makefile.ubuntu $(MFLAGS)
 endif
 ifeq ($(UNAME), Solaris)
-	make  -f Makefile.solaris $(MFLAGS)
+	$(MAKE) -f Makefile.solaris $(MFLAGS)
 endif
 
 install:
 ifeq ($(UNAME), Darwin)
-	make -j 5  -f Makefile.MacOS-OMP $(MFLAGS) install
+	$(MAKE) -f Makefile.MacOS-OMP $(MFLAGS) install
 endif
 ifeq ($(UNAME), Linux)
-	make -j 3  -f Makefile.ubuntu $(MFLAGS) install
+	$(MAKE) -f Makefile.ubuntu $(MFLAGS) install
 endif
 ifeq ($(UNAME), Solaris)
-	make  -f Makefile.solaris $(MFLAGS) install
+	$(MAKE) -f Makefile.solaris $(MFLAGS) install
 endif
 
 
 plugins:
 ifeq ($(UNAME), Darwin)
-	make -j 5 -f Makefile.MacOS $(MFLAGS) plugins
+	$(MAKE) -f Makefile.MacOS $(MFLAGS) plugins
 endif
 ifeq ($(UNAME), Linux)
-	make -j 3  -f Makefile.ubuntu $(MFLAGS) plugins
+	$(MAKE) -f Makefile.ubuntu $(MFLAGS) plugins
 endif
 ifeq ($(UNAME), Solaris)
-	make  -f Makefile.solaris $(MFLAGS) plugins
+	$(MAKE) -f Makefile.solaris $(MFLAGS) plugins
 endif
 
 
