@@ -422,6 +422,7 @@ extern const STRING IsearchAttributeSet;
 const INT IsearchFieldAttr	= 1;
 const INT IsearchWeightAttr	= 7;
 const INT IsearchTypeAttr	= 8;
+const INT IsearchTypeStateAttr	= 9;
 
 // Record Syntaxes
 #ifndef __RECORDSYNTAX

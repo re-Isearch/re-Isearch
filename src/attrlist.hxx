@@ -137,6 +137,14 @@ private:
   FIELDTYPE FieldType;
 };
 
+// Persisted values for IsearchTypeStateAttr. Missing/invalid state is Unknown
+// and must be treated as frozen; only an explicitly Open field may be refined.
+enum FIELD_TYPE_STATE {
+  TypeStateUnknown = 0,
+  TypeStateOpen    = 1,
+  TypeStateFrozen  = 2
+};
+
 class ATTRLIST {
 public:
   ATTRLIST();
@@ -178,6 +186,13 @@ public:
   void        AttrSetFieldType(const FIELDTYPE& FieldType);
   bool AttrGetFieldType(PSTRING StringBuffer) const;
   FIELDTYPE   AttrGetFieldType() const;
+
+  // Initialize newly created field definitions explicitly to TypeStateOpen.
+  void        AttrSetFieldTypeState(const FIELD_TYPE_STATE State);
+  FIELD_TYPE_STATE AttrGetFieldTypeState() const;
+  bool        AttrGetFieldTypeFrozen() const;
+  // Commit the current type in metadata; text/any do not trigger a freeze.
+  void        AttrFreezeFieldType();
 
 #if 1 /* These are now obsolete by the full blow type system */
   void        AttrSetFieldNumerical (const bool Set);

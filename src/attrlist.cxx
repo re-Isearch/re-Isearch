@@ -731,6 +731,37 @@ FIELDTYPE ATTRLIST::AttrGetFieldType() const
 }
 
 
+void ATTRLIST::AttrSetFieldTypeState(const FIELD_TYPE_STATE State)
+{
+  SetValue(IsearchAttributeSet, IsearchTypeStateAttr, (INT)State);
+}
+
+FIELD_TYPE_STATE ATTRLIST::AttrGetFieldTypeState() const
+{
+  STRING State;
+  if (GetValue(IsearchAttributeSet, IsearchTypeStateAttr, &State))
+    {
+      // Require the exact persisted value: e.g. "1junk" must not permit
+      // refinement merely because GetInt() would read its numeric prefix.
+      if (State == "1") return TypeStateOpen;
+      if (State == "2") return TypeStateFrozen;
+    }
+  return TypeStateUnknown;
+}
+
+bool ATTRLIST::AttrGetFieldTypeFrozen() const
+{
+  return AttrGetFieldTypeState() != TypeStateOpen;
+}
+
+void ATTRLIST::AttrFreezeFieldType()
+{
+  const FIELDTYPE FieldType = AttrGetFieldType();
+  if (FieldType != FIELDTYPE::text && FieldType != FIELDTYPE::any)
+    AttrSetFieldTypeState(TypeStateFrozen);
+}
+
+
 #if 0
 enum Objects {
   StringObject,
