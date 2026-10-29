@@ -1,4 +1,4 @@
-## This is the respositiory for re-Isearch. (Frozen)
+## This is the last repo snapshot of the re-Isearch core. **Frozen** -- Generally Use CoreQuarry instead. API is still 100% supported with more features and significant improvements!!!!!!
 
 ### NEWS
 
