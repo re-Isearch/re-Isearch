@@ -730,8 +730,13 @@ void XMLBASE::ParseFields (PRECORD NewRecord)
 	//     (not for SGML... perhaps for SGMLNORM)
 
 
+	// Historically, GILSXML ignored explicit </p> end tags.  That
+	// leaves P on the nesting path when paragraphs share a parent.
+	// Define this for compatibility with databases relying on that behavior.
+#ifdef GILSXML_LEGACY_IGNORE_P_ENDTAG
 	if ((*tags_ptr)[1] == 'p' && (*tags_ptr)[2] == '\0')
-	    continue; // See IP: Ignore paragraphs below
+	    continue;
+#endif
 
 	if(NestLevel) {
 	  NestLevel--;
